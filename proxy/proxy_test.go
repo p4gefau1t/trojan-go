@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"sync"
 	"testing"
@@ -84,7 +83,7 @@ func BenchmarkClientToServerHugePayload(b *testing.B) {
 	conn.Write(payload)
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	log.Println("Speed: ", speed, "MBytes/s")
+	logger.Info("Speed: ", speed, "MBytes/s")
 	b.StopTimer()
 }
 
@@ -135,7 +134,7 @@ func BenchmarkClientToServerHugeConn(b *testing.B) {
 	wg.Wait()
 	t2 := time.Now()
 	speed := float64(mbytes) * float64(connNum) / t2.Sub(t1).Seconds()
-	log.Println("Speed: ", speed, "MBytes/s")
+	logger.Info("Speed: ", speed, "MBytes/s")
 	b.StopTimer()
 }
 

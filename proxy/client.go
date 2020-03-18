@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"log"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -19,19 +18,19 @@ type Client struct {
 func (c *Client) handleConn(conn net.Conn) {
 	inboundConn, err := socks.NewInboundConnSession(conn)
 	if err != nil {
-		log.Println(err)
+		logger.Error("failed to start new inbound session:", err)
 		return
 	}
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
 
 	if err := inboundConn.(protocol.NeedRespond).Respond(nil); err != nil {
-		log.Println(err)
+		logger.Error("failed to respond:", err)
 		return
 	}
 	outboundConn, err := trojan.NewOutboundConnSession(req, c.config)
 	if err != nil {
-		log.Println(err)
+		logger.Error("failed to start new outbound session:", err)
 		return
 	}
 
@@ -40,7 +39,7 @@ func (c *Client) handleConn(conn net.Conn) {
 			IP: c.config.LocalIP,
 		})
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to listen udp:", err)
 			return
 		}
 
@@ -52,30 +51,25 @@ func (c *Client) handleConn(conn net.Conn) {
 
 		inboundPacket, err := socks.NewInboundPacketSession(listenConn)
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to start inbound packet session:", err)
 			return
 		}
 		defer inboundPacket.Close()
-
-		if err != nil {
-			log.Println(err)
-			return
-		}
 
 		outboundPacket, _ := trojan.NewPacketSession(outboundConn)
 		defer outboundPacket.Close()
 		go proxyPacket(inboundPacket, outboundPacket)
 
-		log.Println("UDP associated to", req.String())
+		logger.Info("UDP associated to", req.String())
 		inboundConn.(protocol.NeedRespond).Respond(nil)
 
 		var buf [1]byte
-		n, err := conn.Read(buf[:])
-		log.Println("UDP association ends", err, n)
+		_, err = conn.Read(buf[:])
+		logger.Info("UDP conn ends")
 		return
 	}
 
-	log.Println("conn from", conn.RemoteAddr(), "tunneling to", req.String())
+	logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
 	defer outboundConn.Close()
 	proxyConn(inboundConn, outboundConn)
 }
@@ -85,11 +79,11 @@ func (c *Client) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Println("running client at", listener.Addr())
+	logger.Info("running client at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println(err)
+			logger.Error("error occured when accpeting conn", err)
 			continue
 		}
 		go c.handleConn(conn)

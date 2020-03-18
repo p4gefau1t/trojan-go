@@ -70,10 +70,6 @@ type PacketReadWriter interface {
 	PacketWriter
 }
 
-type ConnSessionBuiler interface {
-	Build(conn io.ReadWriteCloser) (ConnSession, error)
-}
-
 type NeedConfig interface {
 	SetConfig(config *conf.GlobalConfig)
 }
@@ -84,8 +80,7 @@ type ConnSession interface {
 }
 
 type PacketSession interface {
-	PacketReader
-	PacketWriter
+	PacketReadWriter
 	io.Closer
 }
 

@@ -3,7 +3,6 @@ package proxy
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -21,7 +20,7 @@ type Server struct {
 func (c *Server) handleConn(conn net.Conn) {
 	inboundConn, err := trojan.NewInboundConnSession(conn, c.config)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		return
 	}
 	req := inboundConn.GetRequest()
@@ -31,11 +30,11 @@ func (c *Server) handleConn(conn net.Conn) {
 		defer inboundPacket.Close()
 		outboundPacket, err := direct.NewOutboundPacketSession()
 		if err != nil {
-			log.Println(err)
+			logger.Error(err)
 			return
 		}
 		defer outboundPacket.Close()
-		log.Println("UDP associated to", req.String())
+		logger.Info("UDP associated to", req.String())
 
 		inboundConn.(protocol.NeedRespond).Respond(nil)
 		proxyPacket(inboundPacket, outboundPacket)
@@ -45,12 +44,12 @@ func (c *Server) handleConn(conn net.Conn) {
 	defer inboundConn.Close()
 	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		return
 	}
 
 	defer outboundConn.Close()
-	log.Println("conn from", conn.RemoteAddr(), "tunneling to", req.String())
+	logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
 	proxyConn(inboundConn, outboundConn)
 }
 
@@ -67,7 +66,7 @@ func (c *Server) Run() error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println(err)
+			logger.Error(err)
 			continue
 		}
 		go c.handleConn(conn)

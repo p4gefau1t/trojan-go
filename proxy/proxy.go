@@ -2,13 +2,17 @@ package proxy
 
 import (
 	"io"
-	"log"
+	"os"
 	"time"
+
+	"github.com/withmandala/go-log"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
+
+var logger = log.New(os.Stdout).WithColor()
 
 func copyConn(dst io.Writer, src io.Reader, errChan chan error) {
 	_, err := io.Copy(dst, src)
@@ -36,7 +40,7 @@ func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	go copyConn(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		log.Println(err)
+		logger.Error("Connection ends", err)
 	}
 	time.Sleep(time.Second * 3)
 }
@@ -47,7 +51,7 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	go copyPacket(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		log.Println(err)
+		logger.Error("Connection ends", err)
 	}
 	time.Sleep(time.Second * 3)
 }

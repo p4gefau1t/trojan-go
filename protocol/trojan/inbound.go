@@ -2,7 +2,6 @@ package trojan
 
 import (
 	"bufio"
-	"log"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -46,7 +45,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 			Port:        i.config.RemotePort,
 			NetworkType: "tcp",
 		}
-		log.Println("invalid hash or other protocol", string(userHash))
+		logger.Warn("invalid hash or other protocol", string(userHash))
 		return nil
 	}
 	i.bufReader.Discard(56 + 2)

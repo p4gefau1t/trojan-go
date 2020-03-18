@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"log"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -16,7 +15,7 @@ type Forward struct {
 func (f *Forward) handleConn(conn net.Conn) {
 	newConn, err := net.Dial("tcp", f.config.RemoteAddr.String())
 	if err != nil {
-		log.Println("failed to connect to remote endpoint:", err)
+		logger.Error("failed to connect to remote endpoint:", err)
 		return
 	}
 	proxyConn(newConn, conn)
@@ -30,7 +29,7 @@ func (f *Forward) Run() error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println(err)
+			logger.Error(err)
 			continue
 		}
 		go f.handleConn(conn)
