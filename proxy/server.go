@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -17,8 +16,8 @@ type Server struct {
 	common.Runnable
 }
 
-func (c *Server) handleConn(conn net.Conn) {
-	inboundConn, err := trojan.NewInboundConnSession(conn, c.config)
+func (s *Server) handleConn(conn net.Conn) {
+	inboundConn, err := trojan.NewInboundConnSession(conn, s.config)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -34,41 +33,55 @@ func (c *Server) handleConn(conn net.Conn) {
 			return
 		}
 		defer outboundPacket.Close()
-		logger.Info("UDP associated", req)
-		//inboundConn.(protocol.NeedRespond).Respond(nil)
+		logger.Info("UDP associated")
 		proxyPacket(inboundPacket, outboundPacket)
 		logger.Info("UDP tunnel closed")
 		return
 	}
 
 	defer inboundConn.Close()
+
 	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-
 	defer outboundConn.Close()
+
 	logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
 	proxyConn(inboundConn, outboundConn)
 }
 
-func (c *Server) Run() error {
+func (s *Server) Run() error {
 	tlsConfig := &tls.Config{
-		Certificates: c.config.TLS.KeyPair,
-		CipherSuites: c.config.TLS.CipherSuites,
+		Certificates: s.config.TLS.KeyPair,
+		CipherSuites: s.config.TLS.CipherSuites,
 	}
-	listener, err := tls.Listen("tcp", c.config.LocalAddr.String(), tlsConfig)
+	//listener, err := net.ListenTCP("tcp", s.config.LocalAddr)
+	listener, err := net.Listen("tcp", s.config.LocalAddr.String())
 	if err != nil {
 		return err
 	}
-	fmt.Println("running server at", listener.Addr())
+	logger.Info("running server at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
+		tlsConn := tls.Server(conn, tlsConfig)
+		if err := tlsConn.Handshake(); err != nil {
+			err = common.NewError("a non-tls conn accepted").Base(err)
+			logger.Warn(err)
+			remoteConn, err := net.Dial("tcp", s.config.RemoteAddr.String())
+			if err != nil {
+				err = common.NewError("failed to dial to remote endpoint").Base(err)
+				logger.Error(err)
+				continue
+			}
+			go proxyConn(tlsConn, remoteConn)
+			continue
+		}
 		if err != nil {
 			logger.Error(err)
 			continue
 		}
-		go c.handleConn(conn)
+		go s.handleConn(tlsConn)
 	}
 }

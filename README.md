@@ -39,9 +39,16 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 ## TODOs
 
 - [x] Server
+- [x] Forward
+- [x] NAT
 - [x] Client
 - [x] UDP Tunneling
 - [x] Transparent proxy
 - [x] Log
-- [ ] Database support
 - [ ] Mux
+- [ ] TLS Settings
+- [x] TLS redirecting
+- [ ] non-TLS redirecting
+- [ ] Cert utils
+- [ ] Database support
+- [ ] Traffic stats

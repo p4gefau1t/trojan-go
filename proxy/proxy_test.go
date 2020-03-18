@@ -1,16 +1,14 @@
 package proxy
 
 import (
-	"crypto/rand"
-	"io"
 	"io/ioutil"
-	"net"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/test"
 	"golang.org/x/net/proxy"
 )
 
@@ -24,28 +22,6 @@ func TestClientToServerWithJSON(t *testing.T) {
 	go TestServerWithJSON(t)
 	go TestClientWithJSON(t)
 	time.Sleep(time.Hour)
-}
-
-func BlackHoleTCPServer() net.Addr {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	common.Must(err)
-	blackhole := func(conn net.Conn) {
-		io.Copy(ioutil.Discard, conn)
-	}
-	serve := func() {
-		for {
-			conn, _ := listener.Accept()
-			go blackhole(conn)
-		}
-	}
-	go serve()
-	return listener.Addr()
-}
-
-func GeneratePayload(length int) []byte {
-	buf := make([]byte, length)
-	io.ReadFull(rand.Reader, buf)
-	return buf
 }
 
 func BenchmarkClientToServerHugePayload(b *testing.B) {
@@ -70,10 +46,10 @@ func BenchmarkClientToServerHugePayload(b *testing.B) {
 	}
 	go server.Run()
 
-	tcpServer := BlackHoleTCPServer()
+	tcpServer := test.RunBlackHoleTCPServer()
 
 	mbytes := 512
-	payload := GeneratePayload(1024 * 1024 * mbytes)
+	payload := test.GeneratePayload(1024 * 1024 * mbytes)
 	dialer, err := proxy.SOCKS5("tcp", clientConfig.LocalAddr.String(), nil, nil)
 	common.Must(err)
 	conn, err := dialer.Dial("tcp", tcpServer.String())
@@ -109,11 +85,11 @@ func BenchmarkClientToServerHugeConn(b *testing.B) {
 	}
 	go server.Run()
 
-	tcpServer := BlackHoleTCPServer()
+	tcpServer := test.RunBlackHoleTCPServer()
 
 	connNum := 1024
 	mbytes := 1
-	payload := GeneratePayload(1024 * 1024 * mbytes)
+	payload := test.GeneratePayload(1024 * 1024 * mbytes)
 	dialer, err := proxy.SOCKS5("tcp", clientConfig.LocalAddr.String(), nil, nil)
 	common.Must(err)
 
@@ -160,11 +136,11 @@ func BenchmarkClientToContinuesHugeConn(b *testing.B) {
 	}
 	go server.Run()
 
-	tcpServer := BlackHoleTCPServer()
+	tcpServer := test.RunBlackHoleTCPServer()
 
 	connNum := 1024
 	mbytes := 32
-	payload := GeneratePayload(1024 * 1024 * mbytes)
+	payload := test.GeneratePayload(1024 * 1024 * mbytes)
 	dialer, err := proxy.SOCKS5("tcp", clientConfig.LocalAddr.String(), nil, nil)
 	common.Must(err)
 

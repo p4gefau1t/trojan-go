@@ -9,7 +9,7 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) Base(err error) *Error {
-	e.info += "|" + err.Error()
+	e.info += " | " + err.Error()
 	return e
 }
 

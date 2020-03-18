@@ -1,6 +1,9 @@
 package test
 
 import (
+	"crypto/rand"
+	"io"
+	"io/ioutil"
 	"net"
 	"os"
 
@@ -24,4 +27,26 @@ func RunEchoUDPServer(port int) {
 		logger.Info("echo from", addr)
 		conn.WriteToUDP(buf[0:n], addr)
 	}
+}
+
+func RunBlackHoleTCPServer() net.Addr {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	common.Must(err)
+	blackhole := func(conn net.Conn) {
+		io.Copy(ioutil.Discard, conn)
+	}
+	serve := func() {
+		for {
+			conn, _ := listener.Accept()
+			go blackhole(conn)
+		}
+	}
+	go serve()
+	return listener.Addr()
+}
+
+func GeneratePayload(length int) []byte {
+	buf := make([]byte, length)
+	io.ReadFull(rand.Reader, buf)
+	return buf
 }

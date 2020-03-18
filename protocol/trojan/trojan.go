@@ -6,4 +6,4 @@ import (
 	"github.com/withmandala/go-log"
 )
 
-var logger = log.New(os.Stdout)
+var logger = log.New(os.Stdout).WithColor()

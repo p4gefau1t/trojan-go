@@ -11,7 +11,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/test"
 )
 
-func TestUDP(t *testing.T) {
+func TestDirectOutbound(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go test.RunEchoUDPServer(6543 + i)
 	}

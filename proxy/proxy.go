@@ -42,7 +42,7 @@ func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	if err != nil {
 		logger.Error("conn proxy ends:", err)
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(protocol.TCPTimeout)
 }
 
 func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
@@ -53,7 +53,7 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	if err != nil {
 		logger.Error("packet proxy ends:", err)
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(protocol.UDPTimeout)
 }
 
 func NewProxy(config *conf.GlobalConfig) common.Runnable {
