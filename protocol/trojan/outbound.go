@@ -8,7 +8,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/tproxy"
 )
 
 type TrojanOutboundConnSession struct {
@@ -56,30 +55,9 @@ func NewOutboundConnSession(req *protocol.Request, config *conf.GlobalConfig) (p
 		RootCAs:      config.TLS.CertPool,
 		ServerName:   config.TLS.SNI,
 	}
-	var tlsConn *tls.Conn
-	if config.RunType == conf.NATRunType {
-		conn, err := tproxy.DialTCP(
-			"tcp",
-			nil,
-			&net.TCPAddr{
-				IP:   config.RemoteIP,
-				Port: int(config.RemotePort),
-			},
-			false,
-		)
-		if err != nil {
-			return nil, common.NewError("cannot dial to the remote server").Base(err)
-		}
-		tlsConn = tls.Client(conn, tlsConfig)
-		if err := tlsConn.Handshake(); err != nil {
-			return nil, common.NewError("failed to perform handshake").Base(err)
-		}
-	} else {
-		var err error
-		tlsConn, err = tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
-		if err != nil {
-			return nil, common.NewError("cannot dial to the remote server").Base(err)
-		}
+	tlsConn, err := tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
+	if err != nil {
+		return nil, common.NewError("cannot dial to the remote server").Base(err)
 	}
 	o := &TrojanOutboundConnSession{
 		request: req,

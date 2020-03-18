@@ -1,7 +1,6 @@
-package tproxy
+package nat
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -11,7 +10,7 @@ import (
 type NATInboundConnSession struct {
 	protocol.ConnSession
 	reqeust *protocol.Request
-	conn    *Conn
+	conn    net.Conn
 }
 
 func (i *NATInboundConnSession) Read(p []byte) (int, error) {
@@ -31,22 +30,16 @@ func (i *NATInboundConnSession) GetRequest() *protocol.Request {
 }
 
 func (i *NATInboundConnSession) parseRequest() error {
-	remote := i.conn.RemoteAddr()
-	hostStr, portStr, err := net.SplitHostPort(remote.String())
+	addr, err := getOriginalTCPDest(i.conn.(*net.TCPConn))
 	if err != nil {
-		return err
+		return common.NewError("failed to get original dst").Base(err)
 	}
-	ip := net.ParseIP(hostStr)
-	if ip == nil {
-		return common.NewError("invalid host " + hostStr)
-	}
-	var port uint16
-	fmt.Sscanf(portStr, "%d", &port)
 	req := &protocol.Request{
-		IP:   ip,
-		Port: port,
+		IP:      addr.IP,
+		Port:    uint16(addr.Port),
+		Command: protocol.Connect,
 	}
-	if ip.To4() != nil {
+	if addr.IP.To4() != nil {
 		req.AddressType = protocol.IPv4
 	} else {
 		req.AddressType = protocol.IPv6
@@ -57,7 +50,7 @@ func (i *NATInboundConnSession) parseRequest() error {
 
 func NewInboundConnSession(conn net.Conn) (protocol.ConnSession, error) {
 	i := &NATInboundConnSession{
-		conn: conn.(*Conn),
+		conn: conn,
 	}
 	if err := i.parseRequest(); err != nil {
 		return nil, common.NewError("failed to parse request").Base(err)

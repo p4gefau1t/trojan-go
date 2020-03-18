@@ -36,7 +36,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		config.Hash[common.SHA224String(password)] = password
 	}
 	switch config.RunType {
-	case ClientRunType:
+	case ClientRunType, NATRunType:
 		if len(config.Passwords) == 0 {
 			return nil, common.NewError("no password found")
 		}

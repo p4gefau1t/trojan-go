@@ -73,6 +73,11 @@ func NewProxy(config *conf.GlobalConfig) common.Runnable {
 			config: config,
 		}
 		return forward
+	case conf.NATRunType:
+		nat := &NAT{
+			config: config,
+		}
+		return nat
 	default:
 		panic("invalid run type")
 	}
