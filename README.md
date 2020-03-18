@@ -36,12 +36,12 @@ GOOS=linux GOARCH=amd64 go build -o trojan-go
 The format of the configuration file is compatible, see [here](https://trojan-gfw.github.io/trojan/config).
 
 
-## Todo
+## TODOs
 
 - [x] Server
 - [x] Client
 - [x] UDP Tunneling
-- [ ] Transparent proxy
-- [ ] Log
+- [x] Transparent proxy
+- [x] Log
 - [ ] Database support
 - [ ] Mux

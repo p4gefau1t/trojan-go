@@ -1,3 +1,5 @@
+// +build linux
+
 package nat
 
 import (
@@ -130,9 +132,9 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 	i.tableMutex.Unlock()
 	logger.Info("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
-		IP:   dst.IP,
-		Port: uint16(dst.Port),
-		NetworkType: "udp"
+		IP:          dst.IP,
+		Port:        uint16(dst.Port),
+		NetworkType: "udp",
 	}
 	if dst.IP.To4() != nil {
 		req.AddressType = protocol.IPv4
