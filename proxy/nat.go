@@ -55,14 +55,16 @@ func (n *NAT) listenUDP() {
 		AddressType: protocol.IPv4,
 		Command:     protocol.Associate,
 	}
-	tunnel, err := trojan.NewOutboundConnSession(&req, n.config)
-	if err != nil {
-		logger.Error(err)
-		return
+	for {
+		tunnel, err := trojan.NewOutboundConnSession(&req, n.config)
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+		outbound, err := trojan.NewPacketSession(tunnel)
+		proxyPacket(inbound, outbound)
+		tunnel.Close()
 	}
-	defer tunnel.Close()
-	outbound, err := trojan.NewPacketSession(tunnel)
-	proxyPacket(inbound, outbound)
 }
 
 func (n *NAT) Run() error {

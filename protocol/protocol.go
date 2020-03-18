@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -25,7 +26,10 @@ const (
 	IPv6       AddressType = 4
 )
 
-const MaxUDPPacketSize = 1024 * 4
+const (
+	MaxUDPPacketSize = 1024 * 4
+	UDPTimeout       = time.Second * 6
+)
 
 type Request struct {
 	DomainName  []byte

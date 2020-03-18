@@ -59,7 +59,7 @@ func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *ne
 	defer conn.Close()
 	for {
 		buf := make([]byte, protocol.MaxUDPPacketSize)
-		conn.SetReadDeadline(time.Now().Add(time.Second * 5))
+		conn.SetReadDeadline(time.Now().Add(protocol.UDPTimeout))
 		n, addr, err := conn.ReadFromUDP(buf)
 		conn.SetReadDeadline(time.Time{})
 		if err != nil {
@@ -67,7 +67,7 @@ func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *ne
 			return
 		}
 		if addr.String() != req.String() {
-			panic("wtf")
+			panic("addr != req, something went wrong")
 		}
 		info := &packetInfo{
 			request: req,

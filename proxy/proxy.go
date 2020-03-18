@@ -26,7 +26,6 @@ func copyPacket(dst protocol.PacketWriter, src protocol.PacketReader, errChan ch
 			errChan <- err
 			return
 		}
-		logger.Info("udp packet, req", req)
 		_, err = dst.WritePacket(req, packet)
 		if err != nil {
 			errChan <- err

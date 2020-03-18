@@ -1,6 +1,7 @@
 package nat
 
 import (
+	"context"
 	"net"
 	"sync"
 	"time"
@@ -74,9 +75,31 @@ type NATInboundPacketSession struct {
 	conn         *net.UDPConn
 	tableMutex   sync.Mutex
 	sessionTable map[string]*udpSession
+	ctx          context.Context
+	cancel       context.CancelFunc
+}
+
+func (i *NATInboundPacketSession) cleanExpiredSession() {
+	for {
+		i.tableMutex.Lock()
+		now := time.Now()
+		for k, v := range i.sessionTable {
+			if now.After(v.expire) {
+				delete(i.sessionTable, k)
+			}
+		}
+		i.tableMutex.Unlock()
+		select {
+		case <-time.After(protocol.UDPTimeout):
+		case <-i.ctx.Done():
+			return
+		}
+	}
 }
 
 func (i *NATInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
+	i.tableMutex.Lock()
+	defer i.tableMutex.Unlock()
 	session, found := i.sessionTable[req.String()]
 	if !found {
 		return 0, common.NewError("session not found " + req.String())
@@ -98,17 +121,18 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 	if err != nil {
 		return nil, nil, err
 	}
+	i.tableMutex.Lock()
 	i.sessionTable[dst.String()] = &udpSession{
 		src:    src,
 		dst:    dst,
-		expire: time.Now().Add(time.Second * 5),
+		expire: time.Now().Add(protocol.UDPTimeout),
 	}
-	logger.Info("UDP packet from", src, "to", dst)
+	i.tableMutex.Unlock()
+	logger.Info("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
 		IP:   dst.IP,
 		Port: uint16(dst.Port),
-		//Command: protocol.Associate,
-		//NetworkType: "udp"
+		NetworkType: "udp"
 	}
 	if dst.IP.To4() != nil {
 		req.AddressType = protocol.IPv4
@@ -119,6 +143,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 }
 
 func (i *NATInboundPacketSession) Close() error {
+	i.cancel()
 	return i.conn.Close()
 }
 
@@ -129,11 +154,15 @@ func NewInboundPacketSession(config *conf.GlobalConfig) (protocol.PacketSession,
 	}
 	conn, err := tproxy.ListenUDP("udp", addr)
 	if err != nil {
-		return nil, common.NewError("failed to listen udp addr").Base(err)
+		return nil, common.NewError("failed to listen UDP addr").Base(err)
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	i := &NATInboundPacketSession{
 		conn:         conn,
-		sessionTable: make(map[string]*udpSession, 128),
+		sessionTable: make(map[string]*udpSession, 1024),
+		ctx:          ctx,
+		cancel:       cancel,
 	}
+	go i.cleanExpiredSession()
 	return i, nil
 }
