@@ -26,6 +26,7 @@ func copyPacket(dst protocol.PacketWriter, src protocol.PacketReader, errChan ch
 			errChan <- err
 			return
 		}
+		logger.Info("udp packet, req", req)
 		_, err = dst.WritePacket(req, packet)
 		if err != nil {
 			errChan <- err
@@ -40,7 +41,7 @@ func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	go copyConn(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		logger.Error("Connection ends", err)
+		logger.Error("conn proxy ends:", err)
 	}
 	time.Sleep(time.Second * 3)
 }
@@ -51,7 +52,7 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	go copyPacket(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		logger.Error("Connection ends", err)
+		logger.Error("packet proxy ends:", err)
 	}
 	time.Sleep(time.Second * 3)
 }

@@ -34,10 +34,10 @@ func (c *Server) handleConn(conn net.Conn) {
 			return
 		}
 		defer outboundPacket.Close()
-		logger.Info("UDP associated to", req.String())
-
-		inboundConn.(protocol.NeedRespond).Respond(nil)
+		logger.Info("UDP associated", req)
+		//inboundConn.(protocol.NeedRespond).Respond(nil)
 		proxyPacket(inboundPacket, outboundPacket)
+		logger.Info("UDP tunnel closed")
 		return
 	}
 

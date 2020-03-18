@@ -31,8 +31,8 @@ func (i *TrojanPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 }
 
 func (i *TrojanPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	buf := bytes.NewBuffer(make([]byte, 128))
-	protocol.WriteAddress(buf, req)
+	buf := bytes.NewBuffer(make([]byte, 0, 128))
+	common.Must(protocol.WriteAddress(buf, req))
 	length := len(packet)
 	lengthBuf := [2]byte{}
 	binary.BigEndian.PutUint16(lengthBuf[:], uint16(length))

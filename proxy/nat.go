@@ -5,6 +5,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/nat"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 )
@@ -35,13 +36,31 @@ func (n *NAT) listenTCP(l net.Listener) {
 		conn, err := l.Accept()
 		if err != nil {
 			logger.Error(err)
+			continue
 		}
 		go n.handleConn(conn)
 	}
 }
 
 func (n *NAT) listenUDP() {
-
+	inbound, err := nat.NewInboundPacketSession(n.config)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	req := protocol.Request{
+		IP:          net.ParseIP("233.233.233.233"),
+		Port:        1111,
+		AddressType: protocol.IPv4,
+		Command:     protocol.Associate,
+	}
+	tunnel, err := trojan.NewOutboundConnSession(&req, n.config)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	outbound, err := trojan.NewPacketSession(tunnel)
+	proxyPacket(inbound, outbound)
 }
 
 func (n *NAT) Run() error {
@@ -53,6 +72,7 @@ func (n *NAT) Run() error {
 	if err != nil {
 		return err
 	}
+	go n.listenUDP()
 	n.listenTCP(tcpListener)
 	return nil
 }

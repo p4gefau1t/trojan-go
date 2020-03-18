@@ -125,7 +125,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 		req.DomainName = buf[0:length]
 		req.Port = binary.BigEndian.Uint16(buf[length : length+2])
 	default:
-		return nil, common.NewError("invalid dest type")
+		return nil, common.NewError("invalid dest type: ", atype)
 	}
 	return req, nil
 }
@@ -140,6 +140,8 @@ func WriteAddress(w io.Writer, request *Request) error {
 		_, err = w.Write(request.IP.To4())
 	case IPv6:
 		_, err = w.Write(request.IP.To16())
+	default:
+		return common.NewError("invalid address type")
 	}
 	port := [2]byte{}
 	binary.BigEndian.PutUint16(port[:], request.Port)

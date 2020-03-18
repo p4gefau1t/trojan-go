@@ -1,3 +1,5 @@
+github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed h1:eqa6queieK8SvoszxCu0WwH7lSVeL4/N/f1JwOMw1G4=
+github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed/go.mod h1:rA52xkgZwql9LRZXWb2arHEFP6qSR48KY2xOfWzEciQ=
 github.com/withmandala/go-log v0.1.0 h1:wINmTEe7BQ6zEA8sE7lSsYeaxCLluK6RFjF/IB5tzkA=
 github.com/withmandala/go-log v0.1.0/go.mod h1:/V9xQUTW74VjYm3u2Liv/bIUGLWoL9z2GlHwtscp4vg=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=

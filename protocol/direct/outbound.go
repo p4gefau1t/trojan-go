@@ -49,7 +49,10 @@ type DirectOutboundPacketSession struct {
 
 func (o *DirectOutboundPacketSession) Close() error {
 	o.connSet <- 0
-	return o.conn.Close()
+	if o.conn != nil {
+		return o.conn.Close()
+	}
+	return nil
 }
 
 func (o *DirectOutboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
