@@ -11,21 +11,29 @@ import (
 
 type TrojanInboundConnSession struct {
 	protocol.ConnSession
-	config    *conf.GlobalConfig
-	request   *protocol.Request
-	bufReader *bufio.Reader
-	conn      net.Conn
+	config     *conf.GlobalConfig
+	request    *protocol.Request
+	bufReader  *bufio.Reader
+	conn       net.Conn
+	uploaded   int
+	downloaded int
+	password   string
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
-	return i.conn.Write(p)
+	n, err := i.conn.Write(p)
+	i.uploaded += n
+	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
-	return i.bufReader.Read(p)
+	n, err := i.bufReader.Read(p)
+	i.downloaded += n
+	return n, err
 }
 
 func (i *TrojanInboundConnSession) Close() error {
+	logger.Info("user", i.password, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
 	return i.conn.Close()
 }
 
@@ -38,14 +46,16 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	if err != nil {
 		return common.NewError("failed to read hash").Base(err)
 	}
-	_, found := i.config.Hash[string(userHash)]
+	password, found := i.config.Hash[string(userHash)]
+	i.password = password
+	logger.Info("user", password, "authenticated")
 	if !found {
 		i.request = &protocol.Request{
 			IP:          i.config.RemoteIP,
 			Port:        i.config.RemotePort,
 			NetworkType: "tcp",
 		}
-		logger.Warn("invalid hash or other protocol", string(userHash))
+		logger.Warn("invalid hash or other protocol:", string(userHash))
 		return nil
 	}
 	i.bufReader.Discard(56 + 2)

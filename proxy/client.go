@@ -33,6 +33,7 @@ func (c *Client) handleConn(conn net.Conn) {
 		logger.Error("failed to start new outbound session:", err)
 		return
 	}
+	defer outboundConn.Close()
 
 	if req.Command == protocol.Associate {
 		listenConn, err := net.ListenUDP("udp", &net.UDPAddr{
@@ -57,7 +58,7 @@ func (c *Client) handleConn(conn net.Conn) {
 		defer inboundPacket.Close()
 
 		outboundPacket, _ := trojan.NewPacketSession(outboundConn)
-		defer outboundPacket.Close()
+		//defer outboundPacket.Close()
 		go proxyPacket(inboundPacket, outboundPacket)
 
 		inboundConn.(protocol.NeedRespond).Respond(nil)
@@ -70,7 +71,6 @@ func (c *Client) handleConn(conn net.Conn) {
 	}
 
 	logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
-	defer outboundConn.Close()
 	proxyConn(inboundConn, outboundConn)
 }
 

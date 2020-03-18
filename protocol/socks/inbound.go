@@ -120,18 +120,18 @@ func (i *SocksInboundPacketSession) parsePacketHeader(rawPacket []byte) (*protoc
 	if len(rawPacket) <= 4 {
 		return nil, nil, common.NewError("too short")
 	}
-	buffer := bytes.NewBuffer(rawPacket)
-	buffer.Next(2)
-	frag, _ := buffer.ReadByte()
+	buf := bytes.NewBuffer(rawPacket)
+	buf.Next(2)
+	frag, _ := buf.ReadByte()
 	if frag != 0 {
 		return nil, nil, common.NewError("fragment is not supported")
 	}
-	request, err := protocol.ParseAddress(buffer)
+	request, err := protocol.ParseAddress(buf)
 	if err != nil {
 		return nil, nil, common.NewError("cannot parse udp request").Base(err)
 	}
 	request.NetworkType = "udp"
-	return request, buffer.Bytes(), nil
+	return request, buf.Bytes(), nil
 }
 
 func (i *SocksInboundPacketSession) writePacketHeader(w io.Writer, req *protocol.Request) error {

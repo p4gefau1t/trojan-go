@@ -51,4 +51,4 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 - [ ] non-TLS redirecting
 - [ ] Cert utils
 - [ ] Database support
-- [ ] Traffic stats
+- [x] Traffic stats

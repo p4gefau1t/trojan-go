@@ -12,20 +12,27 @@ import (
 
 type TrojanOutboundConnSession struct {
 	protocol.ConnSession
-	config  *conf.GlobalConfig
-	conn    net.Conn
-	request *protocol.Request
+	config     *conf.GlobalConfig
+	conn       net.Conn
+	request    *protocol.Request
+	uploaded   int
+	downloaded int
 }
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
-	return o.conn.Write(p)
+	n, err := o.conn.Write(p)
+	o.uploaded += n
+	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
-	return o.conn.Read(p)
+	n, err := o.conn.Read(p)
+	o.downloaded += n
+	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Close() error {
+	logger.Info("conn to", o.request, "closed", "up:", common.HumanFriendlyTraffic(o.uploaded), "down:", common.HumanFriendlyTraffic(o.downloaded))
 	return o.conn.Close()
 }
 
@@ -68,5 +75,4 @@ func NewOutboundConnSession(req *protocol.Request, config *conf.GlobalConfig) (p
 		return nil, common.NewError("failed to write request").Base(err)
 	}
 	return o, nil
-
 }

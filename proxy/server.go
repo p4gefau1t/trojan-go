@@ -18,6 +18,8 @@ type Server struct {
 
 func (s *Server) handleConn(conn net.Conn) {
 	inboundConn, err := trojan.NewInboundConnSession(conn, s.config)
+	defer inboundConn.Close()
+
 	if err != nil {
 		logger.Error(err)
 		return
@@ -26,7 +28,7 @@ func (s *Server) handleConn(conn net.Conn) {
 
 	if req.Command == protocol.Associate {
 		inboundPacket, _ := trojan.NewPacketSession(inboundConn)
-		defer inboundPacket.Close()
+		//defer inboundPacket.Close()
 		outboundPacket, err := direct.NewOutboundPacketSession()
 		if err != nil {
 			logger.Error(err)
@@ -38,8 +40,6 @@ func (s *Server) handleConn(conn net.Conn) {
 		logger.Info("UDP tunnel closed")
 		return
 	}
-
-	defer inboundConn.Close()
 
 	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
@@ -57,31 +57,46 @@ func (s *Server) Run() error {
 		Certificates: s.config.TLS.KeyPair,
 		CipherSuites: s.config.TLS.CipherSuites,
 	}
-	//listener, err := net.ListenTCP("tcp", s.config.LocalAddr)
-	listener, err := net.Listen("tcp", s.config.LocalAddr.String())
+	listener, err := tls.Listen("tcp", s.config.LocalAddr.String(), tlsConfig)
 	if err != nil {
 		return err
 	}
-	logger.Info("running server at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
-		tlsConn := tls.Server(conn, tlsConfig)
-		if err := tlsConn.Handshake(); err != nil {
-			err = common.NewError("a non-tls conn accepted").Base(err)
+		if err != nil {
+			err = common.NewError("tls handshake failed").Base(err)
 			logger.Warn(err)
-			remoteConn, err := net.Dial("tcp", s.config.RemoteAddr.String())
+			conn.Close()
+			continue
+		}
+		go s.handleConn(conn)
+	}
+	/*
+		listener, err := net.Listen("tcp", s.config.LocalAddr.String())
+		if err != nil {
+			return err
+		}
+		logger.Info("running server at", listener.Addr())
+		for {
+			conn, err := listener.Accept()
+			tlsConn := tls.Server(conn, tlsConfig)
+			if err := tlsConn.Handshake(); err != nil {
+				err = common.NewError("a non-tls conn accepted").Base(err)
+				logger.Warn(err)
+				remoteConn, err := net.Dial("tcp", s.config.RemoteAddr.String())
+				if err != nil {
+					err = common.NewError("failed to dial to remote endpoint").Base(err)
+					logger.Error(err)
+					continue
+				}
+				go proxyConn(tlsConn, remoteConn)
+				continue
+			}
 			if err != nil {
-				err = common.NewError("failed to dial to remote endpoint").Base(err)
 				logger.Error(err)
 				continue
 			}
-			go proxyConn(tlsConn, remoteConn)
-			continue
+			go s.handleConn(tlsConn)
 		}
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-		go s.handleConn(tlsConn)
-	}
+	*/
 }
