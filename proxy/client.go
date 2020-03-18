@@ -60,8 +60,8 @@ func (c *Client) handleConn(conn net.Conn) {
 		defer outboundPacket.Close()
 		go proxyPacket(inboundPacket, outboundPacket)
 
-		logger.Info("UDP associated to", req.String())
 		inboundConn.(protocol.NeedRespond).Respond(nil)
+		logger.Info("UDP associated to", req.String())
 
 		var buf [1]byte
 		_, err = conn.Read(buf[:])

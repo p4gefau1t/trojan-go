@@ -25,7 +25,7 @@ const (
 	IPv6       AddressType = 4
 )
 
-const MaxUDPPacketSize = 1024 * 8
+const MaxUDPPacketSize = 1024 * 4
 
 type Request struct {
 	DomainName  []byte
@@ -125,7 +125,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 		req.DomainName = buf[0:length]
 		req.Port = binary.BigEndian.Uint16(buf[length : length+2])
 	default:
-		return nil, common.NewError("invalid dest type: ", atype)
+		return nil, common.NewError("invalid dest type")
 	}
 	return req, nil
 }

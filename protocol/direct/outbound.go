@@ -1,8 +1,10 @@
 package direct
 
 import (
+	"context"
 	"io"
 	"net"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/protocol"
@@ -41,60 +43,74 @@ func NewOutboundConnSession(conn io.ReadWriteCloser, req *protocol.Request) (pro
 	return o, nil
 }
 
+type packetInfo struct {
+	request *protocol.Request
+	packet  []byte
+}
+
 type DirectOutboundPacketSession struct {
 	protocol.PacketSession
-	conn    *net.UDPConn
-	connSet chan int
+	packetChan chan *packetInfo
+	ctx        context.Context
+	cancel     context.CancelFunc
+}
+
+func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *net.UDPConn) {
+	defer conn.Close()
+	for {
+		buf := make([]byte, protocol.MaxUDPPacketSize)
+		conn.SetReadDeadline(time.Now().Add(time.Second * 5))
+		n, addr, err := conn.ReadFromUDP(buf)
+		conn.SetReadDeadline(time.Time{})
+		if err != nil {
+			logger.Info(err)
+			return
+		}
+		if addr.String() != req.String() {
+			panic("wtf")
+		}
+		info := &packetInfo{
+			request: req,
+			packet:  buf[0:n],
+		}
+		o.packetChan <- info
+	}
 }
 
 func (o *DirectOutboundPacketSession) Close() error {
-	o.connSet <- 0
-	if o.conn != nil {
-		return o.conn.Close()
-	}
+	o.cancel()
 	return nil
 }
 
 func (o *DirectOutboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
-	s := <-o.connSet
-	if s == 0 {
-		return nil, nil, common.NewError("closed")
+	select {
+	case info := <-o.packetChan:
+		return info.request, info.packet, nil
+	case <-o.ctx.Done():
+		return nil, nil, common.NewError("session closed")
 	}
-	buf := [protocol.MaxUDPPacketSize]byte{}
-	n, remote, err := o.conn.ReadFromUDP(buf[:])
-	if err != nil {
-		return nil, nil, err
-	}
-	req := &protocol.Request{
-		IP:          remote.IP,
-		Port:        uint16(remote.Port),
-		NetworkType: "udp",
-		AddressType: protocol.IPv4,
-	}
-	if remote.IP.To16() != nil {
-		req.AddressType = protocol.IPv6
-	}
-	return req, buf[0:n], nil
 }
 
 func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	remoteAddr := &net.UDPAddr{
+	remote := &net.UDPAddr{
 		IP:   req.IP,
 		Port: int(req.Port),
 	}
-	if o.conn == nil {
-		conn, err := net.DialUDP("udp", nil, remoteAddr)
-		if err != nil {
-			return 0, common.NewError("cannot dial to remote to init conn").Base(err)
-		}
-		o.conn = conn
-		o.connSet <- 1
+	conn, err := net.DialUDP("udp", nil, remote)
+	go o.listenConn(req, conn)
+	if err != nil {
+		return 0, common.NewError("cannot dial udp").Base(err)
 	}
-	return o.conn.Write(packet)
+	logger.Info("UDP directly dialing to", remote)
+	n, err := conn.Write(packet)
+	return n, err
 }
 
 func NewOutboundPacketSession() (protocol.PacketSession, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &DirectOutboundPacketSession{
-		connSet: make(chan int),
+		ctx:        ctx,
+		cancel:     cancel,
+		packetChan: make(chan *packetInfo, 256),
 	}, nil
 }

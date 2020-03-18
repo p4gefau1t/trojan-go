@@ -79,7 +79,7 @@ type NATInboundPacketSession struct {
 func (i *NATInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
 	session, found := i.sessionTable[req.String()]
 	if !found {
-		return 0, common.NewError("session not found")
+		return 0, common.NewError("session not found " + req.String())
 	}
 	conn, err := tproxy.DialUDP("udp", session.dst, session.src)
 	if err != nil {

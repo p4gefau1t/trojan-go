@@ -48,6 +48,7 @@ func (n *NAT) listenUDP() {
 		logger.Error(err)
 		return
 	}
+	defer inbound.Close()
 	req := protocol.Request{
 		IP:          net.ParseIP("233.233.233.233"),
 		Port:        1111,
@@ -59,6 +60,7 @@ func (n *NAT) listenUDP() {
 		logger.Error(err)
 		return
 	}
+	defer tunnel.Close()
 	outbound, err := trojan.NewPacketSession(tunnel)
 	proxyPacket(inbound, outbound)
 }
