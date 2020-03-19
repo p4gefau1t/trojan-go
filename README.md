@@ -4,11 +4,13 @@ Trojan proxy written in golang. It is compatiable with the original Trojan proto
 
 It's still currently in heavy development.
 
+[README_zh_cn(中文)](README_zh_cn.md)
+
 ## Features
 
 ### Compatible
 
-It's fully compatible with the Trojan protocol, so that you can safely replace your client and server program with trojan-go, or even just replace one of them, without changing the config file.
+It's fully compatible with the Trojan protocol and configuration file, so that you can safely replace your client and server program with trojan-go, or even just replace one of them, without additional configuration.
 
 ### Easy to use
 
@@ -68,7 +70,9 @@ For more infomation, see Trojan's [docs](https://trojan-gfw.github.io/trojan/con
 TLS handshaking may takes much time in a poor network condition.
 Trojan-go supports multiplexing([smux](https://github.com/xtaci/smux)), which imporves the performance in the high-concurrency scenario by forcing one single TLS tunnel connection carries mutiple TCP connections.
 
-It's **NOT** compatible with the original trojan protocol, so it's disabled by default. You can enable it by setting up the "mux" field, in the tcp options.
+Enabling multiplexing does not increase the bandwidth you get from a speed test, but it will speed up the network experience when you have a large number of concurrent requests, such as browsing web pages containing a large number of images, etc.
+
+Note that this feature is not compatible with the original Trojan , so for compatibility reasons, this feature is turned off by default. But you can enable it by setting the "mux" field in the tcp options. as follows
 
 ```
 "tcp": {
@@ -98,11 +102,11 @@ client.json
 }
 ```
 
-You will only need to set up the client's config file, and the server will automatically detect it.
+You only need to set the client's configuration file, and the server will automatically detect whether to enable multiplexing.
 
 ### Portable
 
-It's written in golang, so it's static compiled by default. You can easily build and deploy it to your server, pc, raspberry pi, and router.
+It's written in Golang, and Golang compiles statically by default, which means that you can execute the compiled single executable directly on the target machine without having to consider dependencies. You can easily compile (or cross compile) it and deploy it on your server, PC, Raspberry Pi, or even a router.
 
 ## Build
 
