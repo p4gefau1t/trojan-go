@@ -52,8 +52,8 @@ func (n *NAT) listenUDP() {
 	}
 	defer inbound.Close()
 	req := protocol.Request{
-		IP:          net.ParseIP("233.233.233.233"),
-		Port:        1111,
+		IP:          net.IPv4(0, 0, 0, 0),
+		Port:        0,
 		AddressType: protocol.IPv4,
 		Command:     protocol.Associate,
 	}

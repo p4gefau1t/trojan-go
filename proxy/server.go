@@ -9,6 +9,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
+	"github.com/xtaci/smux"
 )
 
 type Server struct {
@@ -16,19 +17,57 @@ type Server struct {
 	common.Runnable
 }
 
-func (s *Server) handleConn(conn net.Conn) {
-	inboundConn, err := trojan.NewInboundConnSession(conn, s.config)
+func (s *Server) handleMuxConn(stream *smux.Stream) {
+	inboundConn, err := trojan.NewInboundConnSession(stream, s.config)
+	if err != nil {
+		stream.Close()
+		logger.Error(common.NewError("cannot start inbound session").Base(err))
+		return
+	}
 	defer inboundConn.Close()
-
+	req := inboundConn.GetRequest()
+	if req.Command != protocol.Connect {
+		logger.Error("mux only support tcp now")
+		return
+	}
+	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
+	logger.Info("mux tunneling to", req.String())
+	defer outboundConn.Close()
+	proxyConn(inboundConn, outboundConn)
+}
+
+func (s *Server) handleConn(conn net.Conn) {
+	inboundConn, err := trojan.NewInboundConnSession(conn, s.config)
+
+	if err != nil {
+		logger.Error(err)
+		inboundConn.Close()
+		return
+	}
 	req := inboundConn.GetRequest()
+
+	if req.Command == protocol.Mux {
+		muxServer, err := smux.Server(conn, nil)
+		defer muxServer.Close()
+		common.Must(err)
+		for {
+			stream, err := muxServer.AcceptStream()
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+			go s.handleMuxConn(stream)
+		}
+	}
 
 	if req.Command == protocol.Associate {
 		inboundPacket, _ := trojan.NewPacketSession(inboundConn)
-		//defer inboundPacket.Close()
+		defer inboundPacket.Close()
+
 		outboundPacket, err := direct.NewOutboundPacketSession()
 		if err != nil {
 			logger.Error(err)
@@ -71,32 +110,4 @@ func (s *Server) Run() error {
 		}
 		go s.handleConn(conn)
 	}
-	/*
-		listener, err := net.Listen("tcp", s.config.LocalAddr.String())
-		if err != nil {
-			return err
-		}
-		logger.Info("running server at", listener.Addr())
-		for {
-			conn, err := listener.Accept()
-			tlsConn := tls.Server(conn, tlsConfig)
-			if err := tlsConn.Handshake(); err != nil {
-				err = common.NewError("a non-tls conn accepted").Base(err)
-				logger.Warn(err)
-				remoteConn, err := net.Dial("tcp", s.config.RemoteAddr.String())
-				if err != nil {
-					err = common.NewError("failed to dial to remote endpoint").Base(err)
-					logger.Error(err)
-					continue
-				}
-				go proxyConn(tlsConn, remoteConn)
-				continue
-			}
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-			go s.handleConn(tlsConn)
-		}
-	*/
 }

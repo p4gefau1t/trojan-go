@@ -39,7 +39,7 @@ func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	go copyConn(a, b, errChan)
 	go copyConn(b, a, errChan)
 	err := <-errChan
-	if err != nil {
+	if err != nil && err.Error() != "EOF" {
 		logger.Error("conn proxy ends:", err)
 	}
 	time.Sleep(protocol.TCPTimeout)
@@ -50,7 +50,7 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	go copyPacket(a, b, errChan)
 	go copyPacket(b, a, errChan)
 	err := <-errChan
-	if err != nil {
+	if err != nil && err.Error() != "EOF" {
 		logger.Error("packet proxy ends:", err)
 	}
 	time.Sleep(protocol.UDPTimeout)

@@ -110,6 +110,7 @@ func (i *NATInboundPacketSession) WritePacket(req *protocol.Request, packet []by
 	if err != nil {
 		return 0, common.NewError("cannot dial to source").Base(err)
 	}
+	defer conn.Close()
 	return conn.Write(packet)
 }
 

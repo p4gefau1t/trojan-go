@@ -3,7 +3,7 @@ package trojan
 import (
 	"bufio"
 	"crypto/tls"
-	"net"
+	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -13,7 +13,7 @@ import (
 type TrojanOutboundConnSession struct {
 	protocol.ConnSession
 	config     *conf.GlobalConfig
-	conn       net.Conn
+	conn       io.ReadWriteCloser
 	request    *protocol.Request
 	uploaded   int
 	downloaded int
@@ -70,6 +70,18 @@ func NewOutboundConnSession(req *protocol.Request, config *conf.GlobalConfig) (p
 		request: req,
 		config:  config,
 		conn:    tlsConn,
+	}
+	if err := o.writeRequest(); err != nil {
+		return nil, common.NewError("failed to write request").Base(err)
+	}
+	return o, nil
+}
+
+func NewOutboundConnSessionFromConn(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
+	o := &TrojanOutboundConnSession{
+		request: req,
+		config:  config,
+		conn:    conn,
 	}
 	if err := o.writeRequest(); err != nil {
 		return nil, common.NewError("failed to write request").Base(err)

@@ -24,6 +24,12 @@ func TestClientToServerWithJSON(t *testing.T) {
 	time.Sleep(time.Hour)
 }
 
+func TestMuxClientToServer(t *testing.T) {
+	go TestMuxClient(t)
+	go TestServer(t)
+	time.Sleep(time.Hour)
+}
+
 func BenchmarkClientToServerHugePayload(b *testing.B) {
 	b.StopTimer()
 	data, err := ioutil.ReadFile("client.json")

@@ -45,10 +45,11 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 - [x] UDP Tunneling
 - [x] Transparent proxy
 - [x] Log
-- [ ] Mux
+- [x] Mux
 - [ ] TLS Settings
 - [x] TLS redirecting
 - [ ] non-TLS redirecting
 - [ ] Cert utils
 - [ ] Database support
 - [x] Traffic stats
+- [ ] TCP Settings

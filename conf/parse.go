@@ -10,7 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-func ConvertToIP(s string) (net.IP, error) {
+func ConvertToIP(s string) ([]net.IP, error) {
 	ip := net.ParseIP(s)
 	if ip == nil {
 		ips, err := net.LookupIP(s)
@@ -18,11 +18,11 @@ func ConvertToIP(s string) (net.IP, error) {
 			return nil, err
 		}
 		if len(ips) == 0 {
-			return nil, common.NewError("cannot resolve ip")
+			return nil, common.NewError("cannot resolve host:" + s)
 		}
-		return ips[0], nil
+		return ips, nil
 	}
-	return ip, nil
+	return []net.IP{ip}, nil
 }
 
 func ParseJSON(data []byte) (*GlobalConfig, error) {
@@ -60,22 +60,38 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	default:
 		return nil, common.NewError("invalid run type")
 	}
-	localIP, err := ConvertToIP(config.LocalHost)
+	localIPs, err := ConvertToIP(config.LocalHost)
 	if err != nil {
 		return nil, err
 	}
-	remoteIP, err := ConvertToIP(config.RemoteHost)
+	remoteIPs, err := ConvertToIP(config.RemoteHost)
 	if err != nil {
 		return nil, err
 	}
-	config.LocalIP = localIP
-	config.RemoteIP = remoteIP
+
+	config.LocalIP = localIPs[0]
+	config.RemoteIP = remoteIPs[0]
+
+	if config.TCP.PreferIPV4 {
+		for _, ip := range localIPs {
+			if ip.To4() != nil {
+				config.LocalIP = ip
+				break
+			}
+		}
+		for _, ip := range remoteIPs {
+			if ip.To4() != nil {
+				config.RemoteIP = ip
+				break
+			}
+		}
+	}
 	config.LocalAddr = &net.TCPAddr{
-		IP:   localIP,
+		IP:   config.LocalIP,
 		Port: int(config.LocalPort),
 	}
 	config.RemoteAddr = &net.TCPAddr{
-		IP:   remoteIP,
+		IP:   config.RemoteIP,
 		Port: int(config.RemotePort),
 	}
 	return &config, nil

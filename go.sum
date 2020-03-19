@@ -1,7 +1,11 @@
 github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed h1:eqa6queieK8SvoszxCu0WwH7lSVeL4/N/f1JwOMw1G4=
 github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed/go.mod h1:rA52xkgZwql9LRZXWb2arHEFP6qSR48KY2xOfWzEciQ=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/withmandala/go-log v0.1.0 h1:wINmTEe7BQ6zEA8sE7lSsYeaxCLluK6RFjF/IB5tzkA=
 github.com/withmandala/go-log v0.1.0/go.mod h1:/V9xQUTW74VjYm3u2Liv/bIUGLWoL9z2GlHwtscp4vg=
+github.com/xtaci/smux v2.0.1+incompatible h1:4NrCD5VzuFktMCxK08IShR0C5vKyNICJRShUzvk0U34=
+github.com/xtaci/smux v2.0.1+incompatible/go.mod h1:f+nYm6SpuHMy/SH0zpbvAFHT1QoMcgLOsWcFip5KfPw=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/net v0.0.0-20190311183353-d8887717615a h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=

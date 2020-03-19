@@ -18,6 +18,7 @@ const (
 	Connect   Command = 1
 	Bind      Command = 2
 	Associate Command = 3
+	Mux       Command = 0x7f
 )
 
 const (

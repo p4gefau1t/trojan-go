@@ -63,7 +63,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	cmd, err := i.bufReader.ReadByte()
 	network := "tcp"
 	switch protocol.Command(cmd) {
-	case protocol.Connect:
+	case protocol.Connect, protocol.Mux:
 		network = "tcp"
 	case protocol.Associate:
 		network = "udp"
