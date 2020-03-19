@@ -17,7 +17,7 @@ type TrojanInboundConnSession struct {
 	conn       net.Conn
 	uploaded   int
 	downloaded int
-	password   string
+	userHash   string
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
@@ -33,7 +33,7 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (i *TrojanInboundConnSession) Close() error {
-	logger.Info("user", i.password, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
+	logger.Info("user", i.userHash, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
 	return i.conn.Close()
 }
 
@@ -46,9 +46,8 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	if err != nil {
 		return common.NewError("failed to read hash").Base(err)
 	}
-	password, found := i.config.Hash[string(userHash)]
-	i.password = password
-	logger.Info("user", password, "authenticated")
+	_, found := i.config.Hash[string(userHash)]
+	i.userHash = i.userHash
 	if !found {
 		i.request = &protocol.Request{
 			IP:          i.config.RemoteIP,

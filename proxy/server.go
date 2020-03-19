@@ -45,7 +45,6 @@ func (s *Server) handleConn(conn net.Conn) {
 
 	if err != nil {
 		logger.Error(err)
-		inboundConn.Close()
 		return
 	}
 	req := inboundConn.GetRequest()
@@ -80,6 +79,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		return
 	}
 
+	defer inboundConn.Close()
 	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
 		logger.Error(err)
@@ -105,7 +105,6 @@ func (s *Server) Run() error {
 		if err != nil {
 			err = common.NewError("tls handshake failed").Base(err)
 			logger.Warn(err)
-			conn.Close()
 			continue
 		}
 		go s.handleConn(conn)

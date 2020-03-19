@@ -43,8 +43,10 @@ func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession
 	stream, err := c.muxClient.OpenStream()
 	if err != nil {
 		logger.Error(err)
+		c.muxClient.Close()
 		return
 	}
+	defer stream.Close()
 	//trojan protocol over mux conn
 	outbound, err := trojan.NewOutboundConnSession(req, stream, c.config)
 	if err != nil {
@@ -52,6 +54,7 @@ func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession
 		logger.Error(err)
 		return
 	}
+	defer outbound.Close()
 	proxyConn(conn, outbound)
 }
 

@@ -25,7 +25,6 @@ const (
 	KiB = 1024
 	MiB = KiB * 1024
 	GiB = MiB * 1024
-	TiB = GiB * 1024
 )
 
 func HumanFriendlyTraffic(bytes int) string {
@@ -38,8 +37,5 @@ func HumanFriendlyTraffic(bytes int) string {
 	if bytes <= GiB {
 		return fmt.Sprintf("%.2f MiB", float32(bytes)/MiB)
 	}
-	if bytes <= TiB {
-		return fmt.Sprintf("%.2f GiB", float32(bytes)/GiB)
-	}
-	return fmt.Sprintf("%.2f TiB", float32(bytes)/TiB)
+	return fmt.Sprintf("%.2f TiB", float32(bytes)/GiB)
 }
