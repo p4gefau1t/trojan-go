@@ -31,7 +31,7 @@ func (c *Client) newMuxConn() (*smux.Session, error) {
 		Port:        0,
 		AddressType: protocol.IPv4,
 	}
-	conn, err := trojan.NewOutboundConnSession(req, c.config)
+	conn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 	if err != nil {
 		return nil, common.NewError("failed to dial mux conn").Base(err)
 	}
@@ -46,7 +46,7 @@ func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession
 		return
 	}
 	//trojan protocol over mux conn
-	outbound, err := trojan.NewOutboundConnSessionFromConn(req, stream, c.config)
+	outbound, err := trojan.NewOutboundConnSession(req, stream, c.config)
 	if err != nil {
 		err = common.NewError("fail to start trojan session over mux conn").Base(err)
 		logger.Error(err)
@@ -73,7 +73,7 @@ func (c *Client) handleMuxConn(conn net.Conn) {
 	}
 	if req.Command == protocol.Associate {
 		//not using mux
-		outboundConn, err := trojan.NewOutboundConnSession(req, c.config)
+		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
 			logger.Error("failed to start new outbound session:", err)
 			return
@@ -130,7 +130,7 @@ func (c *Client) handleConn(conn net.Conn) {
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
 
-	outboundConn, err := trojan.NewOutboundConnSession(req, c.config)
+	outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 	if err != nil {
 		logger.Error("failed to start new outbound session:", err)
 		return

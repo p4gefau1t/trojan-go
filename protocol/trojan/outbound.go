@@ -56,28 +56,19 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 	return err
 }
 
-func NewOutboundConnSession(req *protocol.Request, config *conf.GlobalConfig) (protocol.ConnSession, error) {
-	tlsConfig := &tls.Config{
-		CipherSuites: config.TLS.CipherSuites,
-		RootCAs:      config.TLS.CertPool,
-		ServerName:   config.TLS.SNI,
+func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
+	if conn == nil {
+		tlsConfig := &tls.Config{
+			CipherSuites: config.TLS.CipherSuites,
+			RootCAs:      config.TLS.CertPool,
+			ServerName:   config.TLS.SNI,
+		}
+		tlsConn, err := tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
+		if err != nil {
+			return nil, common.NewError("cannot dial to the remote server").Base(err)
+		}
+		conn = tlsConn
 	}
-	tlsConn, err := tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
-	if err != nil {
-		return nil, common.NewError("cannot dial to the remote server").Base(err)
-	}
-	o := &TrojanOutboundConnSession{
-		request: req,
-		config:  config,
-		conn:    tlsConn,
-	}
-	if err := o.writeRequest(); err != nil {
-		return nil, common.NewError("failed to write request").Base(err)
-	}
-	return o, nil
-}
-
-func NewOutboundConnSessionFromConn(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
 	o := &TrojanOutboundConnSession{
 		request: req,
 		config:  config,

@@ -24,7 +24,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 	}
 	req := inbound.GetRequest()
 	defer inbound.Close()
-	outbound, err := trojan.NewOutboundConnSession(req, n.config)
+	outbound, err := trojan.NewOutboundConnSession(req, nil, n.config)
 	if err != nil {
 		logger.Error("failed to start outbound session", err)
 	}
@@ -58,7 +58,7 @@ func (n *NAT) listenUDP() {
 		Command:     protocol.Associate,
 	}
 	for {
-		tunnel, err := trojan.NewOutboundConnSession(&req, n.config)
+		tunnel, err := trojan.NewOutboundConnSession(&req, nil, n.config)
 		if err != nil {
 			logger.Error(err)
 			continue
