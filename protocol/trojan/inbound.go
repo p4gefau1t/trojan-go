@@ -47,7 +47,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		return common.NewError("failed to read hash").Base(err)
 	}
 	_, found := i.config.Hash[string(userHash)]
-	i.userHash = i.userHash
+	i.userHash = string(userHash[0:16])
 	if !found {
 		i.request = &protocol.Request{
 			IP:          i.config.RemoteIP,
