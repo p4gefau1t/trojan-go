@@ -9,31 +9,36 @@ import (
 type RunType string
 
 const (
-	ClientRunType  RunType = "client"
-	ServerRunType  RunType = "server"
-	NATRunType     RunType = "nat"
-	ForwardRunType RunType = "forward"
+	Client  RunType = "client"
+	Server  RunType = "server"
+	NAT     RunType = "nat"
+	Forward RunType = "forward"
 )
 
 type TLSConfig struct {
-	Verify           bool   `json:"verify"`
-	VerifyHostname   bool   `json:"verify_hostname"`
-	CertPath         string `json:"cert"`
-	KeyPath          string `json:"key"`
-	CertPool         *x509.CertPool
-	KeyPair          []tls.Certificate
-	CipherSuites     []uint16
-	CipherSuiteTLS13 []uint16
-	SNI              string `json:"sni"`
-	Alph             []string
-	ReuseSession     bool
-	SessionTicket    bool
-	Curves           string
+	Verify             bool   `json:"verify"`
+	VerifyHostname     bool   `json:"verify_hostname"`
+	CertPath           string `json:"cert"`
+	KeyPath            string `json:"key"`
+	CertPool           *x509.CertPool
+	KeyPair            []tls.Certificate
+	Cipher             string `json:"cipher"`
+	CipherTLS13        string `json:"cipher_tls13"`
+	HTTPFile           string `json:"plain_http_response"`
+	HTTPResponse       []byte
+	CipherSuites       []uint16
+	CipherSuiteTLS13   []uint16
+	PreferServerCipher bool   `json:"prefer_server_cipher"`
+	SNI                string `json:"sni"`
+	Alph               []string
+	ReuseSession       bool
+	SessionTicket      bool
+	Curves             string
 }
 
 type TCPConfig struct {
 	PreferIPV4   bool `json:"prefer_ipv4"`
-	KeepAlive    bool `json:"no_delay"`
+	KeepAlive    bool `json:"keep_alive"`
 	FastOpen     bool `json:"fast_open"`
 	FastOpenQLen int  `json:"fast_open_qlen"`
 	ReusePort    bool `json:"reuse_port"`

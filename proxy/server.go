@@ -99,8 +99,10 @@ func (s *Server) handleConn(conn net.Conn) {
 
 func (s *Server) Run() error {
 	tlsConfig := &tls.Config{
-		Certificates: s.config.TLS.KeyPair,
-		CipherSuites: s.config.TLS.CipherSuites,
+		Certificates:             s.config.TLS.KeyPair,
+		CipherSuites:             s.config.TLS.CipherSuites,
+		PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
+		SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
 	}
 	if s.config.MySQL.Enabled {
 		db, err := common.ConnectDatabase(
@@ -129,6 +131,9 @@ func (s *Server) Run() error {
 		s.meter = &stat.EmptyTrafficMeter{}
 	}
 	logger.Info("Server running at", s.config.LocalAddr)
+
+	var listener net.Listener
+	var err error
 	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
 		cfg := tcplisten.Config{
 			ReusePort:   s.config.TCP.ReusePort,
@@ -139,40 +144,31 @@ func (s *Server) Run() error {
 		if s.config.LocalIP.To4() != nil {
 			network = "tcp4"
 		}
-		listener, err := cfg.NewListener(network, s.config.LocalAddr.String())
+		listener, err = cfg.NewListener(network, s.config.LocalAddr.String())
 		if err != nil {
 			return err
-		}
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				logger.Warn(err)
-				continue
-			}
-			tlsConn := tls.Server(conn, tlsConfig)
-			err = tlsConn.Handshake()
-			if err != nil {
-				logger.Warn(err)
-				tlsConn.Close()
-				continue
-			}
-			go s.handleConn(tlsConn)
 		}
 	} else {
-		listener, err := tls.Listen("tcp", s.config.LocalAddr.String(), tlsConfig)
+		listener, err = net.Listen("tcp", s.config.LocalAddr.String())
 		if err != nil {
 			return err
 		}
-		for {
-			tlsConn, err := listener.Accept()
-			if err != nil {
-				err = common.NewError("tls handshake failed").Base(err)
-				logger.Warn(err)
-				tlsConn.Close()
-				continue
-			}
-			go s.handleConn(tlsConn)
-		}
-
 	}
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			logger.Warn(err)
+			continue
+		}
+		tlsConn := tls.Server(conn, tlsConfig)
+		err = tlsConn.Handshake()
+		if err != nil {
+			logger.Warn(common.NewError("failed to handshake, response http payload").Base(err))
+			conn.Write(s.config.TLS.HTTPResponse)
+			conn.Close()
+			continue
+		}
+		go s.handleConn(tlsConn)
+	}
+
 }

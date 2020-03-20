@@ -149,7 +149,7 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 - [x] Transparent proxy
 - [x] Log
 - [x] Mux
-- [ ] TLS Settings
+- [x] TLS Settings
 - [x] TLS redirecting
 - [ ] non-TLS redirecting
 - [ ] Cert utils

@@ -61,11 +61,19 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
 	if conn == nil {
 		tlsConfig := &tls.Config{
-			CipherSuites: config.TLS.CipherSuites,
-			RootCAs:      config.TLS.CertPool,
-			ServerName:   config.TLS.SNI,
+			CipherSuites:           config.TLS.CipherSuites,
+			RootCAs:                config.TLS.CertPool,
+			ServerName:             config.TLS.SNI,
+			InsecureSkipVerify:     !config.TLS.Verify,
+			SessionTicketsDisabled: !config.TLS.SessionTicket,
+			ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
 		}
 		tlsConn, err := tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
+		if config.TLS.VerifyHostname {
+			if err := tlsConn.VerifyHostname(config.TLS.SNI); err != nil {
+				return nil, common.NewError("failed to verify hostname").Base(err)
+			}
+		}
 		if err != nil {
 			return nil, common.NewError("cannot dial to the remote server").Base(err)
 		}

@@ -6,9 +6,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net"
+	"os"
+	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/withmandala/go-log"
 )
+
+var logger = log.New(os.Stdout).WithColor()
 
 func ConvertToIP(s string) ([]net.IP, error) {
 	ip := net.ParseIP(s)
@@ -27,6 +32,12 @@ func ConvertToIP(s string) ([]net.IP, error) {
 
 func ParseJSON(data []byte) (*GlobalConfig, error) {
 	var config GlobalConfig
+
+	//default settings
+	config.TLS.Verify = true
+	config.TLS.VerifyHostname = true
+	config.TLS.SessionTicket = true
+
 	err := json.Unmarshal(data, &config)
 	if err != nil {
 		return nil, err
@@ -36,7 +47,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		config.Hash[common.SHA224String(password)] = password
 	}
 	switch config.RunType {
-	case ClientRunType, NATRunType:
+	case Client, NAT:
 		if len(config.Passwords) == 0 {
 			return nil, common.NewError("no password found")
 		}
@@ -47,7 +58,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		pool := x509.NewCertPool()
 		pool.AppendCertsFromPEM(serverCertBytes)
 		config.TLS.CertPool = pool
-	case ServerRunType:
+	case Server:
 		if len(config.Passwords) == 0 {
 			return nil, common.NewError("no password found")
 		}
@@ -56,7 +67,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			return nil, err
 		}
 		config.TLS.KeyPair = []tls.Certificate{keyPair}
-	case ForwardRunType:
+	case Forward:
 	default:
 		return nil, common.NewError("invalid run type")
 	}
@@ -94,5 +105,41 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		IP:   config.RemoteIP,
 		Port: int(config.RemotePort),
 	}
+
+	if config.TLS.Cipher != "" {
+		specifiedSuites := strings.Split(config.TLS.Cipher, ":")
+		supportedSuites := tls.CipherSuites()
+		valid := true
+		for _, s := range specifiedSuites {
+			if strings.Contains(s, "-") {
+				logger.Warn("maybe you are using wrong cipher syntax")
+				break
+			}
+		}
+		if valid {
+			for _, specified := range specifiedSuites {
+				found := false
+				for _, supported := range supportedSuites {
+					if supported.Name == specified {
+						config.TLS.CipherSuites = append(config.TLS.CipherSuites, supported.ID)
+						found = true
+						break
+					}
+				}
+				if !found {
+					logger.Warn("cipher:", specified, "is not supported")
+				}
+			}
+		}
+	}
+
+	if config.TLS.HTTPFile != "" {
+		payload, err := ioutil.ReadFile(config.TLS.HTTPFile)
+		if err != nil {
+			logger.Warn("failed to load http response file", err)
+		}
+		config.TLS.HTTPResponse = payload
+	}
+
 	return &config, nil
 }

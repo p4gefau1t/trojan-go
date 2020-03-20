@@ -63,22 +63,22 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 
 func NewProxy(config *conf.GlobalConfig) common.Runnable {
 	switch config.RunType {
-	case conf.ClientRunType:
+	case conf.Client:
 		client := &Client{
 			config: config,
 		}
 		return client
-	case conf.ServerRunType:
+	case conf.Server:
 		server := &Server{
 			config: config,
 		}
 		return server
-	case conf.ForwardRunType:
+	case conf.Forward:
 		forward := &Forward{
 			config: config,
 		}
 		return forward
-	case conf.NATRunType:
+	case conf.NAT:
 		nat := &NAT{
 			config: config,
 		}
