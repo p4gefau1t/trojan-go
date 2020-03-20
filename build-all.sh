@@ -115,8 +115,7 @@ fi
 
 cd release
 for name in *;do
-mv $name trojan-go
-zip $name.zip trojan-go
-rm ./trojan-go
+zip $name.zip $name
+rm $name
 sha1sum $name.zip >> sha1.txt
 done
