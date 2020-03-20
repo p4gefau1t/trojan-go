@@ -11,23 +11,24 @@ import (
 
 type TrojanInboundConnSession struct {
 	protocol.ConnSession
-	config     *conf.GlobalConfig
-	request    *protocol.Request
-	bufReader  *bufio.Reader
-	conn       net.Conn
-	uploaded   int
-	downloaded int
-	userHash   string
+	config        *conf.GlobalConfig
+	request       *protocol.Request
+	bufReadWriter *bufio.ReadWriter
+	conn          net.Conn
+	uploaded      int
+	downloaded    int
+	userHash      string
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
-	n, err := i.conn.Write(p)
+	n, err := i.bufReadWriter.Write(p)
+	i.bufReadWriter.Flush()
 	i.uploaded += n
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
-	n, err := i.bufReader.Read(p)
+	n, err := i.bufReadWriter.Read(p)
 	i.downloaded += n
 	return n, err
 }
@@ -42,7 +43,7 @@ func (i *TrojanInboundConnSession) GetRequest() *protocol.Request {
 }
 
 func (i *TrojanInboundConnSession) parseRequest() error {
-	userHash, err := i.bufReader.Peek(56)
+	userHash, err := i.bufReadWriter.Peek(56)
 	if err != nil {
 		return common.NewError("failed to read hash").Base(err)
 	}
@@ -57,9 +58,9 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		logger.Warn("invalid hash or other protocol:", string(userHash))
 		return nil
 	}
-	i.bufReader.Discard(56 + 2)
+	i.bufReadWriter.Discard(56 + 2)
 
-	cmd, err := i.bufReader.ReadByte()
+	cmd, err := i.bufReadWriter.ReadByte()
 	network := "tcp"
 	switch protocol.Command(cmd) {
 	case protocol.Connect, protocol.Mux:
@@ -73,7 +74,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		return common.NewError("failed to read cmd").Base(err)
 	}
 
-	req, err := protocol.ParseAddress(i.bufReader)
+	req, err := protocol.ParseAddress(i.bufReadWriter)
 	if err != nil {
 		return common.NewError("failed to parse address").Base(err)
 	}
@@ -81,15 +82,15 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	req.NetworkType = network
 	i.request = req
 
-	i.bufReader.Discard(2)
+	i.bufReadWriter.Discard(2)
 	return nil
 }
 
 func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig) (protocol.ConnSession, error) {
 	i := &TrojanInboundConnSession{
-		config:    config,
-		conn:      conn,
-		bufReader: bufio.NewReader(conn),
+		config:        config,
+		conn:          conn,
+		bufReadWriter: common.NewBufReadWriter(conn),
 	}
 	if err := i.parseRequest(); err != nil {
 		return nil, err

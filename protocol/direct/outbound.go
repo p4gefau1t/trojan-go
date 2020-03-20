@@ -1,6 +1,7 @@
 package direct
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"net"
@@ -12,16 +13,18 @@ import (
 
 type DirectOutboundConnSession struct {
 	protocol.ConnSession
-	conn    io.ReadWriteCloser
-	request *protocol.Request
+	conn          io.ReadWriteCloser
+	bufReadWriter *bufio.ReadWriter
+	request       *protocol.Request
 }
 
 func (o *DirectOutboundConnSession) Read(p []byte) (int, error) {
-	return o.conn.Read(p)
+	return o.bufReadWriter.Read(p)
 }
 
 func (o *DirectOutboundConnSession) Write(p []byte) (int, error) {
-	return o.conn.Write(p)
+	defer o.bufReadWriter.Flush()
+	return o.bufReadWriter.Write(p)
 }
 
 func (o *DirectOutboundConnSession) Close() error {
@@ -37,6 +40,7 @@ func NewOutboundConnSession(conn io.ReadWriteCloser, req *protocol.Request) (pro
 			return nil, err
 		}
 		o.conn = newConn
+		o.bufReadWriter = common.NewBufReadWriter(newConn)
 	} else {
 		o.conn = conn
 	}
