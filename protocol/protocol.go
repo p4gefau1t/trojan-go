@@ -120,7 +120,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 			return nil, common.NewError("failed to read ipv6").Base(err)
 		}
 		req.IP = buf[0:16]
-		req.Port = binary.BigEndian.Uint16(buf[4:6])
+		req.Port = binary.BigEndian.Uint16(buf[16:18])
 	case DomainName:
 		_, err := io.ReadFull(r, buf1[:])
 		if err != nil {
@@ -132,7 +132,9 @@ func ParseAddress(r io.Reader) (*Request, error) {
 		if err != nil {
 			return nil, common.NewError("failed to read domain")
 		}
-		if ip := net.ParseIP(string(buf)); ip != nil { //the fucking browser uses ip as a domain name sometimes
+		//the fucking browser uses ip as a domain name sometimes
+		host := buf[0:length]
+		if ip := net.ParseIP(string(host)); ip != nil {
 			req.IP = ip
 			if ip.To4() != nil {
 				req.AddressType = IPv4
@@ -140,7 +142,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 				req.AddressType = IPv6
 			}
 		} else {
-			req.DomainName = buf[0:length]
+			req.DomainName = host
 		}
 		req.Port = binary.BigEndian.Uint16(buf[length : length+2])
 	default:

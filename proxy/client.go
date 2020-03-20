@@ -20,24 +20,35 @@ type muxConn struct {
 type Client struct {
 	config *conf.GlobalConfig
 	common.Runnable
-	muxClient *smux.Session
+	muxClient     *smux.Session
+	muxClientLock sync.Mutex
 }
 
-func (c *Client) newMuxConn() (*smux.Session, error) {
-	//mux request
-	req := &protocol.Request{
-		Command:     protocol.Mux,
-		IP:          net.IPv4(233, 233, 233, 234),
-		Port:        2333,
-		AddressType: protocol.IPv4,
+func (c *Client) checkAndNewMuxClient() {
+	if c.muxClient == nil || c.muxClient.IsClosed() {
+		c.muxClientLock.Lock()
+		defer c.muxClientLock.Unlock()
+		if c.muxClient != nil && !c.muxClient.IsClosed() {
+			//it has been build by other goroutine
+			return
+		}
+		//mux request
+		req := &protocol.Request{
+			Command:     protocol.Mux,
+			IP:          net.IPv4(233, 233, 233, 234),
+			Port:        2333,
+			AddressType: protocol.IPv4,
+		}
+		conn, err := trojan.NewOutboundConnSession(req, nil, c.config)
+		if err != nil {
+			logger.Error(common.NewError("failed to dial mux conn").Base(err))
+			return
+		}
+		logger.Info("mux TLS tunnel established")
+		client, err := smux.Client(conn, nil)
+		common.Must(err)
+		c.muxClient = client
 	}
-	conn, err := trojan.NewOutboundConnSession(req, nil, c.config)
-	if err != nil {
-		return nil, common.NewError("failed to dial mux conn").Base(err)
-	}
-	logger.Info("mux TLS tunnel established")
-	client, err := smux.Client(conn, nil)
-	return client, err
 }
 
 func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession) {
@@ -68,14 +79,7 @@ func (c *Client) handleMuxConn(conn net.Conn) {
 	}
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
-	if c.muxClient == nil || c.muxClient.IsClosed() {
-		client, err := c.newMuxConn()
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		c.muxClient = client
-	}
+	c.checkAndNewMuxClient()
 	if req.Command == protocol.Associate {
 		//not using mux
 		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
