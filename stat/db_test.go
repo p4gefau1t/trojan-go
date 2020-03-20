@@ -13,7 +13,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-func TestDB(t *testing.T) {
+func TestDBTrafficCounter(t *testing.T) {
 	userName := "root"
 	password := "password"
 	ip := "127.0.0.1"
@@ -25,7 +25,7 @@ func TestDB(t *testing.T) {
 	defer db.Close()
 	c := &DBTrafficCounter{
 		db:          db,
-		trafficChan: make(chan *traffic, 1024),
+		trafficChan: make(chan *trafficInfo, 1024),
 		ctx:         context.Background(),
 	}
 	simulation := func() {
@@ -40,4 +40,20 @@ func TestDB(t *testing.T) {
 	}
 	go c.dbDaemon()
 	time.Sleep(time.Second * 30)
+}
+
+func TestDBAuthenticator(t *testing.T) {
+	userName := "root"
+	password := "password"
+	ip := "127.0.0.1"
+	port := "3306"
+	dbName := "trojan"
+	path := strings.Join([]string{userName, ":", password, "@tcp(", ip, ":", port, ")/", dbName, "?charset=utf8"}, "")
+	db, err := sql.Open("mysql", path)
+	common.Must(err)
+	defer db.Close()
+	a, err := NewDBAuthenticator(db)
+	common.Must(err)
+	time.Sleep(time.Second * 5)
+	fmt.Println(a.CheckHash("hashhash"), a.CheckHash("jasdlkflfejlqjef"))
 }

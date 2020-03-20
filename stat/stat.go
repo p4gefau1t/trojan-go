@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/withmandala/go-log"
 )
 
@@ -15,7 +16,8 @@ type TrafficCounter interface {
 }
 
 type Authenticator interface {
-	IsValid(passwordHash string) bool
+	CheckHash(hash string) bool
+	io.Closer
 }
 
 type EmptyTrafficCounter struct {
@@ -31,6 +33,28 @@ func (t *EmptyTrafficCounter) Close() error {
 	return nil
 }
 
-func NewEmptyTrafficCounter() TrafficCounter {
-	return &EmptyTrafficCounter{}
+type EmptyAuthenticator struct {
+	Authenticator
+}
+
+func (a *EmptyAuthenticator) CheckHash(hash string) bool {
+	return true
+}
+
+func (a *EmptyAuthenticator) Close() error {
+	return nil
+}
+
+type ConfigUserAuthenticator struct {
+	Config *conf.GlobalConfig
+	Authenticator
+}
+
+func (a *ConfigUserAuthenticator) CheckHash(hash string) bool {
+	_, found := a.Config.Hash[hash]
+	return found
+}
+
+func (a *ConfigUserAuthenticator) Close() error {
+	return nil
 }

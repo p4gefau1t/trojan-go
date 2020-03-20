@@ -3,12 +3,13 @@ package stat
 import (
 	"context"
 	"database/sql"
+	"sync"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-type traffic struct {
+type trafficInfo struct {
 	passwordHash string
 	download     int
 	upload       int
@@ -17,7 +18,7 @@ type traffic struct {
 type DBTrafficCounter struct {
 	TrafficCounter
 	db          *sql.DB
-	trafficChan chan *traffic
+	trafficChan chan *trafficInfo
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
@@ -27,7 +28,7 @@ const (
 )
 
 func (c *DBTrafficCounter) Count(passwordHash string, upload int, download int) {
-	c.trafficChan <- &traffic{
+	c.trafficChan <- &trafficInfo{
 		passwordHash: passwordHash,
 		upload:       upload,
 		download:     download,
@@ -42,13 +43,13 @@ func (c *DBTrafficCounter) Close() error {
 func (c *DBTrafficCounter) dbDaemon() {
 	for {
 		beginTime := time.Now()
-		statBuffer := make(map[string]*traffic)
+		statBuffer := make(map[string]*trafficInfo)
 		for {
 			select {
 			case u := <-c.trafficChan:
 				t, found := statBuffer[u.passwordHash]
 				if !found {
-					t = &traffic{
+					t = &trafficInfo{
 						passwordHash: u.passwordHash,
 					}
 					statBuffer[u.passwordHash] = t
@@ -95,8 +96,7 @@ func (c *DBTrafficCounter) dbDaemon() {
 }
 
 func NewDBTrafficCounter(db *sql.DB) (TrafficCounter, error) {
-	db.Exec(`
-	CREATE TABLE IF NOT EXISTS users (
+	db.Exec(`CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     username VARCHAR(64) NOT NULL,
     password CHAR(56) NOT NULL,
@@ -108,9 +108,88 @@ func NewDBTrafficCounter(db *sql.DB) (TrafficCounter, error) {
 	);`)
 	c := &DBTrafficCounter{
 		db:          db,
-		trafficChan: make(chan *traffic, 1024),
+		trafficChan: make(chan *trafficInfo, 1024),
 		ctx:         context.Background(),
 	}
 	go c.dbDaemon()
 	return c, nil
+}
+
+type userInfo struct {
+	username     string
+	passwordHash string
+	download     uint64
+	upload       uint64
+	quota        uint64
+}
+
+type DBAuthenticator struct {
+	db         *sql.DB
+	validUsers sync.Map
+	ctx        context.Context
+	cancel     context.CancelFunc
+	Authenticator
+}
+
+func (a *DBAuthenticator) CheckHash(hash string) bool {
+	_, ok := a.validUsers.Load(hash)
+	if !ok {
+		return false
+	}
+	return true
+}
+
+func (a *DBAuthenticator) updateDaemon() {
+	for {
+		rows, err := a.db.Query("SELECT username,password,quota,download,upload FROM users")
+		if err != nil {
+			logger.Error(common.NewError("failed to pull data from the database").Base(err))
+			continue
+		}
+		newValidUsers := make(map[string]string)
+		for rows.Next() {
+			var username, passwordHash string
+			var quota, download, upload int64
+			err := rows.Scan(&username, &passwordHash, &quota, &download, &upload)
+			if err != nil {
+				logger.Error(common.NewError("failed to obtain data from the query result").Base(err))
+				break
+			}
+			if download+upload < quota || quota < 0 {
+				newValidUsers[passwordHash] = username
+			}
+		}
+		//delete those out of quota
+		a.validUsers.Range(func(key interface{}, val interface{}) bool {
+			if _, found := newValidUsers[key.(string)]; !found {
+				a.validUsers.Delete(key)
+			}
+			return true
+		})
+		for k, v := range newValidUsers {
+			a.validUsers.Store(k, v)
+		}
+		select {
+		case <-time.After(statsUpdateDuration):
+			break
+		case <-a.ctx.Done():
+			return
+		}
+	}
+}
+
+func (a *DBAuthenticator) Close() error {
+	a.cancel()
+	return a.db.Close()
+}
+
+func NewDBAuthenticator(db *sql.DB) (Authenticator, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	a := &DBAuthenticator{
+		db:     db,
+		cancel: cancel,
+		ctx:    ctx,
+	}
+	go a.updateDaemon()
+	return a, nil
 }
