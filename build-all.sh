@@ -36,15 +36,17 @@
 # from the standard ports/downloads and therefore removed from this list.
 #
 PLATFORMS="darwin/amd64" # amd64 only as of go1.5
+PLATFORMS="$PLATFORMS darwin/386"
 PLATFORMS="$PLATFORMS windows/amd64 windows/386" # arm compilation not available for Windows
 PLATFORMS="$PLATFORMS linux/amd64 linux/386"
 PLATFORMS="$PLATFORMS linux/ppc64 linux/ppc64le"
 PLATFORMS="$PLATFORMS linux/mips64 linux/mips64le" # experimental in go1.6
+PLATFORMS="$PLATFORMS linux/mips linux/mipsle" # experimental in go1.6
 PLATFORMS="$PLATFORMS freebsd/amd64"
 PLATFORMS="$PLATFORMS netbsd/amd64" # amd64 only as of go1.6
 PLATFORMS="$PLATFORMS openbsd/amd64" # amd64 only as of go1.6
 PLATFORMS="$PLATFORMS dragonfly/amd64" # amd64 only as of go1.5
-PLATFORMS="$PLATFORMS plan9/amd64 plan9/386" # as of go1.4
+#PLATFORMS="$PLATFORMS plan9/amd64 plan9/386" # as of go1.4
 PLATFORMS="$PLATFORMS solaris/amd64" # as of go1.3
 
 # ARMBUILDS lists the platforms that are currently supported.  From this list
@@ -97,12 +99,16 @@ fi
 for GOOS in $PLATFORMS_ARM; do
   GOARCH="arm"
   # build for each ARM version
-  for GOARM in 7 6 5; do
-    BIN_FILENAME="${OUTPUT}-${GOOS}-${GOARCH}${GOARM}"
-    CMD="CGO_ENABLE=0 GOARM=${GOARM} GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@"
-    echo "${CMD}"
-    eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}${GOARM}" 
-  done
+  #for GOARM in 7 6 5; do
+  #  BIN_FILENAME="${OUTPUT}-${GOOS}-${GOARCH}${GOARM}"
+  #  CMD="CGO_ENABLE=0 GOARM=${GOARM} GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@"
+  #  echo "${CMD}"
+  #  eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}${GOARM}" 
+  #done
+  BIN_FILENAME="${OUTPUT}-${GOOS}-${GOARCH}"
+  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@"
+  echo "${CMD}"
+  eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}${GOARM}" 
 done
 
 # eval errors
@@ -115,7 +121,7 @@ fi
 
 cd release
 for name in *;do
-zip $name.zip $name
-rm $name
-sha1sum $name.zip >> sha1.txt
+  zip $name.zip $name
+  rm $name
+  sha1sum $name.zip >> sha1.txt
 done

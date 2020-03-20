@@ -6,6 +6,7 @@ require (
 	github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a
 	github.com/withmandala/go-log v0.1.0
 	github.com/xtaci/smux v2.0.1+incompatible
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a

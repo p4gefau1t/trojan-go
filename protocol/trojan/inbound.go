@@ -106,6 +106,7 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		bufReadWriter: common.NewBufReadWriter(conn),
 		meter:         &stat.EmptyTrafficMeter{},
 		auth:          auth,
+		userHash:      "INVALID_HASH",
 	}
 	if err := i.parseRequest(); err != nil {
 		return nil, err

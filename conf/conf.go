@@ -37,6 +37,7 @@ type TCPConfig struct {
 	FastOpen     bool `json:"fast_open"`
 	FastOpenQLen int  `json:"fast_open_qlen"`
 	ReusePort    bool `json:"reuse_port"`
+	NoDelay      bool `json:"no_delay"`
 	Mux          bool `json:"mux"`
 }
 

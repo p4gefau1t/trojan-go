@@ -10,6 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/stat"
+	"github.com/valyala/tcplisten"
 	"github.com/xtaci/smux"
 )
 
@@ -127,17 +128,51 @@ func (s *Server) Run() error {
 		}
 		s.meter = &stat.EmptyTrafficMeter{}
 	}
-	listener, err := tls.Listen("tcp", s.config.LocalAddr.String(), tlsConfig)
-	if err != nil {
-		return err
-	}
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			err = common.NewError("tls handshake failed").Base(err)
-			logger.Warn(err)
-			continue
+	logger.Info("Server running at", s.config.LocalAddr)
+	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
+		cfg := tcplisten.Config{
+			ReusePort:   s.config.TCP.ReusePort,
+			FastOpen:    s.config.TCP.FastOpen,
+			DeferAccept: s.config.TCP.NoDelay,
 		}
-		go s.handleConn(conn)
+		network := "tcp6"
+		if s.config.LocalIP.To4() != nil {
+			network = "tcp4"
+		}
+		listener, err := cfg.NewListener(network, s.config.LocalAddr.String())
+		if err != nil {
+			return err
+		}
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				logger.Warn(err)
+				continue
+			}
+			tlsConn := tls.Server(conn, tlsConfig)
+			err = tlsConn.Handshake()
+			if err != nil {
+				logger.Warn(err)
+				tlsConn.Close()
+				continue
+			}
+			go s.handleConn(tlsConn)
+		}
+	} else {
+		listener, err := tls.Listen("tcp", s.config.LocalAddr.String(), tlsConfig)
+		if err != nil {
+			return err
+		}
+		for {
+			tlsConn, err := listener.Accept()
+			if err != nil {
+				err = common.NewError("tls handshake failed").Base(err)
+				logger.Warn(err)
+				tlsConn.Close()
+				continue
+			}
+			go s.handleConn(tlsConn)
+		}
+
 	}
 }

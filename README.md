@@ -155,4 +155,4 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 - [ ] Cert utils
 - [x] Database support
 - [x] Traffic stats
-- [ ] TCP Settings
+- [x] TCP Settings

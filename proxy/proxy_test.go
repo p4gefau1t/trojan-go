@@ -18,7 +18,7 @@ func TestClientToServer(t *testing.T) {
 }
 
 func TestClientToDatabaseServer(t *testing.T) {
-	go TestServerWithDatabse(t)
+	go TestServerWithDatabase(t)
 	TestClient(t)
 }
 
@@ -31,6 +31,12 @@ func TestClientToServerWithJSON(t *testing.T) {
 func TestMuxClientToServer(t *testing.T) {
 	go TestMuxClient(t)
 	go TestServer(t)
+	time.Sleep(time.Hour)
+}
+
+func TestClientToPortReusingServer(t *testing.T) {
+	go TestClient(t)
+	TestPortReusingServer(t)
 	time.Sleep(time.Hour)
 }
 
