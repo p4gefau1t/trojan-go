@@ -101,7 +101,7 @@ func (s *Server) Run() error {
 		Certificates: s.config.TLS.KeyPair,
 		CipherSuites: s.config.TLS.CipherSuites,
 	}
-	if s.config.MySQL.Enable {
+	if s.config.MySQL.Enabled {
 		db, err := common.ConnectDatabase(
 			"mysql",
 			s.config.MySQL.Username,

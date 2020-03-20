@@ -75,7 +75,7 @@ func TestServerWithDatabse(t *testing.T) {
 		RemotePort: 80,
 		Hash:       map[string]string{},
 		MySQL: conf.MySQLConfig{
-			Enable:     true,
+			Enabled:    true,
 			ServerHost: "127.0.0.1",
 			ServerPort: 3306,
 			Username:   "root",

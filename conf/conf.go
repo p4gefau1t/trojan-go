@@ -41,7 +41,7 @@ type TCPConfig struct {
 }
 
 type MySQLConfig struct {
-	Enable     bool   `json:"prefer_ipv4"`
+	Enabled    bool   `json:"enabled"`
 	ServerHost string `json:"server_addr"`
 	ServerPort int    `json:"server_port"`
 	Database   string `json:"database"`
