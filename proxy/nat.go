@@ -48,12 +48,12 @@ func (n *NAT) listenUDP() {
 	inbound, err := nat.NewInboundPacketSession(n.config)
 	if err != nil {
 		logger.Error(err)
-		return
+		panic(err)
 	}
 	defer inbound.Close()
 	req := protocol.Request{
-		IP:          net.IPv4(0, 0, 0, 0),
-		Port:        0,
+		IP:          net.IPv4(233, 233, 233, 233),
+		Port:        2333,
 		AddressType: protocol.IPv4,
 		Command:     protocol.Associate,
 	}

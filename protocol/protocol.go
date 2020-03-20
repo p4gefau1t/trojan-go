@@ -43,15 +43,19 @@ type Request struct {
 	net.Addr
 }
 
-func (p *Request) Network() string {
-	return p.NetworkType
+func (r *Request) Network() string {
+	return r.NetworkType
 }
 
-func (p *Request) String() string {
-	if p.DomainName == nil || len(p.DomainName) == 0 {
-		return fmt.Sprintf("%s:%d", p.IP.String(), p.Port)
+func (r *Request) String() string {
+	if r.DomainName == nil || len(r.DomainName) == 0 {
+		if r.IP.To4() != nil {
+			return fmt.Sprintf("%s:%d", r.IP.String(), r.Port)
+		} else {
+			return fmt.Sprintf("[%s]:%d", r.IP.String(), r.Port)
+		}
 	} else {
-		return fmt.Sprintf("%s:%d", p.DomainName, p.Port)
+		return fmt.Sprintf("%s:%d", r.DomainName, r.Port)
 	}
 }
 
@@ -128,7 +132,16 @@ func ParseAddress(r io.Reader) (*Request, error) {
 		if err != nil {
 			return nil, common.NewError("failed to read domain")
 		}
-		req.DomainName = buf[0:length]
+		if ip := net.ParseIP(string(buf)); ip != nil { //the fucking browser uses ip as a domain name sometimes
+			req.IP = ip
+			if ip.To4() != nil {
+				req.AddressType = IPv4
+			} else {
+				req.AddressType = IPv6
+			}
+		} else {
+			req.DomainName = buf[0:length]
+		}
 		req.Port = binary.BigEndian.Uint16(buf[length : length+2])
 	default:
 		return nil, common.NewError("invalid dest type")

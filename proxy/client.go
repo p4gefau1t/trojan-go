@@ -27,14 +27,15 @@ func (c *Client) newMuxConn() (*smux.Session, error) {
 	//mux request
 	req := &protocol.Request{
 		Command:     protocol.Mux,
-		IP:          net.IPv4(0, 0, 0, 0),
-		Port:        0,
+		IP:          net.IPv4(233, 233, 233, 234),
+		Port:        2333,
 		AddressType: protocol.IPv4,
 	}
 	conn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 	if err != nil {
 		return nil, common.NewError("failed to dial mux conn").Base(err)
 	}
+	logger.Info("mux TLS tunnel established")
 	client, err := smux.Client(conn, nil)
 	return client, err
 }
@@ -55,6 +56,7 @@ func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession
 		return
 	}
 	defer outbound.Close()
+	logger.Info("mux tunneling to", req)
 	proxyConn(conn, outbound)
 }
 

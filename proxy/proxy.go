@@ -3,7 +3,6 @@ package proxy
 import (
 	"io"
 	"os"
-	"time"
 
 	"github.com/withmandala/go-log"
 
@@ -39,10 +38,13 @@ func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	go copyConn(a, b, errChan)
 	go copyConn(b, a, errChan)
 	err := <-errChan
-	if err != nil && err.Error() != "EOF" {
-		logger.Error("conn proxy ends:", err)
+	if err != nil {
+		if err.Error() != "EOF" {
+			logger.Error(common.NewError("conn proxy ends").Base(err))
+		}
+	} else {
+		logger.Info("conn proxy ends")
 	}
-	time.Sleep(protocol.TCPTimeout)
 }
 
 func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
@@ -50,10 +52,13 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	go copyPacket(a, b, errChan)
 	go copyPacket(b, a, errChan)
 	err := <-errChan
-	if err != nil && err.Error() != "EOF" {
-		logger.Error("packet proxy ends:", err)
+	if err != nil {
+		if err.Error() != "EOF" {
+			logger.Error(common.NewError("packet proxy ends").Base(err))
+		}
+	} else {
+		logger.Info("packet proxy ends")
 	}
-	time.Sleep(protocol.UDPTimeout)
 }
 
 func NewProxy(config *conf.GlobalConfig) common.Runnable {
