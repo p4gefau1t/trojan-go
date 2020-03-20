@@ -13,7 +13,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-func TestDBTrafficCounter(t *testing.T) {
+func TestDBTrafficMeter(t *testing.T) {
 	userName := "root"
 	password := "password"
 	ip := "127.0.0.1"
@@ -23,7 +23,7 @@ func TestDBTrafficCounter(t *testing.T) {
 	db, err := sql.Open("mysql", path)
 	common.Must(err)
 	defer db.Close()
-	c := &DBTrafficCounter{
+	c := &DBTrafficMeter{
 		db:          db,
 		trafficChan: make(chan *trafficInfo, 1024),
 		ctx:         context.Background(),

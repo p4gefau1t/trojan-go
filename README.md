@@ -153,6 +153,6 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 - [x] TLS redirecting
 - [ ] non-TLS redirecting
 - [ ] Cert utils
-- [ ] Database support
+- [x] Database support
 - [x] Traffic stats
 - [ ] TCP Settings

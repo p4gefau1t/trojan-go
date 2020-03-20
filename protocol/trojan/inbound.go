@@ -7,14 +7,19 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 type TrojanInboundConnSession struct {
 	protocol.ConnSession
+	protocol.NeedAuth
+	protocol.NeedMeter
 	config        *conf.GlobalConfig
 	request       *protocol.Request
 	bufReadWriter *bufio.ReadWriter
 	conn          net.Conn
+	auth          stat.Authenticator
+	meter         stat.TrafficMeter
 	uploaded      int
 	downloaded    int
 	userHash      string
@@ -35,6 +40,7 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 
 func (i *TrojanInboundConnSession) Close() error {
 	logger.Info("user", i.userHash, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
+	i.meter.Count(i.userHash, i.uploaded, i.downloaded)
 	return i.conn.Close()
 }
 
@@ -47,9 +53,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	if err != nil {
 		return common.NewError("failed to read hash").Base(err)
 	}
-	_, found := i.config.Hash[string(userHash)]
-	i.userHash = string(userHash[0:16])
-	if !found {
+	if !i.auth.CheckHash(string(userHash)) {
 		i.request = &protocol.Request{
 			IP:          i.config.RemoteIP,
 			Port:        i.config.RemotePort,
@@ -58,6 +62,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		logger.Warn("invalid hash or other protocol:", string(userHash))
 		return nil
 	}
+	i.userHash = string(userHash)
 	i.bufReadWriter.Discard(56 + 2)
 
 	cmd, err := i.bufReadWriter.ReadByte()
@@ -86,11 +91,21 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	return nil
 }
 
-func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig) (protocol.ConnSession, error) {
+func (i *TrojanInboundConnSession) SetAuth(auth stat.Authenticator) {
+	i.auth = auth
+}
+
+func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
+	i.meter = meter
+}
+
+func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
 	i := &TrojanInboundConnSession{
 		config:        config,
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),
+		meter:         &stat.EmptyTrafficMeter{},
+		auth:          auth,
 	}
 	if err := i.parseRequest(); err != nil {
 		return nil, err

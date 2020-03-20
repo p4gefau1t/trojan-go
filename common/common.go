@@ -3,8 +3,12 @@ package common
 import (
 	"bufio"
 	"crypto/sha256"
+	"database/sql"
 	"fmt"
 	"io"
+	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Runnable interface {
@@ -44,4 +48,9 @@ func HumanFriendlyTraffic(bytes int) string {
 		return fmt.Sprintf("%.2f MiB", float32(bytes)/MiB)
 	}
 	return fmt.Sprintf("%.2f TiB", float32(bytes)/GiB)
+}
+
+func ConnectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {
+	path := strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
+	return sql.Open(driverName, path)
 }

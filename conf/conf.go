@@ -40,6 +40,15 @@ type TCPConfig struct {
 	Mux          bool `json:"mux"`
 }
 
+type MySQLConfig struct {
+	Enable     bool   `json:"prefer_ipv4"`
+	ServerHost string `json:"server_addr"`
+	ServerPort int    `json:"server_port"`
+	Database   string `json:"database"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+}
+
 type GlobalConfig struct {
 	RunType RunType `json:"run_type"`
 
@@ -56,6 +65,7 @@ type GlobalConfig struct {
 	Hash      map[string]string
 	Passwords []string `json:"password"`
 	LogLevel  int
-	TLS       TLSConfig `json:"ssl"`
-	TCP       TCPConfig `json:"tcp"`
+	TLS       TLSConfig   `json:"ssl"`
+	TCP       TCPConfig   `json:"tcp"`
+	MySQL     MySQLConfig `json:"mysql"`
 }

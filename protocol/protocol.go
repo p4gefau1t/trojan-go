@@ -9,6 +9,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 type Command byte
@@ -82,6 +83,14 @@ type PacketReadWriter interface {
 
 type NeedConfig interface {
 	SetConfig(config *conf.GlobalConfig)
+}
+
+type NeedAuth interface {
+	SetAuth(auth stat.Authenticator)
+}
+
+type NeedMeter interface {
+	SetMeter(meter stat.TrafficMeter)
 }
 
 type ConnSession interface {

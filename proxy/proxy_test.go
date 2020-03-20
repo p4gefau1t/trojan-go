@@ -14,8 +14,12 @@ import (
 
 func TestClientToServer(t *testing.T) {
 	go TestServer(t)
-	go TestClient(t)
-	time.Sleep(time.Hour)
+	TestClient(t)
+}
+
+func TestClientToDatabaseServer(t *testing.T) {
+	go TestServerWithDatabse(t)
+	TestClient(t)
 }
 
 func TestClientToServerWithJSON(t *testing.T) {

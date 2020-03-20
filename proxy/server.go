@@ -9,16 +9,20 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
+	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
 )
 
 type Server struct {
 	config *conf.GlobalConfig
 	common.Runnable
+	auth  stat.Authenticator
+	meter stat.TrafficMeter
 }
 
 func (s *Server) handleMuxConn(stream *smux.Stream) {
-	inboundConn, err := trojan.NewInboundConnSession(stream, s.config)
+	inboundConn, err := trojan.NewInboundConnSession(stream, s.config, s.auth)
+	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	if err != nil {
 		stream.Close()
 		logger.Error(common.NewError("cannot start inbound session").Base(err))
@@ -41,7 +45,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	inboundConn, err := trojan.NewInboundConnSession(conn, s.config)
+	inboundConn, err := trojan.NewInboundConnSession(conn, s.config, s.auth)
 
 	if err != nil {
 		logger.Error(err)
@@ -62,6 +66,7 @@ func (s *Server) handleConn(conn net.Conn) {
 			go s.handleMuxConn(stream)
 		}
 	}
+	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 
 	if req.Command == protocol.Associate {
 		inboundPacket, _ := trojan.NewPacketSession(inboundConn)
@@ -95,6 +100,32 @@ func (s *Server) Run() error {
 	tlsConfig := &tls.Config{
 		Certificates: s.config.TLS.KeyPair,
 		CipherSuites: s.config.TLS.CipherSuites,
+	}
+	if s.config.MySQL.Enable {
+		db, err := common.ConnectDatabase(
+			"mysql",
+			s.config.MySQL.Username,
+			s.config.MySQL.Password,
+			s.config.MySQL.ServerHost,
+			s.config.MySQL.ServerPort,
+			s.config.MySQL.Database,
+		)
+		if err != nil {
+			return common.NewError("failed to connect to database server").Base(err)
+		}
+		s.auth, err = stat.NewMixedAuthenticator(s.config, db)
+		if err != nil {
+			return common.NewError("failed to init auth").Base(err)
+		}
+		s.meter, err = stat.NewDBTrafficMeter(db)
+		if err != nil {
+			return common.NewError("failed to init traffic meter").Base(err)
+		}
+	} else {
+		s.auth = &stat.ConfigUserAuthenticator{
+			Config: s.config,
+		}
+		s.meter = &stat.EmptyTrafficMeter{}
 	}
 	listener, err := tls.Listen("tcp", s.config.LocalAddr.String(), tlsConfig)
 	if err != nil {

@@ -51,6 +51,43 @@ func TestServerWithJSON(t *testing.T) {
 	server := Server{
 		config: config,
 	}
-	server.Run()
-	time.Sleep(time.Hour)
+	common.Must(server.Run())
+}
+
+func TestServerWithDatabse(t *testing.T) {
+	key, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	common.Must(err)
+	ip := net.IPv4(127, 0, 0, 1)
+	port := 4445
+	//password := "pass123123"
+	config := &conf.GlobalConfig{
+		LocalAddr: &net.TCPAddr{
+			IP:   ip,
+			Port: port,
+		},
+		LocalIP:   ip,
+		LocalPort: uint16(port),
+		RemoteAddr: &net.TCPAddr{
+			IP:   ip,
+			Port: 80,
+		},
+		RemoteIP:   ip,
+		RemotePort: 80,
+		Hash:       map[string]string{},
+		MySQL: conf.MySQLConfig{
+			Enable:     true,
+			ServerHost: "127.0.0.1",
+			ServerPort: 3306,
+			Username:   "root",
+			Password:   "password",
+			Database:   "trojan",
+		},
+	}
+	config.TLS.KeyPair = []tls.Certificate{key}
+	config.TLS.SNI = "localhost"
+
+	server := Server{
+		config: config,
+	}
+	common.Must(server.Run())
 }

@@ -15,8 +15,8 @@ type trafficInfo struct {
 	upload       int
 }
 
-type DBTrafficCounter struct {
-	TrafficCounter
+type DBTrafficMeter struct {
+	TrafficMeter
 	db          *sql.DB
 	trafficChan chan *trafficInfo
 	ctx         context.Context
@@ -27,7 +27,7 @@ const (
 	statsUpdateDuration = time.Second * 5
 )
 
-func (c *DBTrafficCounter) Count(passwordHash string, upload int, download int) {
+func (c *DBTrafficMeter) Count(passwordHash string, upload int, download int) {
 	c.trafficChan <- &trafficInfo{
 		passwordHash: passwordHash,
 		upload:       upload,
@@ -35,12 +35,12 @@ func (c *DBTrafficCounter) Count(passwordHash string, upload int, download int) 
 	}
 }
 
-func (c *DBTrafficCounter) Close() error {
+func (c *DBTrafficMeter) Close() error {
 	c.cancel()
 	return c.db.Close()
 }
 
-func (c *DBTrafficCounter) dbDaemon() {
+func (c *DBTrafficMeter) dbDaemon() {
 	for {
 		beginTime := time.Now()
 		statBuffer := make(map[string]*trafficInfo)
@@ -95,7 +95,7 @@ func (c *DBTrafficCounter) dbDaemon() {
 	}
 }
 
-func NewDBTrafficCounter(db *sql.DB) (TrafficCounter, error) {
+func NewDBTrafficMeter(db *sql.DB) (TrafficMeter, error) {
 	db.Exec(`CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     username VARCHAR(64) NOT NULL,
@@ -106,7 +106,7 @@ func NewDBTrafficCounter(db *sql.DB) (TrafficCounter, error) {
     PRIMARY KEY (id),
     INDEX (password)
 	);`)
-	c := &DBTrafficCounter{
+	c := &DBTrafficMeter{
 		db:          db,
 		trafficChan: make(chan *trafficInfo, 1024),
 		ctx:         context.Background(),
