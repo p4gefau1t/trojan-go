@@ -37,6 +37,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.TLS.Verify = true
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true
+	config.TCP.MuxIdleTimeout = 5
 
 	err := json.Unmarshal(data, &config)
 	if err != nil {

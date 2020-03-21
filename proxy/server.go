@@ -62,7 +62,11 @@ func (s *Server) handleConn(conn net.Conn) {
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
-				logger.Error(err)
+				if err.Error() == "EOF" {
+					logger.Info("mux conn closed")
+				} else {
+					logger.Error(err)
+				}
 				return
 			}
 			go s.handleMuxConn(stream, hash)

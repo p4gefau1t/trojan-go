@@ -37,13 +37,14 @@ type TLSConfig struct {
 }
 
 type TCPConfig struct {
-	PreferIPV4   bool `json:"prefer_ipv4"`
-	KeepAlive    bool `json:"keep_alive"`
-	FastOpen     bool `json:"fast_open"`
-	FastOpenQLen int  `json:"fast_open_qlen"`
-	ReusePort    bool `json:"reuse_port"`
-	NoDelay      bool `json:"no_delay"`
-	Mux          bool `json:"mux"`
+	PreferIPV4     bool `json:"prefer_ipv4"`
+	KeepAlive      bool `json:"keep_alive"`
+	FastOpen       bool `json:"fast_open"`
+	FastOpenQLen   int  `json:"fast_open_qlen"`
+	ReusePort      bool `json:"reuse_port"`
+	NoDelay        bool `json:"no_delay"`
+	Mux            bool `json:"mux"`
+	MuxIdleTimeout int  `json:"mux_idle_timeout"`
 }
 
 type MySQLConfig struct {

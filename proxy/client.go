@@ -1,8 +1,11 @@
 package proxy
 
 import (
+	"context"
 	"net"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -21,8 +24,11 @@ type muxConn struct {
 type Client struct {
 	config *conf.GlobalConfig
 	common.Runnable
-	muxClient     *smux.Session
-	muxClientLock sync.Mutex
+	muxClient      *smux.Session
+	muxClientLock  sync.Mutex
+	muxConnCount   int32
+	lastActiveTime time.Time
+	ctx            context.Context
 }
 
 func (c *Client) checkAndNewMuxClient() {
@@ -52,7 +58,28 @@ func (c *Client) checkAndNewMuxClient() {
 	}
 }
 
+func (c *Client) checkAndCloseIdleMuxClient() {
+	muxIdleDuration := time.Duration(c.config.TCP.MuxIdleTimeout) * time.Minute
+	for {
+		select {
+		case <-time.After(muxIdleDuration):
+			if c.muxConnCount == 0 && time.Now().Sub(c.lastActiveTime) > muxIdleDuration {
+				if c.muxClient != nil && !c.muxClient.IsClosed() {
+					logger.Info("mux conn is idle, closing")
+					c.muxClient.Close()
+				}
+			}
+		case <-c.ctx.Done():
+			return
+		}
+	}
+}
+
 func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession) {
+	atomic.AddInt32(&c.muxConnCount, 1)
+	defer atomic.AddInt32(&c.muxConnCount, -1)
+	c.lastActiveTime = time.Now()
+
 	stream, err := c.muxClient.OpenStream()
 	if err != nil {
 		logger.Error(err)
@@ -191,6 +218,9 @@ func (c *Client) handleConn(conn net.Conn) {
 
 func (c *Client) Run() error {
 	listener, err := net.Listen("tcp", c.config.LocalAddr.String())
+	//TODO
+	ctx, _ := context.WithCancel(context.Background())
+	c.ctx = ctx
 	if err != nil {
 		return err
 	}
@@ -200,6 +230,9 @@ func (c *Client) Run() error {
 		if err != nil {
 			logger.Error("error occured when accpeting conn", err)
 			continue
+		}
+		if c.config.TCP.MuxIdleTimeout > 0 {
+			go c.checkAndCloseIdleMuxClient()
 		}
 		if c.config.TCP.Mux {
 			go c.handleMuxConn(conn)
