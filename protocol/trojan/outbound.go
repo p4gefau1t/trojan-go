@@ -12,23 +12,23 @@ import (
 
 type TrojanOutboundConnSession struct {
 	protocol.ConnSession
-	config     *conf.GlobalConfig
-	conn       io.ReadWriteCloser
-	bufReader  *bufio.ReadWriter
-	request    *protocol.Request
-	uploaded   int
-	downloaded int
+	config        *conf.GlobalConfig
+	conn          io.ReadWriteCloser
+	bufReadWriter *bufio.ReadWriter
+	request       *protocol.Request
+	uploaded      int
+	downloaded    int
 }
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
-	n, err := o.bufReader.Write(p)
-	o.bufReader.Flush()
+	n, err := o.bufReadWriter.Write(p)
+	o.bufReadWriter.Flush()
 	o.uploaded += n
 	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
-	n, err := o.bufReader.Read(p)
+	n, err := o.bufReadWriter.Read(p)
 	o.downloaded += n
 	return n, err
 }
@@ -80,10 +80,10 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 		conn = tlsConn
 	}
 	o := &TrojanOutboundConnSession{
-		request:   req,
-		config:    config,
-		conn:      conn,
-		bufReader: common.NewBufReadWriter(conn),
+		request:       req,
+		config:        config,
+		conn:          conn,
+		bufReadWriter: common.NewBufReadWriter(conn),
 	}
 	if err := o.writeRequest(); err != nil {
 		return nil, common.NewError("failed to write request").Base(err)

@@ -26,20 +26,17 @@ func TestClientToDatabaseServer(t *testing.T) {
 
 func TestClientToServerWithJSON(t *testing.T) {
 	go TestServerWithJSON(t)
-	go TestClientWithJSON(t)
-	time.Sleep(time.Hour)
+	TestClientWithJSON(t)
 }
 
 func TestMuxClientToServer(t *testing.T) {
 	go TestMuxClient(t)
-	go TestServer(t)
-	time.Sleep(time.Hour)
+	TestServer(t)
 }
 
 func TestClientToPortReusingServer(t *testing.T) {
 	go TestClient(t)
 	TestPortReusingServer(t)
-	time.Sleep(time.Hour)
 }
 
 func TestSNIConfig(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
+	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
@@ -20,8 +21,8 @@ type Server struct {
 	meter stat.TrafficMeter
 }
 
-func (s *Server) handleMuxConn(stream *smux.Stream) {
-	inboundConn, err := trojan.NewInboundConnSession(stream, s.config, s.auth)
+func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
+	inboundConn, err := mux.NewInboundMuxConnSession(stream, passwordHash)
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	if err != nil {
 		stream.Close()
@@ -39,7 +40,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		logger.Error(err)
 		return
 	}
-	logger.Info("mux tunneling to", req.String())
+	logger.Info("user", passwordHash, "mux tunneling to", req.String())
 	defer outboundConn.Close()
 	proxyConn(inboundConn, outboundConn)
 }
@@ -52,6 +53,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		return
 	}
 	req := inboundConn.GetRequest()
+	hash := inboundConn.(protocol.HasHash).GetHash()
 
 	if req.Command == protocol.Mux {
 		muxServer, err := smux.Server(conn, nil)
@@ -63,7 +65,7 @@ func (s *Server) handleConn(conn net.Conn) {
 				logger.Error(err)
 				return
 			}
-			go s.handleMuxConn(stream)
+			go s.handleMuxConn(stream, hash)
 		}
 	}
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)

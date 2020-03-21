@@ -7,6 +7,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/xtaci/smux"
@@ -32,7 +33,7 @@ func (c *Client) checkAndNewMuxClient() {
 			//it has been build by other goroutine
 			return
 		}
-		//mux request
+		//mux request, 233 is for debug purpose, any ip will be ignored in fact
 		req := &protocol.Request{
 			Command:     protocol.Mux,
 			IP:          net.IPv4(233, 233, 233, 234),
@@ -59,8 +60,7 @@ func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession
 		return
 	}
 	defer stream.Close()
-	//trojan protocol over mux conn
-	outbound, err := trojan.NewOutboundConnSession(req, stream, c.config)
+	outbound, err := mux.NewOutboundMuxConnSession(stream, req)
 	if err != nil {
 		err = common.NewError("fail to start trojan session over mux conn").Base(err)
 		logger.Error(err)

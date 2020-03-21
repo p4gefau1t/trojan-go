@@ -64,6 +64,10 @@ type HasRequest interface {
 	GetRequest() *Request
 }
 
+type HasHash interface {
+	GetHash() string
+}
+
 type NeedRespond interface {
 	Respond(io.Reader) error
 }

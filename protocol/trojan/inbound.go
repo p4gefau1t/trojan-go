@@ -14,6 +14,8 @@ type TrojanInboundConnSession struct {
 	protocol.ConnSession
 	protocol.NeedAuth
 	protocol.NeedMeter
+	protocol.HasHash
+
 	config        *conf.GlobalConfig
 	request       *protocol.Request
 	bufReadWriter *bufio.ReadWriter
@@ -22,7 +24,7 @@ type TrojanInboundConnSession struct {
 	meter         stat.TrafficMeter
 	uploaded      int
 	downloaded    int
-	userHash      string
+	passwordHash  string
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
@@ -39,13 +41,17 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (i *TrojanInboundConnSession) Close() error {
-	logger.Info("user", i.userHash, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
-	i.meter.Count(i.userHash, i.uploaded, i.downloaded)
+	logger.Info("user", i.passwordHash, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
+	i.meter.Count(i.passwordHash, i.uploaded, i.downloaded)
 	return i.conn.Close()
 }
 
 func (i *TrojanInboundConnSession) GetRequest() *protocol.Request {
 	return i.request
+}
+
+func (i *TrojanInboundConnSession) GetHash() string {
+	return i.passwordHash
 }
 
 func (i *TrojanInboundConnSession) parseRequest() error {
@@ -62,7 +68,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		logger.Warn("invalid hash or other protocol:", string(userHash))
 		return nil
 	}
-	i.userHash = string(userHash)
+	i.passwordHash = string(userHash)
 	i.bufReadWriter.Discard(56 + 2)
 
 	cmd, err := i.bufReadWriter.ReadByte()
@@ -106,7 +112,7 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		bufReadWriter: common.NewBufReadWriter(conn),
 		meter:         &stat.EmptyTrafficMeter{},
 		auth:          auth,
-		userHash:      "INVALID_HASH",
+		passwordHash:  "INVALID_HASH",
 	}
 	if err := i.parseRequest(); err != nil {
 		return nil, err
