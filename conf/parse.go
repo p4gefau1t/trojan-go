@@ -106,30 +106,37 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		Port: int(config.RemotePort),
 	}
 
-	if config.TLS.Cipher != "" {
-		specifiedSuites := strings.Split(config.TLS.Cipher, ":")
+	if config.TLS.Cipher != "" || config.TLS.CipherTLS13 != "" {
+		specifiedSuites := strings.Split(config.TLS.Cipher+":"+config.TLS.CipherTLS13, ":")
 		supportedSuites := tls.CipherSuites()
-		valid := true
-		for _, s := range specifiedSuites {
-			if strings.Contains(s, "-") {
-				logger.Warn("maybe you are using wrong cipher syntax")
+		invalid := false
+		for _, specified := range specifiedSuites {
+			found := false
+			if specified == "" {
+				continue
+			}
+			for _, supported := range supportedSuites {
+				if supported.Name == specified {
+					config.TLS.CipherSuites = append(config.TLS.CipherSuites, supported.ID)
+					found = true
+					break
+				}
+			}
+			if !found {
+				invalid = true
+				logger.Warn("found invalid cipher name", specified)
 				break
 			}
 		}
-		if valid {
-			for _, specified := range specifiedSuites {
-				found := false
-				for _, supported := range supportedSuites {
-					if supported.Name == specified {
-						config.TLS.CipherSuites = append(config.TLS.CipherSuites, supported.ID)
-						found = true
-						break
-					}
-				}
-				if !found {
-					logger.Warn("cipher:", specified, "is not supported")
-				}
+		if invalid && len(supportedSuites) >= 1 {
+			logger.Warn("cipher list contains invalid cipher name, ignored")
+			logger.Warn("here's a list of supported ciphers:")
+			list := ""
+			for _, c := range supportedSuites {
+				list += c.Name + ":"
 			}
+			logger.Warn(list[0 : len(list)-1])
+			config.TLS.CipherSuites = nil
 		}
 	}
 
