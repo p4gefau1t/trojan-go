@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net"
 	"testing"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -39,7 +38,6 @@ func TestClient(t *testing.T) {
 		config: config,
 	}
 	c.Run()
-	time.Sleep(time.Hour)
 }
 
 func TestMuxClient(t *testing.T) {
@@ -66,6 +64,7 @@ func TestMuxClient(t *testing.T) {
 		},
 		Hash: map[string]string{common.SHA224String(password): password},
 	}
+	config.TCP.MuxIdleTimeout = 1
 	config.TLS.CertPool = pool
 	config.TLS.SNI = "localhost"
 
@@ -73,7 +72,6 @@ func TestMuxClient(t *testing.T) {
 		config: config,
 	}
 	c.Run()
-	time.Sleep(time.Hour)
 }
 
 func TestClientWithJSON(t *testing.T) {
@@ -86,5 +84,4 @@ func TestClientWithJSON(t *testing.T) {
 		config: config,
 	}
 	client.Run()
-	time.Sleep(time.Hour)
 }

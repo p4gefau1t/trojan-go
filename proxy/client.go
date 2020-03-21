@@ -220,6 +220,9 @@ func (c *Client) Run() error {
 	listener, err := net.Listen("tcp", c.config.LocalAddr.String())
 	//TODO
 	ctx, _ := context.WithCancel(context.Background())
+	if c.config.TCP.MuxIdleTimeout > 0 {
+		go c.checkAndCloseIdleMuxClient()
+	}
 	c.ctx = ctx
 	if err != nil {
 		return err
@@ -230,9 +233,6 @@ func (c *Client) Run() error {
 		if err != nil {
 			logger.Error("error occured when accpeting conn", err)
 			continue
-		}
-		if c.config.TCP.MuxIdleTimeout > 0 {
-			go c.checkAndCloseIdleMuxClient()
 		}
 		if c.config.TCP.Mux {
 			go c.handleMuxConn(conn)
