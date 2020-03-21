@@ -28,11 +28,9 @@ Trojan-Go supports most features of the original trojan, including
 
 - Authentication by users record in database
 
-- TCP performance-related options, like TCP fast open, port reusing, etc
+- TCP performance-related options, like TCP fast open, port reusing, etc.
 
 Note that the name of the TLS 1.2 cipher suite is slightly different in golang. Using the original configuration file directly will cause a warning, but it will not affect the running. See wiki for more information.
-
-...
 
 The format of the configuration file is compatible, see [here](https://trojan-gfw.github.io/trojan/config).
 

@@ -47,7 +47,7 @@ PLATFORMS="$PLATFORMS netbsd/amd64" # amd64 only as of go1.6
 PLATFORMS="$PLATFORMS openbsd/amd64" # amd64 only as of go1.6
 PLATFORMS="$PLATFORMS dragonfly/amd64" # amd64 only as of go1.5
 #PLATFORMS="$PLATFORMS plan9/amd64 plan9/386" # as of go1.4
-PLATFORMS="$PLATFORMS solaris/amd64" # as of go1.3
+#PLATFORMS="$PLATFORMS solaris/amd64" # as of go1.3
 
 # ARMBUILDS lists the platforms that are currently supported.  From this list
 # we generate the following architectures:
@@ -115,7 +115,6 @@ done
 if [[ "${FAILURES}" != "" ]]; then
   echo ""
   echo "${SCRIPT_NAME} failed on: ${FAILURES}"
-  exit 1
 fi
 
 
