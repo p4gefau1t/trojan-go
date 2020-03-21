@@ -151,7 +151,7 @@ The format of the configuration file is compatible, see [here](https://trojan-gf
 - [x] Mux
 - [x] TLS Settings
 - [x] TLS redirecting
-- [ ] non-TLS redirecting
+- [X] non-TLS redirecting
 - [ ] Cert utils
 - [x] Database support
 - [x] Traffic stats

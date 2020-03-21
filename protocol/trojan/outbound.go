@@ -69,13 +69,13 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 			ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
 		}
 		tlsConn, err := tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
+		if err != nil {
+			return nil, common.NewError("cannot dial to the remote server").Base(err)
+		}
 		if config.TLS.VerifyHostname {
 			if err := tlsConn.VerifyHostname(config.TLS.SNI); err != nil {
 				return nil, common.NewError("failed to verify hostname").Base(err)
 			}
-		}
-		if err != nil {
-			return nil, common.NewError("cannot dial to the remote server").Base(err)
 		}
 		conn = tlsConn
 	}

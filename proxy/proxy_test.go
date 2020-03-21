@@ -1,7 +1,9 @@
 package proxy
 
 import (
+	"crypto/x509"
 	"io/ioutil"
+	"net"
 	"sync"
 	"testing"
 	"time"
@@ -37,6 +39,44 @@ func TestMuxClientToServer(t *testing.T) {
 func TestClientToPortReusingServer(t *testing.T) {
 	go TestClient(t)
 	TestPortReusingServer(t)
+	time.Sleep(time.Hour)
+}
+
+func TestSNIConfig(t *testing.T) {
+	go ClientWithWrongSNI(t)
+	TestServer(t)
+}
+
+func ClientWithWrongSNI(t *testing.T) {
+	serverCertBytes, err := ioutil.ReadFile("./server.crt")
+	common.Must(err)
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(serverCertBytes)
+	ip := net.IPv4(127, 0, 0, 1)
+	port := 4444
+	password := "pass123123"
+	config := &conf.GlobalConfig{
+		LocalAddr: &net.TCPAddr{
+			IP:   ip,
+			Port: port,
+		},
+		LocalIP:   ip,
+		LocalPort: uint16(port),
+		RemoteAddr: &net.TCPAddr{
+			IP:   ip,
+			Port: 4445,
+		},
+		Hash: map[string]string{common.SHA224String(password): password},
+	}
+	config.TLS.Verify = true
+	config.TLS.CertPool = pool
+	config.TLS.SNI = "localhost123"
+	config.TLS.VerifyHostname = true
+
+	c := Client{
+		config: config,
+	}
+	c.Run()
 	time.Sleep(time.Hour)
 }
 

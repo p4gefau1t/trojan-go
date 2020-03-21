@@ -144,6 +144,7 @@ func (a *DBAuthenticator) updateDaemon() {
 		rows, err := a.db.Query("SELECT username,password,quota,download,upload FROM users")
 		if err != nil {
 			logger.Error(common.NewError("failed to pull data from the database").Base(err))
+			time.Sleep(statsUpdateDuration)
 			continue
 		}
 		newValidUsers := make(map[string]string)

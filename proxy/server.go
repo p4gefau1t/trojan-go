@@ -164,7 +164,9 @@ func (s *Server) Run() error {
 		err = tlsConn.Handshake()
 		if err != nil {
 			logger.Warn(common.NewError("failed to handshake, response http payload").Base(err))
-			conn.Write(s.config.TLS.HTTPResponse)
+			if len(s.config.TLS.HTTPResponse) > 0 {
+				conn.Write(s.config.TLS.HTTPResponse)
+			}
 			conn.Close()
 			continue
 		}
