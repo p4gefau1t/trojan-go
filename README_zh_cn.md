@@ -4,6 +4,34 @@
 
 目前仍然处于开发中。
 
+## 使用方法
+
+```
+./trojan-go -config 你的配置文件.json
+```
+
+配置文件格式和Trojan相同, 参见[这里](https://trojan-gfw.github.io/trojan/config)。
+
+Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
+
+- TLS隧道传输
+
+- 透明代理 (NAT模式)
+
+- UDP代理
+
+- 对抗GFW被动/主动检测的机制
+
+- MySQL数据库支持
+
+- 流量统计，用户流量配额限制
+
+- 从数据库中的用户列表进行认证
+
+- TCP性能方面的选项，如TCP Fast Open，端口复用等等
+
+注意， TLS 1.2密码学套件的名称在golang中有一些不同，直接使用原版配置文件会引发一个警告，但不影响运行， 更多信息参见Wiki。
+
 ## 特性
 
 ### 兼容
@@ -12,7 +40,7 @@
 
 ### 易用
 
-配置文件格式与原版是兼容的，但做了一些简化。你可以更方便地部署你的服务器和客户端。下面是一个例子：
+配置文件格式与原版是兼容的，但做了一些简化。未指定的字段会被附上一个初始值。你可以更方便地部署你的服务器和客户端。下面是一个例子，完整的配置文件参见Wiki。
 
 服务器配置文件
 
@@ -21,7 +49,7 @@ server.json
 {
 	"run_type": "server",
 	"local_addr": "0.0.0.0",
-	"local_port": 4445,
+	"local_port": 443,
 	"remote_addr": "127.0.0.1",
 	"remote_port": 80,
 	"password": [
@@ -30,6 +58,7 @@ server.json
 	"ssl": {
 		"cert": "your_cert.crt",
 		"key": "your_key.crt",
+        "sni": "your_awesome_domain_name",
 	}
 }
 
@@ -108,10 +137,10 @@ client-mux.json
 
 ### 移植性
 
-使用Golang编写，而Golang默认进行静态编译，意味着你可以将编译得到的单个可执行文件在目标机器上直接执行而不需要考虑依赖的问题。你可以很方便地编译（或者交叉编译）它，然后在你的服务器，PC，树莓派，甚至路由器上部署。
+使用Golang编写，而Golang默认进行静态编译，不依赖其他组件, 意味着你可以将编译得到的单个可执行文件在目标机器上直接执行而不需要考虑依赖的问题。你可以很方便地编译（或者交叉编译）它，然后在你的服务器，PC，树莓派，甚至路由器上部署。
 
 
-## 编译构建
+## 构建
 
 确保你的Golang版本 >= 1.11
 
@@ -132,12 +161,3 @@ GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
 ```
 GOOS=linux GOARCH=arm go build -o trojan-go
 ```
-
-## 使用方法
-
-```
-./trojan-go -config 你的配置文件.json
-```
-
-配置文件格式和Trojan相同, 参见[这里](https://trojan-gfw.github.io/trojan/config)。
-

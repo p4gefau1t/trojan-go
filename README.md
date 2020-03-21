@@ -4,7 +4,37 @@ Trojan proxy written in golang. It is compatiable with the original Trojan proto
 
 It's still currently in heavy development.
 
-[README_zh_cn(中文)](README_zh_cn.md)
+[README_zh_cn.md(中文(简体))](README_zh_cn.md)
+
+## Usage
+
+```
+./trojan-go -config your_awesome_config_file.json
+```
+
+Trojan-Go supports most features of the original trojan, including
+
+- TLS tunneling
+
+- Transparent proxy (NAT mode)
+
+- UDP Relaying
+
+- Mechanism against passive and active detection of GFW
+
+- MySQL Database support
+
+- Traffic statistics, quota limits for each user
+
+- Authentication by users record in database
+
+- TCP performance-related options, like TCP fast open, port reusing, etc
+
+Note that the name of the TLS 1.2 cipher suite is slightly different in golang. Using the original configuration file directly will cause a warning, but it will not affect the running. See wiki for more information.
+
+...
+
+The format of the configuration file is compatible, see [here](https://trojan-gfw.github.io/trojan/config).
 
 ## Features
 
@@ -14,14 +44,14 @@ It's fully compatible with the Trojan protocol and configuration file, so that y
 
 ### Easy to use
 
-Trojan-go's configuration file format is compatible with Trojan's, while it's being simplyfied. You can launch your server and client much more easily. Here's an example:
+Trojan-go's configuration file format is compatible with Trojan's, while it's being simplyfied. Unspecified fields will be filled in with a default value. You can launch your server and client much more easily. Here's an example:
 
 server.json
 ```
 {
 	"run_type": "server",
 	"local_addr": "0.0.0.0",
-	"local_port": 4445,
+	"local_port": 443,
 	"remote_addr": "127.0.0.1",
 	"remote_port": 80,
 	"password": [
@@ -30,6 +60,7 @@ server.json
 	"ssl": {
 		"cert": "your_cert.crt",
 		"key": "your_key.crt",
+        "sni": "your_awesome_domain_name",
 	}
 }
 
@@ -106,7 +137,7 @@ You only need to set the client's configuration file, and the server will automa
 
 ### Portable
 
-It's written in Golang, and Golang compiles statically by default, which means that you can execute the compiled single executable directly on the target machine without having to consider dependencies. You can easily compile (or cross compile) it and deploy it on your server, PC, Raspberry Pi, or even a router.
+It's written in Golang, so it will be statically linked by default, which means that you can execute the compiled single executable directly on the target machine without having to consider dependencies. You can easily compile (or cross compile) it and deploy it on your server, PC, Raspberry Pi, or even a router.
 
 ## Build
 
@@ -129,30 +160,3 @@ or
 ```
 GOOS=linux GOARCH=arm go build -o trojan-go
 ```
-
-## Usage
-
-```
-./trojan-go -config your_awesome_config_file.json
-```
-
-The format of the configuration file is compatible, see [here](https://trojan-gfw.github.io/trojan/config).
-
-
-## TODOs
-
-- [x] Server
-- [x] Forward
-- [x] NAT
-- [x] Client
-- [x] UDP Tunneling
-- [x] Transparent proxy
-- [x] Log
-- [x] Mux
-- [x] TLS Settings
-- [x] TLS redirecting
-- [X] non-TLS redirecting
-- [ ] Cert utils
-- [x] Database support
-- [x] Traffic stats
-- [x] TCP Settings
