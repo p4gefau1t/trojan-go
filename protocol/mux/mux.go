@@ -25,26 +25,26 @@ type MuxConnSession struct {
 	conn          io.ReadWriteCloser
 	passwordHash  string
 	meter         stat.TrafficMeter
-	download      int
-	upload        int
+	recv          int
+	sent          int
 }
 
 func (m *MuxConnSession) Read(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Read(p)
-	m.download += n
+	m.recv += n
 	return n, err
 }
 
 func (m *MuxConnSession) Write(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Write(p)
 	m.bufReadWriter.Flush()
-	m.upload += n
+	m.sent += n
 	return n, err
 }
 
 func (m *MuxConnSession) Close() error {
-	m.meter.Count(m.passwordHash, m.upload, m.download)
-	logger.Info("mux conn to", m.request, "closed", "up:", common.HumanFriendlyTraffic(m.upload), "down:", common.HumanFriendlyTraffic(m.download))
+	m.meter.Count(m.passwordHash, m.sent, m.recv)
+	logger.Info("mux conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
 	return m.conn.Close()
 }
 

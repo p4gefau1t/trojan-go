@@ -16,25 +16,25 @@ type TrojanOutboundConnSession struct {
 	conn          io.ReadWriteCloser
 	bufReadWriter *bufio.ReadWriter
 	request       *protocol.Request
-	uploaded      int
-	downloaded    int
+	sent          int
+	recv          int
 }
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
 	n, err := o.bufReadWriter.Write(p)
 	o.bufReadWriter.Flush()
-	o.uploaded += n
+	o.sent += n
 	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
 	n, err := o.bufReadWriter.Read(p)
-	o.downloaded += n
+	o.recv += n
 	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Close() error {
-	logger.Info("conn to", o.request, "closed", "up:", common.HumanFriendlyTraffic(o.uploaded), "down:", common.HumanFriendlyTraffic(o.downloaded))
+	logger.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
 	return o.conn.Close()
 }
 

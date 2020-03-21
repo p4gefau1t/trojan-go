@@ -10,7 +10,7 @@ import (
 var logger = log.New(os.Stdout).WithColor()
 
 type TrafficMeter interface {
-	Count(passwordHash string, upload int, download int)
+	Count(passwordHash string, sent int, recv int)
 	io.Closer
 }
 

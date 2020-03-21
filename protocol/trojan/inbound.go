@@ -22,27 +22,27 @@ type TrojanInboundConnSession struct {
 	conn          net.Conn
 	auth          stat.Authenticator
 	meter         stat.TrafficMeter
-	uploaded      int
-	downloaded    int
+	sent          int
+	recv          int
 	passwordHash  string
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 	n, err := i.bufReadWriter.Write(p)
 	i.bufReadWriter.Flush()
-	i.uploaded += n
+	i.sent += n
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 	n, err := i.bufReadWriter.Read(p)
-	i.downloaded += n
+	i.recv += n
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Close() error {
-	logger.Info("user", i.passwordHash, "conn to", i.request, "closed", "up:", common.HumanFriendlyTraffic(i.uploaded), "down:", common.HumanFriendlyTraffic(i.downloaded))
-	i.meter.Count(i.passwordHash, i.uploaded, i.downloaded)
+	logger.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
+	i.meter.Count(i.passwordHash, i.sent, i.recv)
 	return i.conn.Close()
 }
 

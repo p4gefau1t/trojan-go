@@ -11,8 +11,8 @@ import (
 
 type trafficInfo struct {
 	passwordHash string
-	download     int
-	upload       int
+	recv         int
+	sent         int
 }
 
 type DBTrafficMeter struct {
@@ -27,11 +27,11 @@ const (
 	statsUpdateDuration = time.Second * 5
 )
 
-func (c *DBTrafficMeter) Count(passwordHash string, upload int, download int) {
+func (c *DBTrafficMeter) Count(passwordHash string, sent int, recv int) {
 	c.trafficChan <- &trafficInfo{
 		passwordHash: passwordHash,
-		upload:       upload,
-		download:     download,
+		sent:         sent,
+		recv:         recv,
 	}
 }
 
@@ -54,8 +54,8 @@ func (c *DBTrafficMeter) dbDaemon() {
 					}
 					statBuffer[u.passwordHash] = t
 				}
-				t.upload += u.upload
-				t.download += u.download
+				t.sent += u.sent
+				t.recv += u.recv
 			case <-time.After(statsUpdateDuration):
 				break
 			case <-c.ctx.Done():
@@ -74,13 +74,14 @@ func (c *DBTrafficMeter) dbDaemon() {
 			continue
 		}
 		for _, traffic := range statBuffer {
+			//swap upload and download for users
 			s, err := tx.Prepare("UPDATE users SET upload=upload+? WHERE password=?;")
 			common.Must(err)
-			_, err = s.Exec(traffic.upload, traffic.passwordHash)
+			_, err = s.Exec(traffic.recv, traffic.passwordHash)
 
 			s, err = tx.Prepare("UPDATE users SET download=download+? WHERE password=?;")
 			common.Must(err)
-			_, err = s.Exec(traffic.download, traffic.passwordHash)
+			_, err = s.Exec(traffic.sent, traffic.passwordHash)
 
 			if err != nil {
 				logger.Error(common.NewError("failed to update data to tx").Base(err))
