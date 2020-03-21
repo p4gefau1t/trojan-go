@@ -57,8 +57,8 @@ server.json
 	],
 	"ssl": {
 		"cert": "your_cert.crt",
-		"key": "your_key.crt",
-        "sni": "your_awesome_domain_name",
+		"key": "your_key.key",
+        "sni": "your_awesome_domain_name"
 	}
 }
 
@@ -79,7 +79,7 @@ client.json
     ],
     "ssl": {
         "cert": "your_cert.crt",
-        "sni": "your_awesome_domain_name",
+        "sni": "your_awesome_domain_name"
     }
 }
 ```
@@ -126,7 +126,7 @@ client-mux.json
     ],
     "ssl": {
         "cert": "server.crt",
-        "sni": "your_awesome_domain_name",
+        "sni": "your_awesome_domain_name"
     },
     "tcp": {
         "mux": true
