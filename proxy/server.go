@@ -10,7 +10,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/stat"
-	"github.com/valyala/tcplisten"
 	"github.com/xtaci/smux"
 )
 
@@ -135,19 +134,13 @@ func (s *Server) Run() error {
 	var listener net.Listener
 	var err error
 	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
-		cfg := tcplisten.Config{
-			ReusePort:   s.config.TCP.ReusePort,
-			FastOpen:    s.config.TCP.FastOpen,
-			DeferAccept: s.config.TCP.NoDelay,
-		}
-		network := "tcp6"
-		if s.config.LocalIP.To4() != nil {
-			network = "tcp4"
-		}
-		listener, err = cfg.NewListener(network, s.config.LocalAddr.String())
-		if err != nil {
-			return err
-		}
+		listener, err = ListenWithTCPOption(
+			s.config.TCP.FastOpen,
+			s.config.TCP.ReusePort,
+			s.config.TCP.NoDelay,
+			s.config.LocalIP,
+			s.config.LocalAddr.String(),
+		)
 	} else {
 		listener, err = net.Listen("tcp", s.config.LocalAddr.String())
 		if err != nil {
