@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/withmandala/go-log"
+	"github.com/p4gefau1t/trojan-go/log"
 )
 
-var logger = log.New(os.Stdout).WithColor()
+var logger = log.New(os.Stdout)
 
 func ConvertToIP(s string) ([]net.IP, error) {
 	ip := net.ParseIP(s)
@@ -44,6 +44,9 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.LogLevel = config.LogLevel
+
 	config.Hash = make(map[string]string)
 	for _, password := range config.Passwords {
 		config.Hash[common.SHA224String(password)] = password

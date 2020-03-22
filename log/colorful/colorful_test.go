@@ -8,8 +8,8 @@ package colorful
 import (
 	"testing"
 
+	"github.com/p4gefau1t/trojan-go/log/buffer"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/withmandala/go-log/buffer"
 )
 
 func TestColorBuffer(t *testing.T) {

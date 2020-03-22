@@ -8,7 +8,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a
-	github.com/withmandala/go-log v0.1.0
 	github.com/xtaci/smux v2.0.1+incompatible
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20200320220750-118fecf932d8

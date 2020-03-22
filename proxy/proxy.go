@@ -4,14 +4,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/withmandala/go-log"
-
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
 
-var logger = log.New(os.Stdout).WithColor()
+var logger = log.New(os.Stdout)
 
 func copyConn(dst io.Writer, src io.Reader, errChan chan error) {
 	_, err := io.Copy(dst, src)

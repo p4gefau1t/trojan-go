@@ -7,11 +7,11 @@ import (
 	"os/signal"
 
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy"
-	"github.com/withmandala/go-log"
 )
 
-var logger = log.New(os.Stdout).WithColor()
+var logger = log.New(os.Stdout)
 
 func main() {
 	logger.Info("Trojan-Go initializing...")

@@ -7,12 +7,12 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/stat"
-	"github.com/withmandala/go-log"
 )
 
-var logger = log.New(os.Stdout).WithColor()
+var logger = log.New(os.Stdout)
 
 type MuxConnSession struct {
 	protocol.ConnSession

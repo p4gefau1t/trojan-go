@@ -79,7 +79,7 @@ type GlobalConfig struct {
 
 	Hash      map[string]string
 	Passwords []string     `json:"password"`
-	LogLevel  int          `json: "log_level"`
+	LogLevel  int          `json:"log_level"`
 	TLS       TLSConfig    `json:"ssl"`
 	TCP       TCPConfig    `json:"tcp"`
 	MySQL     MySQLConfig  `json:"mysql"`
