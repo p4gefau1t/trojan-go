@@ -78,8 +78,8 @@ type GlobalConfig struct {
 	RemotePort uint16 `json:"remote_port"`
 
 	Hash      map[string]string
-	Passwords []string `json:"password"`
-	LogLevel  int
+	Passwords []string     `json:"password"`
+	LogLevel  int          `json: "log_level"`
 	TLS       TLSConfig    `json:"ssl"`
 	TCP       TCPConfig    `json:"tcp"`
 	MySQL     MySQLConfig  `json:"mysql"`

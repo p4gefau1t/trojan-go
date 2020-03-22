@@ -91,8 +91,9 @@ func (c *DBTrafficMeter) dbDaemon() {
 		err = tx.Commit()
 		if err != nil {
 			logger.Error(common.NewError("failed to commit tx").Base(err))
+		} else {
+			logger.Info("buffered data has been written into the database")
 		}
-		logger.Info("buffered data has been written into the database")
 	}
 }
 

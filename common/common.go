@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
+	//_ "github.com/mattn/go-sqlite3"
 )
 
 type Runnable interface {
@@ -57,5 +57,6 @@ func ConnectDatabase(driverName, username, password, ip string, port int, dbName
 }
 
 func ConnectSQLite(dbName string) (*sql.DB, error) {
+	//for debug only
 	return sql.Open("sqlite3", dbName)
 }
