@@ -46,7 +46,7 @@ func (f *Forward) Run() error {
 }
 
 func (f *Forward) Close() error {
-	logger.Info("")
+	logger.Info("shutting down forward..")
 	f.cancel()
 	return nil
 }

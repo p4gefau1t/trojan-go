@@ -21,20 +21,21 @@ type TLSConfig struct {
 	CertPath           string `json:"cert"`
 	KeyPath            string `json:"key"`
 	KeyPassword        string `json:"key_password"`
-	CertPool           *x509.CertPool
-	KeyPair            []tls.Certificate
 	Cipher             string `json:"cipher"`
 	CipherTLS13        string `json:"cipher_tls13"`
 	HTTPFile           string `json:"plain_http_response"`
-	HTTPResponse       []byte
-	CipherSuites       []uint16
-	CipherSuiteTLS13   []uint16
 	PreferServerCipher bool   `json:"prefer_server_cipher"`
 	SNI                string `json:"sni"`
-	Alph               []string
-	ReuseSession       bool
-	SessionTicket      bool
-	Curves             string
+
+	CertPool         *x509.CertPool
+	KeyPair          []tls.Certificate
+	HTTPResponse     []byte
+	CipherSuites     []uint16
+	CipherSuiteTLS13 []uint16
+	Alph             []string
+	ReuseSession     bool
+	SessionTicket    bool
+	Curves           string
 }
 
 type TCPConfig struct {
@@ -65,23 +66,24 @@ type SQLiteConfig struct {
 }
 
 type GlobalConfig struct {
-	RunType RunType `json:"run_type"`
+	RunType  RunType `json:"run_type"`
+	LogLevel int     `json:"log_level"`
 
-	LocalAddr net.Addr
 	LocalHost string `json:"local_addr"`
-	LocalIP   net.IP
 	LocalPort uint16 `json:"local_port"`
 
 	RemoteHost string `json:"remote_addr"`
-	RemoteAddr net.Addr
-	RemoteIP   net.IP
 	RemotePort uint16 `json:"remote_port"`
 
-	Hash      map[string]string
 	Passwords []string     `json:"password"`
-	LogLevel  int          `json:"log_level"`
 	TLS       TLSConfig    `json:"ssl"`
 	TCP       TCPConfig    `json:"tcp"`
 	MySQL     MySQLConfig  `json:"mysql"`
-	SQLite    SQLiteConfig `json:"mysql"`
+	SQLite    SQLiteConfig `json:"sqlite"`
+
+	LocalAddr  net.Addr
+	LocalIP    net.IP
+	RemoteAddr net.Addr
+	RemoteIP   net.IP
+	Hash       map[string]string
 }
