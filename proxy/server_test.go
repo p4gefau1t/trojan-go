@@ -160,3 +160,37 @@ func TestServerTCPRedirecting(t *testing.T) {
 	}
 	server.Run()
 }
+
+func TestServerWithSQLite(t *testing.T) {
+	key, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	common.Must(err)
+	ip := net.IPv4(127, 0, 0, 1)
+	port := 4445
+	//password := "pass123123"
+	config := &conf.GlobalConfig{
+		LocalAddr: &net.TCPAddr{
+			IP:   ip,
+			Port: port,
+		},
+		LocalIP:   ip,
+		LocalPort: uint16(port),
+		RemoteAddr: &net.TCPAddr{
+			IP:   ip,
+			Port: 80,
+		},
+		RemoteIP:   ip,
+		RemotePort: 80,
+		Hash:       map[string]string{},
+		SQLite: conf.SQLiteConfig{
+			Enabled:  true,
+			Database: "test.db",
+		},
+	}
+	config.TLS.KeyPair = []tls.Certificate{key}
+	config.TLS.SNI = "localhost"
+
+	server := Server{
+		config: config,
+	}
+	common.Must(server.Run())
+}

@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"crypto/tls"
+	"database/sql"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -109,8 +110,10 @@ func (s *Server) Run() error {
 		PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
 		SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
 	}
+	var db *sql.DB
+	var err error
 	if s.config.MySQL.Enabled {
-		db, err := common.ConnectDatabase(
+		db, err = common.ConnectDatabase(
 			"mysql",
 			s.config.MySQL.Username,
 			s.config.MySQL.Password,
@@ -121,6 +124,18 @@ func (s *Server) Run() error {
 		if err != nil {
 			return common.NewError("failed to connect to database server").Base(err)
 		}
+	} else if s.config.SQLite.Enabled {
+		db, err = common.ConnectSQLite(s.config.SQLite.Database)
+		if err != nil {
+			return common.NewError("failed to connect to database server").Base(err)
+		}
+	}
+	if db == nil {
+		s.auth = &stat.ConfigUserAuthenticator{
+			Config: s.config,
+		}
+		s.meter = &stat.EmptyTrafficMeter{}
+	} else {
 		s.auth, err = stat.NewMixedAuthenticator(s.config, db)
 		if err != nil {
 			return common.NewError("failed to init auth").Base(err)
@@ -129,16 +144,10 @@ func (s *Server) Run() error {
 		if err != nil {
 			return common.NewError("failed to init traffic meter").Base(err)
 		}
-	} else {
-		s.auth = &stat.ConfigUserAuthenticator{
-			Config: s.config,
-		}
-		s.meter = &stat.EmptyTrafficMeter{}
 	}
 	logger.Info("Server running at", s.config.LocalAddr)
 
 	var listener net.Listener
-	var err error
 	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
 		listener, err = ListenWithTCPOption(
 			s.config.TCP.FastOpen,

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Runnable interface {
@@ -53,4 +54,8 @@ func HumanFriendlyTraffic(bytes int) string {
 func ConnectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {
 	path := strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
 	return sql.Open(driverName, path)
+}
+
+func ConnectSQLite(dbName string) (*sql.DB, error) {
+	return sql.Open("sqlite3", dbName)
 }

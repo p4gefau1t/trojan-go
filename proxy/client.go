@@ -80,6 +80,10 @@ func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession
 	defer atomic.AddInt32(&c.muxConnCount, -1)
 	c.lastActiveTime = time.Now()
 
+	if c.muxClient == nil {
+		logger.Error("invalid mux conn")
+		return
+	}
 	stream, err := c.muxClient.OpenStream()
 	if err != nil {
 		logger.Error(err)

@@ -20,6 +20,7 @@ type TLSConfig struct {
 	VerifyHostname     bool   `json:"verify_hostname"`
 	CertPath           string `json:"cert"`
 	KeyPath            string `json:"key"`
+	KeyPassword        string `json:"key_password"`
 	CertPool           *x509.CertPool
 	KeyPair            []tls.Certificate
 	Cipher             string `json:"cipher"`
@@ -56,6 +57,13 @@ type MySQLConfig struct {
 	Password   string `json:"password"`
 }
 
+type SQLiteConfig struct {
+	Enabled  bool   `json:"enabled"`
+	Database string `json:"database"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type GlobalConfig struct {
 	RunType RunType `json:"run_type"`
 
@@ -72,7 +80,8 @@ type GlobalConfig struct {
 	Hash      map[string]string
 	Passwords []string `json:"password"`
 	LogLevel  int
-	TLS       TLSConfig   `json:"ssl"`
-	TCP       TCPConfig   `json:"tcp"`
-	MySQL     MySQLConfig `json:"mysql"`
+	TLS       TLSConfig    `json:"ssl"`
+	TCP       TCPConfig    `json:"tcp"`
+	MySQL     MySQLConfig  `json:"mysql"`
+	SQLite    SQLiteConfig `json:"mysql"`
 }

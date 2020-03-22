@@ -44,6 +44,11 @@ func TestSNIConfig(t *testing.T) {
 	TestServer(t)
 }
 
+func TestSQLite(t *testing.T) {
+	go TestClient(t)
+	TestServerWithSQLite(t)
+}
+
 func ClientWithWrongSNI(t *testing.T) {
 	serverCertBytes, err := ioutil.ReadFile("./server.crt")
 	common.Must(err)

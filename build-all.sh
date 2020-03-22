@@ -84,14 +84,14 @@ for PLATFORM in $PLATFORMS; do
   GOARCH=${PLATFORM#*/}
   BIN_FILENAME="${OUTPUT}-${GOOS}-${GOARCH}"
   if [[ "${GOOS}" == "windows" ]]; then BIN_FILENAME="${BIN_FILENAME}.exe"; fi
-  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@"
+  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@ -ldflags=\"-s -w\""
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
 done
 
 # ARM builds
 if [[ $PLATFORMS_ARM == *"linux"* ]]; then 
-  CMD="CGO_ENABLE=0 GOOS=linux GOARCH=arm64 go build -o ${OUTPUT}-linux-arm64 $@"
+  CMD="CGO_ENABLE=0 GOOS=linux GOARCH=arm64 go build -o ${OUTPUT}-linux-arm64 $@ -ldflags=\"-s -w\""
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
 
@@ -106,7 +106,7 @@ for GOOS in $PLATFORMS_ARM; do
   #  eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}${GOARM}" 
   #done
   BIN_FILENAME="${OUTPUT}-${GOOS}-${GOARCH}"
-  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@"
+  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@ -ldflags=\"-s -w\""
   echo "${CMD}"
   eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}${GOARM}" 
 done

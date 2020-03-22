@@ -44,4 +44,53 @@ func TestParseJSON(t *testing.T) {
 	`
 	_, err := ParseJSON([]byte(data))
 	common.Must(err)
+
+	data = `
+{
+	"run_type": "server",
+	"local_addr": "0.0.0.0",
+	"local_port": 4445,
+	"remote_addr": "127.0.0.1",
+	"remote_port": 80,
+	"password": [
+		"pass123123"
+	],
+	"log_level": 2,
+	"ssl": {
+		"verify": false,
+		"verify_hostname": false,
+		"cert": "pass.crt",
+		"key": "pass.key",
+		"key_password": "",
+		"cipher_tls13":"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
+		"prefer_server_cipher": true,
+		"alpn": [
+			"h2",
+			"http/1.1"
+		],
+		"reuse_session": true,
+		"session_ticket": false,
+		"session_timeout": 600,
+		"plain_http_response": "",
+		"curves": "",
+		"dhparam": ""
+	},
+	"tcp": {
+		"no_delay": true,
+		"keep_alive": true,
+		"fast_open": false,
+		"fast_open_qlen": 20
+	},
+	"mysql": {
+		"enabled": false,
+		"server_addr": "127.0.0.1",
+		"server_port": 3306,
+		"database": "trojan",
+		"username": "root",
+		"password": "password"
+	}
+}
+    `
+	_, err = ParseJSON([]byte(data))
+	common.Must(err)
 }

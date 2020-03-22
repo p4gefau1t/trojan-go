@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"io/ioutil"
 	"net"
 	"os"
@@ -63,11 +64,39 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		if len(config.Passwords) == 0 {
 			return nil, common.NewError("no password found")
 		}
-		keyPair, err := tls.LoadX509KeyPair(config.TLS.CertPath, config.TLS.KeyPath)
-		if err != nil {
-			return nil, err
+		if config.TLS.KeyPassword != "" {
+			keyFile, err := ioutil.ReadFile(config.TLS.KeyPath)
+			if err != nil {
+				return nil, common.NewError("failed to load key file").Base(err)
+			}
+			keyBlock, _ := pem.Decode(keyFile)
+			if keyBlock == nil {
+				return nil, common.NewError("failed to decode key file").Base(err)
+			}
+			decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(config.TLS.KeyPassword))
+			if err == nil {
+				return nil, common.NewError("failed to decrypt key").Base(err)
+			}
+
+			certFile, err := ioutil.ReadFile(config.TLS.CertPath)
+			certBlock, _ := pem.Decode(certFile)
+			if certBlock == nil {
+				return nil, common.NewError("failed to decode cert file").Base(err)
+			}
+
+			keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
+			if err != nil {
+				return nil, err
+			}
+
+			config.TLS.KeyPair = []tls.Certificate{keyPair}
+		} else {
+			keyPair, err := tls.LoadX509KeyPair(config.TLS.CertPath, config.TLS.KeyPath)
+			if err != nil {
+				return nil, common.NewError("failed to load key pair").Base(err)
+			}
+			config.TLS.KeyPair = []tls.Certificate{keyPair}
 		}
-		config.TLS.KeyPair = []tls.Certificate{keyPair}
 	case Forward:
 	default:
 		return nil, common.NewError("invalid run type")

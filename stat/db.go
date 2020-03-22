@@ -97,16 +97,20 @@ func (c *DBTrafficMeter) dbDaemon() {
 }
 
 func NewDBTrafficMeter(db *sql.DB) (TrafficMeter, error) {
-	db.Exec(`CREATE TABLE IF NOT EXISTS users (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    username VARCHAR(64) NOT NULL,
-    password CHAR(56) NOT NULL,
-    quota BIGINT NOT NULL DEFAULT 0,
-    download BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    upload BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (id),
-    INDEX (password)
-	);`)
+	/*
+			_, err := db.Exec(`CREATE TABLE IF NOT EXISTS users (
+		    id INT UNSIGNED AUTO_INCREMENT,
+		    username VARCHAR(64) NOT NULL,
+		    password CHAR(56) NOT NULL,
+		    quota BIGINT NOT NULL DEFAULT 0,
+		    download BIGINT UNSIGNED NOT NULL DEFAULT 0,
+		    upload BIGINT UNSIGNED NOT NULL DEFAULT 0,
+		    PRIMARY KEY (id)
+			);`)
+			if err != nil {
+				logger.Warn(common.NewError("cannot check and create table").Base(err))
+			}
+	*/
 	c := &DBTrafficMeter{
 		db:          db,
 		trafficChan: make(chan *trafficInfo, 1024),
