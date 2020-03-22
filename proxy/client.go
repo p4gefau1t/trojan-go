@@ -22,13 +22,15 @@ type muxConn struct {
 }
 
 type Client struct {
-	config *conf.GlobalConfig
 	common.Runnable
+
+	config         *conf.GlobalConfig
 	muxClient      *smux.Session
 	muxClientLock  sync.Mutex
 	muxConnCount   int32
 	lastActiveTime time.Time
 	ctx            context.Context
+	cancel         context.CancelFunc
 }
 
 func (c *Client) checkAndNewMuxClient() {
@@ -222,19 +224,27 @@ func (c *Client) handleConn(conn net.Conn) {
 
 func (c *Client) Run() error {
 	listener, err := net.Listen("tcp", c.config.LocalAddr.String())
-	//TODO
-	ctx, _ := context.WithCancel(context.Background())
+	if err != nil {
+		return common.NewError("failed to listen local address").Base(err)
+	}
+	defer listener.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c.ctx = ctx
+	c.cancel = cancel
+
 	if c.config.TCP.MuxIdleTimeout > 0 {
 		go c.checkAndCloseIdleMuxClient()
 	}
 	c.ctx = ctx
-	if err != nil {
-		return err
-	}
 	logger.Info("running client at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
+			select {
+			case <-c.ctx.Done():
+			default:
+			}
 			logger.Error("error occured when accpeting conn", err)
 			continue
 		}
@@ -244,4 +254,15 @@ func (c *Client) Run() error {
 			go c.handleConn(conn)
 		}
 	}
+}
+
+func (c *Client) Close() error {
+	logger.Info("shutting down client..")
+	c.cancel()
+	c.muxClientLock.Lock()
+	defer c.muxClientLock.Unlock()
+	if c.muxClient != nil {
+		c.muxClient.Close()
+	}
+	return nil
 }

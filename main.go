@@ -4,6 +4,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
+	"os/signal"
 
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/proxy"
@@ -13,7 +14,7 @@ import (
 var logger = log.New(os.Stdout).WithColor()
 
 func main() {
-	logger.Info("Trojan-Go initializing")
+	logger.Info("Trojan-Go initializing...")
 	configFile := flag.String("config", "config.json", "Config file name")
 	flag.Parse()
 	data, err := ioutil.ReadFile(*configFile)
@@ -24,8 +25,19 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to parse config file", err)
 	}
-	err = proxy.NewProxy(config).Run()
-	if err != nil {
-		logger.Fatal("Error occured", err)
+	proxy := proxy.NewProxy(config)
+	errChan := make(chan error)
+	go func() {
+		errChan <- proxy.Run()
+	}()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
+	select {
+	case <-sigs:
+		proxy.Close()
+	case err := <-errChan:
+		logger.Fatal(err)
 	}
+	logger.Info("Trojan-Go exited")
 }

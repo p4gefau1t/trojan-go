@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -10,6 +11,8 @@ import (
 type Forward struct {
 	common.Runnable
 	config *conf.GlobalConfig
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func (f *Forward) handleConn(conn net.Conn) {
@@ -26,12 +29,24 @@ func (f *Forward) Run() error {
 	if err != nil {
 		return common.NewError("failed to listen local address").Base(err)
 	}
+	defer listener.Close()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
+			select {
+			case <-f.ctx.Done():
+				return nil
+			default:
+			}
 			logger.Error(err)
 			continue
 		}
 		go f.handleConn(conn)
 	}
+}
+
+func (f *Forward) Close() error {
+	logger.Info("")
+	f.cancel()
+	return nil
 }

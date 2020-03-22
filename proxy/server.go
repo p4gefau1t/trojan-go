@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"net"
@@ -16,10 +17,13 @@ import (
 )
 
 type Server struct {
-	config *conf.GlobalConfig
 	common.Runnable
-	auth  stat.Authenticator
-	meter stat.TrafficMeter
+
+	auth   stat.Authenticator
+	meter  stat.TrafficMeter
+	config *conf.GlobalConfig
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
@@ -104,12 +108,10 @@ func (s *Server) handleConn(conn net.Conn) {
 }
 
 func (s *Server) Run() error {
-	tlsConfig := &tls.Config{
-		Certificates:             s.config.TLS.KeyPair,
-		CipherSuites:             s.config.TLS.CipherSuites,
-		PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
-		SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
-	}
+	ctx, cancel := context.WithCancel(context.Background())
+	s.ctx = ctx
+	s.cancel = cancel
+
 	var db *sql.DB
 	var err error
 	if s.config.MySQL.Enabled {
@@ -145,6 +147,8 @@ func (s *Server) Run() error {
 			return common.NewError("failed to init traffic meter").Base(err)
 		}
 	}
+	defer s.auth.Close()
+	defer s.meter.Close()
 	logger.Info("Server running at", s.config.LocalAddr)
 
 	var listener net.Listener
@@ -156,15 +160,31 @@ func (s *Server) Run() error {
 			s.config.LocalIP,
 			s.config.LocalAddr.String(),
 		)
+		if err != nil {
+			return err
+		}
 	} else {
 		listener, err = net.Listen("tcp", s.config.LocalAddr.String())
 		if err != nil {
 			return err
 		}
 	}
+	defer listener.Close()
+
+	tlsConfig := &tls.Config{
+		Certificates:             s.config.TLS.KeyPair,
+		CipherSuites:             s.config.TLS.CipherSuites,
+		PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
+		SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
+	}
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
+			select {
+			case <-s.ctx.Done():
+				return nil
+			default:
+			}
 			logger.Warn(err)
 			continue
 		}
@@ -180,5 +200,10 @@ func (s *Server) Run() error {
 		}
 		go s.handleConn(tlsConn)
 	}
+}
 
+func (s *Server) Close() error {
+	logger.Info("shutting down server..")
+	s.cancel()
+	return nil
 }
