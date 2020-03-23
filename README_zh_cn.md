@@ -78,7 +78,6 @@ client.json
 	    "your_awesome_password"
     ],
     "ssl": {
-        "cert": "your_cert.crt",
         "sni": "your_awesome_domain_name"
     }
 }
@@ -90,7 +89,7 @@ Trojan-Go支持的runtype包括（其实和原版是一样的）
 
 - Server
 
-- NAT (透明代理，[参见这里](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
+- NAT (透明代理，参见[这里](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
 
 - Forward
 
@@ -144,7 +143,6 @@ client-mux.json
 
 确保你的Golang版本 >= 1.11
 
-
 ```
 git clone https://github.com/p4gefau1t/trojan-go.git
 cd trojan-go
@@ -154,10 +152,10 @@ go build
 Golang支持通过设置环境变量进行交叉编译，例如
 
 ```
-GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
+CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
 ```
 以及
 
 ```
-GOOS=linux GOARCH=arm go build -o trojan-go
+CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 ```

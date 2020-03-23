@@ -56,9 +56,13 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		if len(config.Passwords) == 0 {
 			return nil, common.NewError("no password found")
 		}
+		if config.TLS.CertPath == "" {
+			logger.Warn("cert of the remote server is not specified. using default CA list.")
+			break
+		}
 		serverCertBytes, err := ioutil.ReadFile(config.TLS.CertPath)
 		if err != nil {
-			return nil, err
+			return nil, common.NewError("failed to load cert file").Base(err)
 		}
 		pool := x509.NewCertPool()
 		pool.AppendCertsFromPEM(serverCertBytes)

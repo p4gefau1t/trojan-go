@@ -42,7 +42,7 @@ It's fully compatible with the Trojan protocol and configuration file, so that y
 
 ### Easy to use
 
-Trojan-go's configuration file format is compatible with Trojan's, while it's being simplyfied. Unspecified fields will be filled in with a default value. You can launch your server and client much more easily. Here's an example:
+Trojan-go's configuration file format is compatible with Trojan's, while it's being simplyfied. Unspecified fields will be filled in with a default value. You can launch your server and client much easier. Here's an example:
 
 server.json
 ```
@@ -76,7 +76,6 @@ client.json
 	    "your_awesome_password"
     ],
     "ssl": {
-        "cert": "your_cert.crt",
         "sni": "your_awesome_domain_name"
     }
 }
@@ -150,11 +149,11 @@ go build
 
 You can cross-compile it by setting up the environment vars, for example
 ```
-GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
+CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
 ```
 
 or
 
 ```
-GOOS=linux GOARCH=arm go build -o trojan-go
+CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 ```
