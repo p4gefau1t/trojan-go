@@ -65,7 +65,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 			Port:        i.config.RemotePort,
 			NetworkType: "tcp",
 		}
-		logger.Warn("invalid hash or other protocol:", string(userHash))
+		logger.Warn("remote", i.conn.RemoteAddr(), "invalid hash or other protocol:", string(userHash))
 		return nil
 	}
 	i.passwordHash = string(userHash)

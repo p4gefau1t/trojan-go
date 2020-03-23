@@ -23,9 +23,13 @@ type TLSConfig struct {
 	KeyPassword        string `json:"key_password"`
 	Cipher             string `json:"cipher"`
 	CipherTLS13        string `json:"cipher_tls13"`
-	HTTPFile           string `json:"plain_http_response"`
 	PreferServerCipher bool   `json:"prefer_server_cipher"`
 	SNI                string `json:"sni"`
+
+	HTTPFile     string `json:"plain_http_response"`
+	FallbackHost string `json:"fallback_addr"`
+	FallbackPort uint16 `json:"fallback_port"`
+	FallbackAddr net.Addr
 
 	CertPool         *x509.CertPool
 	KeyPair          []tls.Certificate

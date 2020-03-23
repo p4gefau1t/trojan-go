@@ -152,9 +152,10 @@ func TestServerTCPRedirecting(t *testing.T) {
 	}
 	config.TLS.KeyPair = []tls.Certificate{key}
 	config.TLS.SNI = "localhost"
-	payload, err := ioutil.ReadFile("http.txt")
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:443")
 	common.Must(err)
-	config.TLS.HTTPResponse = payload
+	config.TLS.FallbackAddr = addr
+
 	server := Server{
 		config: config,
 	}

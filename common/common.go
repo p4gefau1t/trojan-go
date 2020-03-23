@@ -48,7 +48,7 @@ func HumanFriendlyTraffic(bytes int) string {
 	if bytes <= GiB {
 		return fmt.Sprintf("%.2f MiB", float32(bytes)/MiB)
 	}
-	return fmt.Sprintf("%.2f TiB", float32(bytes)/GiB)
+	return fmt.Sprintf("%.2f GiB", float32(bytes)/GiB)
 }
 
 func ConnectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {

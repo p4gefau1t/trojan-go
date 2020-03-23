@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -16,19 +17,18 @@ import (
 
 var logger = log.New(os.Stdout)
 
-func ConvertToIP(s string) ([]net.IP, error) {
-	ip := net.ParseIP(s)
-	if ip == nil {
-		ips, err := net.LookupIP(s)
-		if err != nil {
-			return nil, err
-		}
-		if len(ips) == 0 {
-			return nil, common.NewError("cannot resolve host:" + s)
-		}
-		return ips, nil
+func convertToAddr(preferV4 bool, host string, port uint16) (*net.TCPAddr, error) {
+	ip := net.ParseIP(host)
+	if ip != nil {
+		return &net.TCPAddr{
+			IP:   ip,
+			Port: int(port),
+		}, nil
 	}
-	return []net.IP{ip}, nil
+	if preferV4 {
+		return net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:%d", host, port))
+	}
+	return net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", host, port))
 }
 
 func ParseJSON(data []byte) (*GlobalConfig, error) {
@@ -108,39 +108,27 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	default:
 		return nil, common.NewError("invalid run type")
 	}
-	localIPs, err := ConvertToIP(config.LocalHost)
-	if err != nil {
-		return nil, err
-	}
-	remoteIPs, err := ConvertToIP(config.RemoteHost)
-	if err != nil {
-		return nil, err
-	}
 
-	config.LocalIP = localIPs[0]
-	config.RemoteIP = remoteIPs[0]
+	localAddr, err := convertToAddr(config.TCP.PreferIPV4, config.LocalHost, config.LocalPort)
+	if err != nil {
+		return nil, common.NewError("invalid local address").Base(err)
+	}
+	config.LocalAddr = localAddr
+	config.LocalIP = localAddr.IP
 
-	if config.TCP.PreferIPV4 {
-		for _, ip := range localIPs {
-			if ip.To4() != nil {
-				config.LocalIP = ip
-				break
-			}
-		}
-		for _, ip := range remoteIPs {
-			if ip.To4() != nil {
-				config.RemoteIP = ip
-				break
-			}
-		}
+	remoteAddr, err := convertToAddr(config.TCP.PreferIPV4, config.RemoteHost, config.RemotePort)
+	if err != nil {
+		return nil, common.NewError("invalid remote address").Base(err)
 	}
-	config.LocalAddr = &net.TCPAddr{
-		IP:   config.LocalIP,
-		Port: int(config.LocalPort),
-	}
-	config.RemoteAddr = &net.TCPAddr{
-		IP:   config.RemoteIP,
-		Port: int(config.RemotePort),
+	config.RemoteAddr = remoteAddr
+	config.RemoteIP = remoteAddr.IP
+
+	if config.TLS.FallbackHost != "" {
+		fallbackAddr, err := convertToAddr(config.TCP.PreferIPV4, config.TLS.FallbackHost, config.TLS.FallbackPort)
+		if err != nil {
+			return nil, common.NewError("invalid tls fallback address").Base(err)
+		}
+		config.TLS.FallbackAddr = fallbackAddr
 	}
 
 	if config.TLS.Cipher != "" || config.TLS.CipherTLS13 != "" {

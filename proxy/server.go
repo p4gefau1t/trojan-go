@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"net"
+	"reflect"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -28,12 +29,12 @@ type Server struct {
 
 func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 	inboundConn, err := mux.NewInboundMuxConnSession(stream, passwordHash)
-	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	if err != nil {
 		stream.Close()
 		logger.Error(common.NewError("cannot start inbound session").Base(err))
 		return
 	}
+	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
 	if req.Command != protocol.Connect {
@@ -52,11 +53,11 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 
 func (s *Server) handleConn(conn net.Conn) {
 	inboundConn, err := trojan.NewInboundConnSession(conn, s.config, s.auth)
-
 	if err != nil {
-		logger.Error(err)
+		logger.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
 	}
+
 	req := inboundConn.GetRequest()
 	hash := inboundConn.(protocol.HasHash).GetHash()
 
@@ -191,10 +192,31 @@ func (s *Server) Run() error {
 		tlsConn := tls.Server(conn, tlsConfig)
 		err = tlsConn.Handshake()
 		if err != nil {
-			logger.Warn(common.NewError("failed to perform handshake, responsing http payload").Base(err))
+			logger.Warn(common.NewError("failed to perform tls handshake, remote:" + conn.RemoteAddr().String()).Base(err))
+
 			if len(s.config.TLS.HTTPResponse) > 0 {
+				logger.Warn("trying to response a plain http response")
 				conn.Write(s.config.TLS.HTTPResponse)
+				continue
 			}
+
+			if s.config.TLS.FallbackAddr != nil {
+				//HACK
+				//obtain the bytes buffered by the tls conn
+				v := reflect.ValueOf(*tlsConn)
+				buf := v.FieldByName("rawInput").FieldByName("buf").Bytes()
+				logger.Debug("payload:" + string(buf))
+
+				remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
+				if err != nil {
+					logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
+				}
+				logger.Warn("proxying this invalid tls conn to the tls fallback server")
+				remote.Write(buf)
+				go proxyConn(conn, remote)
+				continue
+			}
+
 			conn.Close()
 			continue
 		}
