@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -117,62 +118,55 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 	if len(s.config.TLS.HTTPResponse) > 0 {
 		logger.Warn("trying to response with a plain http response")
 		conn.Write(s.config.TLS.HTTPResponse)
+		conn.Close()
 		return
 	}
 
-	if s.config.TLS.FallbackAddr != nil {
-		//HACK
-		//obtain the bytes buffered by the tls conn
-		v := reflect.ValueOf(*tlsConn)
-		rawReq := v.FieldByName("rawInput").FieldByName("buf").Bytes()
+	//HACK
+	//obtain the bytes buffered by the tls conn
+	v := reflect.ValueOf(*tlsConn)
+	rawReq := v.FieldByName("rawInput").FieldByName("buf").Bytes()
 
-		logger.Debug("paylaod:\n" + string(rawReq))
-		supportedALPN := false
-		if s.config.TLS.FallbackHTTP {
-			buffer := bytes.NewBuffer([]byte{})
-			buffer.Write(rawReq)
-			r := bufio.NewReader(buffer)
-			if _, err := http.ReadRequest(r); err == nil {
-				logger.Warn("incoming HTTP request:\n" + string(rawReq))
-				supportedALPN = true
-			}
-		}
+	logger.Debug("paylaod:\n" + string(rawReq))
 
-		if s.config.TLS.FallbackHTTP2 {
-			buffer := bytes.NewBuffer([]byte{})
-			buffer.Write(rawReq)
-			framer := http2.NewFramer(buffer, buffer)
-			if frame, err := framer.ReadFrame(); err == nil {
-				logger.Warn("incoming HTTP2 request:\n" + frame.Header().String())
-				supportedALPN = true
-			}
-		}
+	alpn := ""
 
-		if supportedALPN {
-			remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
-			if err != nil {
-				logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
-				return
-			}
-			logger.Warn("proxying this invalid tls conn to the tls fallback server")
-			remote.Write(rawReq)
-			go proxyConn(conn, remote)
-		} else {
-			/*
-				logger.Warn("unknown protocol, closing")
-				conn.Close()
-			*/
-			//fuck, just proxy it
-			logger.Warn("unknown protocol")
-			remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
-			if err != nil {
-				logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
-				return
-			}
-			logger.Warn("proxying this invalid tls conn to the tls fallback server")
-			remote.Write(rawReq)
-			go proxyConn(conn, remote)
+	if alpn == "" {
+		buffer := bytes.NewBuffer([]byte{})
+		buffer.Write(rawReq)
+		r := bufio.NewReader(buffer)
+		if req, err := http.ReadRequest(r); err == nil {
+			logger.Warn("incoming HTTP request:\n" + string(rawReq))
+			alpn = strings.ToLower(req.Proto)
 		}
+	}
+
+	if alpn == "" {
+		buffer := bytes.NewBuffer([]byte{})
+		buffer.Write(rawReq)
+		framer := http2.NewFramer(buffer, buffer)
+		if frame, err := framer.ReadFrame(); err == nil {
+			logger.Warn("incoming HTTP2 request:\n" + frame.Header().String())
+			alpn = "h2"
+		}
+	}
+
+	addr, found := s.config.TLS.ALPNAddr[alpn]
+	if !found {
+		addr, found = s.config.TLS.ALPNAddr["default"]
+	}
+	if !found {
+		logger.Warn("protocol fallback port not found in alpn array, closing")
+		conn.Close()
+	} else {
+		remote, err := net.Dial("tcp", addr.String())
+		if err != nil {
+			logger.Warn(common.NewError("failed to dial to http fallback server").Base(err))
+			return
+		}
+		remote.Write(rawReq)
+		go proxyConn(conn, remote)
+		return
 	}
 }
 
