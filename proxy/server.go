@@ -109,8 +109,6 @@ func (s *Server) handleConn(conn net.Conn) {
 }
 
 func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
-	//HACK
-	//obtain the bytes buffered by the tls conn
 
 	if len(s.config.TLS.HTTPResponse) > 0 {
 		logger.Warn("trying to response a plain http response")
@@ -119,17 +117,25 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 		return
 	}
 
-	v := reflect.ValueOf(*tlsConn)
-	buf := v.FieldByName("rawInput").FieldByName("buf").Bytes()
-	logger.Debug("payload:" + string(buf))
+	if s.config.TLS.FallbackAddr != nil {
+		//HACK
+		//obtain the bytes buffered by the tls conn
+		v := reflect.ValueOf(*tlsConn)
+		buf := v.FieldByName("rawInput").FieldByName("buf").Bytes()
+		logger.Debug("payload:" + string(buf))
 
-	remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
-	if err != nil {
-		logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
+		remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
+		if err != nil {
+			logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
+		}
+		logger.Warn("proxying this invalid tls conn to the tls fallback server")
+		remote.Write(buf)
+		go proxyConn(conn, remote)
+	} else {
+		logger.Warn("fallback port is unspecified, closing")
+		conn.Close()
 	}
-	logger.Warn("proxying this invalid tls conn to the tls fallback server")
-	remote.Write(buf)
-	go proxyConn(conn, remote)
+
 }
 
 func (s *Server) Run() error {

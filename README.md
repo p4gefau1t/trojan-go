@@ -120,7 +120,7 @@ client-mux.json
     "remote_addr": "your_awesome_server",
     "remote_port": 443,
     "password": [
-	    "your_awesome_password"
+        "your_awesome_password"
     ],
     "ssl": {
         "cert": "server.crt",
@@ -273,7 +273,7 @@ client.json
     "remote_addr": "your_awesome_server",
     "remote_port": 443,
     "password": [
-	    "your_awesome_password"
+        "your_awesome_password"
     ],
     "ssl": {
         "cert": "server.crt",
