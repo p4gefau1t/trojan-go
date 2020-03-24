@@ -155,6 +155,7 @@ func TestServerTCPRedirecting(t *testing.T) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:443")
 	common.Must(err)
 	config.TLS.FallbackAddr = addr
+	config.TLS.FallbackHTTP = true
 
 	server := Server{
 		config: config,

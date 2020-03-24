@@ -26,17 +26,18 @@ type TLSConfig struct {
 	PreferServerCipher bool   `json:"prefer_server_cipher"`
 	SNI                string `json:"sni"`
 
-	HTTPFile     string `json:"plain_http_response"`
-	FallbackHost string `json:"fallback_addr"`
-	FallbackPort uint16 `json:"fallback_port"`
-	FallbackAddr net.Addr
+	HTTPFile         string   `json:"plain_http_response"`
+	ALPH             []string `json:"alph"`
+	ALPHPortOverride uint16   `json:"alpn_port_override"`
 
+	FallbackAddr     net.Addr
+	FallbackHTTP     bool
+	FallbackHTTP2    bool
 	CertPool         *x509.CertPool
 	KeyPair          []tls.Certificate
 	HTTPResponse     []byte
 	CipherSuites     []uint16
 	CipherSuiteTLS13 []uint16
-	Alph             []string
 	ReuseSession     bool
 	SessionTicket    bool
 	Curves           string
