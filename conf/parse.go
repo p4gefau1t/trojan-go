@@ -123,24 +123,12 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.RemoteAddr = remoteAddr
 	config.RemoteIP = remoteAddr.IP
 
-	if len(config.TLS.ALPN) != 0 || config.TLS.ALPHPortOverride != 0 {
-		if config.TLS.ALPHPortOverride == 0 {
-			logger.Warn("alpn port override is unspecified. using remote port")
-			config.TLS.ALPHPortOverride = config.RemotePort
-		}
-		fallbackAddr, err := convertToAddr(config.TCP.PreferIPV4, config.RemoteHost, config.TLS.ALPHPortOverride)
+	if config.TLS.FallbackPort != 0 {
+		fallbackAddr, err := convertToAddr(config.TCP.PreferIPV4, config.RemoteHost, config.TLS.FallbackPort)
 		if err != nil {
 			return nil, common.NewError("invalid tls fallback address").Base(err)
 		}
 		config.TLS.FallbackAddr = fallbackAddr
-		for _, s := range config.TLS.ALPN {
-			if strings.Contains(s, "http") || strings.Contains(s, "HTTP") {
-				config.TLS.FallbackHTTP = true
-			}
-			if s == "h2" {
-				config.TLS.FallbackHTTP2 = true
-			}
-		}
 	}
 
 	if config.TLS.Cipher != "" || config.TLS.CipherTLS13 != "" {
