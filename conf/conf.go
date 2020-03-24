@@ -27,7 +27,7 @@ type TLSConfig struct {
 	SNI                string `json:"sni"`
 
 	HTTPFile         string   `json:"plain_http_response"`
-	ALPH             []string `json:"alph"`
+	ALPN             []string `json:"alpn"`
 	ALPHPortOverride uint16   `json:"alpn_port_override"`
 
 	FallbackAddr     net.Addr
