@@ -13,7 +13,7 @@
 自动申请证书:
 
 ```
-trojan-go -cert request
+sudo ./trojan-go -cert request
 ```
 
 (**注意保存备份生成的证书和密钥**)
@@ -21,13 +21,15 @@ trojan-go -cert request
 为证书续期:
 
 ```
-trojan-go -cert renew
+sudo ./trojan-go -cert renew
 ```
+
+关于证书申请[更详细的说明](#证书申请)
 
 运行客户端/服务端/透明代理/中继:
 
 ```
-trojan-go -config 你的配置文件.json
+./trojan-go -config 你的配置文件.json
 ```
 
 配置文件格式和Trojan相同, 可以参考Trojan[官方文档](https://trojan-gfw.github.io/trojan/config)。
@@ -113,6 +115,42 @@ Trojan-Go支持的runtype包括（其实和原版是一样的）
 - Forward
 
 更多关于配置文件的信息，可以参考Trojan的关于配置文件的[文档](https://trojan-gfw.github.io/trojan/config) 。
+
+### 自动证书申请
+
+<a name="证书申请"></a>
+
+使用
+
+```
+sudo ./trojan-go -cert request
+```
+
+向Let's Encrypt申请证书
+
+申请过程中，按照ACME协议要求，trojan-go需要和letsencrypt服务器交互，因此需要暂时占用本地443和80端口，此时请暂时关闭nginx，apache，或者trojan等服务。
+
+Linux下，绑定80和443端口需要root权限，因此你需要使用sudo执行trojan-go才能正常证书申请流程。
+
+如果申请成功，本目录下会得到
+
+- server.key 服务器私钥
+
+- server.crt 经过Let's Encrypt签名的服务器证书
+
+- user.key 用户Email对应的私钥
+
+- domain_info.json 域名和用户Email信息
+
+请备份这几个文件并且妥善保管。接下来你可以将服务器私钥和证书文件名填入你的配置文件，开启你的trojan-go服务器即可。
+
+如果证书过期了，使用
+
+```
+sudo ./trojan-go -cert renew
+```
+
+更新证书，确保上面提到的四个文件在trojan-go所在目录，运行后trojan-go将自动更新证书文件。
 
 ### 多路复用
 
@@ -287,6 +325,41 @@ run_type supported by Trojan-Go (the same as Trojan):
 - Forward
 
 For more infomation, see Trojan's [docs](https://trojan-gfw.github.io/trojan/config) about the configuration file.
+
+
+## Certificate requesting
+
+use
+
+`` `
+sudo ./trojan-go -cert request
+`` `
+
+Request a certificate from Let's Encrypt.
+
+During the process, according to ACME protocol requirements, trojan-go needs to interact with letsencrypt server, so it needs to temporarily occupy local ports 443 and 80. At this time, please temporarily close services such as nginx, apache, or trojan.
+
+Binding port 80 and 443 under Linux requires root privileges, so you may need to use sudo to execute trojan-go for the certificate requesting.
+
+If everything goes well, you will get
+
+-server.key: server private key
+
+-server.crt: server certificate signed by Let's Encrypt
+
+-user.key: The private key corresponding to the user's email
+
+-domain_info.json: domain name and user email information
+
+Please back up these files and keep them in a safe place. You can fill the server private key and certificate file name into your configuration file, and start your trojan-go server.
+
+If the certificate has expired, use
+
+`` `
+sudo ./trojan-go -cert renew
+`` `
+
+To renew the certificate. Make sure that the files mentioned above are in the same directory where trojan-go is located. Trojan-Go will automatically update the certificate file.
 
 ### Multiplexing
 
