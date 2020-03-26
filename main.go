@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/p4gefau1t/trojan-go/cert"
 	"github.com/p4gefau1t/trojan-go/conf"
-	"github.com/p4gefau1t/trojan-go/guide"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy"
 )
@@ -17,11 +17,14 @@ var logger = log.New(os.Stdout)
 func main() {
 	logger.Info("Trojan-Go initializing...")
 	configFile := flag.String("config", "config.json", "Config filename")
-	guideMode := flag.String("guide", "", "guide mode, use -guide cert to request a cert from letsencrypt")
+	guideMode := flag.String("cert", "", "use \"-cert request\" to request a cert from letsencrypt, or \"-cert renew\" to renew a cert")
 	flag.Parse()
 	switch *guideMode {
-	case "cert":
-		guide.CertGuide()
+	case "request":
+		cert.RequestCertGuide()
+		return
+	case "renew":
+		cert.RenewCertGuide()
 		return
 	default:
 	}

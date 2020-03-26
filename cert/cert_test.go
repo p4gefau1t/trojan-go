@@ -1,4 +1,4 @@
-package guide
+package cert
 
 import (
 	"testing"
@@ -8,10 +8,14 @@ import (
 
 func TestCreate(t *testing.T) {
 	caDir = "https://127.0.0.1:14000/dir"
-	common.Must(CreateCert("localhost", "test@email.com"))
+	common.Must(RequestCert("localhost", "test@email.com"))
 }
 
 func TestRenew(t *testing.T) {
 	caDir = "https://127.0.0.1:14000/dir"
 	common.Must(RenewCert("localhost", "test@email.com"))
+}
+
+func TestCertGuide(t *testing.T) {
+	RequestCertGuide()
 }

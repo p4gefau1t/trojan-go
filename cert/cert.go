@@ -1,4 +1,4 @@
-package guide
+package cert
 
 import (
 	"crypto"
@@ -121,10 +121,12 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 	// because we aren't running as root and can't bind a listener to port 80 and 443
 	// (used later when we attempt to pass challenges). Keep in mind that you still
 	// need to proxy challenge traffic to port 5002 and 5001.
+	//err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", "5002"))
 	err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", ""))
 	if err != nil {
 		return nil, err
 	}
+	//err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", "5001"))
 	err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", ""))
 	if err != nil {
 		return nil, err
@@ -157,36 +159,42 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 	return certificates, nil
 }
 
-func CreateCert(domain, email string) error {
+func RequestCert(domain, email string) error {
 	userKey, err := loadUserKey()
 	if err != nil {
 		logger.Warn("failed to load user key, trying to create one..")
 		userKey, err = createAndSaveUserKey()
+		if err != nil {
+			return err
+		}
+	} else {
+		logger.Warn("found user.key, using exist user key")
 	}
 	cert, err := obtainCertificate(domain, email, userKey, nil)
 	if err != nil {
 		return err
 	}
-	saveServerKeyAndCert(cert)
+	if err := saveServerKeyAndCert(cert); err != nil {
+		return common.NewError("failed to save cert").Base(err)
+	}
 	return nil
 }
 
 func RenewCert(domain, email string) error {
 	serverKey, err := loadServerKey()
-	userKey, err := loadUserKey()
-
 	if err != nil {
 		return err
 	}
-
+	userKey, err := loadUserKey()
+	if err != nil {
+		return err
+	}
 	cert, err := obtainCertificate(domain, email, userKey, serverKey)
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(domain+".key", cert.PrivateKey, os.ModePerm)
-	ioutil.WriteFile(domain+".crt", cert.Certificate, os.ModePerm)
-	data, err := json.Marshal(cert)
-	common.Must(err)
-	ioutil.WriteFile(domain+".json", data, os.ModePerm)
+	if err := saveServerKeyAndCert(cert); err != nil {
+		return common.NewError("failed to save cert").Base(err)
+	}
 	return nil
 }
