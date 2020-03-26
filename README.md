@@ -2,12 +2,32 @@
 
 使用Golang实现的完整Trojan代理，和Trojan协议以及原版的配置文件格式兼容。安全，高效，轻巧，易用。
 
+支持使用多路复用提升并发性能。
+
+使用ACME协议从Let's Encrypt自动申请和更新TLS证书（HTTPS证书），只需提供域名和邮箱。
+
 [English](#English)
 
 ## 使用方法
 
+自动申请证书:
+
 ```
-./trojan-go -config 你的配置文件.json
+trojan-go -cert request
+```
+
+(**注意保存备份生成的证书和密钥**)
+
+为证书续期:
+
+```
+trojan-go -cert renew
+```
+
+运行客户端/服务端/透明代理/中继:
+
+```
+trojan-go -config 你的配置文件.json
 ```
 
 配置文件格式和Trojan相同, 可以参考Trojan[官方文档](https://trojan-gfw.github.io/trojan/config)。
@@ -162,7 +182,27 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 
 Full-featured Trojan proxy written in golang, compatiable with the original Trojan protocol and config file. It's safe, efficient, lightweight and easy to use.
 
+Supports using multiplexing to improve concurrent performance.
+
+Use the ACME protocol to automatically request and renew HTTPS certificates from Let's Encrypt.
+
 ## Usage
+
+Request a certificate automatically:
+
+```
+./trojan-go -cert request
+```
+
+**Don't forget to backup the cert file and crt file.**
+
+Renew a certificate:
+
+```
+./trojan-go -cert renew
+```
+
+Run a client/server/transparent proxy/forwarder:
 
 ```
 ./trojan-go -config your_awesome_config_file.json

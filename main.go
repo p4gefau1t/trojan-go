@@ -17,7 +17,7 @@ var logger = log.New(os.Stdout)
 func main() {
 	logger.Info("Trojan-Go initializing...")
 	configFile := flag.String("config", "config.json", "Config filename")
-	guideMode := flag.String("cert", "", "use \"-cert request\" to request a cert from letsencrypt, or \"-cert renew\" to renew a cert")
+	guideMode := flag.String("cert", "", "Simple letsencrpyt cert acme client. Use \"-cert request\" to request a cert or \"-cert renew\" to renew a cert")
 	flag.Parse()
 	switch *guideMode {
 	case "request":
