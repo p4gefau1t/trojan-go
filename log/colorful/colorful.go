@@ -3,7 +3,11 @@
 
 package colorful
 
-import "github.com/p4gefau1t/trojan-go/log/buffer"
+import (
+	"runtime"
+
+	"github.com/p4gefau1t/trojan-go/log/buffer"
+)
 
 // ColorBuffer add color option to buffer append
 type ColorBuffer struct {
@@ -21,6 +25,19 @@ var (
 	colorCyan   = []byte("\033[0;36m")
 	colorGray   = []byte("\033[0;37m")
 )
+
+func init() {
+	if runtime.GOOS != "linux" {
+		colorOff = []byte("")
+		colorRed = []byte("")
+		colorGreen = []byte("")
+		colorOrange = []byte("")
+		colorBlue = []byte("")
+		colorPurple = []byte("")
+		colorCyan = []byte("")
+		colorGray = []byte("")
+	}
+}
 
 // Off apply no color to the data
 func (cb *ColorBuffer) Off() {

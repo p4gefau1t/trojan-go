@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed
+	github.com/go-acme/lego/v3 v3.5.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4
