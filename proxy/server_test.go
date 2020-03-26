@@ -152,7 +152,12 @@ func TestServerTCPRedirecting(t *testing.T) {
 	}
 	config.TLS.KeyPair = []tls.Certificate{key}
 	config.TLS.SNI = "localhost"
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:443")
+
+	addr := &net.TCPAddr{
+		IP:   net.IPv4(127, 0, 0, 1),
+		Port: 443,
+	}
+
 	common.Must(err)
 	config.TLS.FallbackAddr = addr
 
