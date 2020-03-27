@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"io/ioutil"
 	"os"
@@ -25,6 +24,8 @@ import (
 
 var logger = log.New(os.Stdout)
 var caDir string = "https://acme-v02.api.letsencrypt.org/directory"
+var tlsPort string = "443"
+var httpPort string = "80"
 
 type User struct {
 	Email        string
@@ -79,9 +80,6 @@ func loadUserKey() (*ecdsa.PrivateKey, error) {
 func saveServerKeyAndCert(cert *certificate.Resource) error {
 	ioutil.WriteFile("server.key", cert.PrivateKey, os.ModePerm)
 	ioutil.WriteFile("server.crt", cert.Certificate, os.ModePerm)
-	data, err := json.Marshal(cert)
-	common.Must(err)
-	ioutil.WriteFile("server.json", data, os.ModePerm)
 	return nil
 }
 
@@ -122,12 +120,12 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 	// (used later when we attempt to pass challenges). Keep in mind that you still
 	// need to proxy challenge traffic to port 5002 and 5001.
 	//err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", "5002"))
-	err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", ""))
+	err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", httpPort))
 	if err != nil {
 		return nil, err
 	}
 	//err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", "5001"))
-	err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", ""))
+	err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", tlsPort))
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +157,24 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 	return certificates, nil
 }
 
+func isFilesExist(nameList []string) bool {
+	fileInfo, err := ioutil.ReadDir("./")
+	common.Must(err)
+	for _, v := range fileInfo {
+		name := v.Name()
+		for _, u := range nameList {
+			if name == u {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func RequestCert(domain, email string) error {
+	if isFilesExist([]string{"server.key", "server.crt"}) {
+		return common.NewError("cert files(server.key, server.crt) already exist")
+	}
 	userKey, err := loadUserKey()
 	if err != nil {
 		logger.Warn("failed to load user key, trying to create one..")

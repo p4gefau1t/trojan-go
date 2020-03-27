@@ -41,7 +41,7 @@ func (a *MixedAuthenticator) Close() error {
 }
 
 func NewMixedAuthenticator(config *conf.GlobalConfig, db *sql.DB) (Authenticator, error) {
-	dbAuth, err := NewDBAuthenticator(db)
+	dbAuth, err := NewDBAuthenticator(config, db)
 	common.Must(err)
 	a := &MixedAuthenticator{
 		configAuth: &ConfigUserAuthenticator{

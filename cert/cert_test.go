@@ -8,14 +8,14 @@ import (
 
 func TestCreate(t *testing.T) {
 	caDir = "https://127.0.0.1:14000/dir"
+	tlsPort = "5001"
+	httpPort = "5002"
 	common.Must(RequestCert("localhost", "test@email.com"))
 }
 
 func TestRenew(t *testing.T) {
 	caDir = "https://127.0.0.1:14000/dir"
+	tlsPort = "5001"
+	httpPort = "5002"
 	common.Must(RenewCert("localhost", "test@email.com"))
-}
-
-func TestCertGuide(t *testing.T) {
-	RequestCertGuide()
 }

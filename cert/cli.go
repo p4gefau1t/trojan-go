@@ -46,7 +46,6 @@ func askForConfirmation() bool {
 }
 
 func RequestCertGuide() {
-	//caDir = "https://127.0.0.1:14000/dir"
 	logger.Info("Guide mode: request cert")
 
 	logger.Warn("To perform a ACME challenge, trojan-go need the ROOT PRIVILEGE to bind port 80 and 443")
@@ -96,7 +95,6 @@ func RequestCertGuide() {
 }
 
 func RenewCertGuide() {
-	//caDir = "https://127.0.0.1:14000/dir"
 	logger.Info("Guide mode: renew cert")
 
 	logger.Warn("To perform a ACME challenge, trojan-go need the ROOT PRIVILEGE to bind port 80 and 443")

@@ -26,7 +26,10 @@ func main() {
 	case "renew":
 		cert.RenewCertGuide()
 		return
+	case "":
 	default:
+		logger.Error("Invalid cert arg")
+		return
 	}
 	data, err := ioutil.ReadFile(*configFile)
 	if err != nil {
@@ -44,6 +47,7 @@ func main() {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
+	logger.Info("Trojan-Go interrupted")
 	select {
 	case <-sigs:
 		proxy.Close()
