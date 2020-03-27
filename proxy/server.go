@@ -20,11 +20,12 @@ import (
 type Server struct {
 	common.Runnable
 
-	auth   stat.Authenticator
-	meter  stat.TrafficMeter
-	config *conf.GlobalConfig
-	ctx    context.Context
-	cancel context.CancelFunc
+	listener net.Listener
+	auth     stat.Authenticator
+	meter    stat.TrafficMeter
+	config   *conf.GlobalConfig
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
@@ -200,6 +201,7 @@ func (s *Server) Run() error {
 			return err
 		}
 	}
+	s.listener = listener
 	defer listener.Close()
 
 	tlsConfig := &tls.Config{
@@ -232,6 +234,9 @@ func (s *Server) Run() error {
 
 func (s *Server) Close() error {
 	logger.Info("shutting down server..")
+	if s.listener != nil {
+		s.listener.Close()
+	}
 	s.cancel()
 	return nil
 }

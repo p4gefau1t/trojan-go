@@ -258,11 +258,11 @@ func (c *Client) Run() error {
 
 func (c *Client) Close() error {
 	logger.Info("shutting down client..")
-	c.cancel()
 	c.muxClientLock.Lock()
 	defer c.muxClientLock.Unlock()
 	if c.muxClient != nil {
 		c.muxClient.Close()
 	}
+	c.cancel()
 	return nil
 }
