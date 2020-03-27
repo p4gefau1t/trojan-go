@@ -6,6 +6,8 @@
 
 使用ACME协议从Let's Encrypt自动申请和更新TLS证书（HTTPS证书），只需提供域名和邮箱。
 
+**完整配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。**
+
 [English](#English)
 
 ## 使用方法
@@ -79,7 +81,7 @@ server.json
     ],
     "ssl": {
         "cert": "your_cert.crt",
-        "key": "your_key.key",
+        "key": "your_key.key"
     }
 }
 
