@@ -57,6 +57,7 @@ type MySQLConfig struct {
 	Database   string `json:"database"`
 	Username   string `json:"username"`
 	Password   string `json:"password"`
+	CheckRate  int    `json:"check_rate"`
 }
 
 type SQLiteConfig struct {

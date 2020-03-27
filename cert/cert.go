@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"io/ioutil"
 	"os"
@@ -79,9 +78,6 @@ func loadUserKey() (*ecdsa.PrivateKey, error) {
 func saveServerKeyAndCert(cert *certificate.Resource) error {
 	ioutil.WriteFile("server.key", cert.PrivateKey, os.ModePerm)
 	ioutil.WriteFile("server.crt", cert.Certificate, os.ModePerm)
-	data, err := json.Marshal(cert)
-	common.Must(err)
-	ioutil.WriteFile("server.json", data, os.ModePerm)
 	return nil
 }
 

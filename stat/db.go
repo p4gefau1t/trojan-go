@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/conf"
 )
 
 type trafficInfo struct {
@@ -17,15 +18,12 @@ type trafficInfo struct {
 
 type DBTrafficMeter struct {
 	TrafficMeter
-	db          *sql.DB
-	trafficChan chan *trafficInfo
-	ctx         context.Context
-	cancel      context.CancelFunc
+	db             *sql.DB
+	trafficChan    chan *trafficInfo
+	ctx            context.Context
+	cancel         context.CancelFunc
+	updateDuration time.Duration
 }
-
-const (
-	statsUpdateDuration = time.Second * 5
-)
 
 func (c *DBTrafficMeter) Count(passwordHash string, sent int, recv int) {
 	c.trafficChan <- &trafficInfo{
@@ -56,12 +54,12 @@ func (c *DBTrafficMeter) dbDaemon() {
 				}
 				t.sent += u.sent
 				t.recv += u.recv
-			case <-time.After(statsUpdateDuration):
+			case <-time.After(c.updateDuration):
 				break
 			case <-c.ctx.Done():
 				return
 			}
-			if time.Now().Sub(beginTime) > statsUpdateDuration {
+			if time.Now().Sub(beginTime) > c.updateDuration {
 				break
 			}
 		}
@@ -97,25 +95,12 @@ func (c *DBTrafficMeter) dbDaemon() {
 	}
 }
 
-func NewDBTrafficMeter(db *sql.DB) (TrafficMeter, error) {
-	/*
-			_, err := db.Exec(`CREATE TABLE IF NOT EXISTS users (
-		    id INT UNSIGNED AUTO_INCREMENT,
-		    username VARCHAR(64) NOT NULL,
-		    password CHAR(56) NOT NULL,
-		    quota BIGINT NOT NULL DEFAULT 0,
-		    download BIGINT UNSIGNED NOT NULL DEFAULT 0,
-		    upload BIGINT UNSIGNED NOT NULL DEFAULT 0,
-		    PRIMARY KEY (id)
-			);`)
-			if err != nil {
-				logger.Warn(common.NewError("cannot check and create table").Base(err))
-			}
-	*/
+func NewDBTrafficMeter(config *conf.GlobalConfig, db *sql.DB) (TrafficMeter, error) {
 	c := &DBTrafficMeter{
-		db:          db,
-		trafficChan: make(chan *trafficInfo, 1024),
-		ctx:         context.Background(),
+		db:             db,
+		trafficChan:    make(chan *trafficInfo, 1024),
+		ctx:            context.Background(),
+		updateDuration: time.Duration(config.MySQL.CheckRate) * time.Second,
 	}
 	go c.dbDaemon()
 	return c, nil
@@ -130,10 +115,11 @@ type userInfo struct {
 }
 
 type DBAuthenticator struct {
-	db         *sql.DB
-	validUsers sync.Map
-	ctx        context.Context
-	cancel     context.CancelFunc
+	db             *sql.DB
+	validUsers     sync.Map
+	ctx            context.Context
+	cancel         context.CancelFunc
+	updateDuration time.Duration
 	Authenticator
 }
 
@@ -147,23 +133,23 @@ func (a *DBAuthenticator) CheckHash(hash string) bool {
 
 func (a *DBAuthenticator) updateDaemon() {
 	for {
-		rows, err := a.db.Query("SELECT username,password,quota,download,upload FROM users")
+		rows, err := a.db.Query("SELECT password,quota,download,upload FROM users")
 		if err != nil {
 			logger.Error(common.NewError("failed to pull data from the database").Base(err))
-			time.Sleep(statsUpdateDuration)
+			time.Sleep(a.updateDuration)
 			continue
 		}
 		newValidUsers := make(map[string]string)
 		for rows.Next() {
-			var username, passwordHash string
+			var passwordHash string
 			var quota, download, upload int64
-			err := rows.Scan(&username, &passwordHash, &quota, &download, &upload)
+			err := rows.Scan(&passwordHash, &quota, &download, &upload)
 			if err != nil {
 				logger.Error(common.NewError("failed to obtain data from the query result").Base(err))
 				break
 			}
 			if download+upload < quota || quota < 0 {
-				newValidUsers[passwordHash] = username
+				newValidUsers[passwordHash] = "valid"
 			}
 		}
 		//delete those out of quota
@@ -177,7 +163,7 @@ func (a *DBAuthenticator) updateDaemon() {
 			a.validUsers.Store(k, v)
 		}
 		select {
-		case <-time.After(statsUpdateDuration):
+		case <-time.After(a.updateDuration):
 			break
 		case <-a.ctx.Done():
 			return
@@ -190,12 +176,13 @@ func (a *DBAuthenticator) Close() error {
 	return a.db.Close()
 }
 
-func NewDBAuthenticator(db *sql.DB) (Authenticator, error) {
+func NewDBAuthenticator(config *conf.GlobalConfig, db *sql.DB) (Authenticator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &DBAuthenticator{
-		db:     db,
-		cancel: cancel,
-		ctx:    ctx,
+		db:             db,
+		cancel:         cancel,
+		ctx:            ctx,
+		updateDuration: time.Duration(config.MySQL.CheckRate) * time.Second,
 	}
 	go a.updateDaemon()
 	return a, nil

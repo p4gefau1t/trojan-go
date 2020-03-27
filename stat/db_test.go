@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/conf"
 )
 
 func TestDBTrafficMeter(t *testing.T) {
@@ -21,16 +22,18 @@ func TestDBTrafficMeter(t *testing.T) {
 	dbName := "trojan"
 	path := strings.Join([]string{userName, ":", password, "@tcp(", ip, ":", port, ")/", dbName, "?charset=utf8"}, "")
 	db, err := sql.Open("mysql", path)
+	hash := common.SHA224String("hashhash")
 	common.Must(err)
 	defer db.Close()
 	c := &DBTrafficMeter{
-		db:          db,
-		trafficChan: make(chan *trafficInfo, 1024),
-		ctx:         context.Background(),
+		db:             db,
+		trafficChan:    make(chan *trafficInfo, 1024),
+		ctx:            context.Background(),
+		updateDuration: time.Second * 5,
 	}
 	simulation := func() {
 		for i := 0; i < 100; i++ {
-			c.Count("hashhash", rand.Intn(500), rand.Intn(500))
+			c.Count(hash, rand.Intn(500), rand.Intn(500))
 			time.Sleep(time.Duration(int64(time.Millisecond) * rand.Int63n(300)))
 		}
 		fmt.Println("done")
@@ -52,8 +55,15 @@ func TestDBAuthenticator(t *testing.T) {
 	db, err := sql.Open("mysql", path)
 	common.Must(err)
 	defer db.Close()
-	a, err := NewDBAuthenticator(db)
+	config := conf.GlobalConfig{
+		MySQL: conf.MySQLConfig{
+			CheckRate: 2,
+		},
+	}
+	a, err := NewDBAuthenticator(&config, db)
 	common.Must(err)
 	time.Sleep(time.Second * 5)
-	fmt.Println(a.CheckHash("hashhash"), a.CheckHash("jasdlkflfejlqjef"))
+	hash := common.SHA224String("hashhash")
+	fmt.Println(common.SHA224String("hashhash"))
+	fmt.Println(a.CheckHash(hash), a.CheckHash("jasdlkflfejlqjef"))
 }

@@ -173,7 +173,7 @@ func (s *Server) Run() error {
 		if err != nil {
 			return common.NewError("failed to init auth").Base(err)
 		}
-		s.meter, err = stat.NewDBTrafficMeter(db)
+		s.meter, err = stat.NewDBTrafficMeter(s.config, db)
 		if err != nil {
 			return common.NewError("failed to init traffic meter").Base(err)
 		}
