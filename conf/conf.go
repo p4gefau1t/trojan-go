@@ -48,7 +48,7 @@ type TCPConfig struct {
 	NoDelay        bool `json:"no_delay"`
 	Mux            bool `json:"mux"`
 	MuxIdleTimeout int  `json:"mux_idle_timeout"`
-	MuxConcurrency int  `json:"mux_cocurrency`
+	MuxConcurrency int  `json:"mux_concurrency`
 }
 
 type MySQLConfig struct {
