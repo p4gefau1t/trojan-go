@@ -41,6 +41,10 @@ type Client struct {
 }
 
 func (c *Client) newMuxClient() (*muxClientInfo, error) {
+	id := generateMuxID()
+	if _, found := c.muxPool[id]; found {
+		return nil, common.NewError("duplicated id")
+	}
 	req := &protocol.Request{
 		Command:     protocol.Mux,
 		DomainName:  []byte("MUX_CONN"),
@@ -52,7 +56,6 @@ func (c *Client) newMuxClient() (*muxClientInfo, error) {
 		return nil, err
 	}
 
-	id := generateMuxID()
 	client, err := smux.Client(conn, nil)
 	common.Must(err)
 	logger.Info("mux TLS tunnel established, id:", id)
@@ -68,7 +71,7 @@ func (c *Client) pickMuxClient() (*muxClientInfo, error) {
 	defer c.muxLock.Unlock()
 
 	for _, info := range c.muxPool {
-		if !info.client.IsClosed() && info.client.NumStreams() < c.config.TCP.MuxConcurrency {
+		if !info.client.IsClosed() && (info.client.NumStreams() < c.config.TCP.MuxConcurrency || c.config.TCP.MuxConcurrency <= 0) {
 			info.lastActiveTime = time.Now()
 			return info, nil
 		}
@@ -99,7 +102,9 @@ func (c *Client) checkAndCloseIdleMuxClient() {
 					logger.Info("mux", id, "is closed due to inactive")
 				}
 			}
-			logger.Debug("current mux pool conn", len(c.muxPool))
+			if len(c.muxPool) != 0 {
+				logger.Info("current mux pool conn num", len(c.muxPool))
+			}
 			c.muxLock.Unlock()
 		case <-c.ctx.Done():
 			c.muxLock.Lock()
@@ -113,32 +118,10 @@ func (c *Client) checkAndCloseIdleMuxClient() {
 	}
 }
 
-func (c *Client) proxyToMuxConn(req *protocol.Request, conn protocol.ConnSession) {
-	info, err := c.pickMuxClient()
-	if err != nil {
-		logger.Error(common.NewError("failed to pick a mux client").Base(err))
-		return
-	}
-
-	stream, err := info.client.OpenStream()
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	defer stream.Close()
-	outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
-	if err != nil {
-		logger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
-		return
-	}
-	defer outboundConn.Close()
-	proxyConn(conn, outboundConn)
-}
-
 func (c *Client) handleConn(conn net.Conn) {
 	inboundConn, err := socks.NewInboundConnSession(conn)
 	if err != nil {
-		logger.Error("failed to start new inbound session:", err)
+		logger.Error(common.NewError("failed to start new inbound session:").Base(err))
 		return
 	}
 	defer inboundConn.Close()
@@ -155,14 +138,14 @@ func (c *Client) handleConn(conn net.Conn) {
 			IP: c.config.LocalIP,
 		})
 		if err != nil {
-			logger.Error("failed to listen udp:", err)
+			logger.Error(common.NewError("failed to listen udp:").Base(err))
 			return
 		}
 
 		req.IP = c.config.LocalIP
 		port, err := protocol.ParsePort(listenConn.LocalAddr())
 		common.Must(err)
-		req.Port = uint16(port)
+		req.Port = port
 		req.AddressType = protocol.IPv4
 
 		inboundPacket, err := socks.NewInboundPacketSession(listenConn)
@@ -187,13 +170,32 @@ func (c *Client) handleConn(conn net.Conn) {
 	}
 
 	if err := inboundConn.(protocol.NeedRespond).Respond(nil); err != nil {
-		logger.Error("failed to respond:", err)
+		logger.Error(common.NewError("failed to respond").Base(err))
 		return
 	}
 
 	if c.config.TCP.Mux {
-		logger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req)
-		c.proxyToMuxConn(req, inboundConn)
+		info, err := c.pickMuxClient()
+		if err != nil {
+			logger.Error(common.NewError("failed to pick a mux client").Base(err))
+			return
+		}
+
+		stream, err := info.client.OpenStream()
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		defer stream.Close()
+		outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
+		if err != nil {
+			logger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
+			return
+		}
+		defer outboundConn.Close()
+		logger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
+		proxyConn(conn, outboundConn)
+		info.lastActiveTime = time.Now()
 	} else {
 		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
@@ -230,7 +232,7 @@ func (c *Client) Run() error {
 			case <-c.ctx.Done():
 			default:
 			}
-			logger.Error("error occured when accpeting conn", err)
+			logger.Error(common.NewError("error occured when accpeting conn").Base(err))
 			continue
 		}
 		go c.handleConn(conn)

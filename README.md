@@ -234,7 +234,7 @@ Request a certificate automatically:
 ./trojan-go -cert request
 ```
 
-**Don't forget to backup the cert file and crt file.**
+**Don't forget to backup the .key file and .crt file.**
 
 Renew a certificate:
 

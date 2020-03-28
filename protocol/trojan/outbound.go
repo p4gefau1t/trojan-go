@@ -54,8 +54,7 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 		return common.NewError("failed to write address").Base(err)
 	}
 	w.Write(crlf)
-	err = w.Flush()
-	return err
+	return w.Flush()
 }
 
 func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {

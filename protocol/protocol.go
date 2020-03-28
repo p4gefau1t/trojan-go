@@ -183,12 +183,12 @@ func WriteAddress(w io.Writer, request *Request) error {
 	return err
 }
 
-func ParsePort(addr net.Addr) (int, error) {
+func ParsePort(addr net.Addr) (uint16, error) {
 	_, portStr, err := net.SplitHostPort(addr.String())
 	if err != nil {
 		return 0, err
 	}
-	port := 0
+	var port uint16
 	_, err = fmt.Sscanf(portStr, "%d", &port)
 	return port, err
 }
