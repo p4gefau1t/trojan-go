@@ -70,9 +70,9 @@ func (s *Server) handleConn(conn net.Conn) {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
 				if err.Error() == "EOF" {
-					logger.Info("mux conn closed")
+					logger.Info("mux conn from", conn.RemoteAddr(), "closed")
 				} else {
-					logger.Error(err)
+					logger.Info("mux conn from", conn.RemoteAddr(), "closed: ", err)
 				}
 				return
 			}
@@ -181,7 +181,7 @@ func (s *Server) Run() error {
 	}
 	defer s.auth.Close()
 	defer s.meter.Close()
-	logger.Info("Server running at", s.config.LocalAddr)
+	logger.Info("server is running at", s.config.LocalAddr)
 
 	var listener net.Listener
 	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {

@@ -41,7 +41,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestMuxClient(t *testing.T) {
-	serverCertBytes, err := ioutil.ReadFile("./server.crt")
+	serverCertBytes, err := ioutil.ReadFile("server.crt")
 	common.Must(err)
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(serverCertBytes)
@@ -60,16 +60,18 @@ func TestMuxClient(t *testing.T) {
 			Port: 4445,
 		},
 		TCP: conf.TCPConfig{
-			Mux: true,
+			Mux:            true,
+			MuxConcurrency: 8,
 		},
 		Hash: map[string]string{common.SHA224String(password): password},
 	}
-	config.TCP.MuxIdleTimeout = 1
+	config.TCP.MuxIdleTimeout = 10
 	config.TLS.CertPool = pool
 	config.TLS.SNI = "localhost"
 
 	c := Client{
-		config: config,
+		config:  config,
+		muxPool: make(map[muxID]*muxClientInfo),
 	}
 	c.Run()
 }

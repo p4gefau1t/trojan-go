@@ -42,7 +42,7 @@ func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 			logger.Error(common.NewError("conn proxy ends").Base(err))
 		}
 	} else {
-		logger.Info("conn proxy ends")
+		logger.Debug("conn proxy ends")
 	}
 }
 
@@ -56,7 +56,7 @@ func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 			logger.Error(common.NewError("packet proxy ends").Base(err))
 		}
 	} else {
-		logger.Info("packet proxy ends")
+		logger.Debug("packet proxy ends")
 	}
 }
 
@@ -64,7 +64,8 @@ func NewProxy(config *conf.GlobalConfig) common.Runnable {
 	switch config.RunType {
 	case conf.Client:
 		client := &Client{
-			config: config,
+			config:  config,
+			muxPool: make(map[muxID]*muxClientInfo),
 		}
 		return client
 	case conf.Server:
