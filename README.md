@@ -195,7 +195,7 @@ client-mux.json
 
 ## 构建
 
-确保你的Golang版本 >= 1.11
+确保你的Golang版本 >= 1.14
 
 ```
 git clone https://github.com/p4gefau1t/trojan-go.git
@@ -404,7 +404,7 @@ You only need to set the client's configuration file, and the server will automa
 
 ## Build
 
-Just make sure your golang version >= 1.11
+Just make sure your golang version >= 1.14
 
 
 ```
