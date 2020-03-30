@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bufio"
 	"context"
 	"math/rand"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/protocol/http"
 	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
@@ -23,7 +25,6 @@ func generateMuxID() muxID {
 }
 
 type muxClientInfo struct {
-	sync.Mutex
 	id             muxID
 	client         *smux.Session
 	lastActiveTime time.Time
@@ -118,8 +119,8 @@ func (c *Client) checkAndCloseIdleMuxClient() {
 	}
 }
 
-func (c *Client) handleConn(conn net.Conn) {
-	inboundConn, err := socks.NewInboundConnSession(conn)
+func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
+	inboundConn, err := socks.NewInboundConnSession(conn, rw)
 	if err != nil {
 		logger.Error(common.NewError("failed to start new inbound session:").Base(err))
 		return
@@ -209,6 +210,113 @@ func (c *Client) handleConn(conn net.Conn) {
 	}
 }
 
+func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
+	inboundConn, inboundPacket, err := http.NewHTTPInbound(conn, rw)
+	if err != nil {
+		logger.Error(common.NewError("failed to start new inbound session:").Base(err))
+		return
+	}
+	if inboundConn != nil {
+		defer inboundConn.Close()
+		req := inboundConn.GetRequest()
+
+		if err := inboundConn.(protocol.NeedRespond).Respond(nil); err != nil {
+			logger.Error(common.NewError("failed to respond").Base(err))
+			return
+		}
+
+		if c.config.TCP.Mux {
+			info, err := c.pickMuxClient()
+			if err != nil {
+				logger.Error(common.NewError("failed to pick a mux client").Base(err))
+				return
+			}
+
+			stream, err := info.client.OpenStream()
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+			defer stream.Close()
+			outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
+			if err != nil {
+				logger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
+				return
+			}
+			defer outboundConn.Close()
+			logger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
+			proxyConn(conn, outboundConn)
+			info.lastActiveTime = time.Now()
+		} else {
+			outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
+			if err != nil {
+				logger.Error(common.NewError("failed to start new outbound session").Base(err))
+				return
+			}
+			defer outboundConn.Close()
+
+			logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+			proxyConn(inboundConn, outboundConn)
+		}
+	} else {
+		defer inboundPacket.Close()
+		type httpPacket struct {
+			request *protocol.Request
+			packet  []byte
+		}
+		packetChan := make(chan *httpPacket, 128)
+
+		readHTTPPackets := func() {
+			for {
+				req, packet, err := inboundPacket.ReadPacket()
+				if err != nil {
+					logger.Error(err)
+					return
+				}
+				packetChan <- &httpPacket{
+					request: req,
+					packet:  packet,
+				}
+			}
+		}
+
+		writeHTTPPackets := func() {
+			for {
+				select {
+				case packet := <-packetChan:
+					outboundConn, err := trojan.NewOutboundConnSession(packet.request, nil, c.config)
+					if err != nil {
+						logger.Error(err)
+						continue
+					}
+					_, err = outboundConn.Write(packet.packet)
+					if err != nil {
+						logger.Error(err)
+						continue
+					}
+					go func(outboundConn protocol.ConnSession) {
+						buf := [1024]byte{}
+						for {
+							n, err := outboundConn.Read(buf[:])
+							if err != nil {
+								logger.Error(err)
+								return
+							}
+							if _, err = inboundPacket.WritePacket(nil, buf[0:n]); err != nil {
+								logger.Error(err)
+								return
+							}
+						}
+					}(outboundConn)
+				}
+			}
+		}
+
+		go readHTTPPackets()
+		writeHTTPPackets()
+	}
+}
+
 func (c *Client) Run() error {
 	listener, err := net.Listen("tcp", c.config.LocalAddr.String())
 	if err != nil {
@@ -235,7 +343,18 @@ func (c *Client) Run() error {
 			logger.Error(common.NewError("error occured when accpeting conn").Base(err))
 			continue
 		}
-		go c.handleConn(conn)
+		rw := common.NewBufReadWriter(conn)
+		tmp, err := rw.Peek(1)
+		if err != nil {
+			logger.Error(err)
+			conn.Close()
+			continue
+		}
+		if tmp[0] == 0x05 {
+			go c.handleSocksConn(conn, rw)
+		} else {
+			go c.handleHTTPConn(conn, rw)
+		}
 	}
 }
 

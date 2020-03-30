@@ -119,6 +119,11 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 	}
 
 	if s.config.TLS.FallbackAddr != nil {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error("Recovered", r)
+			}
+		}()
 		//HACK
 		//obtain the bytes buffered by the tls conn
 		v := reflect.ValueOf(*tlsConn)
