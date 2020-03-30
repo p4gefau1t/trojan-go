@@ -47,7 +47,6 @@ func main() {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
-	logger.Info("Trojan-Go interrupted")
 	select {
 	case <-sigs:
 		proxy.Close()
