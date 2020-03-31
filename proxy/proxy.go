@@ -42,11 +42,7 @@ func ProxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	go copyConn(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		if err.Error() != "EOF" {
-			logger.Error(common.NewError("conn proxy ends").Base(err))
-		}
-	} else {
-		logger.Debug("conn proxy ends")
+		logger.Debug(common.NewError("conn proxy ends").Base(err))
 	}
 }
 
@@ -56,11 +52,7 @@ func ProxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	go copyPacket(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		if err.Error() != "EOF" {
-			logger.Error(common.NewError("packet proxy ends").Base(err))
-		}
-	} else {
-		logger.Debug("packet proxy ends")
+		logger.Debug(common.NewError("packet proxy ends").Base(err))
 	}
 }
 
@@ -74,6 +66,6 @@ func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
 	return nil, common.NewError("invalid run_type")
 }
 
-func RegisterBuildable(t conf.RunType, b Buildable) {
+func RegisterProxy(t conf.RunType, b Buildable) {
 	buildableMap[t] = b
 }

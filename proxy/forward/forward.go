@@ -63,5 +63,5 @@ func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 }
 
 func init() {
-	proxy.RegisterBuildable(conf.Forward, &Forward{})
+	proxy.RegisterProxy(conf.Forward, &Forward{})
 }

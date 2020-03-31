@@ -30,8 +30,8 @@ const (
 
 const (
 	MaxUDPPacketSize = 1024 * 4
-	UDPTimeout       = time.Second * 6
-	TCPTimeout       = time.Second * 6
+	UDPTimeout       = time.Second * 5
+	TCPTimeout       = time.Second * 5
 )
 
 type Request struct {

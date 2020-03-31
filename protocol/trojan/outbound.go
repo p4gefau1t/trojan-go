@@ -7,6 +7,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
 
@@ -75,6 +76,19 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 			if err := tlsConn.VerifyHostname(config.TLS.SNI); err != nil {
 				return nil, common.NewError("failed to verify hostname").Base(err)
 			}
+		}
+		if log.LogLevel == 0 {
+			state := tlsConn.ConnectionState()
+			chain := state.VerifiedChains
+			logger.Debug("tls handshaked", "cipher", tls.CipherSuiteName(state.CipherSuite))
+			logger.Debug("chains:")
+			for i := range chain {
+				logger.Debug("--------------------------------")
+				for j := range chain[i] {
+					logger.Debug("subject:", chain[i][j].Subject, "issuer:", chain[i][j].Issuer)
+				}
+			}
+			logger.Debug("--------------------------------")
 		}
 		conn = tlsConn
 	}

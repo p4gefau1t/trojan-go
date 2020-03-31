@@ -63,7 +63,12 @@ func (m *muxPoolManager) pickMuxClient() (*muxClientInfo, error) {
 	defer m.Unlock()
 
 	for _, info := range m.muxPool {
-		if !info.client.IsClosed() && (info.client.NumStreams() < m.config.TCP.MuxConcurrency || m.config.TCP.MuxConcurrency <= 0) {
+		if info.client.IsClosed() {
+			delete(m.muxPool, info.id)
+			logger.Info("mux", info.id, "is dead")
+			continue
+		}
+		if info.client.NumStreams() < m.config.TCP.MuxConcurrency || m.config.TCP.MuxConcurrency <= 0 {
 			info.lastActiveTime = time.Now()
 			return info, nil
 		}
@@ -92,10 +97,18 @@ func (m *muxPoolManager) OpenMuxConn() (*smux.Stream, *muxClientInfo, error) {
 }
 
 func (m *muxPoolManager) checkAndCloseIdleMuxClient() {
-	muxIdleDuration := time.Duration(m.config.TCP.MuxIdleTimeout) * time.Second
+	var muxIdleDuration, checkDuration time.Duration
+	if m.config.TCP.MuxIdleTimeout <= 0 {
+		muxIdleDuration = 0
+		checkDuration = time.Second * 10
+		logger.Warn("invalid mux idle timeout")
+	} else {
+		muxIdleDuration = time.Duration(m.config.TCP.MuxIdleTimeout) * time.Second
+		checkDuration = muxIdleDuration / 4
+	}
 	for {
 		select {
-		case <-time.After(muxIdleDuration / 4):
+		case <-time.After(checkDuration):
 			m.Lock()
 			for id, info := range m.muxPool {
 				if info.client.IsClosed() {
@@ -124,9 +137,6 @@ func (m *muxPoolManager) checkAndCloseIdleMuxClient() {
 }
 
 func NewMuxPoolManager(ctx context.Context, config *conf.GlobalConfig) (*muxPoolManager, error) {
-	if config.TCP.MuxIdleTimeout <= 0 {
-		return nil, common.NewError("invalid mux idle timeout")
-	}
 	m := &muxPoolManager{
 		ctx:     ctx,
 		config:  config,

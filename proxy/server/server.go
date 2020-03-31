@@ -75,11 +75,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
-				if err.Error() == "EOF" {
-					logger.Info("mux conn from", conn.RemoteAddr(), "closed")
-				} else {
-					logger.Info("mux conn from", conn.RemoteAddr(), "closed: ", err)
-				}
+				logger.Debug("mux conn from", conn.RemoteAddr(), "closed: ", err)
 				return
 			}
 			go s.handleMuxConn(stream, hash)
@@ -161,11 +157,6 @@ func (s *Server) Run() error {
 			s.config.MySQL.ServerPort,
 			s.config.MySQL.Database,
 		)
-		if err != nil {
-			return common.NewError("failed to connect to database server").Base(err)
-		}
-	} else if s.config.SQLite.Enabled {
-		db, err = common.ConnectSQLite(s.config.SQLite.Database)
 		if err != nil {
 			return common.NewError("failed to connect to database server").Base(err)
 		}
@@ -254,5 +245,5 @@ func (s *Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 }
 
 func init() {
-	proxy.RegisterBuildable(conf.Server, &Server{})
+	proxy.RegisterProxy(conf.Server, &Server{})
 }

@@ -19,6 +19,11 @@ import (
 
 var logger = log.New(os.Stdout)
 
+type packetInfo struct {
+	request *protocol.Request
+	packet  []byte
+}
+
 type Client struct {
 	common.Runnable
 	proxy.Buildable
@@ -29,55 +34,71 @@ type Client struct {
 	mux    *muxPoolManager
 }
 
+func (c *Client) listenUDP() {
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{
+		IP:   c.config.LocalIP,
+		Port: int(c.config.LocalPort),
+	})
+	if err != nil {
+		logger.Fatal(common.NewError("failed to listen udp").Base(err))
+	}
+	inbound, err := socks.NewInboundPacketSession(listener)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer inbound.Close()
+	req := protocol.Request{
+		DomainName:  []byte("UDP_CONN"),
+		AddressType: protocol.DomainName,
+		Command:     protocol.Associate,
+	}
+	for {
+		tunnel, err := trojan.NewOutboundConnSession(&req, nil, c.config)
+		if err != nil {
+			select {
+			case <-c.ctx.Done():
+				tunnel.Close()
+				return
+			default:
+			}
+			logger.Error(err)
+			continue
+		}
+		outbound, err := trojan.NewPacketSession(tunnel)
+		common.Must(err)
+		proxy.ProxyPacket(inbound, outbound)
+		tunnel.Close()
+	}
+}
+
 func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 	inboundConn, err := socks.NewInboundConnSession(conn, rw)
 	if err != nil {
-		logger.Error(common.NewError("failed to start new inbound session:").Base(err))
+		logger.Error(common.NewError("failed to start new inbound session").Base(err))
 		return
 	}
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
 
 	if req.Command == protocol.Associate {
-		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
-		if err != nil {
-			logger.Error(common.NewError("failed to start new outbound session for UDP").Base(err))
-			return
-		}
-		defer outboundConn.Close()
-
-		listenConn, err := net.ListenUDP("udp", &net.UDPAddr{
-			IP: c.config.LocalIP,
-		})
-		if err != nil {
-			logger.Error(common.NewError("failed to listen udp:").Base(err))
-			return
-		}
-
+		//setting up the bind address to respond
+		//listenUDP() will handle the incoming udp packets
 		req.IP = c.config.LocalIP
-		port, err := protocol.ParsePort(listenConn.LocalAddr())
-		common.Must(err)
-		req.Port = port
-		req.AddressType = protocol.IPv4
-
-		inboundPacket, err := socks.NewInboundPacketSession(listenConn)
-		if err != nil {
-			logger.Error("failed to start inbound packet session:", err)
-			return
+		req.Port = c.config.LocalPort
+		if c.config.LocalIP.To16() != nil {
+			req.AddressType = protocol.IPv6
+		} else {
+			req.AddressType = protocol.IPv4
 		}
-		defer inboundPacket.Close()
-
-		outboundPacket, err := trojan.NewPacketSession(outboundConn)
-		common.Must(err)
-		go proxy.ProxyPacket(inboundPacket, outboundPacket)
-
-		inboundConn.(protocol.NeedRespond).Respond()
+		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
+			logger.Error("failed to repsond")
+		}
 		logger.Info("UDP associated to", req)
 
 		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
 		_, err = conn.Read(buf[:])
-		logger.Info("UDP conn ends", err)
+		logger.Debug(common.NewError("UDP conn ends").Base(err))
 		return
 	}
 
@@ -158,11 +179,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		}
 	} else {
 		defer inboundPacket.Close()
-		type httpPacket struct {
-			request *protocol.Request
-			packet  []byte
-		}
-		packetChan := make(chan *httpPacket, 128)
+		packetChan := make(chan *packetInfo, 128)
 
 		readHTTPPackets := func() {
 			for {
@@ -171,7 +188,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 					logger.Error(err)
 					return
 				}
-				packetChan <- &httpPacket{
+				packetChan <- &packetInfo{
 					request: req,
 					packet:  packet,
 				}
@@ -213,15 +230,11 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 						for {
 							n, err := outboundConn.Read(buf[:])
 							if err != nil {
-								if err.Error() != "EOF" {
-									logger.Error(err)
-								}
+								logger.Debug(err)
 								return
 							}
 							if _, err = inboundPacket.WritePacket(nil, buf[0:n]); err != nil {
-								if err.Error() != "EOF" {
-									logger.Error(err)
-								}
+								logger.Debug(err)
 								return
 							}
 						}
@@ -238,6 +251,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 }
 
 func (c *Client) Run() error {
+	go c.listenUDP()
 	listener, err := net.Listen("tcp", c.config.LocalAddr.String())
 	if err != nil {
 		return common.NewError("failed to listen local address").Base(err)
@@ -290,5 +304,5 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 }
 
 func init() {
-	proxy.RegisterBuildable(conf.Client, &Client{})
+	proxy.RegisterProxy(conf.Client, &Client{})
 }

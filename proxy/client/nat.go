@@ -30,7 +30,7 @@ type NAT struct {
 func (n *NAT) handleConn(conn net.Conn) {
 	inbound, err := nat.NewInboundConnSession(conn)
 	if err != nil {
-		logger.Error("failed to start inbound session", err)
+		logger.Error(common.NewError("failed to start inbound session").Base(err))
 		return
 	}
 	req := inbound.GetRequest()
@@ -141,5 +141,5 @@ func (n *NAT) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 }
 
 func init() {
-	proxy.RegisterBuildable(conf.NAT, &NAT{})
+	proxy.RegisterProxy(conf.NAT, &NAT{})
 }

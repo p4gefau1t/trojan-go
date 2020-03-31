@@ -7,10 +7,12 @@ import (
 	"os/signal"
 
 	"github.com/p4gefau1t/trojan-go/cert"
+	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
@@ -21,9 +23,9 @@ var logger = log.New(os.Stdout)
 func main() {
 	logger.Info("Trojan-Go initializing...")
 	configFile := flag.String("config", "config.json", "Config filename")
-	guideMode := flag.String("cert", "", "Simple letsencrpyt cert acme client. Use \"-cert request\" to request a cert or \"-cert renew\" to renew a cert")
+	certMode := flag.String("cert", "", "Simple letsencrpyt cert acme client. Use \"-cert request\" to request a cert or \"-cert renew\" to renew a cert")
 	flag.Parse()
-	switch *guideMode {
+	switch *certMode {
 	case "request":
 		cert.RequestCertGuide()
 		return
@@ -37,11 +39,11 @@ func main() {
 	}
 	data, err := ioutil.ReadFile(*configFile)
 	if err != nil {
-		logger.Fatal("Failed to read config file", err)
+		logger.Fatal(common.NewError("Failed to read config file").Base(err))
 	}
 	config, err := conf.ParseJSON(data)
 	if err != nil {
-		logger.Fatal("Failed to parse config file", err)
+		logger.Fatal(common.NewError("Failed to parse config file").Base(err))
 	}
 	proxy, err := proxy.NewProxy(config)
 	if err != nil {
