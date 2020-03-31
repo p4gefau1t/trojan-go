@@ -34,6 +34,7 @@ func RunBlackHoleTCPServer() net.Addr {
 	common.Must(err)
 	blackhole := func(conn net.Conn) {
 		io.Copy(ioutil.Discard, conn)
+		conn.Close()
 	}
 	serve := func() {
 		for {

@@ -5,12 +5,19 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"net"
+	"net/http"
+	"sync"
 	"testing"
+	"time"
+
+	_ "net/http/pprof"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
+	"golang.org/x/net/proxy"
 )
 
 var cert string = `
@@ -130,7 +137,7 @@ func TestClient(t *testing.T) {
 	}
 	c := client.Client{}
 	c.Build(config)
-	c.Run()
+	common.Must(c.Run())
 }
 
 func TestServer(t *testing.T) {
@@ -146,7 +153,7 @@ func TestServer(t *testing.T) {
 	}
 	s := server.Server{}
 	s.Build(config)
-	s.Run()
+	common.Must(s.Run())
 }
 
 func TestNAT(t *testing.T) {
@@ -162,7 +169,7 @@ func TestNAT(t *testing.T) {
 	}
 	n := client.NAT{}
 	n.Build(config)
-	n.Run()
+	common.Must(n.Run())
 }
 
 func TestMuxClient(t *testing.T) {
@@ -187,11 +194,237 @@ func TestMuxClient(t *testing.T) {
 }
 
 func TestClientAndServer(t *testing.T) {
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8000", nil)
+		logger.Error(err)
+	}()
 	go TestClient(t)
 	TestServer(t)
 }
 
 func TestMuxClientAndServer(t *testing.T) {
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8000", nil)
+		logger.Error(err)
+	}()
 	go TestMuxClient(t)
 	TestServer(t)
+}
+
+func BenchmarkNormalClientToServer(b *testing.B) {
+	log.LogLevel = 5
+	config1 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+	}
+	c := client.Client{}
+	c.Build(config1)
+	go c.Run()
+
+	config2 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4445,
+		LocalAddr:  getLocalAddr(4445),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 80,
+		RemoteAddr: getLocalAddr(80),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+	}
+	s := server.Server{}
+	s.Build(config2)
+	go s.Run()
+
+	target := RunBlackHoleTCPServer()
+	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	common.Must(err)
+	conn, err := dialer.Dial("tcp", target.String())
+	common.Must(err)
+	mbytes := 512
+	payload := GeneratePayload(1024 * 1024 * mbytes)
+	t1 := time.Now()
+	conn.Write(payload)
+	t2 := time.Now()
+	speed := float64(mbytes) / t2.Sub(t1).Seconds()
+	b.Log("Speed: ", speed, "MB/s")
+	conn.Close()
+}
+
+func BenchmarkMuxClientToServer(b *testing.B) {
+	log.LogLevel = 5
+	config1 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		TCP: conf.TCPConfig{
+			Mux:            true,
+			MuxConcurrency: 8,
+			MuxIdleTimeout: 30,
+		},
+	}
+	c := client.Client{}
+	c.Build(config1)
+	go c.Run()
+
+	config2 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4445,
+		LocalAddr:  getLocalAddr(4445),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 80,
+		RemoteAddr: getLocalAddr(80),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+	}
+	s := server.Server{}
+	s.Build(config2)
+	go s.Run()
+
+	target := RunBlackHoleTCPServer()
+	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	common.Must(err)
+	conn, err := dialer.Dial("tcp", target.String())
+	common.Must(err)
+	mbytes := 512
+	payload := GeneratePayload(1024 * 1024 * mbytes)
+	t1 := time.Now()
+	conn.Write(payload)
+	t2 := time.Now()
+	speed := float64(mbytes) / t2.Sub(t1).Seconds()
+	b.Log("Speed: ", speed, "MB/s")
+	conn.Close()
+}
+
+func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
+	log.LogLevel = 5
+	config1 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+	}
+	c := client.Client{}
+	c.Build(config1)
+	go c.Run()
+
+	config2 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4445,
+		LocalAddr:  getLocalAddr(4445),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 80,
+		RemoteAddr: getLocalAddr(80),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+	}
+	s := server.Server{}
+	s.Build(config2)
+	go s.Run()
+
+	target := RunBlackHoleTCPServer()
+	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	common.Must(err)
+
+	connNum := 128
+	mbytes := 128
+	payload := GeneratePayload(1024 * 1024 * mbytes)
+
+	wg := sync.WaitGroup{}
+	sender := func(wg *sync.WaitGroup) {
+		conn, err := dialer.Dial("tcp", target.String())
+		common.Must(err)
+		conn.Write(payload)
+		conn.Close()
+		wg.Done()
+	}
+
+	wg.Add(connNum)
+
+	t1 := time.Now()
+	for i := 0; i < connNum; i++ {
+		go sender(&wg)
+	}
+	wg.Wait()
+	t2 := time.Now()
+	speed := float64(mbytes) * float64(connNum) / t2.Sub(t1).Seconds()
+	b.Log("Speed: ", speed, "MB/s")
+}
+
+func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
+	log.LogLevel = 5
+	config1 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		TCP: conf.TCPConfig{
+			Mux:            true,
+			MuxConcurrency: 8,
+			MuxIdleTimeout: 30,
+		},
+	}
+	c := client.Client{}
+	c.Build(config1)
+	go c.Run()
+
+	config2 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4445,
+		LocalAddr:  getLocalAddr(4445),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 80,
+		RemoteAddr: getLocalAddr(80),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+	}
+	s := server.Server{}
+	s.Build(config2)
+	go s.Run()
+
+	target := RunBlackHoleTCPServer()
+	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	common.Must(err)
+
+	connNum := 128
+	mbytes := 128
+	payload := GeneratePayload(1024 * 1024 * mbytes)
+
+	wg := sync.WaitGroup{}
+	sender := func(wg *sync.WaitGroup) {
+		conn, err := dialer.Dial("tcp", target.String())
+		common.Must(err)
+		conn.Write(payload)
+		conn.Close()
+		wg.Done()
+	}
+
+	wg.Add(connNum)
+
+	t1 := time.Now()
+	for i := 0; i < connNum; i++ {
+		go sender(&wg)
+	}
+	wg.Wait()
+	t2 := time.Now()
+	speed := float64(mbytes) * float64(connNum) / t2.Sub(t1).Seconds()
+	b.Log("Speed: ", speed, "MB/s")
 }

@@ -86,8 +86,9 @@ func (i *SocksConnInboundSession) Read(p []byte) (int, error) {
 }
 
 func (i *SocksConnInboundSession) Write(p []byte) (int, error) {
-	defer i.bufReadWriter.Flush()
-	return i.bufReadWriter.Write(p)
+	n, err := i.bufReadWriter.Write(p)
+	i.bufReadWriter.Flush()
+	return n, err
 }
 
 func (i *SocksConnInboundSession) Close() error {

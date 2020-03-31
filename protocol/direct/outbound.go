@@ -23,8 +23,9 @@ func (o *DirectOutboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (o *DirectOutboundConnSession) Write(p []byte) (int, error) {
-	defer o.bufReadWriter.Flush()
-	return o.bufReadWriter.Write(p)
+	n, err := o.bufReadWriter.Write(p)
+	o.bufReadWriter.Flush()
+	return n, err
 }
 
 func (o *DirectOutboundConnSession) Close() error {
