@@ -1,135 +1,32 @@
-package proxy
+package client
 
 import (
 	"bufio"
 	"context"
-	"math/rand"
 	"net"
-	"sync"
-	"time"
+	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/http"
 	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
-	"github.com/xtaci/smux"
+	"github.com/p4gefau1t/trojan-go/proxy"
 )
 
-type muxID uint32
-
-func generateMuxID() muxID {
-	return muxID(rand.Uint32())
-}
-
-type muxClientInfo struct {
-	id             muxID
-	client         *smux.Session
-	lastActiveTime time.Time
-}
+var logger = log.New(os.Stdout)
 
 type Client struct {
 	common.Runnable
+	proxy.Buildable
 
 	config *conf.GlobalConfig
 	ctx    context.Context
 	cancel context.CancelFunc
-
-	muxLock sync.Mutex
-	muxPool map[muxID]*muxClientInfo
-}
-
-func (c *Client) newMuxClient() (*muxClientInfo, error) {
-	id := generateMuxID()
-	if _, found := c.muxPool[id]; found {
-		return nil, common.NewError("duplicated id")
-	}
-	req := &protocol.Request{
-		Command:     protocol.Mux,
-		DomainName:  []byte("MUX_CONN"),
-		AddressType: protocol.DomainName,
-	}
-	conn, err := trojan.NewOutboundConnSession(req, nil, c.config)
-	if err != nil {
-		logger.Error(common.NewError("failed to dial tls tunnel").Base(err))
-		return nil, err
-	}
-
-	client, err := smux.Client(conn, nil)
-	common.Must(err)
-	logger.Info("mux TLS tunnel established, id:", id)
-	return &muxClientInfo{
-		client:         client,
-		id:             id,
-		lastActiveTime: time.Now(),
-	}, nil
-}
-
-func (c *Client) pickMuxClient() (*muxClientInfo, error) {
-	c.muxLock.Lock()
-	defer c.muxLock.Unlock()
-
-	for _, info := range c.muxPool {
-		if !info.client.IsClosed() && (info.client.NumStreams() < c.config.TCP.MuxConcurrency || c.config.TCP.MuxConcurrency <= 0) {
-			info.lastActiveTime = time.Now()
-			return info, nil
-		}
-	}
-
-	//not found
-	info, err := c.newMuxClient()
-	if err != nil {
-		return nil, err
-	}
-	c.muxPool[info.id] = info
-	return info, nil
-}
-
-func (c *Client) openMuxConn() (*smux.Stream, *muxClientInfo, error) {
-	info, err := c.pickMuxClient()
-	if err != nil {
-		return nil, nil, err
-	}
-	stream, err := info.client.OpenStream()
-	if err != nil {
-		return nil, nil, err
-	}
-	info.lastActiveTime = time.Now()
-	return stream, info, nil
-}
-
-func (c *Client) checkAndCloseIdleMuxClient() {
-	muxIdleDuration := time.Duration(c.config.TCP.MuxIdleTimeout) * time.Second
-	for {
-		select {
-		case <-time.After(muxIdleDuration / 4):
-			c.muxLock.Lock()
-			for id, info := range c.muxPool {
-				if info.client.IsClosed() {
-					delete(c.muxPool, id)
-					logger.Info("mux", id, "is dead")
-				} else if info.client.NumStreams() == 0 && time.Now().Sub(info.lastActiveTime) > muxIdleDuration {
-					info.client.Close()
-					delete(c.muxPool, id)
-					logger.Info("mux", id, "is closed due to inactive")
-				}
-			}
-			if len(c.muxPool) != 0 {
-				logger.Info("current mux pool conn num", len(c.muxPool))
-			}
-			c.muxLock.Unlock()
-		case <-c.ctx.Done():
-			c.muxLock.Lock()
-			for id, info := range c.muxPool {
-				info.client.Close()
-				logger.Info("mux", id, "closed")
-			}
-			c.muxLock.Unlock()
-			return
-		}
-	}
+	mux    *muxPoolManager
 }
 
 func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
@@ -147,6 +44,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			logger.Error(common.NewError("failed to start new outbound session for UDP").Base(err))
 			return
 		}
+		defer outboundConn.Close()
 
 		listenConn, err := net.ListenUDP("udp", &net.UDPAddr{
 			IP: c.config.LocalIP,
@@ -171,9 +69,9 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 
 		outboundPacket, err := trojan.NewPacketSession(outboundConn)
 		common.Must(err)
-		go proxyPacket(inboundPacket, outboundPacket)
+		go proxy.ProxyPacket(inboundPacket, outboundPacket)
 
-		inboundConn.(protocol.NeedRespond).Respond(nil)
+		inboundConn.(protocol.NeedRespond).Respond()
 		logger.Info("UDP associated to", req)
 
 		//stop relaying UDP once TCP connection is closed
@@ -183,27 +81,27 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		return
 	}
 
-	if err := inboundConn.(protocol.NeedRespond).Respond(nil); err != nil {
+	if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 		logger.Error(common.NewError("failed to respond").Base(err))
 		return
 	}
 
 	if c.config.TCP.Mux {
-		stream, info, err := c.openMuxConn()
+		stream, info, err := c.mux.OpenMuxConn()
 		if err != nil {
 			logger.Error(common.NewError("failed to open mux stream").Base(err))
 			return
 		}
 
-		defer stream.Close()
 		outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
 		if err != nil {
+			stream.Close()
 			logger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 			return
 		}
 		defer outboundConn.Close()
 		logger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-		proxyConn(inboundConn, outboundConn)
+		proxy.ProxyConn(inboundConn, outboundConn)
 	} else {
 		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
@@ -213,7 +111,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		defer outboundConn.Close()
 
 		logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
-		proxyConn(inboundConn, outboundConn)
+		proxy.ProxyConn(inboundConn, outboundConn)
 	}
 }
 
@@ -227,13 +125,13 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		defer inboundConn.Close()
 		req := inboundConn.GetRequest()
 
-		if err := inboundConn.(protocol.NeedRespond).Respond(nil); err != nil {
+		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			logger.Error(common.NewError("failed to respond").Base(err))
 			return
 		}
 
 		if c.config.TCP.Mux {
-			stream, info, err := c.openMuxConn()
+			stream, info, err := c.mux.OpenMuxConn()
 			if err != nil {
 				logger.Error(common.NewError("failed to open mux stream").Base(err))
 				return
@@ -246,7 +144,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			}
 			defer outboundConn.Close()
 			logger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-			proxyConn(inboundConn, outboundConn)
+			proxy.ProxyConn(inboundConn, outboundConn)
 		} else {
 			outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 			if err != nil {
@@ -256,7 +154,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			defer outboundConn.Close()
 
 			logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
-			proxyConn(inboundConn, outboundConn)
+			proxy.ProxyConn(inboundConn, outboundConn)
 		}
 	} else {
 		defer inboundPacket.Close()
@@ -286,7 +184,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				case packet := <-packetChan:
 					var outboundConn protocol.ConnSession
 					if c.config.TCP.Mux {
-						stream, info, err := c.openMuxConn()
+						stream, info, err := c.mux.OpenMuxConn()
 						if err != nil {
 							logger.Error(common.NewError("failed to open mux stream").Base(err))
 							continue
@@ -346,14 +244,6 @@ func (c *Client) Run() error {
 	}
 	defer listener.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	c.ctx = ctx
-	c.cancel = cancel
-
-	if c.config.TCP.MuxIdleTimeout > 0 {
-		go c.checkAndCloseIdleMuxClient()
-	}
-	c.ctx = ctx
 	logger.Info("client is running at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
@@ -384,4 +274,21 @@ func (c *Client) Close() error {
 	logger.Info("shutting down client..")
 	c.cancel()
 	return nil
+}
+
+func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	if config.TCP.Mux {
+		var err error
+		c.mux, err = NewMuxPoolManager(c.ctx, config)
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}
+	c.config = config
+	return c, nil
+}
+
+func init() {
+	proxy.RegisterBuildable(conf.Client, &Client{})
 }

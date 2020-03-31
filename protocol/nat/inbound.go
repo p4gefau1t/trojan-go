@@ -94,6 +94,7 @@ func (i *NATInboundPacketSession) cleanExpiredSession() {
 		select {
 		case <-time.After(protocol.UDPTimeout):
 		case <-i.ctx.Done():
+			i.conn.Close()
 			return
 		}
 	}
@@ -147,7 +148,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 
 func (i *NATInboundPacketSession) Close() error {
 	i.cancel()
-	return i.conn.Close()
+	return nil
 }
 
 func NewInboundPacketSession(config *conf.GlobalConfig) (protocol.PacketSession, error) {

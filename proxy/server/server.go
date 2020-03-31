@@ -1,24 +1,30 @@
-package proxy
+package server
 
 import (
 	"context"
 	"crypto/tls"
 	"database/sql"
 	"net"
+	"os"
 	"reflect"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
+	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
 )
 
+var logger = log.New(os.Stdout)
+
 type Server struct {
 	common.Runnable
+	proxy.Buildable
 
 	listener net.Listener
 	auth     stat.Authenticator
@@ -49,7 +55,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 	}
 	logger.Info("user", passwordHash, "mux tunneling to", req.String())
 	defer outboundConn.Close()
-	proxyConn(inboundConn, outboundConn)
+	proxy.ProxyConn(inboundConn, outboundConn)
 }
 
 func (s *Server) handleConn(conn net.Conn) {
@@ -92,7 +98,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		}
 		defer outboundPacket.Close()
 		logger.Info("UDP associated")
-		proxyPacket(inboundPacket, outboundPacket)
+		proxy.ProxyPacket(inboundPacket, outboundPacket)
 		logger.Info("UDP tunnel closed")
 		return
 	}
@@ -106,15 +112,14 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer outboundConn.Close()
 
 	logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
-	proxyConn(inboundConn, outboundConn)
+	proxy.ProxyConn(inboundConn, outboundConn)
 }
 
 func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
-
+	defer conn.Close()
 	if len(s.config.TLS.HTTPResponse) > 0 {
 		logger.Warn("trying to response a plain http response")
 		conn.Write(s.config.TLS.HTTPResponse)
-		conn.Close()
 		return
 	}
 
@@ -133,22 +138,18 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 		remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
 		if err != nil {
 			logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
+			return
 		}
 		logger.Warn("proxying this invalid tls conn to the tls fallback server")
 		remote.Write(buf)
-		go proxyConn(conn, remote)
+		proxy.ProxyConn(conn, remote)
 	} else {
 		logger.Warn("fallback port is unspecified, closing")
-		conn.Close()
 	}
 
 }
 
 func (s *Server) Run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.ctx = ctx
-	s.cancel = cancel
-
 	var db *sql.DB
 	var err error
 	if s.config.MySQL.Enabled {
@@ -244,4 +245,14 @@ func (s *Server) Close() error {
 	}
 	s.cancel()
 	return nil
+}
+
+func (s *Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
+	s.config = config
+	s.ctx, s.cancel = context.WithCancel(context.Background())
+	return s, nil
+}
+
+func init() {
+	proxy.RegisterBuildable(conf.Server, &Server{})
 }

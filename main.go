@@ -10,6 +10,10 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy"
+
+	_ "github.com/p4gefau1t/trojan-go/proxy/client"
+	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
+	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 )
 
 var logger = log.New(os.Stdout)
@@ -39,7 +43,10 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to parse config file", err)
 	}
-	proxy := proxy.NewProxy(config)
+	proxy, err := proxy.NewProxy(config)
+	if err != nil {
+		logger.Fatal(err)
+	}
 	errChan := make(chan error)
 	go func() {
 		errChan <- proxy.Run()

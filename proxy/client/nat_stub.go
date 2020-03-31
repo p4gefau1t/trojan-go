@@ -1,6 +1,6 @@
 // +build !linux
 
-package proxy
+package client
 
 import (
 	"github.com/p4gefau1t/trojan-go/common"

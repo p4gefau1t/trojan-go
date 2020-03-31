@@ -1,12 +1,17 @@
-package proxy
+package forward
 
 import (
 	"context"
 	"net"
+	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/proxy"
 )
+
+var logger = log.New(os.Stdout)
 
 type Forward struct {
 	common.Runnable
@@ -21,7 +26,7 @@ func (f *Forward) handleConn(conn net.Conn) {
 		logger.Error("failed to connect to remote endpoint:", err)
 		return
 	}
-	proxyConn(newConn, conn)
+	proxy.ProxyConn(newConn, conn)
 }
 
 func (f *Forward) Run() error {
@@ -49,4 +54,14 @@ func (f *Forward) Close() error {
 	logger.Info("shutting down forward..")
 	f.cancel()
 	return nil
+}
+
+func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
+	f.ctx, f.cancel = context.WithCancel(context.Background())
+	f.config = config
+	return f, nil
+}
+
+func init() {
+	proxy.RegisterBuildable(conf.Forward, &Forward{})
 }

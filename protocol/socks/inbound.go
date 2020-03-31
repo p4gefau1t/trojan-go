@@ -69,7 +69,7 @@ func (i *SocksConnInboundSession) parseRequest() error {
 	return nil
 }
 
-func (i *SocksConnInboundSession) Respond(r io.Reader) error {
+func (i *SocksConnInboundSession) Respond() error {
 	if i.request.Command == protocol.Connect {
 		i.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 		return nil

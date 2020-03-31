@@ -69,7 +69,7 @@ type HasHash interface {
 }
 
 type NeedRespond interface {
-	Respond(io.Reader) error
+	Respond() error
 }
 
 type PacketReader interface {

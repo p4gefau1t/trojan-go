@@ -43,7 +43,7 @@ func (i *HTTPInboundTunnelConnSession) Close() error {
 	return i.conn.Close()
 }
 
-func (i *HTTPInboundTunnelConnSession) Respond(r io.Reader) error {
+func (i *HTTPInboundTunnelConnSession) Respond() error {
 	payload := fmt.Sprintf("HTTP/%d.%d 200 Connection established\r\n\r\n", i.httpRequest.ProtoMajor, i.httpRequest.ProtoMinor)
 	_, err := i.Write([]byte(payload))
 	return err
