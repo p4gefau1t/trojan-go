@@ -56,6 +56,32 @@ func ProxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	}
 }
 
+func copyPacketWithAliveChan(dst protocol.PacketWriter, src protocol.PacketReader, errChan chan error, aliveChan chan int) {
+	for {
+		req, packet, err := src.ReadPacket()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		_, err = dst.WritePacket(req, packet)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		aliveChan <- 1
+	}
+}
+
+func ProxyPacketWithAliveChan(a protocol.PacketReadWriter, b protocol.PacketReadWriter, aliveChan chan int) {
+	errChan := make(chan error, 2)
+	go copyPacket(a, b, errChan)
+	go copyPacket(b, a, errChan)
+	err := <-errChan
+	if err != nil {
+		logger.Debug(common.NewError("packet proxy ends").Base(err))
+	}
+}
+
 var buildableMap map[conf.RunType]Buildable = make(map[conf.RunType]Buildable)
 
 func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {

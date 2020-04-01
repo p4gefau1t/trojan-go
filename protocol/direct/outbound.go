@@ -106,7 +106,7 @@ func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet 
 	if err != nil {
 		return 0, common.NewError("cannot dial udp").Base(err)
 	}
-	logger.Info("UDP directly dialing to", remote)
+	logger.Debug("UDP directly dialing to", remote)
 	n, err := conn.Write(packet)
 	return n, err
 }

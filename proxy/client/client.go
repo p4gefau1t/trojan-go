@@ -5,6 +5,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -28,46 +29,58 @@ type Client struct {
 	common.Runnable
 	proxy.Buildable
 
-	config *conf.GlobalConfig
-	ctx    context.Context
-	cancel context.CancelFunc
-	mux    *muxPoolManager
+	config         *conf.GlobalConfig
+	ctx            context.Context
+	cancel         context.CancelFunc
+	mux            *muxPoolManager
+	associatedChan chan int
 }
 
 func (c *Client) listenUDP() {
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   c.config.LocalIP,
-		Port: int(c.config.LocalPort),
-	})
-	if err != nil {
-		logger.Fatal(common.NewError("failed to listen udp").Base(err))
-	}
-	inbound, err := socks.NewInboundPacketSession(listener)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	defer inbound.Close()
-	req := protocol.Request{
-		DomainName:  []byte("UDP_CONN"),
-		AddressType: protocol.DomainName,
-		Command:     protocol.Associate,
-	}
 	for {
+	start:
+		listener, err := net.ListenUDP("udp", &net.UDPAddr{
+			IP:   c.config.LocalIP,
+			Port: int(c.config.LocalPort),
+		})
+		if err != nil {
+			logger.Fatal(common.NewError("failed to listen udp").Base(err))
+		}
+		inbound, err := socks.NewInboundPacketSession(listener)
+		<-c.associatedChan
+		common.Must(err)
+		logger.Debug("associated signal")
+		req := protocol.Request{
+			DomainName:  []byte("UDP_CONN"),
+			AddressType: protocol.DomainName,
+			Command:     protocol.Associate,
+		}
 		tunnel, err := trojan.NewOutboundConnSession(&req, nil, c.config)
 		if err != nil {
-			select {
-			case <-c.ctx.Done():
-				tunnel.Close()
-				return
-			default:
-			}
 			logger.Error(err)
 			continue
 		}
 		outbound, err := trojan.NewPacketSession(tunnel)
 		common.Must(err)
-		proxy.ProxyPacket(inbound, outbound)
-		tunnel.Close()
+		alive := make(chan int)
+		go proxy.ProxyPacketWithAliveChan(inbound, outbound, alive)
+		for {
+			select {
+			case <-alive:
+				logger.Debug("keep alive..(alive)")
+			case <-c.associatedChan:
+				logger.Debug("keep alive..(associated)")
+			case <-time.After(protocol.UDPTimeout):
+				logger.Debug("time out, closing UDP tunnel")
+				outbound.Close()
+				inbound.Close()
+				goto start
+			case <-c.ctx.Done():
+				outbound.Close()
+				inbound.Close()
+				return
+			}
+		}
 	}
 }
 
@@ -90,10 +103,12 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		} else {
 			req.AddressType = protocol.IPv4
 		}
+		//notify listenUDP to get ready for relaying udp packets
+		c.associatedChan <- 1
+		logger.Info("UDP associated to", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			logger.Error("failed to repsond")
 		}
-		logger.Info("UDP associated to", req)
 
 		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
@@ -292,6 +307,7 @@ func (c *Client) Close() error {
 
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.associatedChan = make(chan int)
 	if config.TCP.Mux {
 		var err error
 		c.mux, err = NewMuxPoolManager(c.ctx, config)

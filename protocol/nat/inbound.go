@@ -132,7 +132,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 		expire: time.Now().Add(protocol.UDPTimeout),
 	}
 	i.tableMutex.Unlock()
-	logger.Info("tproxy UDP packet from", src, "to", dst)
+	logger.Debug("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
 		IP:          dst.IP,
 		Port:        uint16(dst.Port),
