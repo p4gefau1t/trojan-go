@@ -7,6 +7,10 @@ import (
 	"io"
 )
 
+const (
+	Version = "v0.0.15"
+)
+
 type Runnable interface {
 	Run() error
 	Close() error
