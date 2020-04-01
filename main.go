@@ -12,12 +12,12 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
+	_ "github.com/p4gefau1t/trojan-go/version"
 )
 
 var logger = log.New(os.Stdout)
 
 func main() {
-	logger.Info("Trojan-Go initializing...")
 	flag.Parse()
 	for {
 		h, err := common.PopOptionHandler()
@@ -29,5 +29,4 @@ func main() {
 			break
 		}
 	}
-	logger.Info("Trojan-Go exited")
 }

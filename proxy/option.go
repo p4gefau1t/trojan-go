@@ -24,6 +24,7 @@ func (*proxyOption) Priority() int {
 }
 
 func (c *proxyOption) Handle() error {
+	logger.Info("Trojan-Go proxy initializing...")
 	data, err := ioutil.ReadFile(*c.args)
 	if err != nil {
 		logger.Fatal(common.NewError("Failed to read config file").Base(err))
