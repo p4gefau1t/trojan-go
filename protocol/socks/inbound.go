@@ -3,12 +3,19 @@ package socks
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"net"
+	"os"
+	"sync"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
+
+var logger = log.New(os.Stdout)
 
 type SocksConnInboundSession struct {
 	protocol.ConnSession
@@ -69,7 +76,7 @@ func (i *SocksConnInboundSession) parseRequest() error {
 	return nil
 }
 
-func (i *SocksConnInboundSession) Respond(r io.Reader) error {
+func (i *SocksConnInboundSession) Respond() error {
 	if i.request.Command == protocol.Connect {
 		i.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 		return nil
@@ -86,8 +93,9 @@ func (i *SocksConnInboundSession) Read(p []byte) (int, error) {
 }
 
 func (i *SocksConnInboundSession) Write(p []byte) (int, error) {
-	defer i.bufReadWriter.Flush()
-	return i.bufReadWriter.Write(p)
+	n, err := i.bufReadWriter.Write(p)
+	i.bufReadWriter.Flush()
+	return n, err
 }
 
 func (i *SocksConnInboundSession) Close() error {
@@ -115,13 +123,23 @@ func NewInboundConnSession(conn io.ReadWriteCloser, rw *bufio.ReadWriter) (proto
 	return i, nil
 }
 
-type SocksInboundPacketSession struct {
-	protocol.PacketSession
-	conn         *net.UDPConn
-	socks5Client *net.UDPAddr
+type udpSession struct {
+	src    *net.UDPAddr
+	req    *protocol.Request
+	expire time.Time
 }
 
-func (i *SocksInboundPacketSession) parsePacketHeader(rawPacket []byte) (*protocol.Request, []byte, error) {
+type SocksInboundPacketSession struct {
+	protocol.PacketSession
+
+	conn         *net.UDPConn
+	sessionTable map[string]*udpSession
+	tableMutex   sync.Mutex
+	ctx          context.Context
+	cancel       context.CancelFunc
+}
+
+func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Request, []byte, error) {
 	if len(rawPacket) <= 4 {
 		return nil, nil, common.NewError("too short")
 	}
@@ -147,14 +165,46 @@ func (i *SocksInboundPacketSession) writePacketHeader(w io.Writer, req *protocol
 	return nil
 }
 
+func (i *SocksInboundPacketSession) cleanExpiredSession() {
+	for {
+		i.tableMutex.Lock()
+		now := time.Now()
+		for k, v := range i.sessionTable {
+			if now.After(v.expire) {
+				logger.Debug("deleting expired session", v.src, "req:", v.req)
+				delete(i.sessionTable, k)
+			}
+		}
+		i.tableMutex.Unlock()
+		select {
+		case <-time.After(protocol.UDPTimeout):
+		case <-i.ctx.Done():
+			i.conn.Close()
+			return
+		}
+	}
+}
+
 func (i *SocksInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 	buf := make([]byte, protocol.MaxUDPPacketSize)
-	n, remote, err := i.conn.ReadFromUDP(buf)
-	i.socks5Client = remote
+	n, src, err := i.conn.ReadFromUDP(buf)
 	if err != nil {
 		return nil, nil, err
 	}
-	return i.parsePacketHeader(buf[0:n])
+	req, payload, err := i.parsePacket(buf[0:n])
+	if err != nil {
+		return nil, nil, err
+	}
+	session := &udpSession{
+		src:    src,
+		req:    req,
+		expire: time.Now().Add(protocol.UDPTimeout),
+	}
+	i.tableMutex.Lock()
+	i.sessionTable[req.String()] = session
+	i.tableMutex.Unlock()
+	logger.Debug("UDP read from", src, "req", req)
+	return req, payload, err
 }
 
 func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
@@ -163,16 +213,28 @@ func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []
 		return 0, err
 	}
 	w.Write(packet)
-	return i.conn.WriteToUDP(w.Bytes(), i.socks5Client)
+	client, found := i.sessionTable[req.String()]
+	if !found {
+		return 0, common.NewError("session not found")
+	}
+	logger.Debug("UDP write to", client.src, "req", req)
+	return i.conn.WriteToUDP(w.Bytes(), client.src)
 }
 
 func (i *SocksInboundPacketSession) Close() error {
+	i.cancel()
 	return i.conn.Close()
 }
 
 func NewInboundPacketSession(conn *net.UDPConn) (*SocksInboundPacketSession, error) {
-	i := &SocksInboundPacketSession{}
+	ctx, cancel := context.WithCancel(context.Background())
 	conn.SetWriteBuffer(0)
-	i.conn = conn
+	i := &SocksInboundPacketSession{
+		ctx:          ctx,
+		cancel:       cancel,
+		sessionTable: make(map[string]*udpSession),
+		conn:         conn,
+	}
+	go i.cleanExpiredSession()
 	return i, nil
 }

@@ -12,6 +12,10 @@ import (
 
 var logger = log.New(os.Stdout)
 
+type Buildable interface {
+	Build(config *conf.GlobalConfig) (common.Runnable, error)
+}
+
 func copyConn(dst io.Writer, src io.Reader, errChan chan error) {
 	_, err := io.Copy(dst, src)
 	errChan <- err
@@ -32,58 +36,62 @@ func copyPacket(dst protocol.PacketWriter, src protocol.PacketReader, errChan ch
 	}
 }
 
-func proxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
+func ProxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	errChan := make(chan error, 2)
 	go copyConn(a, b, errChan)
 	go copyConn(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		if err.Error() != "EOF" {
-			logger.Error(common.NewError("conn proxy ends").Base(err))
-		}
-	} else {
-		logger.Debug("conn proxy ends")
+		logger.Debug(common.NewError("conn proxy ends").Base(err))
 	}
 }
 
-func proxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
+func ProxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	errChan := make(chan error, 2)
 	go copyPacket(a, b, errChan)
 	go copyPacket(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		if err.Error() != "EOF" {
-			logger.Error(common.NewError("packet proxy ends").Base(err))
-		}
-	} else {
-		logger.Debug("packet proxy ends")
+		logger.Debug(common.NewError("packet proxy ends").Base(err))
 	}
 }
 
-func NewProxy(config *conf.GlobalConfig) common.Runnable {
-	switch config.RunType {
-	case conf.Client:
-		client := &Client{
-			config:  config,
-			muxPool: make(map[muxID]*muxClientInfo),
+func copyPacketWithAliveChan(dst protocol.PacketWriter, src protocol.PacketReader, errChan chan error, aliveChan chan int) {
+	for {
+		req, packet, err := src.ReadPacket()
+		if err != nil {
+			errChan <- err
+			return
 		}
-		return client
-	case conf.Server:
-		server := &Server{
-			config: config,
+		_, err = dst.WritePacket(req, packet)
+		if err != nil {
+			errChan <- err
+			return
 		}
-		return server
-	case conf.Forward:
-		forward := &Forward{
-			config: config,
-		}
-		return forward
-	case conf.NAT:
-		nat := &NAT{
-			config: config,
-		}
-		return nat
-	default:
-		panic("invalid run type")
+		aliveChan <- 1
 	}
+}
+
+func ProxyPacketWithAliveChan(a protocol.PacketReadWriter, b protocol.PacketReadWriter, aliveChan chan int) {
+	errChan := make(chan error, 2)
+	go copyPacket(a, b, errChan)
+	go copyPacket(b, a, errChan)
+	err := <-errChan
+	if err != nil {
+		logger.Debug(common.NewError("packet proxy ends").Base(err))
+	}
+}
+
+var buildableMap map[conf.RunType]Buildable = make(map[conf.RunType]Buildable)
+
+func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
+	runType := config.RunType
+	if buildable, found := buildableMap[runType]; found {
+		return buildable.Build(config)
+	}
+	return nil, common.NewError("invalid run_type")
+}
+
+func RegisterProxy(t conf.RunType, b Buildable) {
+	buildableMap[t] = b
 }

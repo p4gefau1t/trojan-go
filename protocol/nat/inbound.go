@@ -94,6 +94,7 @@ func (i *NATInboundPacketSession) cleanExpiredSession() {
 		select {
 		case <-time.After(protocol.UDPTimeout):
 		case <-i.ctx.Done():
+			i.conn.Close()
 			return
 		}
 	}
@@ -131,7 +132,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 		expire: time.Now().Add(protocol.UDPTimeout),
 	}
 	i.tableMutex.Unlock()
-	logger.Info("tproxy UDP packet from", src, "to", dst)
+	logger.Debug("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
 		IP:          dst.IP,
 		Port:        uint16(dst.Port),
@@ -147,7 +148,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 
 func (i *NATInboundPacketSession) Close() error {
 	i.cancel()
-	return i.conn.Close()
+	return nil
 }
 
 func NewInboundPacketSession(config *conf.GlobalConfig) (protocol.PacketSession, error) {

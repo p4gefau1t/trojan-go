@@ -35,15 +35,16 @@ func (i *HTTPInboundTunnelConnSession) Read(p []byte) (int, error) {
 }
 
 func (i *HTTPInboundTunnelConnSession) Write(p []byte) (int, error) {
-	defer i.bufReadWriter.Flush()
-	return i.bufReadWriter.Write(p)
+	n, err := i.bufReadWriter.Write(p)
+	i.bufReadWriter.Flush()
+	return n, err
 }
 
 func (i *HTTPInboundTunnelConnSession) Close() error {
 	return i.conn.Close()
 }
 
-func (i *HTTPInboundTunnelConnSession) Respond(r io.Reader) error {
+func (i *HTTPInboundTunnelConnSession) Respond() error {
 	payload := fmt.Sprintf("HTTP/%d.%d 200 Connection established\r\n\r\n", i.httpRequest.ProtoMajor, i.httpRequest.ProtoMinor)
 	_, err := i.Write([]byte(payload))
 	return err
@@ -175,6 +176,7 @@ func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, erro
 }
 
 func (i *HTTPInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	defer i.bufReadWriter.Flush()
-	return i.bufReadWriter.Write(packet)
+	n, err := i.bufReadWriter.Write(packet)
+	i.bufReadWriter.Flush()
+	return n, err
 }

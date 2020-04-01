@@ -23,8 +23,9 @@ func (o *DirectOutboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (o *DirectOutboundConnSession) Write(p []byte) (int, error) {
-	defer o.bufReadWriter.Flush()
-	return o.bufReadWriter.Write(p)
+	n, err := o.bufReadWriter.Write(p)
+	o.bufReadWriter.Flush()
+	return n, err
 }
 
 func (o *DirectOutboundConnSession) Close() error {
@@ -105,7 +106,7 @@ func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet 
 	if err != nil {
 		return 0, common.NewError("cannot dial udp").Base(err)
 	}
-	logger.Info("UDP directly dialing to", remote)
+	logger.Debug("UDP directly dialing to", remote)
 	n, err := conn.Write(packet)
 	return n, err
 }

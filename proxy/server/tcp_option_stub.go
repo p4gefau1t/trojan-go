@@ -1,6 +1,6 @@
 // +build windows
 
-package proxy
+package server
 
 import (
 	"net"
