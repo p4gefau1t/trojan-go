@@ -122,7 +122,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		return
 	}
 
-	if c.config.TCP.Mux {
+	if c.config.Mux.Enabled {
 		stream, info, err := c.mux.OpenMuxConn()
 		if err != nil {
 			logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -166,7 +166,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 
-		if c.config.TCP.Mux {
+		if c.config.Mux.Enabled {
 			stream, info, err := c.mux.OpenMuxConn()
 			if err != nil {
 				logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -215,7 +215,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				select {
 				case packet := <-packetChan:
 					var outboundConn protocol.ConnSession
-					if c.config.TCP.Mux {
+					if c.config.Mux.Enabled {
 						stream, info, err := c.mux.OpenMuxConn()
 						if err != nil {
 							logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -308,7 +308,7 @@ func (c *Client) Close() error {
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.associatedChan = make(chan int)
-	if config.TCP.Mux {
+	if config.Mux.Enabled {
 		var err error
 		c.mux, err = NewMuxPoolManager(c.ctx, config)
 		if err != nil {

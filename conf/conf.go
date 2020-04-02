@@ -26,7 +26,7 @@ type TLSConfig struct {
 	PreferServerCipher bool   `json:"prefer_server_cipher"`
 	SNI                string `json:"sni"`
 	HTTPFile           string `json:"plain_http_response"`
-	FallbackPort       uint16 `json:"fallback_port"`
+	FallbackPort       int    `json:"fallback_port"`
 
 	FallbackAddr     net.Addr
 	CertPool         *x509.CertPool
@@ -40,15 +40,18 @@ type TLSConfig struct {
 }
 
 type TCPConfig struct {
-	PreferIPV4     bool `json:"prefer_ipv4"`
-	KeepAlive      bool `json:"keep_alive"`
-	FastOpen       bool `json:"fast_open"`
-	FastOpenQLen   int  `json:"fast_open_qlen"`
-	ReusePort      bool `json:"reuse_port"`
-	NoDelay        bool `json:"no_delay"`
-	Mux            bool `json:"mux"`
-	MuxIdleTimeout int  `json:"mux_idle_timeout"`
-	MuxConcurrency int  `json:"mux_concurrency`
+	PreferIPV4   bool `json:"prefer_ipv4"`
+	KeepAlive    bool `json:"keep_alive"`
+	FastOpen     bool `json:"fast_open"`
+	FastOpenQLen int  `json:"fast_open_qlen"`
+	ReusePort    bool `json:"reuse_port"`
+	NoDelay      bool `json:"no_delay"`
+}
+
+type MuxConfig struct {
+	Enabled     bool `json:"enabled"`
+	IdleTimeout int  `json:"idle_timeout"`
+	Concurrency int  `json:"concurrency"`
 }
 
 type MySQLConfig struct {
@@ -69,20 +72,18 @@ type SQLiteConfig struct {
 }
 
 type GlobalConfig struct {
-	RunType  RunType `json:"run_type"`
-	LogLevel int     `json:"log_level"`
-
-	LocalHost string `json:"local_addr"`
-	LocalPort uint16 `json:"local_port"`
-
-	RemoteHost string `json:"remote_addr"`
-	RemotePort uint16 `json:"remote_port"`
-
-	Passwords []string     `json:"password"`
-	TLS       TLSConfig    `json:"ssl"`
-	TCP       TCPConfig    `json:"tcp"`
-	MySQL     MySQLConfig  `json:"mysql"`
-	SQLite    SQLiteConfig `json:"sqlite"`
+	RunType    RunType      `json:"run_type"`
+	LogLevel   int          `json:"log_level"`
+	LocalHost  string       `json:"local_addr"`
+	LocalPort  int          `json:"local_port"`
+	RemoteHost string       `json:"remote_addr"`
+	RemotePort int          `json:"remote_port"`
+	Passwords  []string     `json:"password"`
+	TLS        TLSConfig    `json:"ssl"`
+	TCP        TCPConfig    `json:"tcp"`
+	MySQL      MySQLConfig  `json:"mysql"`
+	SQLite     SQLiteConfig `json:"sqlite"`
+	Mux        MuxConfig    `json:"mux"`
 
 	LocalAddr  net.Addr
 	LocalIP    net.IP

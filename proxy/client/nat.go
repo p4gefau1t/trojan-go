@@ -35,7 +35,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 	}
 	req := inbound.GetRequest()
 	defer inbound.Close()
-	if n.config.TCP.Mux {
+	if n.config.Mux.Enabled {
 		stream, info, err := n.mux.OpenMuxConn()
 		if err != nil {
 			logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -130,7 +130,7 @@ func (n *NAT) Close() error {
 func (n *NAT) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	n.ctx, n.cancel = context.WithCancel(context.Background())
 	n.config = config
-	if config.TCP.Mux {
+	if config.Mux.Enabled {
 		mux, err := NewMuxPoolManager(n.ctx, config)
 		if err != nil {
 			logger.Fatal(err)

@@ -36,7 +36,7 @@ const (
 
 type Request struct {
 	DomainName  []byte
-	Port        uint16
+	Port        int
 	IP          net.IP
 	AddressType AddressType
 	NetworkType string
@@ -125,7 +125,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 			return nil, common.NewError("failed to read ipv4").Base(err)
 		}
 		req.IP = buf[0:4]
-		req.Port = binary.BigEndian.Uint16(buf[4:6])
+		req.Port = int(binary.BigEndian.Uint16(buf[4:6]))
 	case IPv6:
 		var buf [18]byte
 		_, err := io.ReadFull(r, buf[:])
@@ -133,7 +133,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 			return nil, common.NewError("failed to read ipv6").Base(err)
 		}
 		req.IP = buf[0:16]
-		req.Port = binary.BigEndian.Uint16(buf[16:18])
+		req.Port = int(binary.BigEndian.Uint16(buf[16:18]))
 	case DomainName:
 		_, err := io.ReadFull(r, buf1[:])
 		if err != nil {
@@ -157,7 +157,7 @@ func ParseAddress(r io.Reader) (*Request, error) {
 		} else {
 			req.DomainName = host
 		}
-		req.Port = binary.BigEndian.Uint16(buf[length : length+2])
+		req.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
 		return nil, common.NewError("invalid dest type")
 	}
@@ -178,7 +178,7 @@ func WriteAddress(w io.Writer, request *Request) error {
 		return common.NewError("invalid address type")
 	}
 	port := [2]byte{}
-	binary.BigEndian.PutUint16(port[:], request.Port)
+	binary.BigEndian.PutUint16(port[:], uint16(request.Port))
 	w.Write(port[:])
 	return err
 }

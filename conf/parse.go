@@ -17,12 +17,12 @@ import (
 
 var logger = log.New(os.Stdout)
 
-func convertToAddr(preferV4 bool, host string, port uint16) (*net.TCPAddr, error) {
+func convertToAddr(preferV4 bool, host string, port int) (*net.TCPAddr, error) {
 	ip := net.ParseIP(host)
 	if ip != nil {
 		return &net.TCPAddr{
 			IP:   ip,
-			Port: int(port),
+			Port: port,
 		}, nil
 	}
 	if preferV4 {
@@ -38,8 +38,8 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.TLS.Verify = true
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true
-	config.TCP.MuxIdleTimeout = 60
-	config.TCP.MuxConcurrency = 8
+	config.Mux.IdleTimeout = 60
+	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60
 
 	err := json.Unmarshal(data, &config)

@@ -43,7 +43,7 @@ func (i *NATInboundConnSession) parseRequest() error {
 	}
 	req := &protocol.Request{
 		IP:      addr.IP,
-		Port:    uint16(addr.Port),
+		Port:    addr.Port,
 		Command: protocol.Connect,
 	}
 	if addr.IP.To4() != nil {
@@ -135,7 +135,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 	logger.Debug("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
 		IP:          dst.IP,
-		Port:        uint16(dst.Port),
+		Port:        dst.Port,
 		NetworkType: "udp",
 	}
 	if dst.IP.To4() != nil {

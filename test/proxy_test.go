@@ -182,10 +182,10 @@ func TestMuxClient(t *testing.T) {
 		RemoteAddr: getLocalAddr(4445),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
-		TCP: conf.TCPConfig{
-			Mux:            true,
-			MuxConcurrency: 8,
-			MuxIdleTimeout: 30,
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
 		},
 	}
 	client := client.Client{}
@@ -267,10 +267,10 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 		RemoteAddr: getLocalAddr(4445),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
-		TCP: conf.TCPConfig{
-			Mux:            true,
-			MuxConcurrency: 8,
-			MuxIdleTimeout: 30,
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
 		},
 	}
 	c := client.Client{}
@@ -376,10 +376,10 @@ func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
 		RemoteAddr: getLocalAddr(4445),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
-		TCP: conf.TCPConfig{
-			Mux:            true,
-			MuxConcurrency: 8,
-			MuxIdleTimeout: 30,
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
 		},
 	}
 	c := client.Client{}
