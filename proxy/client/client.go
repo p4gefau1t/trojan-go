@@ -11,11 +11,13 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/http"
 	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
+	"github.com/p4gefau1t/trojan-go/router"
 )
 
 var logger = log.New(os.Stdout)
@@ -34,6 +36,7 @@ type Client struct {
 	cancel         context.CancelFunc
 	mux            *muxPoolManager
 	associatedChan chan int
+	router         router.Router
 }
 
 func (c *Client) listenUDP() {
@@ -44,7 +47,9 @@ func (c *Client) listenUDP() {
 			Port: int(c.config.LocalPort),
 		})
 		if err != nil {
-			logger.Fatal(common.NewError("failed to listen udp").Base(err))
+			logger.Error(common.NewError("failed to listen udp").Base(err))
+			time.Sleep(protocol.UDPTimeout)
+			continue
 		}
 		inbound, err := socks.NewInboundPacketSession(listener)
 		<-c.associatedChan
@@ -70,7 +75,7 @@ func (c *Client) listenUDP() {
 				logger.Debug("keep alive..(alive)")
 			case <-c.associatedChan:
 				logger.Debug("keep alive..(associated)")
-			case <-time.After(protocol.UDPTimeout):
+			case <-time.After(protocol.UDPTimeout * 5):
 				logger.Debug("time out, closing UDP tunnel")
 				outbound.Close()
 				inbound.Close()
@@ -122,7 +127,26 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		return
 	}
 
-	if c.config.TCP.Mux {
+	policy, err := c.router.RouteRequest(req)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	if policy == router.Bypass {
+		outboundConn, err := direct.NewOutboundConnSession(nil, req)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		logger.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+		proxy.ProxyConn(inboundConn, outboundConn)
+		return
+	} else if policy == router.Block {
+		logger.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+		return
+	}
+
+	if c.config.Mux.Enabled {
 		stream, info, err := c.mux.OpenMuxConn()
 		if err != nil {
 			logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -166,7 +190,26 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 
-		if c.config.TCP.Mux {
+		policy, err := c.router.RouteRequest(req)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		if policy == router.Bypass {
+			outboundConn, err := direct.NewOutboundConnSession(nil, req)
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+			logger.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+			proxy.ProxyConn(inboundConn, outboundConn)
+			return
+		} else if policy == router.Block {
+			logger.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+			return
+		}
+
+		if c.config.Mux.Enabled {
 			stream, info, err := c.mux.OpenMuxConn()
 			if err != nil {
 				logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -215,7 +258,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				select {
 				case packet := <-packetChan:
 					var outboundConn protocol.ConnSession
-					if c.config.TCP.Mux {
+					if c.config.Mux.Enabled {
 						stream, info, err := c.mux.OpenMuxConn()
 						if err != nil {
 							logger.Error(common.NewError("failed to open mux stream").Base(err))
@@ -307,12 +350,39 @@ func (c *Client) Close() error {
 
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.router = &router.EmptyRouter{
+		DefaultPolicy: router.Proxy,
+	}
 	c.associatedChan = make(chan int)
-	if config.TCP.Mux {
-		var err error
+	var err error
+	if config.Mux.Enabled {
+		logger.Info("mux enabled")
 		c.mux, err = NewMuxPoolManager(c.ctx, config)
 		if err != nil {
 			logger.Fatal(err)
+		}
+	}
+	if config.Router.Enabled {
+		logger.Info("router enabled")
+		var defaultPolicy router.Policy
+		switch config.Router.DefaultPolicy {
+		case "proxy":
+			defaultPolicy = router.Proxy
+		case "bypass":
+			defaultPolicy = router.Bypass
+		case "block":
+			defaultPolicy = router.Block
+		}
+		c.router, err = router.NewMixedRouter(
+			defaultPolicy,
+			false,
+			false,
+			config.Router.Proxy,
+			config.Router.Bypass,
+			config.Router.Block,
+		)
+		if err != nil {
+			logger.Fatal(common.NewError("invalid list").Base(err))
 		}
 	}
 	c.config = config

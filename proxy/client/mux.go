@@ -68,7 +68,7 @@ func (m *muxPoolManager) pickMuxClient() (*muxClientInfo, error) {
 			logger.Info("mux", info.id, "is dead")
 			continue
 		}
-		if info.client.NumStreams() < m.config.TCP.MuxConcurrency || m.config.TCP.MuxConcurrency <= 0 {
+		if info.client.NumStreams() < m.config.Mux.Concurrency || m.config.Mux.Concurrency <= 0 {
 			info.lastActiveTime = time.Now()
 			return info, nil
 		}
@@ -98,12 +98,12 @@ func (m *muxPoolManager) OpenMuxConn() (*smux.Stream, *muxClientInfo, error) {
 
 func (m *muxPoolManager) checkAndCloseIdleMuxClient() {
 	var muxIdleDuration, checkDuration time.Duration
-	if m.config.TCP.MuxIdleTimeout <= 0 {
+	if m.config.Mux.IdleTimeout <= 0 {
 		muxIdleDuration = 0
 		checkDuration = time.Second * 10
 		logger.Warn("invalid mux idle timeout")
 	} else {
-		muxIdleDuration = time.Duration(m.config.TCP.MuxIdleTimeout) * time.Second
+		muxIdleDuration = time.Duration(m.config.Mux.IdleTimeout) * time.Second
 		checkDuration = muxIdleDuration / 4
 	}
 	for {

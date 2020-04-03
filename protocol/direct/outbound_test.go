@@ -21,7 +21,7 @@ func TestDirectOutbound(t *testing.T) {
 			IP:   net.ParseIP("127.0.0.1"),
 			Port: 6543,
 		}
-		req.Port += uint16(rand.Intn(10))
+		req.Port += rand.Intn(10)
 		packet := []byte(fmt.Sprintf("hello motherfucker %d, port=%d", i, req.Port))
 		_, err := outbound.WritePacket(req, packet)
 		common.Must(err)

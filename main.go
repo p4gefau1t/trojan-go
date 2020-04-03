@@ -7,8 +7,11 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 
+	//the following modules are optional
+	//you can comment some of them if you don't need them
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/p4gefau1t/trojan-go/cert"
+	_ "github.com/p4gefau1t/trojan-go/daemon"
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"

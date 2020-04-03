@@ -114,7 +114,7 @@ func (s *Server) handleConn(conn net.Conn) {
 func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 	defer conn.Close()
 	if len(s.config.TLS.HTTPResponse) > 0 {
-		logger.Warn("trying to response a plain http response")
+		logger.Warn("trying to response with a plain http response")
 		conn.Write(s.config.TLS.HTTPResponse)
 		return
 	}
@@ -122,7 +122,7 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 	if s.config.TLS.FallbackAddr != nil {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Error("Recovered", r)
+				logger.Error("recovered", r)
 			}
 		}()
 		//HACK

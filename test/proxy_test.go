@@ -182,15 +182,36 @@ func TestMuxClient(t *testing.T) {
 		RemoteAddr: getLocalAddr(4445),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
-		TCP: conf.TCPConfig{
-			Mux:            true,
-			MuxConcurrency: 8,
-			MuxIdleTimeout: 30,
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
 		},
 	}
 	client := client.Client{}
 	client.Build(config)
 	client.Run()
+}
+
+func TestRouterClient(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Router: conf.RouterConfig{
+			Enabled:       true,
+			Bypass:        []byte("baidu.com\nqq.com\n\n192.168.0.0/16\n"),
+			DefaultPolicy: "proxy",
+		},
+	}
+	c := client.Client{}
+	c.Build(config)
+	common.Must(c.Run())
 }
 
 func TestClientAndServer(t *testing.T) {
@@ -208,6 +229,15 @@ func TestMuxClientAndServer(t *testing.T) {
 		logger.Error(err)
 	}()
 	go TestMuxClient(t)
+	TestServer(t)
+}
+
+func TestRouterClientAndServer(t *testing.T) {
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8000", nil)
+		logger.Error(err)
+	}()
+	go TestRouterClient(t)
 	TestServer(t)
 }
 
@@ -267,10 +297,10 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 		RemoteAddr: getLocalAddr(4445),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
-		TCP: conf.TCPConfig{
-			Mux:            true,
-			MuxConcurrency: 8,
-			MuxIdleTimeout: 30,
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
 		},
 	}
 	c := client.Client{}
@@ -376,10 +406,10 @@ func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
 		RemoteAddr: getLocalAddr(4445),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
-		TCP: conf.TCPConfig{
-			Mux:            true,
-			MuxConcurrency: 8,
-			MuxIdleTimeout: 30,
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
 		},
 	}
 	c := client.Client{}
