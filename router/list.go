@@ -15,15 +15,23 @@ type ListRouter struct {
 	ipList              []*net.IPNet
 	matchPolicy         Policy
 	nonMatchPolicy      Policy
-	allResolveToIP      bool
-	nonMatchResolveToIP bool
+	routeByIP           bool
+	routeByIPOnNonmatch bool
 }
 
 func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 	switch req.AddressType {
 	case protocol.DomainName:
 		domain := string(req.DomainName)
-		if r.allResolveToIP {
+		if ip := net.ParseIP(domain); ip != nil {
+			for _, net := range r.ipList {
+				if net.Contains(ip) {
+					return r.matchPolicy, nil
+				}
+			}
+			return r.nonMatchPolicy, nil
+		}
+		if r.routeByIP {
 			addr, err := net.ResolveIPAddr("tcp", domain)
 			if err != nil {
 				return Unknown, err
@@ -42,7 +50,7 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 				return r.matchPolicy, nil
 			}
 		}
-		if r.nonMatchResolveToIP {
+		if r.routeByIPOnNonmatch {
 			addr, err := net.ResolveIPAddr("tcp", domain)
 			if err != nil {
 				return Unknown, err
@@ -70,45 +78,37 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 	}
 }
 
-func (r *ListRouter) LoadIPList(data []byte) error {
+func (r *ListRouter) LoadList(data []byte) error {
 	buf := bytes.NewBuffer(data)
 	for {
 		line, err := buf.ReadBytes('\n')
-		if err != nil || line[0] == '\n' {
+		if err != nil {
 			break
 		}
-		_, ipNet, err := net.ParseCIDR(string(line[0 : len(line)-1]))
+		if line[0] == '\n' || line[0] == '\r' {
+			continue
+		}
+		record := string(line)
+		record = strings.Replace(string(record), "\r\n", "", -1)
+		record = strings.Replace(string(record), "\n", "", -1)
+		_, ipNet, err := net.ParseCIDR(record)
 		if err != nil {
-			return err
+			r.domainList = append(r.domainList, record)
+			continue
 		}
 		r.ipList = append(r.ipList, ipNet)
 	}
 	return nil
 }
 
-func (r *ListRouter) LoadDomainList(data []byte) error {
-	buf := bytes.NewBuffer(data)
-	for {
-		line, err := buf.ReadBytes('\n')
-		if err != nil {
-			break
-		}
-		r.domainList = append(r.domainList, string(line[0:len(line)-1]))
-	}
-	return nil
-}
-
-func NewListRouter(matchPolicy Policy, nonMatchPolicy Policy, allResolveToIP bool, nonMatchResolveToIP bool, ipList []byte, domainList []byte) (*ListRouter, error) {
+func NewListRouter(matchPolicy Policy, nonMatchPolicy Policy, routeByIP bool, routeByIPOnNonmatch bool, list []byte) (*ListRouter, error) {
 	r := ListRouter{
 		matchPolicy:         matchPolicy,
 		nonMatchPolicy:      nonMatchPolicy,
-		allResolveToIP:      allResolveToIP,
-		nonMatchResolveToIP: nonMatchResolveToIP,
+		routeByIP:           routeByIP,
+		routeByIPOnNonmatch: routeByIPOnNonmatch,
 	}
-	if err := r.LoadIPList(ipList); err != nil {
-		return nil, err
-	}
-	if err := r.LoadDomainList(domainList); err != nil {
+	if err := r.LoadList(list); err != nil {
 		return nil, err
 	}
 	return &r, nil

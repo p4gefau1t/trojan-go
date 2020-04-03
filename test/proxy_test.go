@@ -193,6 +193,27 @@ func TestMuxClient(t *testing.T) {
 	client.Run()
 }
 
+func TestRouterClient(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Router: conf.RouterConfig{
+			Enabled:       true,
+			Bypass:        []byte("baidu.com\nqq.com\n\n192.168.0.0/16\n"),
+			DefaultPolicy: "proxy",
+		},
+	}
+	c := client.Client{}
+	c.Build(config)
+	common.Must(c.Run())
+}
+
 func TestClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
@@ -208,6 +229,15 @@ func TestMuxClientAndServer(t *testing.T) {
 		logger.Error(err)
 	}()
 	go TestMuxClient(t)
+	TestServer(t)
+}
+
+func TestRouterClientAndServer(t *testing.T) {
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8000", nil)
+		logger.Error(err)
+	}()
+	go TestRouterClient(t)
 	TestServer(t)
 }
 

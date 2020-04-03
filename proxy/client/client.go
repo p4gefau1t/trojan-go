@@ -11,11 +11,13 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/http"
 	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
+	"github.com/p4gefau1t/trojan-go/router"
 )
 
 var logger = log.New(os.Stdout)
@@ -34,6 +36,7 @@ type Client struct {
 	cancel         context.CancelFunc
 	mux            *muxPoolManager
 	associatedChan chan int
+	router         router.Router
 }
 
 func (c *Client) listenUDP() {
@@ -122,6 +125,25 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		return
 	}
 
+	policy, err := c.router.RouteRequest(req)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	if policy == router.Bypass {
+		outboundConn, err := direct.NewOutboundConnSession(nil, req)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		logger.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+		proxy.ProxyConn(inboundConn, outboundConn)
+		return
+	} else if policy == router.Block {
+		logger.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+		return
+	}
+
 	if c.config.Mux.Enabled {
 		stream, info, err := c.mux.OpenMuxConn()
 		if err != nil {
@@ -163,6 +185,25 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			logger.Error(common.NewError("failed to respond").Base(err))
+			return
+		}
+
+		policy, err := c.router.RouteRequest(req)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		if policy == router.Bypass {
+			outboundConn, err := direct.NewOutboundConnSession(nil, req)
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+			logger.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+			proxy.ProxyConn(inboundConn, outboundConn)
+			return
+		} else if policy == router.Block {
+			logger.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 			return
 		}
 
@@ -307,12 +348,39 @@ func (c *Client) Close() error {
 
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.router = &router.EmptyRouter{
+		DefaultPolicy: router.Proxy,
+	}
 	c.associatedChan = make(chan int)
+	var err error
 	if config.Mux.Enabled {
-		var err error
+		logger.Info("mux enabled")
 		c.mux, err = NewMuxPoolManager(c.ctx, config)
 		if err != nil {
 			logger.Fatal(err)
+		}
+	}
+	if config.Router.Enabled {
+		logger.Info("router enabled")
+		var defaultPolicy router.Policy
+		switch config.Router.DefaultPolicy {
+		case "proxy":
+			defaultPolicy = router.Proxy
+		case "bypass":
+			defaultPolicy = router.Bypass
+		case "block":
+			defaultPolicy = router.Block
+		}
+		c.router, err = router.NewMixedRouter(
+			defaultPolicy,
+			false,
+			false,
+			config.Router.Proxy,
+			config.Router.Bypass,
+			config.Router.Block,
+		)
+		if err != nil {
+			logger.Fatal(common.NewError("invalid list").Base(err))
 		}
 	}
 	c.config = config

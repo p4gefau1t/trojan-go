@@ -41,6 +41,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Mux.IdleTimeout = 60
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60
+	config.Router.DefaultPolicy = "proxy"
 
 	err := json.Unmarshal(data, &config)
 	if err != nil {
@@ -173,6 +174,36 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			logger.Warn("failed to load http response file", err)
 		}
 		config.TLS.HTTPResponse = payload
+	}
+
+	config.Router.Block = []byte{}
+	config.Router.Proxy = []byte{}
+	config.Router.Bypass = []byte{}
+	for _, path := range config.Router.BlockFiles {
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		config.Router.Block = append(config.Router.Block, data...)
+		config.Router.Block = append(config.Router.Block, byte('\n'))
+	}
+
+	for _, path := range config.Router.ProxyFiles {
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		config.Router.Proxy = append(config.Router.Proxy, data...)
+		config.Router.Proxy = append(config.Router.Proxy, byte('\n'))
+	}
+
+	for _, path := range config.Router.BypassFiles {
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		config.Router.Bypass = append(config.Router.Bypass, data...)
+		config.Router.Bypass = append(config.Router.Bypass, byte('\n'))
 	}
 
 	return &config, nil

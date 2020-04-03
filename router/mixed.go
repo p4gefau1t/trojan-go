@@ -38,18 +38,18 @@ func (r *MixedRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 	return r.defaultPolicy, nil
 }
 
-func NewMixedRouter(defaultPolicy Policy, allResolveToIP bool, resolveToIPOnNonMatch bool, proxyIP []byte, proxyDomain []byte, bypassIP []byte, bypassDomain []byte, blockIP []byte, blockDomain []byte) (Router, error) {
+func NewMixedRouter(defaultPolicy Policy, routeByIP bool, routeByIPOnNonmatch bool, proxy []byte, bypass []byte, block []byte) (Router, error) {
 	r := &MixedRouter{
 		defaultPolicy: defaultPolicy,
 	}
 	var err error
-	if r.blockList, err = NewListRouter(match, nonMatch, allResolveToIP, resolveToIPOnNonMatch, blockIP, blockDomain); err != nil {
+	if r.blockList, err = NewListRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch, block); err != nil {
 		return nil, err
 	}
-	if r.bypassList, err = NewListRouter(match, nonMatch, allResolveToIP, resolveToIPOnNonMatch, bypassIP, bypassDomain); err != nil {
+	if r.bypassList, err = NewListRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch, bypass); err != nil {
 		return nil, err
 	}
-	if r.proxyList, err = NewListRouter(match, nonMatch, allResolveToIP, resolveToIPOnNonMatch, proxyIP, proxyIP); err != nil {
+	if r.proxyList, err = NewListRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch, proxy); err != nil {
 		return nil, err
 	}
 	return r, nil

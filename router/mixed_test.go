@@ -9,10 +9,9 @@ import (
 )
 
 func TestMixed(t *testing.T) {
-	bypassIP := []byte("0.0.0.0/8\n10.0.0.0/8\n192.0.0.0/24\n")
-	bypassDomain := []byte("baidu.com\nqq.com\n")
+	bypass := []byte("0.0.0.0/8\n10.0.0.0/8\n192.0.0.0/24\nbaidu.com\nqq.com\n")
 
-	r, err := NewMixedRouter(Proxy, false, false, []byte{}, []byte{}, bypassIP, bypassDomain, []byte{}, []byte{})
+	r, err := NewMixedRouter(Proxy, false, false, []byte{}, bypass, []byte{})
 	common.Must(err)
 	p, err := r.RouteRequest(&protocol.Request{
 		AddressType: protocol.IPv4,

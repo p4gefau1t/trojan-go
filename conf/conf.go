@@ -71,6 +71,20 @@ type SQLiteConfig struct {
 	Password string `json:"password"`
 }
 
+type RouterConfig struct {
+	Enabled             bool     `json:"enabled"`
+	BypassFiles         []string `json:"bypass"`
+	ProxyFiles          []string `json:"proxy"`
+	BlockFiles          []string `json:"block"`
+	DefaultPolicy       string   `json:"default_policy"`
+	RouteByIP           bool     `json:"route_by_ip"`
+	RouteByIPOnNonmatch bool     `json:"route_by_ip_on_nonmatch"`
+
+	Bypass []byte
+	Proxy  []byte
+	Block  []byte
+}
+
 type GlobalConfig struct {
 	RunType    RunType      `json:"run_type"`
 	LogLevel   int          `json:"log_level"`
@@ -84,6 +98,7 @@ type GlobalConfig struct {
 	MySQL      MySQLConfig  `json:"mysql"`
 	SQLite     SQLiteConfig `json:"sqlite"`
 	Mux        MuxConfig    `json:"mux"`
+	Router     RouterConfig `json:"router"`
 
 	LocalAddr  net.Addr
 	LocalIP    net.IP
