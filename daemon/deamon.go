@@ -36,7 +36,7 @@ func (o *DaemonOption) Handle() error {
 	}
 	cmd := exec.Command(os.Args[0], args...)
 	cmd.Start()
-	fmt.Println("Trojan-Go is running in the background")
+	fmt.Println("Trojan-Go is running in the background...")
 	fmt.Println("[PID]", cmd.Process.Pid)
 	os.Exit(0)
 	return nil

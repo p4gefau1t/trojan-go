@@ -48,7 +48,7 @@ func (c *Client) listenUDP() {
 		})
 		if err != nil {
 			logger.Error(common.NewError("failed to listen udp").Base(err))
-			time.Sleep(time.Second * 5)
+			time.Sleep(protocol.UDPTimeout)
 			continue
 		}
 		inbound, err := socks.NewInboundPacketSession(listener)
@@ -75,7 +75,7 @@ func (c *Client) listenUDP() {
 				logger.Debug("keep alive..(alive)")
 			case <-c.associatedChan:
 				logger.Debug("keep alive..(associated)")
-			case <-time.After(protocol.UDPTimeout):
+			case <-time.After(protocol.UDPTimeout * 5):
 				logger.Debug("time out, closing UDP tunnel")
 				outbound.Close()
 				inbound.Close()
