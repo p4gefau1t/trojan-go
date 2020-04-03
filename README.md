@@ -4,7 +4,7 @@
 
 支持使用[多路复用](#多路复用)提升并发性能，使用[路由模块](#路由模块)实现国内直连。
 
-使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)TLS证书（HTTPS证书），只需提供域名和邮箱。
+支持使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
 
 **完整配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。**
 
@@ -18,7 +18,7 @@
 sudo ./trojan-go -cert request
 ```
 
-(**注意保存备份生成的证书和密钥**)
+(**注意备份生成的证书和密钥，并确保其安全**)
 
 为证书续期:
 
@@ -34,7 +34,7 @@ sudo ./trojan-go -cert renew
 ./trojan-go -config 你的配置文件.json
 ```
 
-配置文件格式和Trojan相同, 可以参考Trojan[官方文档](https://trojan-gfw.github.io/trojan/config)。
+配置文件格式和Trojan相同, 完整说明可以参考Trojan-Go的[文档](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。
 
 Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
@@ -54,7 +54,7 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 - TCP性能方面的选项，如TCP Fast Open，端口复用等
 
-注意， TLS 1.2密码学套件的名称在golang中有一些不同，并且不安全的TLS 1.2套件已经被弃用，直接使用原版配置文件会引发一个警告，但不影响运行。更多信息参见[Wiki](https://github.com/p4gefau1t/trojan-go/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)。
+注意， TLS 1.2密码学套件的名称在golang中有一些不同，并且不安全的TLS 1.2套件已经被弃用，直接使用包含这些套件的原版Trojan配置文件会引发一个警告，但不影响运行。
 
 ## 特性
 
@@ -106,9 +106,9 @@ client.json
 }
 ```
 
-### 自动证书申请
-
 <a name="证书申请"></a>
+
+### 自动证书申请
 
 使用
 
@@ -147,40 +147,19 @@ sudo ./trojan-go -cert renew
 <a name="多路复用"></a>
 
 在很差的网络条件下，TLS握手可能会花费很多时间。
+
 Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TLS握手带来的延迟，以期提升高并发情景下的性能。
 
 启用多路复用并不会增加你测速得到的带宽，但是会加速你有大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
 
-注意，这个特性和原版Trojan**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。但是你可以通过设置tcp选项中的"mux"字段启用它。如下
+注意，这个特性和原版Trojan**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
 
 ```
-"tcp": {
-    "mux": true
+"mux": {
+    "enabled": true
 }
 ```
 
-举个例子，上面的客户端的配置文件client.json加上一个tcp选项
-
-client-mux.json
-```
-{
-    "run_type": "client",
-    "local_addr": "127.0.0.1",
-    "local_port": 1080,
-    "remote_addr": "your_awesome_server",
-    "remote_port": 443,
-    "password": [
-        "your_awesome_password"
-    ],
-    "ssl": {
-        "cert": "server.crt",
-        "sni": "your_awesome_domain_name"
-    },
-    "tcp": {
-        "mux": true
-    }
-}
-```
 你只需要设置客户端的配置文件即可，服务端会自动检测是否启用多路复用并提供支持。
 
 ### 路由模块
@@ -215,7 +194,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 }
 ```
 
-其中bypass, block, proxy字段中填入相应的列表文件，文件每行是一个域名或者IP地址段(CIDR)。
+其中bypass, block, proxy字段中填入相应的列表文件，文件每行是一个域名或者IP地址段(CIDR)。一旦匹配，则执行相应策略。
 
 完整的选项说明参见Wiki
 
@@ -237,7 +216,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 ## 构建
 
-确保你的Golang版本 >= 1.11
+确保你的Golang版本 >= 1.13
 
 ```
 git clone https://github.com/p4gefau1t/trojan-go.git
@@ -373,13 +352,13 @@ Binding port 80 and 443 under Linux requires root privileges, so you may need to
 
 If everything goes well, you will get
 
--server.key: server private key
+- server.key: server private key
 
--server.crt: server certificate signed by Let's Encrypt
+- server.crt: server certificate signed by Let's Encrypt
 
--user.key: The private key corresponding to the user's email
+- user.key: The private key corresponding to the user's email
 
--domain_info.json: domain name and user email information
+- domain_info.json: domain name and user email information
 
 Please back up these files and keep them in a safe place. You can fill the server private key and certificate file name into your configuration file, and start your trojan-go server.
 
@@ -401,34 +380,12 @@ Enabling multiplexing does not increase the bandwidth you get from a speed test,
 Note that this feature is not compatible with the original Trojan , so for compatibility reasons, this feature is turned off by default. But you can enable it by setting the "mux" field in the tcp options. as follows
 
 ```
-"tcp": {
-    "mux": true
-}
-```
-for example
-
-client.json
-```
-{
-    "run_type": "client",
-    "local_addr": "127.0.0.1",
-    "local_port": 1080,
-    "remote_addr": "your_awesome_server",
-    "remote_port": 443,
-    "password": [
-        "your_awesome_password"
-    ],
-    "ssl": {
-        "cert": "server.crt",
-        "sni": "your_awesome_domain_name"
-    },
-    "tcp": {
-        "mux": true
-    }
+"mux": {
+    "enabled": true
 }
 ```
 
-You only need to set the client's configuration file, and the server will automatically detect whether to enable multiplexing.
+You only need to set up the client's configuration file, and the server will automatically detect whether to enable multiplexing.
 
 ### Routing
 
@@ -436,11 +393,11 @@ A simple and practical routing module is built into the Trojan-Go client.
 
 There are three routing strategies
 
--Proxy. The request is proxied through the TLS tunnel, and the trojan server will connect to the destination remote endpoints.
+- Proxy. The request is proxied through the TLS tunnel, and the trojan server will connect to the destination remote endpoints.
 
--Bypass. Local client will connect to the remote endpoints directly without using the TLS tunnel.
+- Bypass. Local client will connect to the remote endpoints directly without using the TLS tunnel.
 
--Block. Close the incoming connection immediately.
+- Block. Close the incoming connection immediately.
 
 To activate the module, setup the "router" option in your config file, for example:
 
@@ -462,7 +419,7 @@ To activate the module, setup the "router" option in your config file, for examp
 
 ## Build
 
-Just make sure your golang version >= 1.11
+Just make sure your golang version >= 1.13
 
 
 ```
