@@ -2,9 +2,9 @@
 
 使用Golang实现的完整Trojan代理，和Trojan协议以及原版的配置文件格式兼容。安全，高效，轻巧，易用。
 
-支持使用多路复用提升并发性能。
+支持使用[多路复用](#多路复用)提升并发性能，使用[路由模块](#路由模块)实现国内直连。
 
-使用ACME协议从Let's Encrypt自动申请和更新TLS证书（HTTPS证书），只需提供域名和邮箱。
+使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)TLS证书（HTTPS证书），只需提供域名和邮箱。
 
 **完整配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。**
 
@@ -40,7 +40,7 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 - TLS隧道传输
 
-- 透明代理 (NAT模式)
+- 透明代理 (NAT模式，iptables设置参见[这里](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
 
 - UDP代理
 
@@ -52,7 +52,7 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 - 从数据库中的用户列表进行认证
 
-- TCP性能方面的选项，如TCP Fast Open，端口复用等等
+- TCP性能方面的选项，如TCP Fast Open，端口复用等
 
 注意， TLS 1.2密码学套件的名称在golang中有一些不同，并且不安全的TLS 1.2套件已经被弃用，直接使用原版配置文件会引发一个警告，但不影响运行。更多信息参见[Wiki](https://github.com/p4gefau1t/trojan-go/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)。
 
@@ -64,7 +64,7 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 ### 易用
 
-配置文件格式与原版是兼容的，但做了一些简化。未指定的字段会被附上一个初始值。你可以更方便地部署你的服务器和客户端。下面是一个例子，完整的配置文件参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)。一个完整的配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。
+配置文件格式与原版兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个例子，完整的配置文件说明参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)。一个完整的配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。
 
 服务器配置文件
 
@@ -106,18 +106,6 @@ client.json
 }
 ```
 
-Trojan-Go支持的runtype包括（其实和原版是一样的）
-
-- Client
-
-- Server
-
-- NAT (透明代理，参见[这里](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
-
-- Forward
-
-更多关于配置文件的信息，可以参考Trojan的关于配置文件的[文档](https://trojan-gfw.github.io/trojan/config) 。
-
 ### 自动证书申请
 
 <a name="证书申请"></a>
@@ -156,6 +144,8 @@ sudo ./trojan-go -cert renew
 
 ### 多路复用
 
+<a name="多路复用"></a>
+
 在很差的网络条件下，TLS握手可能会花费很多时间。
 Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TLS握手带来的延迟，以期提升高并发情景下的性能。
 
@@ -193,6 +183,58 @@ client-mux.json
 ```
 你只需要设置客户端的配置文件即可，服务端会自动检测是否启用多路复用并提供支持。
 
+### 路由模块
+
+<a name="路由模块"></a>
+
+Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现国内直连等自定义路由功能。
+
+路由策略有三种
+
+- Proxy 代理。将请求通过TLS隧道进行代理，由trojan服务器和目的地址进行连接。
+
+- Bypass 绕过。直接在本地和目的地址进行连接。
+
+- Block 封锁。不代理请求，直接关闭连接。
+
+要激活模块，在你的配置文件中添加router选项，并且设置enabled为true，例如
+
+```
+"router": {
+    "enabled": true,
+    "bypass": [
+        "bypass_list1.txt",
+        "bypass_list2.txt"
+    ],
+    "block": [
+        "block_list.txt"
+    ]
+    "proxy": [
+        "proxy_list.txt"
+    ]
+}
+```
+
+其中bypass, block, proxy字段中填入相应的列表文件，文件每行是一个域名或者IP地址段(CIDR)。
+
+完整的选项说明参见Wiki
+
+下面是一个实现国内直连的选项，它将绕过中国大陆IP地址，中国大陆域名，以及内网IP等保留的私有IP地址，直接连接而不通过隧道代理。
+
+```
+"router": {
+    "enabled": true,
+    "bypass": [
+        "cn-domains.txt",
+        "cn-ipv4.txt",
+        "cn-ipv6.txt", 
+        "private-ip.txt"
+    ]
+}
+```
+
+上述的列表文件已经包含在release的压缩包中。其中的cn-domains.txt提取自v2ray的[domain-list-community](https://github.com/v2ray/domain-list-community)。
+
 ## 构建
 
 确保你的Golang版本 >= 1.11
@@ -222,13 +264,13 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 
 Full-featured Trojan proxy written in golang, compatiable with the original Trojan protocol and config file. It's safe, efficient, lightweight and easy to use.
 
-Supports using multiplexing to improve concurrent performance.
+Supports multiplexing and traffic routing.
 
-Use the ACME protocol to automatically request and renew HTTPS certificates from Let's Encrypt.
+Uses the ACME protocol to automatically request and renew HTTPS certificates from Let's Encrypt.
 
 ## Usage
 
-Request a certificate automatically:
+To request a certificate automatically:
 
 ```
 ./trojan-go -cert request
@@ -236,7 +278,7 @@ Request a certificate automatically:
 
 **Don't forget to backup the .key file and .crt file.**
 
-Renew a certificate:
+To renew a certificate:
 
 ```
 ./trojan-go -cert renew
@@ -252,7 +294,7 @@ Trojan-Go supports most features of the original trojan, including
 
 - TLS tunneling
 
-- Transparent proxy (NAT mode)
+- Transparent proxy (NAT mode, see [here](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
 
 - UDP Relaying
 
@@ -315,20 +357,6 @@ client.json
     }
 }
 ```
-
-run_type supported by Trojan-Go (the same as Trojan):
-
-- Client
-
-- Server
-
-- NAT (transparent proxy, see [here](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
-
-- Forward
-
-For more infomation, see Trojan's [docs](https://trojan-gfw.github.io/trojan/config) about the configuration file.
-
-
 ## Certificate requesting
 
 use
@@ -401,6 +429,36 @@ client.json
 ```
 
 You only need to set the client's configuration file, and the server will automatically detect whether to enable multiplexing.
+
+### Routing
+
+A simple and practical routing module is built into the Trojan-Go client.
+
+There are three routing strategies
+
+-Proxy. The request is proxied through the TLS tunnel, and the trojan server will connect to the destination remote endpoints.
+
+-Bypass. Local client will connect to the remote endpoints directly without using the TLS tunnel.
+
+-Block. Close the incoming connection immediately.
+
+To activate the module, setup the "router" option in your config file, for example:
+
+```
+"router": {
+    "enabled": true,
+    "bypass": [
+        "bypass_list1.txt",
+        "bypass_list2.txt"
+    ],
+    "block": [
+        "block_list.txt"
+    ]
+    "proxy": [
+        "proxy_list.txt"
+    ]
+}
+```
 
 ## Build
 

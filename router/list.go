@@ -19,6 +19,16 @@ type ListRouter struct {
 	routeByIPOnNonmatch bool
 }
 
+func (r *ListRouter) isSubdomain(fulldomain, domain string) bool {
+	if strings.HasSuffix(fulldomain, domain) {
+		idx := strings.Index(fulldomain, domain)
+		if idx == 0 || fulldomain[idx-1] == '.' {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 	switch req.AddressType {
 	case protocol.DomainName:
@@ -45,8 +55,8 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 				AddressType: atype,
 			})
 		}
-		for _, suffix := range r.domainList {
-			if strings.HasSuffix(domain, suffix) {
+		for _, d := range r.domainList {
+			if r.isSubdomain(domain, d) {
 				return r.matchPolicy, nil
 			}
 		}

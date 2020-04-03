@@ -122,5 +122,16 @@ cd release
 for name in *;do
   zip $name.zip $name
   rm $name
-  sha1sum $name.zip >> sha1.txt
 done
+
+cp ../data/*.json ./
+cp ../data/*.txt ./
+
+for name in *.zip;do
+  zip -ur $name ./*.txt ./*.json
+  sha1sum $name > $name.sha1
+done
+
+rm ./*.json
+rm ./*.txt
+

@@ -47,7 +47,9 @@ func (c *Client) listenUDP() {
 			Port: int(c.config.LocalPort),
 		})
 		if err != nil {
-			logger.Fatal(common.NewError("failed to listen udp").Base(err))
+			logger.Error(common.NewError("failed to listen udp").Base(err))
+			time.Sleep(time.Second * 5)
+			continue
 		}
 		inbound, err := socks.NewInboundPacketSession(listener)
 		<-c.associatedChan

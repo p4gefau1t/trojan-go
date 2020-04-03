@@ -1,0 +1,26 @@
+{
+    "run_type": "client",
+    "local_addr": "127.0.0.1",
+    "local_port": 1080,
+    "remote_addr": "your_server",
+    "remote_port": 443,
+    "password": [
+        "your_password"
+    ],
+    "ssl": {
+        "sni": "your_domain_name"
+    },
+    "mux" :{
+        "enabled": true
+    },
+    "router":{
+        "enabled": true,
+        "bypass": [
+            "cn-domains.txt",
+            "cn-ipv4.txt",
+            "cn-ipv6.txt",
+            "private-ip.txt"
+        ],
+        "default": "proxy"
+    }
+}
