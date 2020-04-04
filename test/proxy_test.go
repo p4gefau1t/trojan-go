@@ -15,6 +15,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
+	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
 	"golang.org/x/net/proxy"
@@ -116,6 +117,16 @@ func getHash(password string) map[string]string {
 
 func TestClientJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("client.json")
+	common.Must(err)
+	config, err := conf.ParseJSON(data)
+	common.Must(err)
+	c := client.Client{}
+	c.Build(config)
+	c.Run()
+}
+
+func TestServerJSON(t *testing.T) {
+	data, err := ioutil.ReadFile("server.json")
 	common.Must(err)
 	config, err := conf.ParseJSON(data)
 	common.Must(err)
@@ -239,6 +250,11 @@ func TestRouterClientAndServer(t *testing.T) {
 	}()
 	go TestRouterClient(t)
 	TestServer(t)
+}
+
+func TestClientServerJSON(t *testing.T) {
+	go TestServerJSON(t)
+	TestClient(t)
 }
 
 func BenchmarkNormalClientToServer(b *testing.B) {

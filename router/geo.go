@@ -139,6 +139,7 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 		return err
 	}
 	for _, c := range ipCode {
+		c = strings.ToUpper(c)
 		found := false
 		for _, e := range geoip.GetEntry() {
 			code := e.GetCountryCode()
@@ -148,8 +149,10 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 				break
 			}
 		}
-		if !found {
-			log.DefaultLogger.Warn("ip code", c, "not found")
+		if found {
+			log.DefaultLogger.Info("site code", c, "loaded")
+		} else {
+			log.DefaultLogger.Warn("site code", c, "not found")
 		}
 	}
 
@@ -158,6 +161,7 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 		return err
 	}
 	for _, c := range siteCode {
+		c = strings.ToUpper(c)
 		found := false
 		for _, s := range geosite.GetEntry() {
 			code := s.GetCountryCode()
@@ -168,11 +172,12 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 				break
 			}
 		}
-		if !found {
+		if found {
+			log.DefaultLogger.Info("site code", c, "loaded")
+		} else {
 			log.DefaultLogger.Warn("site code", c, "not found")
 		}
 	}
-	log.DefaultLogger.Info("geoip and geosite loaded")
 	return nil
 }
 

@@ -183,7 +183,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			continue
 		}
 		if strings.HasPrefix(s, "geosite:") {
-			config.Router.BlockIPCode = append(config.Router.BlockIPCode, s[len("geosite:"):len(s)])
+			config.Router.BlockSiteCode = append(config.Router.BlockSiteCode, s[len("geosite:"):len(s)])
 			continue
 		}
 		data, err := ioutil.ReadFile(s)
@@ -200,7 +200,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			continue
 		}
 		if strings.HasPrefix(s, "geosite:") {
-			config.Router.BypassIPCode = append(config.Router.BypassIPCode, s[len("geosite:"):len(s)])
+			config.Router.BypassSiteCode = append(config.Router.BypassSiteCode, s[len("geosite:"):len(s)])
 			continue
 		}
 		data, err := ioutil.ReadFile(s)
@@ -217,7 +217,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			continue
 		}
 		if strings.HasPrefix(s, "geosite:") {
-			config.Router.ProxyIPCode = append(config.Router.ProxyIPCode, s[len("geosite:"):len(s)])
+			config.Router.ProxySiteCode = append(config.Router.ProxySiteCode, s[len("geosite:"):len(s)])
 			continue
 		}
 		data, err := ioutil.ReadFile(s)

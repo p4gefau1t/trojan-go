@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
@@ -19,7 +20,7 @@ type MixedRouter struct {
 func (r *MixedRouter) match(router Router, req *protocol.Request) bool {
 	policy, err := router.RouteRequest(req)
 	if err != nil {
-		log.DefaultLogger.Warn("match error", err)
+		log.DefaultLogger.Warn(common.NewError("match error").Base(err))
 		return false
 	}
 	if policy == match {

@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/p4gefau1t/trojan-go/common"
 )
 
 func downloadFile(url string, filepath string) error {
@@ -24,4 +26,25 @@ func downloadFile(url string, filepath string) error {
 		return err
 	}
 	return nil
+}
+
+func downloadGeoSite() error {
+	filename := "geosite.dat"
+	url := "https://github.com/v2ray/domain-list-community/raw/release/dlc.dat"
+	return downloadFile(url, filename)
+}
+
+func downloadGeoIP() error {
+	filename := "geoip.dat"
+	url := "https://raw.githubusercontent.com/v2ray/geoip/release/geoip.dat"
+	return downloadFile(url, filename)
+}
+
+type updateOption struct {
+	args *string
+	common.OptionHandler
+}
+
+func init() {
+
 }

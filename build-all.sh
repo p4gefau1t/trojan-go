@@ -124,14 +124,14 @@ for name in *;do
   rm $name
 done
 
+cp ../data/*.dat ./
 cp ../data/*.json ./
-cp ../data/*.txt ./
 
 for name in *.zip;do
-  zip -ur $name ./*.txt ./*.json
+  zip -ur $name ./*.dat ./*.json
   sha1sum $name > $name.sha1
 done
 
+rm ./*.dat
 rm ./*.json
-rm ./*.txt
 

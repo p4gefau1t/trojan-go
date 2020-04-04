@@ -363,7 +363,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		log.DefaultLogger.Info("router enabled")
 		c.router, err = router.NewMixedRouter(config)
 		if err != nil {
-			log.DefaultLogger.Fatal(common.NewError("invalid list").Base(err))
+			log.DefaultLogger.Fatal(common.NewError("invalid router list").Base(err))
 		}
 	}
 	c.config = config
