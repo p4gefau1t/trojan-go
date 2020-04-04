@@ -58,10 +58,17 @@ func (c *Client) listenUDP() {
 			log.DefaultLogger.Error(err)
 			continue
 		}
-		outbound, err := trojan.NewPacketSession(tunnel)
+		trojanOutbound, err := trojan.NewPacketSession(tunnel)
 		common.Must(err)
-		proxy.ProxyPacket(inbound, outbound)
-		outbound.Close()
+		directOutbound, err := direct.NewOutboundPacketSession()
+		common.Must(err)
+		table := map[router.Policy]protocol.PacketReadWriter{
+			router.Proxy:  trojanOutbound,
+			router.Bypass: directOutbound,
+		}
+		proxy.ProxyPacketWithRouter(inbound, table, c.router)
+		trojanOutbound.Close()
+		directOutbound.Close()
 	}
 }
 
