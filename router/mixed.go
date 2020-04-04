@@ -12,20 +12,20 @@ type MixedRouter struct {
 }
 
 func (r *MixedRouter) RouteRequest(req *protocol.Request) (Policy, error) {
-	policy, err := r.bypassList.RouteRequest(req)
-	if err != nil {
-		return Unknown, err
-	}
-	if policy == match {
-		return Bypass, nil
-	}
-
-	policy, err = r.blockList.RouteRequest(req)
+	policy, err := r.blockList.RouteRequest(req)
 	if err != nil {
 		return Unknown, err
 	}
 	if policy == match {
 		return Block, nil
+	}
+
+	policy, err = r.bypassList.RouteRequest(req)
+	if err != nil {
+		return Unknown, err
+	}
+	if policy == match {
+		return Bypass, nil
 	}
 
 	policy, err = r.proxyList.RouteRequest(req)
