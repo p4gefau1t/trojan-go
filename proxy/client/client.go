@@ -103,10 +103,10 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		//listenUDP() will handle the incoming udp packets
 		req.IP = c.config.LocalIP
 		req.Port = c.config.LocalPort
-		if c.config.LocalIP.To16() != nil {
-			req.AddressType = protocol.IPv6
-		} else {
+		if c.config.LocalIP.To4() != nil {
 			req.AddressType = protocol.IPv4
+		} else {
+			req.AddressType = protocol.IPv6
 		}
 		//notify listenUDP to get ready for relaying udp packets
 		c.associatedChan <- 1
@@ -375,8 +375,8 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		}
 		c.router, err = router.NewMixedRouter(
 			defaultPolicy,
-			false,
-			false,
+			config.Router.RouteByIP,
+			config.Router.RouteByIPOnNonmatch,
 			config.Router.Proxy,
 			config.Router.Bypass,
 			config.Router.Block,

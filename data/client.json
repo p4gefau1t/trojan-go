@@ -16,11 +16,17 @@
     "router":{
         "enabled": true,
         "bypass": [
-            "cn-domains.txt",
-            "cn-ipv4.txt",
-            "cn-ipv6.txt",
+            "cn-domain.txt",
+            "cn-ip.txt",
             "private-ip.txt"
         ],
-        "default": "proxy"
+		"proxy": [
+			"non-cn-domain.txt"
+        ],
+		"block": [
+			"ads-all-domains.txt"
+		],
+        "default": "proxy",
+        "route_by_ip_on_nonmatch": true
     }
 }
