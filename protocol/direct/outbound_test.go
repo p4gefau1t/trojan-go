@@ -28,6 +28,6 @@ func TestDirectOutbound(t *testing.T) {
 	}
 	for i := 0; i < 30; i++ {
 		req, buf, err := outbound.ReadPacket()
-		logger.Info(req, string(buf), err)
+		fmt.Println(req, string(buf), err)
 	}
 }

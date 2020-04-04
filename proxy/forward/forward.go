@@ -3,15 +3,12 @@ package forward
 import (
 	"context"
 	"net"
-	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy"
 )
-
-var logger = log.New(os.Stdout)
 
 type Forward struct {
 	common.Runnable
@@ -23,7 +20,7 @@ type Forward struct {
 func (f *Forward) handleConn(conn net.Conn) {
 	newConn, err := net.Dial("tcp", f.config.RemoteAddr.String())
 	if err != nil {
-		logger.Error("failed to connect to remote endpoint:", err)
+		log.DefaultLogger.Error("failed to connect to remote endpoint:", err)
 		return
 	}
 	proxy.ProxyConn(newConn, conn)
@@ -43,7 +40,7 @@ func (f *Forward) Run() error {
 				return nil
 			default:
 			}
-			logger.Error(err)
+			log.DefaultLogger.Error(err)
 			continue
 		}
 		go f.handleConn(conn)
@@ -51,7 +48,7 @@ func (f *Forward) Run() error {
 }
 
 func (f *Forward) Close() error {
-	logger.Info("shutting down forward..")
+	log.DefaultLogger.Info("shutting down forward..")
 	f.cancel()
 	return nil
 }

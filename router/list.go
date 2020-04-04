@@ -42,13 +42,13 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 			return r.nonMatchPolicy, nil
 		}
 		if r.routeByIP {
-			addr, err := net.ResolveIPAddr("tcp", domain)
+			addr, err := net.ResolveIPAddr("ip", domain)
 			if err != nil {
 				return Unknown, err
 			}
-			atype := protocol.IPv4
-			if addr.IP.To16() != nil {
-				atype = protocol.IPv6
+			atype := protocol.IPv6
+			if addr.IP.To4() != nil {
+				atype = protocol.IPv4
 			}
 			return r.RouteRequest(&protocol.Request{
 				IP:          addr.IP,
@@ -61,13 +61,13 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 			}
 		}
 		if r.routeByIPOnNonmatch {
-			addr, err := net.ResolveIPAddr("tcp", domain)
+			addr, err := net.ResolveIPAddr("ip", domain)
 			if err != nil {
 				return Unknown, err
 			}
-			atype := protocol.IPv4
-			if addr.IP.To16() != nil {
-				atype = protocol.IPv6
+			atype := protocol.IPv6
+			if addr.IP.To4() != nil {
+				atype = protocol.IPv4
 			}
 			return r.RouteRequest(&protocol.Request{
 				IP:          addr.IP,
@@ -77,8 +77,8 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 		return r.nonMatchPolicy, nil
 	case protocol.IPv4, protocol.IPv6:
 		ip := req.IP
-		for _, net := range r.ipList {
-			if net.Contains(ip) {
+		for _, ipNet := range r.ipList {
+			if ipNet.Contains(ip) {
 				return r.matchPolicy, nil
 			}
 		}

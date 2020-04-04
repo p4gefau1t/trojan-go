@@ -16,11 +16,14 @@
     "router":{
         "enabled": true,
         "bypass": [
-            "cn-domains.txt",
-            "cn-ipv4.txt",
-            "cn-ipv6.txt",
-            "private-ip.txt"
+            "geoip:cn",
+            "geosite:cn",
+            "geosite:private"
         ],
-        "default": "proxy"
+        "block": [
+            "geosite:category-ads"
+        ],
+        "proxy": [],
+        "route_by_ip_on_nonmatch": true
     }
 }

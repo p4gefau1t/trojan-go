@@ -3,7 +3,6 @@ package mux
 import (
 	"bufio"
 	"io"
-	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -11,8 +10,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/stat"
 )
-
-var logger = log.New(os.Stdout)
 
 type MuxConnSession struct {
 	protocol.ConnSession
@@ -44,7 +41,7 @@ func (m *MuxConnSession) Write(p []byte) (int, error) {
 
 func (m *MuxConnSession) Close() error {
 	m.meter.Count(m.passwordHash, m.sent, m.recv)
-	logger.Info("mux conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
+	log.DefaultLogger.Info("mux conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
 	return m.conn.Close()
 }
 

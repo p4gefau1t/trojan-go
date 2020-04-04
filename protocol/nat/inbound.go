@@ -11,6 +11,7 @@ import (
 	"github.com/LiamHaworth/go-tproxy"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
 
@@ -132,7 +133,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 		expire: time.Now().Add(protocol.UDPTimeout),
 	}
 	i.tableMutex.Unlock()
-	logger.Debug("tproxy UDP packet from", src, "to", dst)
+	log.DefaultLogger.Debug("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
 		IP:          dst.IP,
 		Port:        dst.Port,

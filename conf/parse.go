@@ -8,14 +8,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 )
-
-var logger = log.New(os.Stdout)
 
 func convertToAddr(preferV4 bool, host string, port int) (*net.TCPAddr, error) {
 	ip := net.ParseIP(host)
@@ -48,7 +45,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		return nil, err
 	}
 
-	log.LogLevel = config.LogLevel
+	log.DefaultLogger.SetLogLevel(log.LogLevel(config.LogLevel))
 
 	config.Hash = make(map[string]string)
 	for _, password := range config.Passwords {
@@ -60,7 +57,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			return nil, common.NewError("no password found")
 		}
 		if config.TLS.CertPath == "" {
-			logger.Warn("cert of the remote server is not specified. using default CA list.")
+			log.DefaultLogger.Warn("cert of the remote server is not specified. using default CA list.")
 			break
 		}
 		serverCertBytes, err := ioutil.ReadFile(config.TLS.CertPath)
@@ -152,18 +149,18 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			}
 			if !found {
 				invalid = true
-				logger.Warn("found invalid cipher name", specified)
+				log.DefaultLogger.Warn("found invalid cipher name", specified)
 				break
 			}
 		}
 		if invalid && len(supportedSuites) >= 1 {
-			logger.Warn("cipher list contains invalid cipher name, ignored")
-			logger.Warn("here's a list of supported ciphers:")
+			log.DefaultLogger.Warn("cipher list contains invalid cipher name, ignored")
+			log.DefaultLogger.Warn("here's a list of supported ciphers:")
 			list := ""
 			for _, c := range supportedSuites {
 				list += c.Name + ":"
 			}
-			logger.Warn(list[0 : len(list)-1])
+			log.DefaultLogger.Warn(list[0 : len(list)-1])
 			config.TLS.CipherSuites = nil
 		}
 	}
@@ -171,40 +168,75 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	if config.TLS.HTTPFile != "" {
 		payload, err := ioutil.ReadFile(config.TLS.HTTPFile)
 		if err != nil {
-			logger.Warn("failed to load http response file", err)
+			log.DefaultLogger.Warn("failed to load http response file", err)
 		}
 		config.TLS.HTTPResponse = payload
 	}
 
-	config.Router.Block = []byte{}
-	config.Router.Proxy = []byte{}
-	config.Router.Bypass = []byte{}
-	for _, path := range config.Router.BlockFiles {
-		data, err := ioutil.ReadFile(path)
+	config.Router.BlockList = []byte{}
+	config.Router.ProxyList = []byte{}
+	config.Router.BypassList = []byte{}
+
+	for _, s := range config.Router.Block {
+		if strings.HasPrefix(s, "geoip:") {
+			config.Router.BlockIPCode = append(config.Router.BlockIPCode, s[len("geoip:"):len(s)])
+			continue
+		}
+		if strings.HasPrefix(s, "geosite:") {
+			config.Router.BlockSiteCode = append(config.Router.BlockSiteCode, s[len("geosite:"):len(s)])
+			continue
+		}
+		data, err := ioutil.ReadFile(s)
 		if err != nil {
 			return nil, err
 		}
-		config.Router.Block = append(config.Router.Block, data...)
-		config.Router.Block = append(config.Router.Block, byte('\n'))
+		config.Router.BlockList = append(config.Router.BlockList, data...)
+		config.Router.BlockList = append(config.Router.BlockList, byte('\n'))
 	}
 
-	for _, path := range config.Router.ProxyFiles {
-		data, err := ioutil.ReadFile(path)
+	for _, s := range config.Router.Bypass {
+		if strings.HasPrefix(s, "geoip:") {
+			config.Router.BypassIPCode = append(config.Router.BypassIPCode, s[len("geoip:"):len(s)])
+			continue
+		}
+		if strings.HasPrefix(s, "geosite:") {
+			config.Router.BypassSiteCode = append(config.Router.BypassSiteCode, s[len("geosite:"):len(s)])
+			continue
+		}
+		data, err := ioutil.ReadFile(s)
 		if err != nil {
 			return nil, err
 		}
-		config.Router.Proxy = append(config.Router.Proxy, data...)
-		config.Router.Proxy = append(config.Router.Proxy, byte('\n'))
+		config.Router.BypassList = append(config.Router.BypassList, data...)
+		config.Router.BypassList = append(config.Router.BypassList, byte('\n'))
 	}
 
-	for _, path := range config.Router.BypassFiles {
-		data, err := ioutil.ReadFile(path)
+	for _, s := range config.Router.Proxy {
+		if strings.HasPrefix(s, "geoip:") {
+			config.Router.ProxyIPCode = append(config.Router.ProxyIPCode, s[len("geoip:"):len(s)])
+			continue
+		}
+		if strings.HasPrefix(s, "geosite:") {
+			config.Router.ProxySiteCode = append(config.Router.ProxySiteCode, s[len("geosite:"):len(s)])
+			continue
+		}
+		data, err := ioutil.ReadFile(s)
 		if err != nil {
 			return nil, err
 		}
-		config.Router.Bypass = append(config.Router.Bypass, data...)
-		config.Router.Bypass = append(config.Router.Bypass, byte('\n'))
+		config.Router.ProxyList = append(config.Router.ProxyList, data...)
+		config.Router.ProxyList = append(config.Router.ProxyList, byte('\n'))
 	}
 
+	config.Router.GeoIP, err = ioutil.ReadFile("geoip.dat")
+	if err != nil {
+		config.Router.GeoIP = []byte{}
+		log.DefaultLogger.Warn(err)
+	}
+	config.Router.GeoSite, err = ioutil.ReadFile("geosite.dat")
+	if err != nil {
+		config.Router.GeoSite = []byte{}
+		log.DefaultLogger.Warn(err)
+	}
 	return &config, nil
 }

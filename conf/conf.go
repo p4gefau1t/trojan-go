@@ -73,16 +73,25 @@ type SQLiteConfig struct {
 
 type RouterConfig struct {
 	Enabled             bool     `json:"enabled"`
-	BypassFiles         []string `json:"bypass"`
-	ProxyFiles          []string `json:"proxy"`
-	BlockFiles          []string `json:"block"`
+	Bypass              []string `json:"bypass"`
+	Proxy               []string `json:"proxy"`
+	Block               []string `json:"block"`
 	DefaultPolicy       string   `json:"default_policy"`
 	RouteByIP           bool     `json:"route_by_ip"`
 	RouteByIPOnNonmatch bool     `json:"route_by_ip_on_nonmatch"`
 
-	Bypass []byte
-	Proxy  []byte
-	Block  []byte
+	BypassList []byte
+	ProxyList  []byte
+	BlockList  []byte
+
+	GeoIP          []byte
+	BypassIPCode   []string
+	ProxyIPCode    []string
+	BlockIPCode    []string
+	GeoSite        []byte
+	BypassSiteCode []string
+	ProxySiteCode  []string
+	BlockSiteCode  []string
 }
 
 type GlobalConfig struct {

@@ -2,13 +2,10 @@ package version
 
 import (
 	"flag"
-	"os"
+	"fmt"
 
 	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/log"
 )
-
-var logger = log.New(os.Stdout)
 
 type versionOption struct {
 	arg *bool
@@ -25,10 +22,10 @@ func (*versionOption) Priority() int {
 
 func (c *versionOption) Handle() error {
 	if *c.arg {
-		logger.Info("Trojan-Go", common.Version)
-		logger.Info("Developed by PageFault(p4gefau1t)")
-		logger.Info("Lisensed under GNU General Public License v3")
-		logger.Info("GitHub Repository: https://github.com/p4gefau1t/trojan-go")
+		fmt.Println("Trojan-Go", common.Version)
+		fmt.Println("Developed by PageFault(p4gefau1t)")
+		fmt.Println("Lisensed under GNU General Public License v3")
+		fmt.Println("GitHub Repository: https://github.com/p4gefau1t/trojan-go")
 		return nil
 	}
 	return common.NewError("not set")

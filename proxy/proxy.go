@@ -2,83 +2,105 @@ package proxy
 
 import (
 	"io"
-	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/router"
 )
-
-var logger = log.New(os.Stdout)
 
 type Buildable interface {
 	Build(config *conf.GlobalConfig) (common.Runnable, error)
 }
 
-func copyConn(dst io.Writer, src io.Reader, errChan chan error) {
-	_, err := io.Copy(dst, src)
-	errChan <- err
-}
-
-func copyPacket(dst protocol.PacketWriter, src protocol.PacketReader, errChan chan error) {
-	for {
-		req, packet, err := src.ReadPacket()
-		if err != nil {
-			errChan <- err
-			return
-		}
-		_, err = dst.WritePacket(req, packet)
-		if err != nil {
-			errChan <- err
-			return
-		}
-	}
-}
-
-func ProxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
+func ProxyConn(a, b io.ReadWriteCloser) {
 	errChan := make(chan error, 2)
-	go copyConn(a, b, errChan)
-	go copyConn(b, a, errChan)
+	copyConn := func(dst io.Writer, src io.Reader) {
+		_, err := io.Copy(dst, src)
+		errChan <- err
+	}
+	go copyConn(a, b)
+	go copyConn(b, a)
 	err := <-errChan
 	if err != nil {
-		logger.Debug(common.NewError("conn proxy ends").Base(err))
+		log.DefaultLogger.Debug(common.NewError("conn proxy ends").Base(err))
 	}
 }
 
-func ProxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
+func ProxyPacket(a, b protocol.PacketReadWriter) {
 	errChan := make(chan error, 2)
-	go copyPacket(a, b, errChan)
-	go copyPacket(b, a, errChan)
+	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
+		for {
+			req, packet, err := src.ReadPacket()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			_, err = dst.WritePacket(req, packet)
+			if err != nil {
+				errChan <- err
+				return
+			}
+		}
+	}
+	go copyPacket(a, b)
+	go copyPacket(b, a)
 	err := <-errChan
 	if err != nil {
-		logger.Debug(common.NewError("packet proxy ends").Base(err))
+		log.DefaultLogger.Debug(common.NewError("packet proxy ends").Base(err))
 	}
 }
 
-func copyPacketWithAliveChan(dst protocol.PacketWriter, src protocol.PacketReader, errChan chan error, aliveChan chan int) {
-	for {
-		req, packet, err := src.ReadPacket()
-		if err != nil {
-			errChan <- err
-			return
+func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Policy]protocol.PacketReadWriter, router router.Router) {
+	errChan := make(chan error, 1+len(table))
+	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
+		for {
+			req, packet, err := src.ReadPacket()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			_, err = dst.WritePacket(req, packet)
+			if err != nil {
+				errChan <- err
+				return
+			}
 		}
-		_, err = dst.WritePacket(req, packet)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		aliveChan <- 1
 	}
-}
+	copyToDst := func() {
+		for {
+			req, packet, err := from.ReadPacket()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			policy, err := router.RouteRequest(req)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			to, found := table[policy]
+			if !found {
+				log.DefaultLogger.Debug("policy not found, skipping:", policy)
+				continue
+			}
+			log.DefaultLogger.Debug("udp packet ", req, "routing policy:", policy)
+			_, err = to.WritePacket(req, packet)
+			if err != nil {
+				errChan <- err
+				return
+			}
+		}
+	}
 
-func ProxyPacketWithAliveChan(a protocol.PacketReadWriter, b protocol.PacketReadWriter, aliveChan chan int) {
-	errChan := make(chan error, 2)
-	go copyPacket(a, b, errChan)
-	go copyPacket(b, a, errChan)
+	for _, to := range table {
+		go copyPacket(from, to)
+	}
+	go copyToDst()
 	err := <-errChan
 	if err != nil {
-		logger.Debug(common.NewError("packet proxy ends").Base(err))
+		log.DefaultLogger.Debug(common.NewError("packet proxy with routing ends").Base(err))
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/log"
 )
 
 type certOption struct {
@@ -31,7 +32,7 @@ func (c *certOption) Handle() error {
 		return common.NewError("not specified")
 	default:
 		err := common.NewError("invalid args " + *c.args)
-		logger.Error(err)
+		log.DefaultLogger.Error(err)
 		return common.NewError("invalid args")
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
+	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
 	"golang.org/x/net/proxy"
@@ -124,6 +125,16 @@ func TestClientJSON(t *testing.T) {
 	c.Run()
 }
 
+func TestServerJSON(t *testing.T) {
+	data, err := ioutil.ReadFile("server.json")
+	common.Must(err)
+	config, err := conf.ParseJSON(data)
+	common.Must(err)
+	c := client.Client{}
+	c.Build(config)
+	c.Run()
+}
+
 func TestClient(t *testing.T) {
 	config := &conf.GlobalConfig{
 		LocalIP:    getLocalIP(),
@@ -205,7 +216,7 @@ func TestRouterClient(t *testing.T) {
 		Hash:       getHash("pass123"),
 		Router: conf.RouterConfig{
 			Enabled:       true,
-			Bypass:        []byte("baidu.com\nqq.com\n\n192.168.0.0/16\n"),
+			BypassList:    []byte("baidu.com\nqq.com\n\n192.168.0.0/16\n"),
 			DefaultPolicy: "proxy",
 		},
 	}
@@ -217,7 +228,7 @@ func TestRouterClient(t *testing.T) {
 func TestClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		logger.Error(err)
+		log.DefaultLogger.Error(err)
 	}()
 	go TestClient(t)
 	TestServer(t)
@@ -226,7 +237,7 @@ func TestClientAndServer(t *testing.T) {
 func TestMuxClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		logger.Error(err)
+		log.DefaultLogger.Error(err)
 	}()
 	go TestMuxClient(t)
 	TestServer(t)
@@ -235,15 +246,20 @@ func TestMuxClientAndServer(t *testing.T) {
 func TestRouterClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		logger.Error(err)
+		log.DefaultLogger.Error(err)
 	}()
 	go TestRouterClient(t)
 	TestServer(t)
 }
 
+func TestClientServerJSON(t *testing.T) {
+	go TestServerJSON(t)
+	TestClient(t)
+}
+
 func BenchmarkNormalClientToServer(b *testing.B) {
-	log.LogLevel = 5
 	config1 := &conf.GlobalConfig{
+		LogLevel:   5,
 		LocalIP:    getLocalIP(),
 		LocalPort:  4444,
 		LocalAddr:  getLocalAddr(4444),
@@ -287,8 +303,8 @@ func BenchmarkNormalClientToServer(b *testing.B) {
 }
 
 func BenchmarkMuxClientToServer(b *testing.B) {
-	log.LogLevel = 5
 	config1 := &conf.GlobalConfig{
+		LogLevel:   5,
 		LocalIP:    getLocalIP(),
 		LocalPort:  4444,
 		LocalAddr:  getLocalAddr(4444),
@@ -337,8 +353,8 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 }
 
 func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
-	log.LogLevel = 5
 	config1 := &conf.GlobalConfig{
+		LogLevel:   5,
 		LocalIP:    getLocalIP(),
 		LocalPort:  4444,
 		LocalAddr:  getLocalAddr(4444),
@@ -396,8 +412,8 @@ func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
 }
 
 func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
-	log.LogLevel = 5
 	config1 := &conf.GlobalConfig{
+		LogLevel:   5,
 		LocalIP:    getLocalIP(),
 		LocalPort:  4444,
 		LocalAddr:  getLocalAddr(4444),

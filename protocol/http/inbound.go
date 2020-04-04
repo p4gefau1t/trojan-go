@@ -69,10 +69,10 @@ func (i *HTTPInboundTunnelConnSession) parseRequest() error {
 	if err != nil {
 		if ip := net.ParseIP(httpRequest.Host); ip != nil {
 			i.request.IP = ip
-			if ip.To16() != nil {
-				i.request.AddressType = protocol.IPv6
-			} else {
+			if ip.To4() != nil {
 				i.request.AddressType = protocol.IPv4
+			} else {
+				i.request.AddressType = protocol.IPv6
 			}
 		} else {
 			i.request.DomainName = []byte(httpRequest.Host)
@@ -96,10 +96,10 @@ func parseHTTPRequest(httpRequest *http.Request) *protocol.Request {
 	if err != nil {
 		if ip := net.ParseIP(httpRequest.Host); ip != nil {
 			request.IP = ip
-			if ip.To16() != nil {
-				request.AddressType = protocol.IPv6
-			} else {
+			if ip.To4() != nil {
 				request.AddressType = protocol.IPv4
+			} else {
+				request.AddressType = protocol.IPv6
 			}
 		} else {
 			request.DomainName = []byte(httpRequest.Host)
@@ -154,10 +154,10 @@ func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, erro
 	if err != nil {
 		if ip := net.ParseIP(httpRequest.Host); ip != nil {
 			request.IP = ip
-			if ip.To16() != nil {
-				request.AddressType = protocol.IPv6
-			} else {
+			if ip.To4() != nil {
 				request.AddressType = protocol.IPv4
+			} else {
+				request.AddressType = protocol.IPv6
 			}
 		} else {
 			request.DomainName = []byte(httpRequest.Host)

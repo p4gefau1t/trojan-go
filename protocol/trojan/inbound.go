@@ -6,6 +6,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/stat"
 )
@@ -41,7 +42,7 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (i *TrojanInboundConnSession) Close() error {
-	logger.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
+	log.DefaultLogger.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
 	i.meter.Count(i.passwordHash, i.sent, i.recv)
 	return i.conn.Close()
 }
@@ -65,7 +66,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 			Port:        i.config.RemotePort,
 			NetworkType: "tcp",
 		}
-		logger.Warn("remote", i.conn.RemoteAddr(), "invalid hash or other protocol:", string(userHash))
+		log.DefaultLogger.Warn("remote", i.conn.RemoteAddr(), "invalid hash or other protocol:", string(userHash))
 		return nil
 	}
 	i.passwordHash = string(userHash)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/nat"
@@ -30,7 +31,7 @@ type NAT struct {
 func (n *NAT) handleConn(conn net.Conn) {
 	inbound, err := nat.NewInboundConnSession(conn)
 	if err != nil {
-		logger.Error(common.NewError("failed to start inbound session").Base(err))
+		log.DefaultLogger.Error(common.NewError("failed to start inbound session").Base(err))
 		return
 	}
 	req := inbound.GetRequest()
@@ -38,34 +39,34 @@ func (n *NAT) handleConn(conn net.Conn) {
 	if n.config.Mux.Enabled {
 		stream, info, err := n.mux.OpenMuxConn()
 		if err != nil {
-			logger.Error(common.NewError("failed to open mux stream").Base(err))
+			log.DefaultLogger.Error(common.NewError("failed to open mux stream").Base(err))
 			return
 		}
 		outbound, err := mux.NewOutboundMuxConnSession(stream, req)
 		if err != nil {
 			stream.Close()
-			logger.Error(common.NewError("failed to start mux outbound session").Base(err))
+			log.DefaultLogger.Error(common.NewError("failed to start mux outbound session").Base(err))
 			return
 		}
 		defer outbound.Close()
-		logger.Info("[transparent]conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
+		log.DefaultLogger.Info("[transparent]conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
 		proxy.ProxyConn(inbound, outbound)
 		return
 	}
 	outbound, err := trojan.NewOutboundConnSession(req, nil, n.config)
 	if err != nil {
-		logger.Error("failed to start outbound session", err)
+		log.DefaultLogger.Error("failed to start outbound session", err)
 		return
 	}
 	defer outbound.Close()
-	logger.Info("[transparent]conn from", conn.RemoteAddr(), "tunneling to", req)
+	log.DefaultLogger.Info("[transparent]conn from", conn.RemoteAddr(), "tunneling to", req)
 	proxy.ProxyConn(inbound, outbound)
 }
 
 func (n *NAT) listenUDP() {
 	inbound, err := nat.NewInboundPacketSession(n.config)
 	if err != nil {
-		logger.Fatal(err)
+		log.DefaultLogger.Fatal(err)
 	}
 	n.packetInbound = inbound
 	defer inbound.Close()
@@ -82,7 +83,7 @@ func (n *NAT) listenUDP() {
 				return
 			default:
 			}
-			logger.Error(err)
+			log.DefaultLogger.Error(err)
 			continue
 		}
 		outbound, err := trojan.NewPacketSession(tunnel)
@@ -94,7 +95,7 @@ func (n *NAT) listenUDP() {
 
 func (n *NAT) Run() error {
 	go n.listenUDP()
-	logger.Info("nat running at", n.config.LocalAddr)
+	log.DefaultLogger.Info("nat running at", n.config.LocalAddr)
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
 		IP:   n.config.LocalIP,
 		Port: int(n.config.LocalPort),
@@ -112,7 +113,7 @@ func (n *NAT) Run() error {
 				return nil
 			default:
 			}
-			logger.Error(err)
+			log.DefaultLogger.Error(err)
 			continue
 		}
 		go n.handleConn(conn)
@@ -120,7 +121,7 @@ func (n *NAT) Run() error {
 }
 
 func (n *NAT) Close() error {
-	logger.Info("shutting down nat...")
+	log.DefaultLogger.Info("shutting down nat...")
 	n.cancel()
 	n.listener.Close()
 	n.packetInbound.Close()
@@ -133,7 +134,7 @@ func (n *NAT) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	if config.Mux.Enabled {
 		mux, err := NewMuxPoolManager(n.ctx, config)
 		if err != nil {
-			logger.Fatal(err)
+			log.DefaultLogger.Fatal(err)
 		}
 		n.mux = mux
 	}
