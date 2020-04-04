@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"net"
-	"os"
 	"reflect"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -19,8 +18,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
 )
-
-var logger = log.New(os.Stdout)
 
 type Server struct {
 	common.Runnable
@@ -38,22 +35,22 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 	inboundConn, err := mux.NewInboundMuxConnSession(stream, passwordHash)
 	if err != nil {
 		stream.Close()
-		logger.Error(common.NewError("cannot start inbound session").Base(err))
+		log.DefaultLogger.Error(common.NewError("cannot start inbound session").Base(err))
 		return
 	}
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
 	if req.Command != protocol.Connect {
-		logger.Error("mux only support tcp now")
+		log.DefaultLogger.Error("mux only support tcp now")
 		return
 	}
 	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
-		logger.Error(err)
+		log.DefaultLogger.Error(err)
 		return
 	}
-	logger.Info("user", passwordHash, "mux tunneling to", req.String())
+	log.DefaultLogger.Info("user", passwordHash, "mux tunneling to", req.String())
 	defer outboundConn.Close()
 	proxy.ProxyConn(inboundConn, outboundConn)
 }
@@ -61,7 +58,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 func (s *Server) handleConn(conn net.Conn) {
 	inboundConn, err := trojan.NewInboundConnSession(conn, s.config, s.auth)
 	if err != nil {
-		logger.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
+		log.DefaultLogger.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
 	}
 
@@ -75,7 +72,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
-				logger.Debug("mux conn from", conn.RemoteAddr(), "closed: ", err)
+				log.DefaultLogger.Debug("mux conn from", conn.RemoteAddr(), "closed: ", err)
 				return
 			}
 			go s.handleMuxConn(stream, hash)
@@ -89,32 +86,32 @@ func (s *Server) handleConn(conn net.Conn) {
 
 		outboundPacket, err := direct.NewOutboundPacketSession()
 		if err != nil {
-			logger.Error(err)
+			log.DefaultLogger.Error(err)
 			return
 		}
 		defer outboundPacket.Close()
-		logger.Info("UDP associated")
+		log.DefaultLogger.Info("UDP associated")
 		proxy.ProxyPacket(inboundPacket, outboundPacket)
-		logger.Info("UDP tunnel closed")
+		log.DefaultLogger.Info("UDP tunnel closed")
 		return
 	}
 
 	defer inboundConn.Close()
 	outboundConn, err := direct.NewOutboundConnSession(nil, req)
 	if err != nil {
-		logger.Error(err)
+		log.DefaultLogger.Error(err)
 		return
 	}
 	defer outboundConn.Close()
 
-	logger.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
+	log.DefaultLogger.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
 	proxy.ProxyConn(inboundConn, outboundConn)
 }
 
 func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 	defer conn.Close()
 	if len(s.config.TLS.HTTPResponse) > 0 {
-		logger.Warn("trying to response with a plain http response")
+		log.DefaultLogger.Warn("trying to response with a plain http response")
 		conn.Write(s.config.TLS.HTTPResponse)
 		return
 	}
@@ -122,25 +119,25 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 	if s.config.TLS.FallbackAddr != nil {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Error("recovered", r)
+				log.DefaultLogger.Error("recovered", r)
 			}
 		}()
 		//HACK
 		//obtain the bytes buffered by the tls conn
 		v := reflect.ValueOf(*tlsConn)
 		buf := v.FieldByName("rawInput").FieldByName("buf").Bytes()
-		logger.Debug("payload:" + string(buf))
+		log.DefaultLogger.Debug("payload:" + string(buf))
 
 		remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
 		if err != nil {
-			logger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
+			log.DefaultLogger.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
 			return
 		}
-		logger.Warn("proxying this invalid tls conn to the tls fallback server")
+		log.DefaultLogger.Warn("proxying this invalid tls conn to the tls fallback server")
 		remote.Write(buf)
 		proxy.ProxyConn(conn, remote)
 	} else {
-		logger.Warn("fallback port is unspecified, closing")
+		log.DefaultLogger.Warn("fallback port is unspecified, closing")
 	}
 
 }
@@ -178,7 +175,7 @@ func (s *Server) Run() error {
 	}
 	defer s.auth.Close()
 	defer s.meter.Close()
-	logger.Info("server is running at", s.config.LocalAddr)
+	log.DefaultLogger.Info("server is running at", s.config.LocalAddr)
 
 	var listener net.Listener
 	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
@@ -215,13 +212,13 @@ func (s *Server) Run() error {
 				return nil
 			default:
 			}
-			logger.Warn(err)
+			log.DefaultLogger.Warn(err)
 			continue
 		}
 		tlsConn := tls.Server(conn, tlsConfig)
 		err = tlsConn.Handshake()
 		if err != nil {
-			logger.Warn(common.NewError("failed to perform tls handshake, remote:" + conn.RemoteAddr().String()).Base(err))
+			log.DefaultLogger.Warn(common.NewError("failed to perform tls handshake, remote:" + conn.RemoteAddr().String()).Base(err))
 			go s.handleInvalidConn(conn, tlsConn)
 			continue
 		}
@@ -230,7 +227,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Close() error {
-	logger.Info("shutting down server..")
+	log.DefaultLogger.Info("shutting down server..")
 	if s.listener != nil {
 		s.listener.Close()
 	}

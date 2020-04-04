@@ -8,6 +8,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 )
 
 type proxyOption struct {
@@ -24,18 +25,18 @@ func (*proxyOption) Priority() int {
 }
 
 func (c *proxyOption) Handle() error {
-	logger.Info("Trojan-Go proxy initializing...")
+	log.DefaultLogger.Info("Trojan-Go proxy initializing...")
 	data, err := ioutil.ReadFile(*c.args)
 	if err != nil {
-		logger.Fatal(common.NewError("Failed to read config file").Base(err))
+		log.DefaultLogger.Fatal(common.NewError("Failed to read config file").Base(err))
 	}
 	config, err := conf.ParseJSON(data)
 	if err != nil {
-		logger.Fatal(common.NewError("Failed to parse config file").Base(err))
+		log.DefaultLogger.Fatal(common.NewError("Failed to parse config file").Base(err))
 	}
 	proxy, err := NewProxy(config)
 	if err != nil {
-		logger.Fatal(err)
+		log.DefaultLogger.Fatal(err)
 	}
 	errChan := make(chan error)
 	go func() {
@@ -49,7 +50,7 @@ func (c *proxyOption) Handle() error {
 		proxy.Close()
 		return nil
 	case err := <-errChan:
-		logger.Fatal(err)
+		log.DefaultLogger.Fatal(err)
 		return err
 	}
 }

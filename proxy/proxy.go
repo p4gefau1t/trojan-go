@@ -2,15 +2,12 @@ package proxy
 
 import (
 	"io"
-	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
-
-var logger = log.New(os.Stdout)
 
 type Buildable interface {
 	Build(config *conf.GlobalConfig) (common.Runnable, error)
@@ -42,7 +39,7 @@ func ProxyConn(a io.ReadWriteCloser, b io.ReadWriteCloser) {
 	go copyConn(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		logger.Debug(common.NewError("conn proxy ends").Base(err))
+		log.DefaultLogger.Debug(common.NewError("conn proxy ends").Base(err))
 	}
 }
 
@@ -52,7 +49,7 @@ func ProxyPacket(a protocol.PacketReadWriter, b protocol.PacketReadWriter) {
 	go copyPacket(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		logger.Debug(common.NewError("packet proxy ends").Base(err))
+		log.DefaultLogger.Debug(common.NewError("packet proxy ends").Base(err))
 	}
 }
 
@@ -78,7 +75,7 @@ func ProxyPacketWithAliveChan(a protocol.PacketReadWriter, b protocol.PacketRead
 	go copyPacket(b, a, errChan)
 	err := <-errChan
 	if err != nil {
-		logger.Debug(common.NewError("packet proxy ends").Base(err))
+		log.DefaultLogger.Debug(common.NewError("packet proxy ends").Base(err))
 	}
 }
 

@@ -3,7 +3,6 @@ package mux
 import (
 	"bufio"
 	"io"
-	"os"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -12,7 +11,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/stat"
 )
 
-var logger = log.New(os.Stdout)
+var logger = log.DefaultLogger
 
 type MuxConnSession struct {
 	protocol.ConnSession

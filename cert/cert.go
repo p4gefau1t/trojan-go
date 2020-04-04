@@ -8,10 +8,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"os"
-
-	"github.com/p4gefau1t/trojan-go/log"
 
 	"github.com/go-acme/lego/v3/certcrypto"
 	"github.com/go-acme/lego/v3/certificate"
@@ -22,7 +21,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-var logger = log.New(os.Stdout)
 var caDir string = "https://acme-v02.api.letsencrypt.org/directory"
 var tlsPort string = "443"
 var httpPort string = "80"
@@ -152,7 +150,7 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 	// Each certificate comes back with the cert bytes, the bytes of the client's
 	// private key, and a certificate URL. SAVE THESE TO DISK.
 	//fmt.Printf("%#v\n", certificates)
-	logger.Info("certificates obtained:", certificates.Domain)
+	fmt.Println("certificates obtained:", certificates.Domain)
 
 	return certificates, nil
 }
@@ -177,13 +175,13 @@ func RequestCert(domain, email string) error {
 	}
 	userKey, err := loadUserKey()
 	if err != nil {
-		logger.Warn("failed to load user key, trying to create one..")
+		fmt.Println("failed to load user key, trying to create one..")
 		userKey, err = createAndSaveUserKey()
 		if err != nil {
 			return err
 		}
 	} else {
-		logger.Warn("found user.key, using exist user key")
+		fmt.Println("found user.key, using exist user key")
 	}
 	cert, err := obtainCertificate(domain, email, userKey, nil)
 	if err != nil {

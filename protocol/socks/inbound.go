@@ -6,7 +6,6 @@ import (
 	"context"
 	"io"
 	"net"
-	"os"
 	"sync"
 	"time"
 
@@ -14,8 +13,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
-
-var logger = log.New(os.Stdout)
 
 type SocksConnInboundSession struct {
 	protocol.ConnSession
@@ -171,7 +168,7 @@ func (i *SocksInboundPacketSession) cleanExpiredSession() {
 		now := time.Now()
 		for k, v := range i.sessionTable {
 			if now.After(v.expire) {
-				logger.Debug("deleting expired session", v.src, "req:", v.req)
+				log.DefaultLogger.Debug("deleting expired session", v.src, "req:", v.req)
 				delete(i.sessionTable, k)
 			}
 		}
@@ -203,7 +200,7 @@ func (i *SocksInboundPacketSession) ReadPacket() (*protocol.Request, []byte, err
 	i.tableMutex.Lock()
 	i.sessionTable[req.String()] = session
 	i.tableMutex.Unlock()
-	logger.Debug("UDP read from", src, "req", req)
+	log.DefaultLogger.Debug("UDP read from", src, "req", req)
 	return req, payload, err
 }
 
@@ -217,7 +214,7 @@ func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []
 	if !found {
 		return 0, common.NewError("session not found")
 	}
-	logger.Debug("UDP write to", client.src, "req", req)
+	log.DefaultLogger.Debug("UDP write to", client.src, "req", req)
 	return i.conn.WriteToUDP(w.Bytes(), client.src)
 }
 

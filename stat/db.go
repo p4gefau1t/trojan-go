@@ -8,6 +8,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/log"
 )
 
 type trafficInfo struct {
@@ -68,7 +69,7 @@ func (c *DBTrafficMeter) dbDaemon() {
 		}
 		tx, err := c.db.Begin()
 		if err != nil {
-			logger.Error(common.NewError("cannot begin transactin").Base(err))
+			log.DefaultLogger.Error(common.NewError("cannot begin transactin").Base(err))
 			continue
 		}
 		for _, traffic := range statBuffer {
@@ -82,15 +83,15 @@ func (c *DBTrafficMeter) dbDaemon() {
 			_, err = s.Exec(traffic.sent, traffic.passwordHash)
 
 			if err != nil {
-				logger.Error(common.NewError("failed to update data to tx").Base(err))
+				log.DefaultLogger.Error(common.NewError("failed to update data to tx").Base(err))
 				break
 			}
 		}
 		err = tx.Commit()
 		if err != nil {
-			logger.Error(common.NewError("failed to commit tx").Base(err))
+			log.DefaultLogger.Error(common.NewError("failed to commit tx").Base(err))
 		} else {
-			logger.Info("buffered data has been written into the database")
+			log.DefaultLogger.Info("buffered data has been written into the database")
 		}
 	}
 }
@@ -135,7 +136,7 @@ func (a *DBAuthenticator) updateDaemon() {
 	for {
 		rows, err := a.db.Query("SELECT password,quota,download,upload FROM users")
 		if err != nil {
-			logger.Error(common.NewError("failed to pull data from the database").Base(err))
+			log.DefaultLogger.Error(common.NewError("failed to pull data from the database").Base(err))
 			time.Sleep(a.updateDuration)
 			continue
 		}
@@ -145,7 +146,7 @@ func (a *DBAuthenticator) updateDaemon() {
 			var quota, download, upload int64
 			err := rows.Scan(&passwordHash, &quota, &download, &upload)
 			if err != nil {
-				logger.Error(common.NewError("failed to obtain data from the query result").Base(err))
+				log.DefaultLogger.Error(common.NewError("failed to obtain data from the query result").Base(err))
 				break
 			}
 			if download+upload < quota || quota < 0 {

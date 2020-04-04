@@ -7,11 +7,8 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/p4gefau1t/trojan-go/log"
 	syscall "golang.org/x/sys/unix"
 )
-
-var logger = log.New(os.Stdout)
 
 const (
 	IP6T_SO_ORIGINAL_DST = 80

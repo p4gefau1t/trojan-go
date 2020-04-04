@@ -35,7 +35,7 @@ func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (o *TrojanOutboundConnSession) Close() error {
-	logger.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
+	log.DefaultLogger.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
 	return o.conn.Close()
 }
 
@@ -77,18 +77,18 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 				return nil, common.NewError("failed to verify hostname").Base(err)
 			}
 		}
-		if log.LogLevel == 0 {
+		if config.LogLevel == 0 {
 			state := tlsConn.ConnectionState()
 			chain := state.VerifiedChains
-			logger.Debug("tls handshaked", "cipher", tls.CipherSuiteName(state.CipherSuite))
-			logger.Debug("chains:")
+			log.DefaultLogger.Debug("tls handshaked", "cipher", tls.CipherSuiteName(state.CipherSuite))
+			log.DefaultLogger.Debug("chains:")
 			for i := range chain {
-				logger.Debug("--------------------------------")
+				log.DefaultLogger.Debug("--------------------------------")
 				for j := range chain[i] {
-					logger.Debug("subject:", chain[i][j].Subject, "issuer:", chain[i][j].Issuer)
+					log.DefaultLogger.Debug("subject:", chain[i][j].Subject, "issuer:", chain[i][j].Issuer)
 				}
 			}
-			logger.Debug("--------------------------------")
+			log.DefaultLogger.Debug("--------------------------------")
 		}
 		conn = tlsConn
 	}
