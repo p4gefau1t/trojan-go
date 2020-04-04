@@ -176,8 +176,17 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Router.BlockList = []byte{}
 	config.Router.ProxyList = []byte{}
 	config.Router.BypassList = []byte{}
-	for _, path := range config.Router.BlockFiles {
-		data, err := ioutil.ReadFile(path)
+
+	for _, s := range config.Router.Block {
+		if strings.HasPrefix(s, "geoip:") {
+			config.Router.BlockIPCode = append(config.Router.BlockIPCode, s[len("geoip:"):len(s)])
+			continue
+		}
+		if strings.HasPrefix(s, "geosite:") {
+			config.Router.BlockIPCode = append(config.Router.BlockIPCode, s[len("geosite:"):len(s)])
+			continue
+		}
+		data, err := ioutil.ReadFile(s)
 		if err != nil {
 			return nil, err
 		}
@@ -185,17 +194,16 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		config.Router.BlockList = append(config.Router.BlockList, byte('\n'))
 	}
 
-	for _, path := range config.Router.ProxyFiles {
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return nil, err
+	for _, s := range config.Router.Bypass {
+		if strings.HasPrefix(s, "geoip:") {
+			config.Router.BypassIPCode = append(config.Router.BypassIPCode, s[len("geoip:"):len(s)])
+			continue
 		}
-		config.Router.ProxyList = append(config.Router.ProxyList, data...)
-		config.Router.ProxyList = append(config.Router.ProxyList, byte('\n'))
-	}
-
-	for _, path := range config.Router.BypassFiles {
-		data, err := ioutil.ReadFile(path)
+		if strings.HasPrefix(s, "geosite:") {
+			config.Router.BypassIPCode = append(config.Router.BypassIPCode, s[len("geosite:"):len(s)])
+			continue
+		}
+		data, err := ioutil.ReadFile(s)
 		if err != nil {
 			return nil, err
 		}
@@ -203,5 +211,32 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		config.Router.BypassList = append(config.Router.BypassList, byte('\n'))
 	}
 
+	for _, s := range config.Router.Proxy {
+		if strings.HasPrefix(s, "geoip:") {
+			config.Router.ProxyIPCode = append(config.Router.ProxyIPCode, s[len("geoip:"):len(s)])
+			continue
+		}
+		if strings.HasPrefix(s, "geosite:") {
+			config.Router.ProxyIPCode = append(config.Router.ProxyIPCode, s[len("geosite:"):len(s)])
+			continue
+		}
+		data, err := ioutil.ReadFile(s)
+		if err != nil {
+			return nil, err
+		}
+		config.Router.ProxyList = append(config.Router.ProxyList, data...)
+		config.Router.ProxyList = append(config.Router.ProxyList, byte('\n'))
+	}
+
+	config.Router.GeoIP, err = ioutil.ReadFile("geoip.dat")
+	if err != nil {
+		config.Router.GeoIP = []byte{}
+		log.DefaultLogger.Warn(err)
+	}
+	config.Router.GeoSite, err = ioutil.ReadFile("geosite.dat")
+	if err != nil {
+		config.Router.GeoSite = []byte{}
+		log.DefaultLogger.Warn(err)
+	}
 	return &config, nil
 }

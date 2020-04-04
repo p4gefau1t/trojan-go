@@ -361,23 +361,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	}
 	if config.Router.Enabled {
 		log.DefaultLogger.Info("router enabled")
-		var defaultPolicy router.Policy
-		switch config.Router.DefaultPolicy {
-		case "proxy":
-			defaultPolicy = router.Proxy
-		case "bypass":
-			defaultPolicy = router.Bypass
-		case "block":
-			defaultPolicy = router.Block
-		}
-		c.router, err = router.NewMixedRouter(
-			defaultPolicy,
-			config.Router.RouteByIP,
-			config.Router.RouteByIPOnNonmatch,
-			config.Router.ProxyList,
-			config.Router.BypassList,
-			config.Router.BlockList,
-		)
+		c.router, err = router.NewMixedRouter(config)
 		if err != nil {
 			log.DefaultLogger.Fatal(common.NewError("invalid list").Base(err))
 		}

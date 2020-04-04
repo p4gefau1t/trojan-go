@@ -88,9 +88,9 @@ func NewMixedRouter(config *conf.GlobalConfig) (Router, error) {
 		return nil, err
 	}
 
-	r.blockGeo, _ = NewProtoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
-	r.bypassGeo, _ = NewProtoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
-	r.proxyGeo, _ = NewProtoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
+	r.blockGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
+	r.bypassGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
+	r.proxyGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
 
 	if err := r.blockGeo.LoadGeoData(config.Router.GeoIP, config.Router.BlockIPCode, config.Router.GeoSite, config.Router.BlockSiteCode); err != nil {
 		//return nil, err

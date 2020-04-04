@@ -36,8 +36,12 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 	for _, d := range r.domains {
 		switch d.GetType() {
 		case router.Domain_Domain, router.Domain_Full:
-			if r.isSubdomain(fulldomain, d.GetValue()) {
-				return true
+			domain := d.GetValue()
+			if strings.HasSuffix(fulldomain, domain) {
+				idx := strings.Index(fulldomain, domain)
+				if idx == 0 || fulldomain[idx-1] == '.' {
+					return true
+				}
 			}
 		case router.Domain_Plain:
 			//keyword
@@ -50,7 +54,9 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 			if err != nil {
 				log.DefaultLogger.Error("invalid regex")
 			}
-			return matched
+			if matched {
+				return true
+			}
 		default:
 		}
 	}
@@ -58,14 +64,26 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 }
 
 func (r *GeoRouter) matchIP(ip net.IP) bool {
+	isIPv6 := true
+	len := net.IPv6len
+	if ip.To4() != nil {
+		len = net.IPv4len
+		isIPv6 = false
+	}
 	for _, c := range r.cidrs {
 		n := int(c.GetPrefix())
-		len := net.IPv6len
-		if ip.To4() != nil {
-			len = net.IPv4len
-		}
 		mask := net.CIDRMask(n, 8*len)
-		subnet := &net.IPNet{IP: ip.Mask(mask), Mask: mask}
+		cidrIP := net.IP(c.GetIp())
+		if cidrIP.To4() != nil { //cidr is ipv4
+			if isIPv6 {
+				continue
+			}
+		} else { //cidr is ipv6
+			if !isIPv6 {
+				continue
+			}
+		}
+		subnet := &net.IPNet{IP: cidrIP.Mask(mask), Mask: mask}
 		if subnet.Contains(ip) {
 			return true
 		}
@@ -120,10 +138,10 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 	if err := proto.Unmarshal(geoipData, geoip); err != nil {
 		return err
 	}
-	for _, e := range geoip.GetEntry() {
-		code := e.GetCountryCode()
+	for _, c := range ipCode {
 		found := false
-		for _, c := range ipCode {
+		for _, e := range geoip.GetEntry() {
+			code := e.GetCountryCode()
 			if c == code {
 				r.cidrs = append(r.cidrs, e.GetCidr()...)
 				found = true
@@ -131,7 +149,7 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 			}
 		}
 		if !found {
-			log.DefaultLogger.Warn("ip code", code, "not found")
+			log.DefaultLogger.Warn("ip code", c, "not found")
 		}
 	}
 
@@ -139,10 +157,10 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 	if err := proto.Unmarshal(geositeData, geosite); err != nil {
 		return err
 	}
-	for _, s := range geosite.GetEntry() {
-		code := s.GetCountryCode()
+	for _, c := range siteCode {
 		found := false
-		for _, c := range siteCode {
+		for _, s := range geosite.GetEntry() {
+			code := s.GetCountryCode()
 			if c == code {
 				domainList := s.GetDomain()
 				r.domains = append(r.domains, domainList...)
@@ -151,14 +169,14 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 			}
 		}
 		if !found {
-			log.DefaultLogger.Warn("site code", code, "not found")
+			log.DefaultLogger.Warn("site code", c, "not found")
 		}
 	}
 	log.DefaultLogger.Info("geoip and geosite loaded")
 	return nil
 }
 
-func NewProtoRouter(matchPolicy Policy, nonMatchPolicy Policy, routeByIP bool, routeByIPOnNonmatch bool) (*GeoRouter, error) {
+func NewGeoRouter(matchPolicy Policy, nonMatchPolicy Policy, routeByIP bool, routeByIPOnNonmatch bool) (*GeoRouter, error) {
 	r := GeoRouter{
 		matchPolicy:         matchPolicy,
 		nonMatchPolicy:      nonMatchPolicy,
