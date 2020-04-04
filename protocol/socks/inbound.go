@@ -184,7 +184,9 @@ func (i *SocksInboundPacketSession) cleanExpiredSession() {
 
 func (i *SocksInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 	buf := make([]byte, protocol.MaxUDPPacketSize)
+	i.conn.SetDeadline(time.Now().Add(protocol.UDPTimeout))
 	n, src, err := i.conn.ReadFromUDP(buf)
+	i.conn.SetDeadline(time.Time{})
 	if err != nil {
 		return nil, nil, err
 	}

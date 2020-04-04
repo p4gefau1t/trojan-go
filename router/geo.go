@@ -150,9 +150,9 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 			}
 		}
 		if found {
-			log.DefaultLogger.Info("site code", c, "loaded")
+			log.DefaultLogger.Info("geoip tag", c, "loaded")
 		} else {
-			log.DefaultLogger.Warn("site code", c, "not found")
+			log.DefaultLogger.Warn("geoip tag", c, "not found")
 		}
 	}
 
@@ -173,9 +173,9 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 			}
 		}
 		if found {
-			log.DefaultLogger.Info("site code", c, "loaded")
+			log.DefaultLogger.Info("geosite tag", c, "loaded")
 		} else {
-			log.DefaultLogger.Warn("site code", c, "not found")
+			log.DefaultLogger.Warn("geosite tag", c, "not found")
 		}
 	}
 	return nil

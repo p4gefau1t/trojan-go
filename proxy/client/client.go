@@ -32,57 +32,36 @@ type Client struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	mux            *muxPoolManager
-	associatedChan chan int
+	associatedChan chan time.Time
 	router         router.Router
 }
 
 func (c *Client) listenUDP() {
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{
+		IP:   c.config.LocalIP,
+		Port: int(c.config.LocalPort),
+	})
+	inbound, err := socks.NewInboundPacketSession(listener)
+	common.Must(err)
 	for {
-	start:
-		listener, err := net.ListenUDP("udp", &net.UDPAddr{
-			IP:   c.config.LocalIP,
-			Port: int(c.config.LocalPort),
-		})
-		if err != nil {
-			log.DefaultLogger.Error(common.NewError("failed to listen udp").Base(err))
-			time.Sleep(protocol.UDPTimeout)
-			continue
+		for t := <-c.associatedChan; time.Now().Sub(t) > protocol.UDPTimeout; t = <-c.associatedChan {
+			log.DefaultLogger.Debug("expired udp request, skipping")
 		}
-		inbound, err := socks.NewInboundPacketSession(listener)
-		<-c.associatedChan
-		common.Must(err)
 		log.DefaultLogger.Debug("associated signal")
-		req := protocol.Request{
+		req := &protocol.Request{
 			DomainName:  []byte("UDP_CONN"),
 			AddressType: protocol.DomainName,
 			Command:     protocol.Associate,
 		}
-		tunnel, err := trojan.NewOutboundConnSession(&req, nil, c.config)
+		tunnel, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
 			log.DefaultLogger.Error(err)
 			continue
 		}
 		outbound, err := trojan.NewPacketSession(tunnel)
 		common.Must(err)
-		alive := make(chan int)
-		go proxy.ProxyPacketWithAliveChan(inbound, outbound, alive)
-		for {
-			select {
-			case <-alive:
-				log.DefaultLogger.Debug("keep alive..(alive)")
-			case <-c.associatedChan:
-				log.DefaultLogger.Debug("keep alive..(associated)")
-			case <-time.After(protocol.UDPTimeout * 5):
-				log.DefaultLogger.Debug("time out, closing UDP tunnel")
-				outbound.Close()
-				inbound.Close()
-				goto start
-			case <-c.ctx.Done():
-				outbound.Close()
-				inbound.Close()
-				return
-			}
-		}
+		proxy.ProxyPacket(inbound, outbound)
+		outbound.Close()
 	}
 }
 
@@ -106,7 +85,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			req.AddressType = protocol.IPv6
 		}
 		//notify listenUDP to get ready for relaying udp packets
-		c.associatedChan <- 1
+		c.associatedChan <- time.Now()
 		log.DefaultLogger.Info("UDP associated to", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			log.DefaultLogger.Error("failed to repsond")
@@ -350,7 +329,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.router = &router.EmptyRouter{
 		DefaultPolicy: router.Proxy,
 	}
-	c.associatedChan = make(chan int)
+	c.associatedChan = make(chan time.Time, 512)
 	var err error
 	if config.Mux.Enabled {
 		log.DefaultLogger.Info("mux enabled")

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
 
@@ -68,7 +69,7 @@ func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *ne
 		n, addr, err := conn.ReadFromUDP(buf)
 		conn.SetReadDeadline(time.Time{})
 		if err != nil {
-			logger.Info(err)
+			log.DefaultLogger.Info(err)
 			return
 		}
 		if addr.String() != req.String() {
@@ -97,16 +98,25 @@ func (o *DirectOutboundPacketSession) ReadPacket() (*protocol.Request, []byte, e
 }
 
 func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	remote := &net.UDPAddr{
-		IP:   req.IP,
-		Port: int(req.Port),
+	var remote *net.UDPAddr
+	if req.AddressType == protocol.DomainName {
+		remote, err := net.ResolveUDPAddr("", string(req.DomainName))
+		if err != nil {
+			return 0, err
+		}
+		remote.Port = req.Port
+	} else {
+		remote = &net.UDPAddr{
+			IP:   req.IP,
+			Port: req.Port,
+		}
 	}
 	conn, err := net.DialUDP("udp", nil, remote)
-	go o.listenConn(req, conn)
 	if err != nil {
 		return 0, common.NewError("cannot dial udp").Base(err)
 	}
-	logger.Debug("UDP directly dialing to", remote)
+	log.DefaultLogger.Debug("UDP directly dialing to", remote)
+	go o.listenConn(req, conn)
 	n, err := conn.Write(packet)
 	return n, err
 }
