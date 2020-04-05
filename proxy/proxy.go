@@ -24,7 +24,7 @@ func ProxyConn(a, b io.ReadWriteCloser) {
 	go copyConn(b, a)
 	err := <-errChan
 	if err != nil {
-		log.DefaultLogger.Debug(common.NewError("conn proxy ends").Base(err))
+		log.Debug(common.NewError("conn proxy ends").Base(err))
 	}
 }
 
@@ -48,7 +48,7 @@ func ProxyPacket(a, b protocol.PacketReadWriter) {
 	go copyPacket(b, a)
 	err := <-errChan
 	if err != nil {
-		log.DefaultLogger.Debug(common.NewError("packet proxy ends").Base(err))
+		log.Debug(common.NewError("packet proxy ends").Base(err))
 	}
 }
 
@@ -82,10 +82,10 @@ func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Poli
 			}
 			to, found := table[policy]
 			if !found {
-				log.DefaultLogger.Debug("policy not found, skipping:", policy)
+				log.Debug("policy not found, skipping:", policy)
 				continue
 			}
-			log.DefaultLogger.Debug("udp packet ", req, "routing policy:", policy)
+			log.Debug("udp packet ", req, "routing policy:", policy)
 			_, err = to.WritePacket(req, packet)
 			if err != nil {
 				errChan <- err
@@ -100,7 +100,7 @@ func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Poli
 	go copyToDst()
 	err := <-errChan
 	if err != nil {
-		log.DefaultLogger.Debug(common.NewError("packet proxy with routing ends").Base(err))
+		log.Debug(common.NewError("packet proxy with routing ends").Base(err))
 	}
 }
 

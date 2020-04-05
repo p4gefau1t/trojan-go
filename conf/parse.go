@@ -45,7 +45,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		return nil, err
 	}
 
-	log.DefaultLogger.SetLogLevel(log.LogLevel(config.LogLevel))
+	log.SetLogLevel(log.LogLevel(config.LogLevel))
 
 	config.Hash = make(map[string]string)
 	for _, password := range config.Passwords {
@@ -57,7 +57,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			return nil, common.NewError("no password found")
 		}
 		if config.TLS.CertPath == "" {
-			log.DefaultLogger.Warn("cert of the remote server is not specified. using default CA list.")
+			log.Warn("cert of the remote server is not specified. using default CA list.")
 			break
 		}
 		serverCertBytes, err := ioutil.ReadFile(config.TLS.CertPath)
@@ -149,18 +149,18 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			}
 			if !found {
 				invalid = true
-				log.DefaultLogger.Warn("found invalid cipher name", specified)
+				log.Warn("found invalid cipher name", specified)
 				break
 			}
 		}
 		if invalid && len(supportedSuites) >= 1 {
-			log.DefaultLogger.Warn("cipher list contains invalid cipher name, ignored")
-			log.DefaultLogger.Warn("here's a list of supported ciphers:")
+			log.Warn("cipher list contains invalid cipher name, ignored")
+			log.Warn("here's a list of supported ciphers:")
 			list := ""
 			for _, c := range supportedSuites {
 				list += c.Name + ":"
 			}
-			log.DefaultLogger.Warn(list[0 : len(list)-1])
+			log.Warn(list[0 : len(list)-1])
 			config.TLS.CipherSuites = nil
 		}
 	}
@@ -168,7 +168,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	if config.TLS.HTTPFile != "" {
 		payload, err := ioutil.ReadFile(config.TLS.HTTPFile)
 		if err != nil {
-			log.DefaultLogger.Warn("failed to load http response file", err)
+			log.Warn("failed to load http response file", err)
 		}
 		config.TLS.HTTPResponse = payload
 	}
@@ -231,12 +231,12 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Router.GeoIP, err = ioutil.ReadFile("geoip.dat")
 	if err != nil {
 		config.Router.GeoIP = []byte{}
-		log.DefaultLogger.Warn(err)
+		log.Warn(err)
 	}
 	config.Router.GeoSite, err = ioutil.ReadFile("geosite.dat")
 	if err != nil {
 		config.Router.GeoSite = []byte{}
-		log.DefaultLogger.Warn(err)
+		log.Warn(err)
 	}
 	return &config, nil
 }

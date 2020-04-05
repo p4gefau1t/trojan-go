@@ -45,13 +45,13 @@ func (m *muxPoolManager) newMuxClient() (*muxClientInfo, error) {
 	}
 	conn, err := trojan.NewOutboundConnSession(req, nil, m.config)
 	if err != nil {
-		log.DefaultLogger.Error(common.NewError("failed to dial tls tunnel").Base(err))
+		log.Error(common.NewError("failed to dial tls tunnel").Base(err))
 		return nil, err
 	}
 
 	client, err := smux.Client(conn, nil)
 	common.Must(err)
-	log.DefaultLogger.Info("mux TLS tunnel established, id:", id)
+	log.Info("mux TLS tunnel established, id:", id)
 	return &muxClientInfo{
 		client:         client,
 		id:             id,
@@ -66,7 +66,7 @@ func (m *muxPoolManager) pickMuxClient() (*muxClientInfo, error) {
 	for _, info := range m.muxPool {
 		if info.client.IsClosed() {
 			delete(m.muxPool, info.id)
-			log.DefaultLogger.Info("mux", info.id, "is dead")
+			log.Info("mux", info.id, "is dead")
 			continue
 		}
 		if info.client.NumStreams() < m.config.Mux.Concurrency || m.config.Mux.Concurrency <= 0 {
@@ -102,7 +102,7 @@ func (m *muxPoolManager) checkAndCloseIdleMuxClient() {
 	if m.config.Mux.IdleTimeout <= 0 {
 		muxIdleDuration = 0
 		checkDuration = time.Second * 10
-		log.DefaultLogger.Warn("invalid mux idle timeout")
+		log.Warn("invalid mux idle timeout")
 	} else {
 		muxIdleDuration = time.Duration(m.config.Mux.IdleTimeout) * time.Second
 		checkDuration = muxIdleDuration / 4
@@ -114,22 +114,22 @@ func (m *muxPoolManager) checkAndCloseIdleMuxClient() {
 			for id, info := range m.muxPool {
 				if info.client.IsClosed() {
 					delete(m.muxPool, id)
-					log.DefaultLogger.Info("mux", id, "is dead")
+					log.Info("mux", id, "is dead")
 				} else if info.client.NumStreams() == 0 && time.Now().Sub(info.lastActiveTime) > muxIdleDuration {
 					info.client.Close()
 					delete(m.muxPool, id)
-					log.DefaultLogger.Info("mux", id, "is closed due to inactive")
+					log.Info("mux", id, "is closed due to inactive")
 				}
 			}
 			if len(m.muxPool) != 0 {
-				log.DefaultLogger.Info("current mux pool conn num", len(m.muxPool))
+				log.Info("current mux pool conn num", len(m.muxPool))
 			}
 			m.Unlock()
 		case <-m.ctx.Done():
 			m.Lock()
 			for id, info := range m.muxPool {
 				info.client.Close()
-				log.DefaultLogger.Info("mux", id, "closed")
+				log.Info("mux", id, "closed")
 			}
 			m.Unlock()
 			return

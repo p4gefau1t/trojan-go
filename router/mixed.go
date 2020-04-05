@@ -20,7 +20,7 @@ type MixedRouter struct {
 func (r *MixedRouter) match(router Router, req *protocol.Request) bool {
 	policy, err := router.RouteRequest(req)
 	if err != nil {
-		log.DefaultLogger.Warn(common.NewError("match error").Base(err))
+		log.Warn(common.NewError("match error").Base(err))
 		return false
 	}
 	if policy == match {
@@ -95,15 +95,15 @@ func NewMixedRouter(config *conf.GlobalConfig) (Router, error) {
 
 	if err := r.blockGeo.LoadGeoData(config.Router.GeoIP, config.Router.BlockIPCode, config.Router.GeoSite, config.Router.BlockSiteCode); err != nil {
 		//return nil, err
-		log.DefaultLogger.Warn(err)
+		log.Warn(err)
 	}
 	if err := r.bypassGeo.LoadGeoData(config.Router.GeoIP, config.Router.BypassIPCode, config.Router.GeoSite, config.Router.BypassSiteCode); err != nil {
 		//return nil, err
-		log.DefaultLogger.Warn(err)
+		log.Warn(err)
 	}
 	if err := r.proxyGeo.LoadGeoData(config.Router.GeoIP, config.Router.ProxyIPCode, config.Router.GeoSite, config.Router.ProxySiteCode); err != nil {
 		//return nil, err
-		log.DefaultLogger.Warn(err)
+		log.Warn(err)
 	}
 	return r, nil
 }

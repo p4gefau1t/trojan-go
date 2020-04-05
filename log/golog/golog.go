@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	log.DefaultLogger = New(os.Stdout)
+	log.RegisterLogger(New(os.Stdout))
 }
 
 // FdWriter interface extends existing io.Writer with file descriptor function

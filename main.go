@@ -11,7 +11,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/p4gefau1t/trojan-go/cert"
 	_ "github.com/p4gefau1t/trojan-go/daemon"
-	_ "github.com/p4gefau1t/trojan-go/log/golog"
+
+	//_ "github.com/p4gefau1t/trojan-go/log/golog"
+	_ "github.com/p4gefau1t/trojan-go/log/simplelog"
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
@@ -23,7 +25,7 @@ func main() {
 	for {
 		h, err := common.PopOptionHandler()
 		if err != nil {
-			log.DefaultLogger.Fatal("invalid options")
+			log.Fatal("invalid options")
 		}
 		err = h.Handle()
 		if err == nil {

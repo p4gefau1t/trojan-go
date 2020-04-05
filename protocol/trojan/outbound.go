@@ -35,7 +35,7 @@ func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (o *TrojanOutboundConnSession) Close() error {
-	log.DefaultLogger.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
+	log.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
 	return o.conn.Close()
 }
 
@@ -80,15 +80,15 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 		if config.LogLevel == 0 {
 			state := tlsConn.ConnectionState()
 			chain := state.VerifiedChains
-			log.DefaultLogger.Debug("tls handshaked", "cipher", tls.CipherSuiteName(state.CipherSuite))
-			log.DefaultLogger.Debug("chains:")
+			log.Debug("tls handshaked", "cipher", tls.CipherSuiteName(state.CipherSuite))
+			log.Debug("chains:")
 			for i := range chain {
-				log.DefaultLogger.Debug("--------------------------------")
+				log.Debug("--------------------------------")
 				for j := range chain[i] {
-					log.DefaultLogger.Debug("subject:", chain[i][j].Subject, "issuer:", chain[i][j].Issuer)
+					log.Debug("subject:", chain[i][j].Subject, "issuer:", chain[i][j].Issuer)
 				}
 			}
-			log.DefaultLogger.Debug("--------------------------------")
+			log.Debug("--------------------------------")
 		}
 		conn = tlsConn
 	}
