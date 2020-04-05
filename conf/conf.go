@@ -79,6 +79,8 @@ type RouterConfig struct {
 	DefaultPolicy       string   `json:"default_policy"`
 	RouteByIP           bool     `json:"route_by_ip"`
 	RouteByIPOnNonmatch bool     `json:"route_by_ip_on_nonmatch"`
+	GeoIPFilename       string   `json:"geoip"`
+	GeoSiteFilename     string   `json:"geosite"`
 
 	BypassList []byte
 	ProxyList  []byte

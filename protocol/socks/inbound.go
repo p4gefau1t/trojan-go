@@ -212,10 +212,13 @@ func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []
 		return 0, err
 	}
 	w.Write(packet)
+	i.tableMutex.Lock()
+	defer i.tableMutex.Unlock()
 	client, found := i.sessionTable[req.String()]
 	if !found {
 		return 0, common.NewError("session not found")
 	}
+	client.expire = time.Now().Add(protocol.UDPTimeout)
 	log.Debug("UDP write to", client.src, "req", req)
 	return i.conn.WriteToUDP(w.Bytes(), client.src)
 }

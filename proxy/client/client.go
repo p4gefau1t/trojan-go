@@ -55,7 +55,7 @@ func (c *Client) listenUDP() {
 		}
 		tunnel, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
-			log.Error(err)
+			log.Error(common.NewError("failed to open udp tunnel").Base(err))
 			continue
 		}
 		trojanOutbound, err := trojan.NewPacketSession(tunnel)
@@ -92,8 +92,13 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			req.AddressType = protocol.IPv6
 		}
 		//notify listenUDP to get ready for relaying udp packets
+		select {
+		case <-c.associatedChan:
+			log.Debug("replacing older udp associate request..")
+		default:
+		}
 		c.associatedChan <- time.Now()
-		log.Info("UDP associated to", req)
+		log.Info("UDP associated, req", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			log.Error("failed to repsond")
 		}
@@ -336,7 +341,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.router = &router.EmptyRouter{
 		DefaultPolicy: router.Proxy,
 	}
-	c.associatedChan = make(chan time.Time, 512)
+	c.associatedChan = make(chan time.Time, 1)
 	var err error
 	if config.Mux.Enabled {
 		log.Info("mux enabled")

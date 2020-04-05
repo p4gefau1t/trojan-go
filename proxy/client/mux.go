@@ -91,6 +91,11 @@ func (m *muxPoolManager) OpenMuxConn() (*smux.Stream, *muxClientInfo, error) {
 	}
 	stream, err := info.client.OpenStream()
 	if err != nil {
+		m.Lock()
+		defer m.Unlock()
+		delete(m.muxPool, info.id)
+		info.client.Close()
+		log.Info("somthing wrong with mux", info.id, ", closing")
 		return nil, nil, err
 	}
 	info.lastActiveTime = time.Now()

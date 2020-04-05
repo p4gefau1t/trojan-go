@@ -39,6 +39,8 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60
 	config.Router.DefaultPolicy = "proxy"
+	config.Router.GeoIPFilename = "geoip.dat"
+	config.Router.GeoSiteFilename = "geosite.dat"
 
 	err := json.Unmarshal(data, &config)
 	if err != nil {
@@ -106,7 +108,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		}
 	case Forward:
 	default:
-		return nil, common.NewError("invalid run type")
+		return nil, common.NewError("invalid run type:" + string(config.RunType))
 	}
 
 	localAddr, err := convertToAddr(config.TCP.PreferIPV4, config.LocalHost, config.LocalPort)
@@ -228,15 +230,20 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		config.Router.ProxyList = append(config.Router.ProxyList, byte('\n'))
 	}
 
-	config.Router.GeoIP, err = ioutil.ReadFile("geoip.dat")
+	config.Router.GeoIP, err = ioutil.ReadFile(config.Router.GeoIPFilename)
 	if err != nil {
 		config.Router.GeoIP = []byte{}
 		log.Warn(err)
 	}
-	config.Router.GeoSite, err = ioutil.ReadFile("geosite.dat")
+	config.Router.GeoSite, err = ioutil.ReadFile(config.Router.GeoSiteFilename)
 	if err != nil {
 		config.Router.GeoSite = []byte{}
 		log.Warn(err)
+	}
+
+	if config.TLS.SNI == "" {
+		log.Warn("SNI is unspecified, using remote_addr as SNI")
+		config.TLS.SNI = config.RemoteHost
 	}
 	return &config, nil
 }

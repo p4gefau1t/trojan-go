@@ -254,7 +254,7 @@ func TestRouterClientAndServer(t *testing.T) {
 
 func TestClientServerJSON(t *testing.T) {
 	go TestServerJSON(t)
-	TestClient(t)
+	TestClientJSON(t)
 }
 
 func BenchmarkNormalClientToServer(b *testing.B) {
