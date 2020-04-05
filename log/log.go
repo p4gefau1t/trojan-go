@@ -9,12 +9,12 @@ import (
 type LogLevel int
 
 const (
-	All        LogLevel = 0
+	AllLevel   LogLevel = 0
 	InfoLevel  LogLevel = 1
 	WarnLevel  LogLevel = 2
 	ErrorLevel LogLevel = 3
 	FatalLevel LogLevel = 4
-	Off        LogLevel = 5
+	OffLevel   LogLevel = 5
 )
 
 type Logger interface {

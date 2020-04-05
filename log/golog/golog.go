@@ -206,7 +206,7 @@ func (l *Logger) Output(depth int, prefix Prefix, data string) error {
 		var pc uintptr
 
 		// Get the caller filename and line
-		if pc, file, line, ok = runtime.Caller(depth + 1); !ok {
+		if pc, file, line, ok = runtime.Caller(depth + 2); !ok {
 			file = "<unknown file>"
 			fn = "<unknown function>"
 			line = 0

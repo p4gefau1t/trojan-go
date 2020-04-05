@@ -19,49 +19,73 @@ func (l *SimpleLogger) SetLogLevel(level log.LogLevel) {
 }
 
 func (l *SimpleLogger) Fatal(v ...interface{}) {
-	golog.Fatal(v...)
+	if l.logLevel <= log.FatalLevel {
+		golog.Fatal(v...)
+	}
 }
 
 func (l *SimpleLogger) Fatalf(format string, v ...interface{}) {
-	golog.Fatalf(format, v...)
+	if l.logLevel <= log.FatalLevel {
+		golog.Fatalf(format, v...)
+	}
 }
 
 func (l *SimpleLogger) Error(v ...interface{}) {
-	golog.Println(v...)
+	if l.logLevel <= log.ErrorLevel {
+		golog.Println(v...)
+	}
 }
 
 func (l *SimpleLogger) Errorf(format string, v ...interface{}) {
-	golog.Printf(format, v...)
+	if l.logLevel <= log.ErrorLevel {
+		golog.Printf(format, v...)
+	}
 }
 
 func (l *SimpleLogger) Warn(v ...interface{}) {
-	golog.Println(v...)
+	if l.logLevel <= log.WarnLevel {
+		golog.Println(v...)
+	}
 }
 
 func (l *SimpleLogger) Warnf(format string, v ...interface{}) {
-	golog.Printf(format, v...)
+	if l.logLevel <= log.WarnLevel {
+		golog.Printf(format, v...)
+	}
 }
 
 func (l *SimpleLogger) Info(v ...interface{}) {
-	golog.Println(v...)
+	if l.logLevel <= log.InfoLevel {
+		golog.Println(v...)
+	}
 }
 
 func (l *SimpleLogger) Infof(format string, v ...interface{}) {
-	golog.Printf(format, v...)
+	if l.logLevel <= log.InfoLevel {
+		golog.Printf(format, v...)
+	}
 }
 
 func (l *SimpleLogger) Debug(v ...interface{}) {
-	golog.Println(v...)
+	if l.logLevel <= log.AllLevel {
+		golog.Println(v...)
+	}
 }
 
 func (l *SimpleLogger) Debugf(format string, v ...interface{}) {
-	golog.Printf(format, v...)
+	if l.logLevel <= log.AllLevel {
+		golog.Printf(format, v...)
+	}
 }
 
 func (l *SimpleLogger) Trace(v ...interface{}) {
-	golog.Println(v...)
+	if l.logLevel <= log.AllLevel {
+		golog.Println(v...)
+	}
 }
 
 func (l *SimpleLogger) Tracef(format string, v ...interface{}) {
-	golog.Printf(format, v...)
+	if l.logLevel <= log.AllLevel {
+		golog.Printf(format, v...)
+	}
 }

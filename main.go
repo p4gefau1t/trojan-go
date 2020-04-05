@@ -11,13 +11,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/p4gefau1t/trojan-go/cert"
 	_ "github.com/p4gefau1t/trojan-go/daemon"
-
-	//_ "github.com/p4gefau1t/trojan-go/log/golog"
-	_ "github.com/p4gefau1t/trojan-go/log/simplelog"
+	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/version"
+	//_ "github.com/p4gefau1t/trojan-go/log/simplelog"
 )
 
 func main() {
