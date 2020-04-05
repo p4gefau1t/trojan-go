@@ -39,8 +39,9 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60
 	config.Router.DefaultPolicy = "proxy"
-	config.Router.GeoIPFilename = "geoip.dat"
-	config.Router.GeoSiteFilename = "geosite.dat"
+
+	config.Router.GeoIPFilename = common.GetProgramDir() + "/geoip.dat"
+	config.Router.GeoSiteFilename = common.GetProgramDir() + "/geosite.dat"
 
 	err := json.Unmarshal(data, &config)
 	if err != nil {

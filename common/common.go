@@ -5,10 +5,13 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"log"
+	"os"
+	"path/filepath"
 )
 
 const (
-	Version = "v0.0.17"
+	Version = "v0.1.0"
 )
 
 type Runnable interface {
@@ -48,4 +51,12 @@ func HumanFriendlyTraffic(bytes int) string {
 		return fmt.Sprintf("%.2f MiB", float32(bytes)/MiB)
 	}
 	return fmt.Sprintf("%.2f GiB", float32(bytes)/GiB)
+}
+
+func GetProgramDir() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return dir
 }

@@ -28,11 +28,13 @@ func (c *proxyOption) Handle() error {
 	log.Info("Trojan-Go proxy initializing...")
 	data, err := ioutil.ReadFile(*c.args)
 	if err != nil {
-		log.Fatal(common.NewError("Failed to read config file").Base(err))
+		log.Error(common.NewError("Failed to read config file").Base(err))
+		os.Exit(23)
 	}
 	config, err := conf.ParseJSON(data)
 	if err != nil {
-		log.Fatal(common.NewError("Failed to parse config file").Base(err))
+		log.Error(common.NewError("Failed to parse config file").Base(err))
+		os.Exit(23)
 	}
 	proxy, err := NewProxy(config)
 	if err != nil {
@@ -57,6 +59,6 @@ func (c *proxyOption) Handle() error {
 
 func init() {
 	common.RegisterOptionHandler(&proxyOption{
-		args: flag.String("config", "config.json", "Config filename"),
+		args: flag.String("config", common.GetProgramDir()+"/config.json", "Config filename"),
 	})
 }
