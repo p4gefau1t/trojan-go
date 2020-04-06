@@ -126,12 +126,13 @@ done
 
 cp ../data/*.dat ./
 cp ../data/*.json ./
+cp ../data/*.service ./
 
 for name in *.zip;do
-  zip -ur $name ./*.dat ./*.json
+  zip -ur $name ./*.dat ./*.json ./*.service
   sha1sum $name > $name.sha1
 done
 
 rm ./*.dat
 rm ./*.json
-
+rm ./*.service

@@ -72,23 +72,15 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 		if err != nil {
 			return nil, common.NewError("cannot dial to the remote server").Base(err)
 		}
-		if config.TLS.VerifyHostname {
-			if err := tlsConn.VerifyHostname(config.TLS.SNI); err != nil {
-				return nil, common.NewError("failed to verify hostname").Base(err)
-			}
-		}
 		if config.LogLevel == 0 {
 			state := tlsConn.ConnectionState()
 			chain := state.VerifiedChains
-			log.Debug("tls handshaked", "cipher", tls.CipherSuiteName(state.CipherSuite))
-			log.Debug("chains:")
+			log.Debug("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 			for i := range chain {
-				log.Debug("--------------------------------")
 				for j := range chain[i] {
-					log.Debug("subject:", chain[i][j].Subject, "issuer:", chain[i][j].Issuer)
+					log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
 				}
 			}
-			log.Debug("--------------------------------")
 		}
 		conn = tlsConn
 	}

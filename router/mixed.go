@@ -89,20 +89,17 @@ func NewMixedRouter(config *conf.GlobalConfig) (Router, error) {
 		return nil, err
 	}
 
-	r.blockGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
+	r.blockGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, false)
 	r.bypassGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
 	r.proxyGeo, _ = NewGeoRouter(match, nonMatch, routeByIP, routeByIPOnNonmatch)
 
 	if err := r.blockGeo.LoadGeoData(config.Router.GeoIP, config.Router.BlockIPCode, config.Router.GeoSite, config.Router.BlockSiteCode); err != nil {
-		//return nil, err
 		log.Warn(err)
 	}
 	if err := r.bypassGeo.LoadGeoData(config.Router.GeoIP, config.Router.BypassIPCode, config.Router.GeoSite, config.Router.BypassSiteCode); err != nil {
-		//return nil, err
 		log.Warn(err)
 	}
 	if err := r.proxyGeo.LoadGeoData(config.Router.GeoIP, config.Router.ProxyIPCode, config.Router.GeoSite, config.Router.ProxySiteCode); err != nil {
-		//return nil, err
 		log.Warn(err)
 	}
 	return r, nil
