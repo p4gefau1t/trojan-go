@@ -20,7 +20,7 @@ type Forward struct {
 func (f *Forward) handleConn(conn net.Conn) {
 	newConn, err := net.Dial("tcp", f.config.RemoteAddr.String())
 	if err != nil {
-		log.DefaultLogger.Error("failed to connect to remote endpoint:", err)
+		log.Error("failed to connect to remote endpoint:", err)
 		return
 	}
 	proxy.ProxyConn(newConn, conn)
@@ -40,7 +40,7 @@ func (f *Forward) Run() error {
 				return nil
 			default:
 			}
-			log.DefaultLogger.Error(err)
+			log.Error(err)
 			continue
 		}
 		go f.handleConn(conn)
@@ -48,7 +48,7 @@ func (f *Forward) Run() error {
 }
 
 func (f *Forward) Close() error {
-	log.DefaultLogger.Info("shutting down forward..")
+	log.Info("shutting down forward..")
 	f.cancel()
 	return nil
 }

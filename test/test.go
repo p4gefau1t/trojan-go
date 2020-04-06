@@ -21,7 +21,7 @@ func RunEchoUDPServer(port int) {
 		buf := make([]byte, protocol.MaxUDPPacketSize)
 		n, addr, err := conn.ReadFromUDP(buf[:])
 		common.Must(err)
-		log.DefaultLogger.Info("echo from", addr)
+		log.Info("echo from", addr)
 		conn.WriteToUDP(buf[0:n], addr)
 	}
 }

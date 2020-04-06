@@ -228,7 +228,7 @@ func TestRouterClient(t *testing.T) {
 func TestClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 	}()
 	go TestClient(t)
 	TestServer(t)
@@ -237,7 +237,7 @@ func TestClientAndServer(t *testing.T) {
 func TestMuxClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 	}()
 	go TestMuxClient(t)
 	TestServer(t)
@@ -246,7 +246,7 @@ func TestMuxClientAndServer(t *testing.T) {
 func TestRouterClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 	}()
 	go TestRouterClient(t)
 	TestServer(t)
@@ -254,7 +254,7 @@ func TestRouterClientAndServer(t *testing.T) {
 
 func TestClientServerJSON(t *testing.T) {
 	go TestServerJSON(t)
-	TestClient(t)
+	TestClientJSON(t)
 }
 
 func BenchmarkNormalClientToServer(b *testing.B) {

@@ -16,6 +16,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/version"
+	//_ "github.com/p4gefau1t/trojan-go/log/simplelog"
 )
 
 func main() {
@@ -23,7 +24,7 @@ func main() {
 	for {
 		h, err := common.PopOptionHandler()
 		if err != nil {
-			log.DefaultLogger.Fatal("invalid options")
+			log.Fatal("invalid options")
 		}
 		err = h.Handle()
 		if err == nil {

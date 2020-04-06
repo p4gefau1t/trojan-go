@@ -41,13 +41,16 @@ func (c *Client) listenUDP() {
 		IP:   c.config.LocalIP,
 		Port: int(c.config.LocalPort),
 	})
+	if err != nil {
+		log.Fatal("failed to listen udp")
+	}
 	inbound, err := socks.NewInboundPacketSession(listener)
 	common.Must(err)
 	for {
 		for t := <-c.associatedChan; time.Now().Sub(t) > protocol.UDPTimeout; t = <-c.associatedChan {
-			log.DefaultLogger.Debug("expired udp request, skipping")
+			log.Debug("expired udp request, skipping")
 		}
-		log.DefaultLogger.Debug("associated signal")
+		log.Debug("associated signal")
 		req := &protocol.Request{
 			DomainName:  []byte("UDP_CONN"),
 			AddressType: protocol.DomainName,
@@ -55,7 +58,7 @@ func (c *Client) listenUDP() {
 		}
 		tunnel, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
-			log.DefaultLogger.Error(err)
+			log.Error(common.NewError("failed to open udp tunnel").Base(err))
 			continue
 		}
 		trojanOutbound, err := trojan.NewPacketSession(tunnel)
@@ -75,7 +78,7 @@ func (c *Client) listenUDP() {
 func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 	inboundConn, err := socks.NewInboundConnSession(conn, rw)
 	if err != nil {
-		log.DefaultLogger.Error(common.NewError("failed to start new inbound session").Base(err))
+		log.Error(common.NewError("failed to start new inbound session").Base(err))
 		return
 	}
 	defer inboundConn.Close()
@@ -92,68 +95,73 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			req.AddressType = protocol.IPv6
 		}
 		//notify listenUDP to get ready for relaying udp packets
+		select {
+		case <-c.associatedChan:
+			log.Debug("replacing older udp associate request..")
+		default:
+		}
 		c.associatedChan <- time.Now()
-		log.DefaultLogger.Info("UDP associated to", req)
+		log.Info("UDP associated, req", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
-			log.DefaultLogger.Error("failed to repsond")
+			log.Error("failed to repsond")
 		}
 
 		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
 		_, err = conn.Read(buf[:])
-		log.DefaultLogger.Debug(common.NewError("UDP conn ends").Base(err))
+		log.Debug(common.NewError("UDP conn ends").Base(err))
 		return
 	}
 
 	if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
-		log.DefaultLogger.Error(common.NewError("failed to respond").Base(err))
+		log.Error(common.NewError("failed to respond").Base(err))
 		return
 	}
 
 	policy, err := c.router.RouteRequest(req)
 	if err != nil {
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 		return
 	}
 	if policy == router.Bypass {
 		outboundConn, err := direct.NewOutboundConnSession(nil, req)
 		if err != nil {
-			log.DefaultLogger.Error(err)
+			log.Error(err)
 			return
 		}
-		log.DefaultLogger.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+		log.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
 		proxy.ProxyConn(inboundConn, outboundConn)
 		return
 	} else if policy == router.Block {
-		log.DefaultLogger.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+		log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 		return
 	}
 
 	if c.config.Mux.Enabled {
 		stream, info, err := c.mux.OpenMuxConn()
 		if err != nil {
-			log.DefaultLogger.Error(common.NewError("failed to open mux stream").Base(err))
+			log.Error(common.NewError("failed to open mux stream").Base(err))
 			return
 		}
 
 		outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
 		if err != nil {
 			stream.Close()
-			log.DefaultLogger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
+			log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 			return
 		}
 		defer outboundConn.Close()
-		log.DefaultLogger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
+		log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
 		proxy.ProxyConn(inboundConn, outboundConn)
 	} else {
 		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 		if err != nil {
-			log.DefaultLogger.Error(common.NewError("failed to start new outbound session").Base(err))
+			log.Error(common.NewError("failed to start new outbound session").Base(err))
 			return
 		}
 		defer outboundConn.Close()
 
-		log.DefaultLogger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+		log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
 		proxy.ProxyConn(inboundConn, outboundConn)
 	}
 }
@@ -161,7 +169,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 	inboundConn, inboundPacket, err := http.NewHTTPInbound(conn, rw)
 	if err != nil {
-		log.DefaultLogger.Error(common.NewError("failed to start new inbound session:").Base(err))
+		log.Error(common.NewError("failed to start new inbound session:").Base(err))
 		return
 	}
 	if inboundConn != nil {
@@ -169,53 +177,53 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		req := inboundConn.GetRequest()
 
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
-			log.DefaultLogger.Error(common.NewError("failed to respond").Base(err))
+			log.Error(common.NewError("failed to respond").Base(err))
 			return
 		}
 
 		policy, err := c.router.RouteRequest(req)
 		if err != nil {
-			log.DefaultLogger.Error(err)
+			log.Error(err)
 			return
 		}
 		if policy == router.Bypass {
 			outboundConn, err := direct.NewOutboundConnSession(nil, req)
 			if err != nil {
-				log.DefaultLogger.Error(err)
+				log.Error(err)
 				return
 			}
-			log.DefaultLogger.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+			log.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
 			proxy.ProxyConn(inboundConn, outboundConn)
 			return
 		} else if policy == router.Block {
-			log.DefaultLogger.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+			log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 			return
 		}
 
 		if c.config.Mux.Enabled {
 			stream, info, err := c.mux.OpenMuxConn()
 			if err != nil {
-				log.DefaultLogger.Error(common.NewError("failed to open mux stream").Base(err))
+				log.Error(common.NewError("failed to open mux stream").Base(err))
 				return
 			}
 			defer stream.Close()
 			outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
 			if err != nil {
-				log.DefaultLogger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
+				log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 				return
 			}
 			defer outboundConn.Close()
-			log.DefaultLogger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
+			log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
 			proxy.ProxyConn(inboundConn, outboundConn)
 		} else {
 			outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
 			if err != nil {
-				log.DefaultLogger.Error(common.NewError("failed to start new outbound session").Base(err))
+				log.Error(common.NewError("failed to start new outbound session").Base(err))
 				return
 			}
 			defer outboundConn.Close()
 
-			log.DefaultLogger.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+			log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
 			proxy.ProxyConn(inboundConn, outboundConn)
 		}
 	} else {
@@ -226,7 +234,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			for {
 				req, packet, err := inboundPacket.ReadPacket()
 				if err != nil {
-					log.DefaultLogger.Error(err)
+					log.Error(err)
 					return
 				}
 				packetChan <- &packetInfo{
@@ -244,25 +252,25 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 					if c.config.Mux.Enabled {
 						stream, info, err := c.mux.OpenMuxConn()
 						if err != nil {
-							log.DefaultLogger.Error(common.NewError("failed to open mux stream").Base(err))
+							log.Error(common.NewError("failed to open mux stream").Base(err))
 							continue
 						}
 						outboundConn, err = mux.NewOutboundMuxConnSession(stream, packet.request)
 						if err != nil {
-							log.DefaultLogger.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
+							log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 							continue
 						}
-						log.DefaultLogger.Info("conn from", conn.RemoteAddr(), "mux tunneling to", packet.request, "mux id", info.id)
+						log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", packet.request, "mux id", info.id)
 					} else {
 						outboundConn, err = trojan.NewOutboundConnSession(packet.request, nil, c.config)
 						if err != nil {
-							log.DefaultLogger.Error(err)
+							log.Error(err)
 							continue
 						}
 					}
 					_, err = outboundConn.Write(packet.packet)
 					if err != nil {
-						log.DefaultLogger.Error(err)
+						log.Error(err)
 						continue
 					}
 					go func(outboundConn protocol.ConnSession) {
@@ -271,11 +279,11 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 						for {
 							n, err := outboundConn.Read(buf[:])
 							if err != nil {
-								log.DefaultLogger.Debug(err)
+								log.Debug(err)
 								return
 							}
 							if _, err = inboundPacket.WritePacket(nil, buf[0:n]); err != nil {
-								log.DefaultLogger.Debug(err)
+								log.Debug(err)
 								return
 							}
 						}
@@ -299,7 +307,7 @@ func (c *Client) Run() error {
 	}
 	defer listener.Close()
 
-	log.DefaultLogger.Info("client is running at", listener.Addr())
+	log.Info("client is running at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -307,13 +315,13 @@ func (c *Client) Run() error {
 			case <-c.ctx.Done():
 			default:
 			}
-			log.DefaultLogger.Error(common.NewError("error occured when accpeting conn").Base(err))
+			log.Error(common.NewError("error occured when accpeting conn").Base(err))
 			continue
 		}
 		rw := common.NewBufReadWriter(conn)
 		tmp, err := rw.Peek(1)
 		if err != nil {
-			log.DefaultLogger.Error(common.NewError("failed to obtain proxy type").Base(err))
+			log.Error(common.NewError("failed to obtain proxy type").Base(err))
 			conn.Close()
 			continue
 		}
@@ -326,7 +334,7 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) Close() error {
-	log.DefaultLogger.Info("shutting down client..")
+	log.Info("shutting down client..")
 	c.cancel()
 	return nil
 }
@@ -336,20 +344,20 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.router = &router.EmptyRouter{
 		DefaultPolicy: router.Proxy,
 	}
-	c.associatedChan = make(chan time.Time, 512)
+	c.associatedChan = make(chan time.Time, 1)
 	var err error
 	if config.Mux.Enabled {
-		log.DefaultLogger.Info("mux enabled")
+		log.Info("mux enabled")
 		c.mux, err = NewMuxPoolManager(c.ctx, config)
 		if err != nil {
-			log.DefaultLogger.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 	if config.Router.Enabled {
-		log.DefaultLogger.Info("router enabled")
+		log.Info("router enabled")
 		c.router, err = router.NewMixedRouter(config)
 		if err != nil {
-			log.DefaultLogger.Fatal(common.NewError("invalid router list").Base(err))
+			log.Fatal(common.NewError("invalid router list").Base(err))
 		}
 	}
 	c.config = config

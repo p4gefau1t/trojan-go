@@ -168,7 +168,7 @@ func (i *SocksInboundPacketSession) cleanExpiredSession() {
 		now := time.Now()
 		for k, v := range i.sessionTable {
 			if now.After(v.expire) {
-				log.DefaultLogger.Debug("deleting expired session", v.src, "req:", v.req)
+				log.Debug("deleting expired session", v.src, "req:", v.req)
 				delete(i.sessionTable, k)
 			}
 		}
@@ -202,7 +202,7 @@ func (i *SocksInboundPacketSession) ReadPacket() (*protocol.Request, []byte, err
 	i.tableMutex.Lock()
 	i.sessionTable[req.String()] = session
 	i.tableMutex.Unlock()
-	log.DefaultLogger.Debug("UDP read from", src, "req", req)
+	log.Debug("UDP read from", src, "req", req)
 	return req, payload, err
 }
 
@@ -212,11 +212,14 @@ func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []
 		return 0, err
 	}
 	w.Write(packet)
+	i.tableMutex.Lock()
+	defer i.tableMutex.Unlock()
 	client, found := i.sessionTable[req.String()]
 	if !found {
 		return 0, common.NewError("session not found")
 	}
-	log.DefaultLogger.Debug("UDP write to", client.src, "req", req)
+	client.expire = time.Now().Add(protocol.UDPTimeout)
+	log.Debug("UDP write to", client.src, "req", req)
 	return i.conn.WriteToUDP(w.Bytes(), client.src)
 }
 

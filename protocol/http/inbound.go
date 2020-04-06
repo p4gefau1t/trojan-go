@@ -7,10 +7,40 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
+
+func parseHTTPRequest(httpRequest *http.Request) *protocol.Request {
+	request := &protocol.Request{
+		NetworkType: "tcp",
+		Port:        80,
+		Command:     protocol.Connect,
+	}
+	host, port, err := net.SplitHostPort(httpRequest.Host)
+	if err != nil {
+		if ip := net.ParseIP(httpRequest.Host); ip != nil {
+			request.IP = ip
+			if ip.To4() != nil {
+				request.AddressType = protocol.IPv4
+			} else {
+				request.AddressType = protocol.IPv6
+			}
+		} else {
+			request.DomainName = []byte(httpRequest.Host)
+			request.AddressType = protocol.DomainName
+		}
+	} else {
+		request.DomainName = []byte(host)
+		request.AddressType = protocol.DomainName
+		n, err := strconv.ParseInt(port, 10, 16)
+		common.Must(err)
+		request.Port = int(n)
+	}
+	return request
+}
 
 type HTTPInboundTunnelConnSession struct {
 	protocol.ConnSession
@@ -60,57 +90,8 @@ func (i *HTTPInboundTunnelConnSession) parseRequest() error {
 	}
 	i.bodyReader = httpRequest.Body
 	i.httpRequest = httpRequest
-	i.request = &protocol.Request{
-		NetworkType: "tcp",
-		Port:        80,
-		Command:     protocol.Connect,
-	}
-	host, port, err := net.SplitHostPort(httpRequest.Host)
-	if err != nil {
-		if ip := net.ParseIP(httpRequest.Host); ip != nil {
-			i.request.IP = ip
-			if ip.To4() != nil {
-				i.request.AddressType = protocol.IPv4
-			} else {
-				i.request.AddressType = protocol.IPv6
-			}
-		} else {
-			i.request.DomainName = []byte(httpRequest.Host)
-			i.request.AddressType = protocol.DomainName
-		}
-	} else {
-		i.request.DomainName = []byte(host)
-		i.request.AddressType = protocol.DomainName
-		fmt.Sscanf(port, "%d", &i.request.Port)
-	}
+	i.request = parseHTTPRequest(httpRequest)
 	return nil
-}
-
-func parseHTTPRequest(httpRequest *http.Request) *protocol.Request {
-	request := &protocol.Request{
-		NetworkType: "tcp",
-		Port:        80,
-		Command:     protocol.Connect,
-	}
-	host, port, err := net.SplitHostPort(httpRequest.Host)
-	if err != nil {
-		if ip := net.ParseIP(httpRequest.Host); ip != nil {
-			request.IP = ip
-			if ip.To4() != nil {
-				request.AddressType = protocol.IPv4
-			} else {
-				request.AddressType = protocol.IPv6
-			}
-		} else {
-			request.DomainName = []byte(httpRequest.Host)
-			request.AddressType = protocol.DomainName
-		}
-	} else {
-		request.DomainName = []byte(host)
-		request.AddressType = protocol.DomainName
-		fmt.Sscanf(port, "%d", &request.Port)
-	}
-	return request
 }
 
 type HTTPInboundPacketSession struct {
@@ -145,30 +126,7 @@ func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, erro
 	if err != nil {
 		return nil, nil, err
 	}
-	request := &protocol.Request{
-		NetworkType: "tcp",
-		Port:        80,
-		Command:     protocol.Connect,
-	}
-	host, port, err := net.SplitHostPort(httpRequest.Host)
-	if err != nil {
-		if ip := net.ParseIP(httpRequest.Host); ip != nil {
-			request.IP = ip
-			if ip.To4() != nil {
-				request.AddressType = protocol.IPv4
-			} else {
-				request.AddressType = protocol.IPv6
-			}
-		} else {
-			request.DomainName = []byte(httpRequest.Host)
-			request.AddressType = protocol.DomainName
-		}
-	} else {
-		request.DomainName = []byte(host)
-		request.AddressType = protocol.DomainName
-		fmt.Sscanf(port, "%d", &request.Port)
-	}
-	//packet, err := httputil.DumpRequest(httpRequest, true)
+	request := parseHTTPRequest(httpRequest)
 	buf := bytes.NewBuffer([]byte{})
 	err = httpRequest.Write(buf)
 	common.Must(err)
@@ -179,4 +137,32 @@ func (i *HTTPInboundPacketSession) WritePacket(req *protocol.Request, packet []b
 	n, err := i.bufReadWriter.Write(packet)
 	i.bufReadWriter.Flush()
 	return n, err
+}
+
+func NewHTTPInbound(conn io.ReadWriteCloser, rw *bufio.ReadWriter) (protocol.ConnSession, protocol.PacketSession, error) {
+	var bufReadWriter *bufio.ReadWriter
+	if rw == nil {
+		bufReadWriter = common.NewBufReadWriter(conn)
+	} else {
+		bufReadWriter = rw
+	}
+	method, err := bufReadWriter.Peek(7)
+	if err != nil {
+		return nil, nil, err
+	}
+	if bytes.Equal(method, []byte("CONNECT")) {
+		i := &HTTPInboundTunnelConnSession{
+			bufReadWriter: bufReadWriter,
+			conn:          conn,
+		}
+		if err := i.parseRequest(); err != nil {
+			return nil, nil, common.NewError("failed to parse http header").Base(err)
+		}
+		return i, nil, nil
+	}
+	i := &HTTPInboundPacketSession{
+		bufReadWriter: bufReadWriter,
+		conn:          conn,
+	}
+	return nil, i, nil
 }

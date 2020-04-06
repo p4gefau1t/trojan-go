@@ -32,7 +32,7 @@ func (c *certOption) Handle() error {
 		return common.NewError("not specified")
 	default:
 		err := common.NewError("invalid args " + *c.args)
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 		return common.NewError("invalid args")
 	}
 }

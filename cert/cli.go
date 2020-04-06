@@ -32,7 +32,7 @@ func askForConfirmation() bool {
 	var response string
 	_, err := fmt.Scanln(&response)
 	if err != nil {
-		log.DefaultLogger.Fatal(err)
+		log.Fatal(err)
 	}
 	okayResponses := []string{"y", "Y", "yes", "Yes", "YES"}
 	nokayResponses := []string{"n", "N", "no", "No", "NO"}
@@ -47,11 +47,11 @@ func askForConfirmation() bool {
 }
 
 func RequestCertGuide() {
-	log.DefaultLogger.Info("Guide mode: request cert")
+	log.Info("Guide mode: request cert")
 
-	log.DefaultLogger.Warn("To perform a ACME challenge, trojan-go need the ROOT PRIVILEGE to bind port 80 and 443")
-	log.DefaultLogger.Warn("Please make sure you HAVE sudo this program, and port 80/443 is NOT used by other process at this moment")
-	log.DefaultLogger.Info("Continue? (y/n)")
+	log.Warn("To perform a ACME challenge, trojan-go need the ROOT PRIVILEGE to bind port 80 and 443")
+	log.Warn("Please make sure you HAVE sudo this program, and port 80/443 is NOT used by other process at this moment")
+	log.Info("Continue? (y/n)")
 
 	if !askForConfirmation() {
 		return
@@ -66,9 +66,9 @@ func RequestCertGuide() {
 		fmt.Println("Your email:")
 		fmt.Scanf("%s", &info.Email)
 	} else {
-		log.DefaultLogger.Info("domain_info.json found")
+		log.Info("domain_info.json found")
 		if err := json.Unmarshal(data, info); err != nil {
-			log.DefaultLogger.Error(common.NewError("failed to parse domain_info.json").Base(err))
+			log.Error(common.NewError("failed to parse domain_info.json").Base(err))
 			return
 		}
 	}
@@ -85,22 +85,22 @@ func RequestCertGuide() {
 	ioutil.WriteFile("domain_info.json", data, os.ModePerm)
 
 	if err := RequestCert(info.Domain, info.Email); err != nil {
-		log.DefaultLogger.Error(common.NewError("Failed to create cert").Base(err))
+		log.Error(common.NewError("Failed to create cert").Base(err))
 		return
 	}
 
-	log.DefaultLogger.Info("All done. Certificates has been saved to server.crt and server.key")
-	log.DefaultLogger.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-	log.DefaultLogger.Warn("BACKUP DOMAIN_INFO.JSON, SERVER.KEY, SERVER.CRT AND USER.KEY TO A SAFE PLACE")
-	log.DefaultLogger.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	log.Info("All done. Certificates has been saved to server.crt and server.key")
+	log.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	log.Warn("BACKUP DOMAIN_INFO.JSON, SERVER.KEY, SERVER.CRT AND USER.KEY TO A SAFE PLACE")
+	log.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 }
 
 func RenewCertGuide() {
-	log.DefaultLogger.Info("Guide mode: renew cert")
+	log.Info("Guide mode: renew cert")
 
-	log.DefaultLogger.Warn("To perform a ACME challenge, trojan-go need the ROOT PRIVILEGE to bind port 80 and 443")
-	log.DefaultLogger.Warn("Please make sure you HAVE sudo this program, and port 80/443 is NOT used by other process at this moment")
-	log.DefaultLogger.Info("Continue? (y/n)")
+	log.Warn("To perform a ACME challenge, trojan-go need the ROOT PRIVILEGE to bind port 80 and 443")
+	log.Warn("Please make sure you HAVE sudo this program, and port 80/443 is NOT used by other process at this moment")
+	log.Info("Continue? (y/n)")
 
 	if !askForConfirmation() {
 		return
@@ -108,13 +108,13 @@ func RenewCertGuide() {
 
 	data, err := ioutil.ReadFile("domain_info.json")
 	if err != nil {
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 		return
 	}
 
 	info := &domainInfo{}
 	if err := json.Unmarshal(data, info); err != nil {
-		log.DefaultLogger.Error(err)
+		log.Error(err)
 	}
 
 	fmt.Printf("Domain: %s, Email: %s\n", info.Domain, info.Email)
@@ -125,8 +125,8 @@ func RenewCertGuide() {
 	}
 
 	if err := RenewCert(info.Domain, info.Email); err != nil {
-		log.DefaultLogger.Error(common.NewError("Failed to renew cert").Base(err))
+		log.Error(common.NewError("Failed to renew cert").Base(err))
 		return
 	}
-	log.DefaultLogger.Info("All done")
+	log.Info("All done")
 }

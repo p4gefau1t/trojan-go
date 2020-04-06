@@ -25,18 +25,21 @@ func (*proxyOption) Priority() int {
 }
 
 func (c *proxyOption) Handle() error {
-	log.DefaultLogger.Info("Trojan-Go proxy initializing...")
+	log.Info("Trojan-Go proxy initializing...")
+	log.Info("Loading config file from", *c.args)
 	data, err := ioutil.ReadFile(*c.args)
 	if err != nil {
-		log.DefaultLogger.Fatal(common.NewError("Failed to read config file").Base(err))
+		log.Error(common.NewError("Failed to read config file").Base(err))
+		os.Exit(23)
 	}
 	config, err := conf.ParseJSON(data)
 	if err != nil {
-		log.DefaultLogger.Fatal(common.NewError("Failed to parse config file").Base(err))
+		log.Error(common.NewError("Failed to parse config file").Base(err))
+		os.Exit(23)
 	}
 	proxy, err := NewProxy(config)
 	if err != nil {
-		log.DefaultLogger.Fatal(err)
+		log.Fatal(err)
 	}
 	errChan := make(chan error)
 	go func() {
@@ -50,13 +53,13 @@ func (c *proxyOption) Handle() error {
 		proxy.Close()
 		return nil
 	case err := <-errChan:
-		log.DefaultLogger.Fatal(err)
+		log.Fatal(err)
 		return err
 	}
 }
 
 func init() {
 	common.RegisterOptionHandler(&proxyOption{
-		args: flag.String("config", "config.json", "Config filename"),
+		args: flag.String("config", common.GetProgramDir()+"/config.json", "Config filename"),
 	})
 }

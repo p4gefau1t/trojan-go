@@ -17,7 +17,7 @@ func (*versionOption) Name() string {
 }
 
 func (*versionOption) Priority() int {
-	return 0
+	return 10
 }
 
 func (c *versionOption) Handle() error {

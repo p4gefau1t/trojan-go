@@ -1,0 +1,16 @@
+[Unit]
+Description=Trojan-Go - An unidentifiable mechanism that helps you bypass GFW
+Documentation=https://github.com/p4gefau1t/trojan-go
+After=network.target nss-lookup.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/trojan-go/trojan-go -config /etc/trojan-go/config.json
+Restart=on-failure
+RestartSec=10
+RestartPreventExitStatus=23
+
+[Install]
+WantedBy=multi-user.target
