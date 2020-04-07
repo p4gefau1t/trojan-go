@@ -95,14 +95,11 @@ client.json
     "run_type": "client",
     "local_addr": "127.0.0.1",
     "local_port": 1080,
-    "remote_addr": "your_awesome_server",
+    "remote_addr": "www.your_awesome_domain_name.com",
     "remote_port": 443,
     "password": [
         "your_awesome_password"
-    ],
-    "ssl": {
-        "sni": "your_awesome_domain_name"
-    }
+    ]
 }
 ```
 
@@ -327,14 +324,11 @@ client.json
     "run_type": "client",
     "local_addr": "127.0.0.1",
     "local_port": 1080,
-    "remote_addr": "your_awesome_server",
+    "remote_addr": "www.your_awesome_domain_name.com",
     "remote_port": 443,
     "password": [
         "your_awesome_password"
-    ],
-    "ssl": {
-        "sni": "your_awesome_domain_name"
-    }
+    ]
 }
 ```
 ## Certificate requesting
