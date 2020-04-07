@@ -111,7 +111,7 @@ func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
 	if buildable, found := buildableMap[runType]; found {
 		return buildable.Build(config)
 	}
-	return nil, common.NewError("invalid run_type")
+	return nil, common.NewError("invalid run_type " + string(runType))
 }
 
 func RegisterProxy(t conf.RunType, b Buildable) {

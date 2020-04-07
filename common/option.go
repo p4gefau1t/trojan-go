@@ -6,7 +6,7 @@ type OptionHandler interface {
 	Priority() int
 }
 
-var handlers map[string]OptionHandler = make(map[string]OptionHandler)
+var handlers = make(map[string]OptionHandler)
 
 func RegisterOptionHandler(h OptionHandler) {
 	handlers[h.Name()] = h

@@ -131,6 +131,7 @@ func (m *muxPoolManager) checkAndCloseIdleMuxClient() {
 			}
 			m.Unlock()
 		case <-m.ctx.Done():
+			log.Debug("shutting down mux manager..")
 			m.Lock()
 			for id, info := range m.muxPool {
 				info.client.Close()

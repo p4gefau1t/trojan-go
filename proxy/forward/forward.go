@@ -12,9 +12,10 @@ import (
 
 type Forward struct {
 	common.Runnable
-	config *conf.GlobalConfig
-	ctx    context.Context
-	cancel context.CancelFunc
+	config   *conf.GlobalConfig
+	ctx      context.Context
+	cancel   context.CancelFunc
+	listener net.Listener
 }
 
 func (f *Forward) handleConn(conn net.Conn) {
@@ -28,6 +29,7 @@ func (f *Forward) handleConn(conn net.Conn) {
 
 func (f *Forward) Run() error {
 	listener, err := net.Listen("tcp", f.config.LocalAddr.String())
+	f.listener = listener
 	if err != nil {
 		return common.NewError("failed to listen local address").Base(err)
 	}
@@ -49,6 +51,7 @@ func (f *Forward) Run() error {
 
 func (f *Forward) Close() error {
 	log.Info("shutting down forward..")
+	f.listener.Close()
 	f.cancel()
 	return nil
 }

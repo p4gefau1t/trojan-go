@@ -25,8 +25,10 @@ func (*proxyOption) Priority() int {
 }
 
 func (c *proxyOption) Handle() error {
-	log.Info("Trojan-Go proxy initializing...")
+	log.Info("Trojan-Go proxy ", common.Version, "initializing")
 	log.Info("Loading config file from", *c.args)
+
+	//exit code 23 stands for initializing error, and systemd will not trying to restart it
 	data, err := ioutil.ReadFile(*c.args)
 	if err != nil {
 		log.Error(common.NewError("Failed to read config file").Base(err))
@@ -39,7 +41,8 @@ func (c *proxyOption) Handle() error {
 	}
 	proxy, err := NewProxy(config)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(common.NewError("Failed to launch proxy").Base(err))
+		os.Exit(23)
 	}
 	errChan := make(chan error)
 	go func() {

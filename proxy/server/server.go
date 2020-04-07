@@ -215,14 +215,16 @@ func (s *Server) Run() error {
 			log.Warn(err)
 			continue
 		}
-		tlsConn := tls.Server(conn, tlsConfig)
-		err = tlsConn.Handshake()
-		if err != nil {
-			log.Warn(common.NewError("failed to perform tls handshake, remote:" + conn.RemoteAddr().String()).Base(err))
-			go s.handleInvalidConn(conn, tlsConn)
-			continue
-		}
-		go s.handleConn(tlsConn)
+		go func(conn net.Conn) {
+			tlsConn := tls.Server(conn, tlsConfig)
+			err = tlsConn.Handshake()
+			if err != nil {
+				log.Warn(common.NewError("failed to perform tls handshake, remote:" + conn.RemoteAddr().String()).Base(err))
+				go s.handleInvalidConn(conn, tlsConn)
+				return
+			}
+			go s.handleConn(tlsConn)
+		}(conn)
 	}
 }
 
