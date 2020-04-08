@@ -4,6 +4,8 @@
 
 支持使用[多路复用](#多路复用)提升并发性能，使用[路由模块](#路由模块)实现国内直连。
 
+支持CDN[流量中转](#Websocket)(基于WebSocket over TLS/SSL)
+
 支持使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
 
 **完整配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。**
@@ -139,6 +141,26 @@ sudo ./trojan-go -cert renew
 
 更新证书，确保上面提到的四个文件在trojan-go所在目录，运行后trojan-go将自动更新证书文件。
 
+### WebSocket
+
+<a name="WebSocket"></a>
+
+Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。
+
+服务器和客户端配置文件中同时添加```websocket```选项即可启用Websocket支持，例如
+
+```
+"websocket": {
+    "enabled": true,
+    "path": "/im_a_url_path",
+    "hostname": "www.your_awesome_domain_name.com"
+}
+```
+
+服务端可以省略```hostname```, 但是服务器和客户端的```path```必须相同。服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
+
+由于原版Trojan并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。
+
 ### 多路复用
 
 <a name="多路复用"></a>
@@ -242,6 +264,8 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 Full-featured Trojan proxy written in golang, compatiable with the original Trojan protocol and config file. It's safe, efficient, lightweight and easy to use.
 
 Supports multiplexing and traffic routing.
+
+Supports CDN traffic transferring, based on WebSocket over TLS/SSL
 
 Uses the ACME protocol to automatically request and renew HTTPS certificates from Let's Encrypt.
 
@@ -364,6 +388,24 @@ sudo ./trojan-go -cert renew
 `` `
 
 To renew the certificate. Make sure that the files mentioned above are in the same directory where trojan-go is located. Trojan-Go will automatically update the certificate file.
+
+#WebSocket
+
+Trojan-Go can use WebSocket over TLS/SSL to carry the Trojan traffic, making it possible to exploit CDN to proxy traffic.
+
+Websocket support can be enabled by adding the "websocket" option to both server and client configuration files, for example
+
+```
+"websocket": {
+    "enabled": true,
+    "path": "/im_a_url_path",
+    "hostname": "www.your_awesome_domain_name.com"
+}
+```
+
+The server can omit ```hostname``` field, but the ```path``` of the server and client must be the same. After Websocket support is enabled on the server, Websocket and general Trojan traffic can be supported at the same time. Clients without Websocket options will still work.
+
+Since the original Trojan does not support Websocket, if you want to use Websocket to carry traffic, please make sure that both endpoints use Trojan-Go.
 
 ### Multiplexing
 

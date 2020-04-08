@@ -78,7 +78,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		return common.NewError("failed to read hash").Base(err)
 	}
 	if !i.auth.CheckHash(string(userHash)) {
-		return common.NewError("invalid hash")
+		return common.NewError("invalid hash:" + string(userHash))
 	}
 	i.passwordHash = string(userHash)
 	i.bufReadWriter.Discard(56 + 2)
