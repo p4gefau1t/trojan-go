@@ -2,13 +2,19 @@ package trojan
 
 import (
 	"bufio"
+	"bytes"
+	"context"
+	"io"
 	"net"
+	"net/http"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/stat"
+	"golang.org/x/net/websocket"
 )
 
 type TrojanInboundConnSession struct {
@@ -20,12 +26,15 @@ type TrojanInboundConnSession struct {
 	config        *conf.GlobalConfig
 	request       *protocol.Request
 	bufReadWriter *bufio.ReadWriter
-	conn          net.Conn
+	conn          io.ReadWriteCloser
 	auth          stat.Authenticator
 	meter         stat.TrafficMeter
 	sent          int
 	recv          int
 	passwordHash  string
+	ctx           context.Context
+	cancel        context.CancelFunc
+	readBytes     *bytes.Buffer
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
@@ -36,6 +45,13 @@ func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
+	if i.readBytes != nil {
+		n, err := i.readBytes.Read(p)
+		if err == io.EOF {
+			i.readBytes = nil
+		}
+		return n, err
+	}
 	n, err := i.bufReadWriter.Read(p)
 	i.recv += n
 	return n, err
@@ -44,6 +60,7 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 func (i *TrojanInboundConnSession) Close() error {
 	log.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
 	i.meter.Count(i.passwordHash, i.sent, i.recv)
+	i.cancel()
 	return i.conn.Close()
 }
 
@@ -61,13 +78,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		return common.NewError("failed to read hash").Base(err)
 	}
 	if !i.auth.CheckHash(string(userHash)) {
-		i.request = &protocol.Request{
-			IP:          i.config.RemoteIP,
-			Port:        i.config.RemotePort,
-			NetworkType: "tcp",
-		}
-		log.Warn("remote", i.conn.RemoteAddr(), "invalid hash or other protocol:", string(userHash))
-		return nil
+		return common.NewError("invalid hash")
 	}
 	i.passwordHash = string(userHash)
 	i.bufReadWriter.Discard(56 + 2)
@@ -98,6 +109,87 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	return nil
 }
 
+//Fake response writer
+//Websocket ServeHTTP method uses its Hijack method to get the Readwriter
+type wsHttpResponseWriter struct {
+	http.Hijacker
+	http.ResponseWriter
+
+	ReadWriter *bufio.ReadWriter
+	Conn       net.Conn
+}
+
+func (w *wsHttpResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return w.Conn, w.ReadWriter, nil
+}
+
+func (i *TrojanInboundConnSession) parseWebsocket() (bool, error) {
+	correct := "GET " + i.config.Websocket.Path
+	first, err := i.bufReadWriter.Peek(len(correct))
+	if err != nil {
+		return false, err
+	}
+	if !bytes.Equal([]byte(correct), first) {
+		//it may be a normal trojan conn
+		return true, common.NewError("invalid header")
+	}
+
+	httpRequest, err := http.ReadRequest(i.bufReadWriter.Reader)
+	if err != nil {
+		//malformed http request
+		return false, err
+	}
+
+	url := "wss://" + i.config.Websocket.HostName + i.config.Websocket.Path
+	origin := "https://" + i.config.Websocket.HostName
+	wsConfig, err := websocket.NewConfig(url, origin)
+
+	if httpRequest.URL.String() != i.config.Websocket.Path {
+		log.Error("invalid websocket path, url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
+		i.readBytes = bytes.NewBuffer([]byte{})
+		httpRequest.Write(i.readBytes)
+		return false, common.NewError("invalid url")
+	}
+
+	handshaked := make(chan struct{})
+
+	var wsConn *websocket.Conn
+	wsServer := websocket.Server{
+		Config: *wsConfig,
+		Handler: func(conn *websocket.Conn) {
+			wsConn = conn //store the websocket after handshaking
+			log.Debug("websocket obtained")
+			handshaked <- struct{}{}
+			//this function will NOT return unless the connection is ended
+			//or the websocket will be closed by ServeHTTP method
+			<-i.ctx.Done()
+		},
+		Handshake: func(wsConfig *websocket.Config, httpRequest *http.Request) error {
+			log.Debug("websocket url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
+			return nil
+		},
+	}
+
+	responseWriter := &wsHttpResponseWriter{
+		Conn:       i.conn.(net.Conn),
+		ReadWriter: i.bufReadWriter,
+	}
+	go wsServer.ServeHTTP(responseWriter, httpRequest)
+
+	select {
+	case <-handshaked:
+	case <-time.After(protocol.TCPTimeout):
+	}
+
+	if wsConn == nil {
+		return false, common.NewError("failed to perform websocket handshake")
+	}
+	//setup new readwriter
+	i.conn = wsConn
+	i.bufReadWriter = common.NewBufReadWriter(wsConn)
+	return true, nil
+}
+
 func (i *TrojanInboundConnSession) SetAuth(auth stat.Authenticator) {
 	i.auth = auth
 }
@@ -107,6 +199,7 @@ func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
 }
 
 func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	i := &TrojanInboundConnSession{
 		config:        config,
 		conn:          conn,
@@ -114,9 +207,30 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		meter:         &stat.EmptyTrafficMeter{},
 		auth:          auth,
 		passwordHash:  "INVALID_HASH",
+		ctx:           ctx,
+		cancel:        cancel,
+	}
+	//try to treat it as a websocket connection first
+	validConn, err := i.parseWebsocket()
+	if err == nil {
+		log.Debug("websocket conn")
+	}
+	if !validConn {
+		i.request = &protocol.Request{
+			IP:          i.config.RemoteIP,
+			Port:        i.config.RemotePort,
+			NetworkType: "tcp",
+		}
+		log.Warn("remote", conn.RemoteAddr(), "invalid websocket conn")
+		return i, nil
 	}
 	if err := i.parseRequest(); err != nil {
-		return nil, err
+		i.request = &protocol.Request{
+			IP:          i.config.RemoteIP,
+			Port:        i.config.RemotePort,
+			NetworkType: "tcp",
+		}
+		log.Warn("remote", conn.RemoteAddr(), "invalid hash or other protocol")
 	}
 	return i, nil
 }

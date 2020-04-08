@@ -45,7 +45,7 @@ wget https://raw.githubusercontent.com/v2ray/geoip/release/geoip.dat -O geoip.da
 cp ../data/* ./
 
 for name in trojan-go*;do
-  zip $name.zip client.json server.json trojan-go.service $name
+  zip $name.zip client.json server.json trojan-go.service geoip.dat geosite.dat $name
   sha1sum $name.zip > $name.zip.sha1
   rm $name
 done

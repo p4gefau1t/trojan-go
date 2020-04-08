@@ -9,6 +9,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"golang.org/x/net/websocket"
 )
 
 type TrojanOutboundConnSession struct {
@@ -40,22 +41,21 @@ func (o *TrojanOutboundConnSession) Close() error {
 }
 
 func (o *TrojanOutboundConnSession) writeRequest() error {
-	w := bufio.NewWriter(o.conn)
 	hash := ""
 	for k := range o.config.Hash {
 		hash = k
 		break
 	}
 	crlf := []byte("\r\n")
-	w.Write([]byte(hash))
-	w.Write(crlf)
-	w.WriteByte(byte(o.request.Command))
-	err := protocol.WriteAddress(w, o.request)
+	o.bufReadWriter.Write([]byte(hash))
+	o.bufReadWriter.Write(crlf)
+	o.bufReadWriter.WriteByte(byte(o.request.Command))
+	err := protocol.WriteAddress(o.bufReadWriter, o.request)
 	if err != nil {
 		return common.NewError("failed to write address").Base(err)
 	}
-	w.Write(crlf)
-	return w.Flush()
+	o.bufReadWriter.Write(crlf)
+	return o.bufReadWriter.Flush()
 }
 
 func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
@@ -83,6 +83,19 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 			}
 		}
 		conn = tlsConn
+		if config.Websocket.Enabled {
+			url := "wss://" + config.Websocket.HostName + config.Websocket.Path
+			origin := "https://" + config.Websocket.HostName
+			config, err := websocket.NewConfig(url, origin)
+			if err != nil {
+				return nil, err
+			}
+			wsConn, err := websocket.NewClient(config, conn)
+			if err != nil {
+				return nil, err
+			}
+			conn = wsConn
+		}
 	}
 	o := &TrojanOutboundConnSession{
 		request:       req,

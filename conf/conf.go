@@ -96,20 +96,27 @@ type RouterConfig struct {
 	BlockSiteCode  []string
 }
 
+type WebsocketConfig struct {
+	Enabled  bool   `json:"enabled`
+	HostName string `json:"host_name"`
+	Path     string `json:"path"`
+}
+
 type GlobalConfig struct {
-	RunType    RunType      `json:"run_type"`
-	LogLevel   int          `json:"log_level"`
-	LocalHost  string       `json:"local_addr"`
-	LocalPort  int          `json:"local_port"`
-	RemoteHost string       `json:"remote_addr"`
-	RemotePort int          `json:"remote_port"`
-	Passwords  []string     `json:"password"`
-	TLS        TLSConfig    `json:"ssl"`
-	TCP        TCPConfig    `json:"tcp"`
-	MySQL      MySQLConfig  `json:"mysql"`
-	SQLite     SQLiteConfig `json:"sqlite"`
-	Mux        MuxConfig    `json:"mux"`
-	Router     RouterConfig `json:"router"`
+	RunType    RunType         `json:"run_type"`
+	LogLevel   int             `json:"log_level"`
+	LocalHost  string          `json:"local_addr"`
+	LocalPort  int             `json:"local_port"`
+	RemoteHost string          `json:"remote_addr"`
+	RemotePort int             `json:"remote_port"`
+	Passwords  []string        `json:"password"`
+	TLS        TLSConfig       `json:"ssl"`
+	TCP        TCPConfig       `json:"tcp"`
+	MySQL      MySQLConfig     `json:"mysql"`
+	SQLite     SQLiteConfig    `json:"sqlite"`
+	Mux        MuxConfig       `json:"mux"`
+	Router     RouterConfig    `json:"router"`
+	Websocket  WebsocketConfig `json:"websocket"`
 
 	LocalAddr  net.Addr
 	LocalIP    net.IP

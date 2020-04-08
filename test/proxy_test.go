@@ -225,6 +225,48 @@ func TestRouterClient(t *testing.T) {
 	common.Must(c.Run())
 }
 
+func TestWebsocketClient(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Websocket: conf.WebsocketConfig{
+			Enabled:  true,
+			HostName: "127.0.0.1",
+			Path:     "/websocket",
+		},
+	}
+	c := client.Client{}
+	c.Build(config)
+	common.Must(c.Run())
+}
+
+func TestWebsocketServer(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4445,
+		LocalAddr:  getLocalAddr(4445),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 80,
+		RemoteAddr: getLocalAddr(80),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Websocket: conf.WebsocketConfig{
+			Enabled:  true,
+			HostName: "127.0.0.1",
+			Path:     "/websocket",
+		},
+	}
+	s := server.Server{}
+	s.Build(config)
+	common.Must(s.Run())
+}
+
 func TestClientAndServer(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
@@ -255,6 +297,11 @@ func TestRouterClientAndServer(t *testing.T) {
 func TestClientServerJSON(t *testing.T) {
 	go TestServerJSON(t)
 	TestClientJSON(t)
+}
+
+func TestWebsocketClientServer(t *testing.T) {
+	go TestWebsocketServer(t)
+	TestWebsocketClient(t)
 }
 
 func BenchmarkNormalClientToServer(b *testing.B) {

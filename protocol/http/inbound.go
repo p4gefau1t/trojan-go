@@ -117,10 +117,6 @@ func (i *HTTPInboundPacketSession) GetRequest() *protocol.Request {
 	return i.request
 }
 
-func (i *HTTPInboundPacketSession) Respond(r io.Reader) error {
-	return nil
-}
-
 func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 	httpRequest, err := http.ReadRequest(i.bufReadWriter.Reader)
 	if err != nil {
