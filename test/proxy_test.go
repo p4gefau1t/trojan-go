@@ -122,7 +122,7 @@ func TestClientJSON(t *testing.T) {
 	common.Must(err)
 	c := client.Client{}
 	c.Build(config)
-	c.Run()
+	common.Must(c.Run())
 }
 
 func TestServerJSON(t *testing.T) {
@@ -130,9 +130,9 @@ func TestServerJSON(t *testing.T) {
 	common.Must(err)
 	config, err := conf.ParseJSON(data)
 	common.Must(err)
-	c := client.Client{}
+	c := server.Server{}
 	c.Build(config)
-	c.Run()
+	common.Must(c.Run())
 }
 
 func TestClient(t *testing.T) {
@@ -246,6 +246,32 @@ func TestWebsocketClient(t *testing.T) {
 	common.Must(c.Run())
 }
 
+func TestWebsocketMuxClient(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Websocket: conf.WebsocketConfig{
+			Enabled:  true,
+			HostName: "127.0.0.1",
+			Path:     "/websocket",
+		},
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
+		},
+	}
+	c := client.Client{}
+	c.Build(config)
+	common.Must(c.Run())
+}
+
 func TestWebsocketServer(t *testing.T) {
 	config := &conf.GlobalConfig{
 		LocalIP:    getLocalIP(),
@@ -302,6 +328,11 @@ func TestClientServerJSON(t *testing.T) {
 func TestWebsocketClientServer(t *testing.T) {
 	go TestWebsocketServer(t)
 	TestWebsocketClient(t)
+}
+
+func TestWebsocketMuxClientServer(t *testing.T) {
+	go TestWebsocketServer(t)
+	TestWebsocketMuxClient(t)
 }
 
 func BenchmarkNormalClientToServer(b *testing.B) {

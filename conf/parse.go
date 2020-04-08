@@ -98,6 +98,25 @@ func loadCommonConfig(config *GlobalConfig) error {
 			config.TLS.CipherSuites = nil
 		}
 	}
+
+	//websocket settings
+	if config.Websocket.Enabled {
+		log.Info("websocket enabled")
+		if config.Websocket.Path == "" {
+			return common.NewError("websocket path is empty")
+		}
+		if config.Websocket.Path[0] != '/' {
+			return common.NewError("websocket path must start with \"/\"")
+		}
+		if config.Websocket.HostName == "" {
+			if config.RunType == Client {
+				log.Warn("Client websocket host_name is unspecified, using remote_addr \"", config.RemoteHost, "\" as host_name")
+				config.Websocket.HostName = config.RemoteHost
+			} else if config.RunType == Server {
+				return common.NewError("Server websocket host_name is unspecified")
+			}
+		}
+	}
 	return nil
 }
 

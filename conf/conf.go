@@ -97,8 +97,8 @@ type RouterConfig struct {
 }
 
 type WebsocketConfig struct {
-	Enabled  bool   `json:"enabled`
-	HostName string `json:"host_name"`
+	Enabled  bool   `json:"enabled"`
+	HostName string `json:"hostname"`
 	Path     string `json:"path"`
 }
 

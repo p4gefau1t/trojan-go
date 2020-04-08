@@ -66,7 +66,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	hash := inboundConn.(protocol.HasHash).GetHash()
 
 	if req.Command == protocol.Mux {
-		muxServer, err := smux.Server(conn, nil)
+		muxServer, err := smux.Server(inboundConn, nil)
 		defer muxServer.Close()
 		common.Must(err)
 		for {

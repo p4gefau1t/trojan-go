@@ -131,6 +131,7 @@ func (i *TrojanInboundConnSession) parseWebsocket() (bool, error) {
 	}
 	if !bytes.Equal([]byte(correct), first) {
 		//it may be a normal trojan conn
+		log.Debug("not a ws conn", string(first))
 		return true, common.NewError("invalid header")
 	}
 
@@ -210,19 +211,21 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		ctx:           ctx,
 		cancel:        cancel,
 	}
-	//try to treat it as a websocket connection first
-	validConn, err := i.parseWebsocket()
-	if err == nil {
-		log.Debug("websocket conn")
-	}
-	if !validConn {
-		i.request = &protocol.Request{
-			IP:          i.config.RemoteIP,
-			Port:        i.config.RemotePort,
-			NetworkType: "tcp",
+	if i.config.Websocket.Enabled {
+		validConn, err := i.parseWebsocket()
+		if err == nil {
+			log.Debug("websocket conn")
 		}
-		log.Warn("remote", conn.RemoteAddr(), "invalid websocket conn")
-		return i, nil
+		if !validConn {
+			//no need to continue parsing
+			i.request = &protocol.Request{
+				IP:          i.config.RemoteIP,
+				Port:        i.config.RemotePort,
+				NetworkType: "tcp",
+			}
+			log.Warn("remote", conn.RemoteAddr(), "invalid websocket conn")
+			return i, nil
+		}
 	}
 	if err := i.parseRequest(); err != nil {
 		i.request = &protocol.Request{
