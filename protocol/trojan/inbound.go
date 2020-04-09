@@ -6,15 +6,12 @@ import (
 	"context"
 	"io"
 	"net"
-	"net/http"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/stat"
-	"golang.org/x/net/websocket"
 )
 
 type TrojanInboundConnSession struct {
@@ -109,88 +106,6 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	return nil
 }
 
-//Fake response writer
-//Websocket ServeHTTP method uses its Hijack method to get the Readwriter
-type wsHttpResponseWriter struct {
-	http.Hijacker
-	http.ResponseWriter
-
-	ReadWriter *bufio.ReadWriter
-	Conn       net.Conn
-}
-
-func (w *wsHttpResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return w.Conn, w.ReadWriter, nil
-}
-
-func (i *TrojanInboundConnSession) parseWebsocket() (bool, error) {
-	correct := "GET " + i.config.Websocket.Path
-	first, err := i.bufReadWriter.Peek(len(correct))
-	if err != nil {
-		return false, err
-	}
-	if !bytes.Equal([]byte(correct), first) {
-		//it may be a normal trojan conn
-		log.Debug("not a ws conn", string(first))
-		return true, common.NewError("invalid header")
-	}
-
-	httpRequest, err := http.ReadRequest(i.bufReadWriter.Reader)
-	if err != nil {
-		//malformed http request
-		return false, err
-	}
-
-	url := "wss://" + i.config.Websocket.HostName + i.config.Websocket.Path
-	origin := "https://" + i.config.Websocket.HostName
-	wsConfig, err := websocket.NewConfig(url, origin)
-
-	if httpRequest.URL.String() != i.config.Websocket.Path {
-		log.Error("invalid websocket path, url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
-		i.readBytes = bytes.NewBuffer([]byte{})
-		httpRequest.Write(i.readBytes)
-		return false, common.NewError("invalid url")
-	}
-
-	handshaked := make(chan struct{})
-
-	var wsConn *websocket.Conn
-	wsServer := websocket.Server{
-		Config: *wsConfig,
-		Handler: func(conn *websocket.Conn) {
-			wsConn = conn //store the websocket after handshaking
-			log.Debug("websocket obtained")
-			handshaked <- struct{}{}
-			//this function will NOT return unless the connection is ended
-			//or the websocket will be closed by ServeHTTP method
-			<-i.ctx.Done()
-		},
-		Handshake: func(wsConfig *websocket.Config, httpRequest *http.Request) error {
-			log.Debug("websocket url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
-			return nil
-		},
-	}
-
-	responseWriter := &wsHttpResponseWriter{
-		Conn:       i.conn.(net.Conn),
-		ReadWriter: i.bufReadWriter,
-	}
-	go wsServer.ServeHTTP(responseWriter, httpRequest)
-
-	select {
-	case <-handshaked:
-	case <-time.After(protocol.TCPTimeout):
-	}
-
-	if wsConn == nil {
-		return false, common.NewError("failed to perform websocket handshake")
-	}
-	//setup new readwriter
-	i.conn = wsConn
-	i.bufReadWriter = common.NewBufReadWriter(wsConn)
-	return true, nil
-}
-
 func (i *TrojanInboundConnSession) SetAuth(auth stat.Authenticator) {
 	i.auth = auth
 }
@@ -212,11 +127,13 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		cancel:        cancel,
 	}
 	if i.config.Websocket.Enabled {
-		validConn, err := i.parseWebsocket()
-		if err == nil {
+		ws, err := NewInboundWebsocket(conn, i.bufReadWriter, i.ctx, config)
+		if ws != nil {
 			log.Debug("websocket conn")
+			i.conn = ws
+			i.bufReadWriter = common.NewBufReadWriter(ws)
 		}
-		if !validConn {
+		if err != nil {
 			//no need to continue parsing
 			i.request = &protocol.Request{
 				IP:          i.config.RemoteIP,

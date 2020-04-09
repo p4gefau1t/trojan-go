@@ -100,6 +100,7 @@ type WebsocketConfig struct {
 	Enabled  bool   `json:"enabled"`
 	HostName string `json:"hostname"`
 	Path     string `json:"path"`
+	Password string `json:"password"`
 }
 
 type GlobalConfig struct {

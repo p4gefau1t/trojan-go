@@ -239,6 +239,7 @@ func TestWebsocketClient(t *testing.T) {
 			Enabled:  true,
 			HostName: "127.0.0.1",
 			Path:     "/websocket",
+			Password: "testpassword",
 		},
 	}
 	c := client.Client{}
@@ -260,6 +261,7 @@ func TestWebsocketMuxClient(t *testing.T) {
 			Enabled:  true,
 			HostName: "127.0.0.1",
 			Path:     "/websocket",
+			Password: "testpassword",
 		},
 		Mux: conf.MuxConfig{
 			Enabled:     true,
@@ -286,6 +288,7 @@ func TestWebsocketServer(t *testing.T) {
 			Enabled:  true,
 			HostName: "127.0.0.1",
 			Path:     "/websocket",
+			Password: "testpassword",
 		},
 	}
 	s := server.Server{}

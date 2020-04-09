@@ -9,7 +9,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"golang.org/x/net/websocket"
 )
 
 type TrojanOutboundConnSession struct {
@@ -84,17 +83,11 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, conf
 		}
 		conn = tlsConn
 		if config.Websocket.Enabled {
-			url := "wss://" + config.Websocket.HostName + config.Websocket.Path
-			origin := "https://" + config.Websocket.HostName
-			config, err := websocket.NewConfig(url, origin)
+			ws, err := NewOutboundWebosocket(tlsConn, config)
 			if err != nil {
-				return nil, err
+				return nil, common.NewError("failed to start websocket connection").Base(err)
 			}
-			wsConn, err := websocket.NewClient(config, conn)
-			if err != nil {
-				return nil, err
-			}
-			conn = wsConn
+			conn = ws
 		}
 	}
 	o := &TrojanOutboundConnSession{
