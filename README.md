@@ -255,6 +255,21 @@ CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
 CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 ```
 
+## 致谢
+
+https://github.com/trojan-gfw/trojan
+
+https://github.com/v2ray/
+
+https://github.com/xtaci/smux
+
+https://github.com/go-acme/lego
+
+https://github.com/LiamHaworth/go-tproxy
+
+https://github.com/valyala/tcplisten
+
+
 ---------
 
 <a name="English"></a>
@@ -477,3 +492,17 @@ or
 ```
 CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
 ```
+
+## Credits
+
+https://github.com/trojan-gfw/trojan
+
+https://github.com/v2ray/
+
+https://github.com/xtaci/smux
+
+https://github.com/go-acme/lego
+
+https://github.com/LiamHaworth/go-tproxy
+
+https://github.com/valyala/tcplisten

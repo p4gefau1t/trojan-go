@@ -104,7 +104,7 @@ func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Poli
 	}
 }
 
-var buildableMap map[conf.RunType]Buildable = make(map[conf.RunType]Buildable)
+var buildableMap = make(map[conf.RunType]Buildable)
 
 func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
 	runType := config.RunType
