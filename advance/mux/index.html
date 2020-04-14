@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>使用多路复用提升并发性能 - Trojan-Go</title>
+<meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
+<meta name="generator" content="Hugo 0.69.0" />
+<link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/mux/">
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="使用多路复用提升并发性能" />
+<meta property="og:description" content="Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/mux/" />
+<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:site_name" content="Hugo Techdoc Theme" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+<meta name="twitter:title" content="使用多路复用提升并发性能"/>
+<meta name="twitter:description" content="Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步"/>
+<meta itemprop="name" content="使用多路复用提升并发性能">
+<meta itemprop="description" content="Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步">
+
+<meta itemprop="wordCount" content="687">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Trojan-Go</h1>
+
+ <span class="version">Version 0.1.3</span>
+<a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
+<p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/trojan-go/">Home</a></li>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li>
+<li><a href="https://twitter.com/p4gefau1t">Twitter</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>使用多路复用提升并发性能</h1>
+<p>Trojan-Go支持使用多路复用提升并发性能。</p>
+<p>Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步骤确保后续通讯的安全性。这个过程即为TLS握手。</p>
+<p>目前GFW对于TLS握手有审查和干扰，同时由于出口网络拥塞的原因，普通的线路完成TLS握手通常需要将近一秒甚至更长的时间。这可能会使得浏览网页和观看视频的延迟提高。</p>
+<p>Trojan-Go使用多路复用的方式解决这一问题。每个建立的TLS连接将承载多个TCP连接。当新的代理请求到来时，不需要和服务器握手发起一个新的TLS连接，而是尽可能重复使用已有的TLS连接。这样就可以减少TLS握手的带来的延迟。在高并发的情况下，如浏览含有大量图片的网页时，优势尤其突出。</p>
+<p>激活mux模块，只需要将<code>mux</code>选项中<code>enabled</code>字段设为true即可，下面是一个例子</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;client&quot;,
+    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;local_port&quot;: 1080,
+    &quot;remote_addr&quot;: &quot;your_server&quot;,
+    &quot;remote_port&quot;: 443,
+    &quot;password&quot;: [
+        &quot;your_password&quot;
+    ],
+    &quot;mux&quot; :{
+        &quot;enabled&quot;: true
+    }
+}
+</code></pre><p>完整的mux配置如下</p>
+<pre><code>&quot;mux&quot;: {
+    &quot;enabled&quot;: false,
+    &quot;concurrency&quot;: 8,
+    &quot;idle_timeout&quot;: 60
+}
+</code></pre><p><code>concurrency</code>是每个TLS连接最多可以承载的TCP连接数。这个数值越大，TLS连接被复用的比例就更高，握手导致的延迟越低，但服务器和客户端的计算负担也会越大，这有可能使你的网络吞吐量降低。如果你的线路的TLS握手极端缓慢，你可以将这个数值设置为-1，Trojan-Go将只进行一次TLS握手，只使用唯一的一条TLS连接进行传输。</p>
+<p><code>idle_timeout</code>指的是每个TLS连接空闲多长时间后关闭。设置超时时间，<strong>可能</strong>有助于减少不必要的长连接存活确认(Keep Alive)流量传输引发GFW的探测。你可以将这个数值设置为-1，TLS连接将不会因为长时间空闲而被关闭。</p>
+<div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/mux.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/" title="高级配置"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 高级配置</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/websocket/" title="使用Websocket进行CDN转发">Next - 使用Websocket进行CDN转发 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main><div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+  
+<ul class="sub-menu">
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

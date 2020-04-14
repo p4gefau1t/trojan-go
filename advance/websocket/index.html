@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>使用Websocket进行CDN转发 - Trojan-Go</title>
+<meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
+<meta name="generator" content="Hugo 0.69.0" />
+<link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="使用Websocket进行CDN转发" />
+<meta property="og:description" content="Trojan-Go支持使用TLS&#43;Websocket&#43;TLS（多重TLS）承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/websocket/" />
+<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:site_name" content="Hugo Techdoc Theme" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+<meta name="twitter:title" content="使用Websocket进行CDN转发"/>
+<meta name="twitter:description" content="Trojan-Go支持使用TLS&#43;Websocket&#43;TLS（多重TLS）承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性"/>
+<meta itemprop="name" content="使用Websocket进行CDN转发">
+<meta itemprop="description" content="Trojan-Go支持使用TLS&#43;Websocket&#43;TLS（多重TLS）承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性">
+
+<meta itemprop="wordCount" content="1164">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Trojan-Go</h1>
+
+ <span class="version">Version 0.1.3</span>
+<a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
+<p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/trojan-go/">Home</a></li>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li>
+<li><a href="https://twitter.com/p4gefau1t">Twitter</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>使用Websocket进行CDN转发</h1>
+<p>Trojan-Go支持使用TLS+Websocket+TLS（多重TLS）承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的同时考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go使用了多重TLS，即使遭受GFW的HTTPS中间人攻击，<strong>在正确的配置下</strong>，连接的安全性依然能得到保证。</p>
+<p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项</p>
+<pre><code>&quot;websocket&quot;: {
+    &quot;enabled&quot;: true,
+    &quot;path&quot;: &quot;/imaurlpath&quot;,
+    &quot;hostname&quot;: &quot;www.your_awesome_domain_name.com&quot;,
+    &quot;password&quot;: &quot;another_password&quot;
+}
+</code></pre><p>客户端<code>hostname</code>是可选的，填写你的域名。如果留空，将会使用<code>remote_addr</code>填充，服务端可以省略<code>hostname</code>。</p>
+<p><code>path</code>指的是websocket所在的URL路径，必须以斜杠(&quot;/&quot;)开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的<code>path</code>一致。<code>path</code>应当选择较长的字符串，以避免遭到主动检测。</p>
+<p>服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。</p>
+<p>由于原版Trojan并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。</p>
+<p>因为Trojan-Go与CDN进行了TLS握手，对于CDN而言，TLS流量内容是明文。为了保证安全性，Trojan-Go默认将在Websocket连接上再建立一次TLS连接。此时传输实际上经过了两次TLS连接，并且这个TLS隧道的证书校验被<strong>强制开启</strong>。</p>
+<p>如果你使用了国内的CDN，建议设置<code>password</code>字段进行二次加密，Trojan-Go将使用该密码对Websocket承载的流量再进行一次加密(AES-128-CTR)。注意这个字段的作用仅仅是<strong>混淆</strong>TLS的特征，防止被国内的CDN识别和封锁Trojan流量。无论是否使用二次加密，传输的安全性都可以由第二层TLS隧道保证。注意确保服务端和客户端混淆密码一致。</p>
+<p>CDN转发的场景和在GFW在2020年3月29日进行的HTTPS流量劫持和中间人攻击类似。它们的共同点是，第一层TLS承载的流量明文均可以被第三者窃听。<strong>如果你使用了websocket模式</strong>，你可以将客户端的<code>verify</code>字段填写为false，并指定<code>cert</code>字段。在这样的设置下，即使第一层TLS传输的明文遭到审查，由于第二层TLS的保护（证书校验强制开启），传输的内容依旧安全。</p>
+<p>下面是一个客户端配置文件的例子</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;client&quot;,
+    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;local_port&quot;: 1080,
+    &quot;remote_addr&quot;: &quot;your_server&quot;,
+    &quot;remote_port&quot;: 443,
+    &quot;password&quot;: [
+        &quot;your_password&quot;
+    ],
+    &quot;websocket&quot;: {
+        &quot;enabled&quot;: true,
+        &quot;path&quot;: &quot;/imaurlpath&quot;,
+        &quot;hostname&quot;: &quot;www.your_awesome_domain_name.com&quot;
+    }
+}
+
+</code></pre><div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/websocket.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/mux/" title="使用多路复用提升并发性能"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用多路复用提升并发性能</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/router/" title="使用路由功能实现国内直连和广告屏蔽">Next - 使用路由功能实现国内直连和广告屏蔽 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main><div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

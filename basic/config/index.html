@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>正确配置Trojan-Go - Trojan-Go</title>
+<meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
+<meta name="generator" content="Hugo 0.69.0" />
+<link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/config/">
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="正确配置Trojan-Go" />
+<meta property="og:description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/basic/config/" />
+<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:site_name" content="Hugo Techdoc Theme" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+<meta name="twitter:title" content="正确配置Trojan-Go"/>
+<meta name="twitter:description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名"/>
+<meta itemprop="name" content="正确配置Trojan-Go">
+<meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名">
+
+<meta itemprop="wordCount" content="1655">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Trojan-Go</h1>
+
+ <span class="version">Version 0.1.3</span>
+<a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
+<p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/trojan-go/">Home</a></li>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li>
+<li><a href="https://twitter.com/p4gefau1t">Twitter</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>正确配置Trojan-Go</h1>
+<p>下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征</p>
+<p>在开始之前，你需要</p>
+<ul>
+<li>
+<p>一个服务器，且未被GFW封锁</p>
+</li>
+<li>
+<p>一个域名，可以使用免费的域名服务，如.tk等</p>
+</li>
+<li>
+<p>Trojan-Go，可以从release页面下载</p>
+</li>
+</ul>
+<h3 id="配置证书">配置证书</h3>
+<p>为了伪装成一个正常的HTTPS站点，也为了保证传输的安全，我们需要一份经过权威证书机构签名的证书。Trojan-Go支持从Let&rsquo;s Encrypt自动申请证书。首先将你的域名正确解析到你的服务器IP。然后准备好一个邮箱地址，合乎邮箱地址规则即可，不需要真实邮箱地址。保证你的服务器443和80端口没有被其他程序（nginx，apache，正在运行的Trojan等）占用。然后执行</p>
+<pre><code>sudo ./trojan-go -cert request
+</code></pre><p>按照屏幕提示填入相关信息。如果操作成功，当前目录下将得到四个文件</p>
+<ul>
+<li>
+<p>server.key 服务器私钥</p>
+</li>
+<li>
+<p>server.crt 经过Let&rsquo;s Encrypt签名的服务器证书</p>
+</li>
+<li>
+<p>user.key 用户Email对应的私钥</p>
+</li>
+<li>
+<p>domain_info.json 域名和用户Email信息</p>
+</li>
+</ul>
+<p>备份好这些文件，不要将.key文件分享给其他任何人，否则你的身份可能被冒用。</p>
+<p>证书的有效期通常是三个月，你可以使用</p>
+<pre><code>sudo ./trojan-go -cert renew
+</code></pre><p>进行证书更新。更新之前请确保同目录下有上述的四个文件。</p>
+<h3 id="服务端配置">服务端配置</h3>
+<p>我们的目标是，使得你的服务器和正常的HTTPS网站表现相同。</p>
+<p>首先你需要一个配置Web服务器，可以使用nginx，apache，caddy等。Web服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。</p>
+<p>这是一份比较安全的服务器配置，需要你在本地80端口配置一个HTTP服务（必要），在1234端口配置一个HTTPS服务（可选，可以删除fallback_port字段，跳过这个步骤）</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;server&quot;,
+    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
+    &quot;local_port&quot;: 443,
+    &quot;remote_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;remote_port&quot;: 80,
+    &quot;password&quot;: [
+        &quot;your_awesome_password&quot;
+    ],
+    &quot;ssl&quot;: {
+        &quot;cert&quot;: &quot;server.crt&quot;,
+        &quot;key&quot;: &quot;server.key&quot;,
+        &quot;fallback_port&quot;: 1234
+    }
+}
+</code></pre><p>这个配置文件使Trojan-Go在服务器的所有网卡上(0.0.0.0)监听443端口，使用server.crt和server.key作为证书和密钥进行TLS握手。你应该使用尽可能复杂的密码，同时确保客户端和服务端<code>password</code>是一致的。</p>
+<p>如果TLS连接建立后，检测到TLS的内容非法，将TLS连接代理到本地127.0.0.1:80上的HTTP服务，这时远端看起来就是一个HTTPS的网站页面。</p>
+<p>如果TLS握手失败了，说明对方使用的不是TLS协议进行主动探测，此时Trojan-Go将连接代理到本地127.0.0.1:1234上运行的HTTPS服务，本地HTTPS服务器也会检测到连接不是TLS连接，返回一个400 Bad Reqeust的HTTP页面。<code>fallback_port</code>是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。</p>
+<p>如果TLS连接建立，并且确认是Trojan协议，而且密码正确，那么服务器将解析来自客户端的请求并进行代理。</p>
+<p>你可以通过使用浏览器访问你的域名 https://your_domain_name 来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用 http://your_domain_name:443 验证<code>fallback_port</code>工作是否正常。</p>
+<p>事实上，你甚至可以将Trojan-Go当作你的HTTPS服务器，用来给你的网站提供HTTPS服务。访客可以正常地通过Trojan-Go浏览你的网站，而和代理流量互不影响。</p>
+<h3 id="客户端配置">客户端配置</h3>
+<p>对应的客户端配置</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;client&quot;,
+    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;local_port&quot;: 1080,
+    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
+    &quot;remote_port&quot;: 443,
+    &quot;password&quot;: [
+	    &quot;your_awesome_password&quot;
+    ],
+    &quot;ssl&quot;: {
+        &quot;sni&quot;: &quot;your_domain_name&quot;
+    }
+}
+</code></pre><p>这个客户端配置使Trojan-Go开启一个监听在本地1080端口的socks5/http代理（自动识别），远端服务器为your_awesome_server:443，your_awesome_server可以是IP或者域名。</p>
+<p>如果你在<code>remote_addr</code>中填写的是域名，<code>sni</code>可以省略。<code>sni</code>字段应当填写你申请证书的对应域名，或者你自己签发证书时证书的Common Name，而且必须一致。注意，<code>sni</code>字段目前的在TLS协议中是规定<strong>明文传送</strong>的(目的是使服务器提供相应证书)，所以不要填写类似google.com等已经被封锁的域名，否则很有可能导致你的服务器也被封锁。</p>
+<div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/basic/config.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/basic/trojan/" title="Trojan基本原理"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - Trojan基本原理</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/" title="高级配置">Next - 高级配置 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main><div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
+
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

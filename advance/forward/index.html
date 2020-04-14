@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>流量中继 - Trojan-Go</title>
+<meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
+<meta name="generator" content="Hugo 0.69.0" />
+<link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/forward/">
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="流量中继" />
+<meta property="og:description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/forward/" />
+<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:site_name" content="Hugo Techdoc Theme" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+<meta name="twitter:title" content="流量中继"/>
+<meta name="twitter:description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线"/>
+<meta itemprop="name" content="流量中继">
+<meta itemprop="description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线">
+
+<meta itemprop="wordCount" content="291">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Trojan-Go</h1>
+
+ <span class="version">Version 0.1.3</span>
+<a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
+<p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/trojan-go/">Home</a></li>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li>
+<li><a href="https://twitter.com/p4gefau1t">Twitter</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>流量中继</h1>
+<p>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线路更好的服务器，作为中继，将你的流量转发给trojan服务器。</p>
+<p>Forward中继的配置很简单，下面是一个Forward的配置</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;forward&quot;,
+    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
+    &quot;local_port&quot;: 1234,
+    &quot;remote_addr&quot;: &quot;your_trojan_server&quot;,
+    &quot;remote_port&quot;: 443,
+}
+
+</code></pre><p>Forwad启动后，客户端连接该主机的1234端口，和直接连接Trojan服务器443端口是等效的。为了保证安全性和稳定性，Forward只做简单的流量转发，本地不需要任何的证书文件和密钥文件。</p>
+<p>你可以使用多个Forward链接起来作为多重跳板，如果你忍受这种做法带来的延迟升高和吞吐量下降的话。</p>
+<div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/forward.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/router/" title="使用路由功能实现国内直连和广告屏蔽"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用路由功能实现国内直连和广告屏蔽</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/config/" title="完整的配置文件">Next - 完整的配置文件 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main><div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

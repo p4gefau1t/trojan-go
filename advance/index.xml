@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>高级配置 on Trojan-Go</title>
+    <link>https://p4gefau1t.github.io/trojan-go/advance/</link>
+    <description>Recent content in 高级配置 on Trojan-Go</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://p4gefau1t.github.io/trojan-go/advance/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>使用多路复用提升并发性能</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/mux/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/mux/</guid>
+      <description>Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步</description>
+    </item>
+    
+    <item>
+      <title>使用Websocket进行CDN转发</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/websocket/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/websocket/</guid>
+      <description>Trojan-Go支持使用TLS+Websocket+TLS（多重TLS）承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性</description>
+    </item>
+    
+    <item>
+      <title>使用路由功能实现国内直连和广告屏蔽</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/router/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/router/</guid>
+      <description>Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 下面是一个例子 { &amp;quot;run_type&amp;quot;: &amp;quot;client&amp;quot;, &amp;quot;local_addr&amp;quot;: &amp;quot;127.0.0.1&amp;quot;, &amp;quot;local_port&amp;quot;: 1080, &amp;quot;remote_addr&amp;quot;: &amp;quot;your_server&amp;quot;, &amp;quot;remote_port&amp;quot;: 443, &amp;quot;password&amp;quot;: [ &amp;quot;your_password&amp;quot; ], &amp;quot;ssl&amp;quot;: { &amp;quot;sni&amp;quot;: &amp;quot;your_domain_name&amp;quot;</description>
+    </item>
+    
+    <item>
+      <title>流量中继</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/forward/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/forward/</guid>
+      <description>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线</description>
+    </item>
+    
+    <item>
+      <title>完整的配置文件</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/config/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/config/</guid>
+      <description>下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于一个服务器server，key和cert为必填。 其余未填的选项，用下面给出的值进行填</description>
+    </item>
+    
+  </channel>
+</rss>

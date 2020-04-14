@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>History on Consider Phlebas</title>
+    <link>/history/</link>
+    <description>Recent content in History on Consider Phlebas</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 28 Jan 2018 21:58:09 +0100</lastBuildDate>
+    
+	<atom:link href="/history/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+  </channel>
+</rss>
