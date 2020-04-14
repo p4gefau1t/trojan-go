@@ -8,7 +8,7 @@
 
 支持使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
 
-**完整配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。**
+**完整配置教程参见[这里](https://p4gefau1t.github.io/trojan-go)。**
 
 [English](#English)
 
@@ -36,7 +36,7 @@ sudo ./trojan-go -cert renew
 ./trojan-go -config 你的配置文件.json
 ```
 
-配置文件格式和Trojan相同, 完整说明可以参考Trojan-Go的[文档](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。
+配置文件格式和Trojan相同, 完整说明可以参考Trojan-Go的[文档](https://p4gefau1t.github.io/trojan-go)。
 
 Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
@@ -66,7 +66,7 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 ### 易用
 
-配置文件格式与原版兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个例子，完整的配置文件说明参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)。一个完整的配置教程参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Trojan-Go%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%8A%82%E7%82%B9)。
+配置文件格式与原版兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见Github pages。
 
 服务器配置文件
 
@@ -217,7 +217,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 其中```bypass```,```block```, ```proxy```字段中填入相应的列表文件或者geo数据库tag。列表文件每行是一个域名或者IP地址段(CIDR)。geo数据库geoip和geosite为IP数据库和域名数据库。一旦匹配，则执行相应策略。
 
-完整的选项说明参见[这里](https://github.com/p4gefau1t/trojan-go/wiki/%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE---%E5%9B%BD%E5%86%85%E7%9B%B4%E8%BF%9E)。
+完整的选项说明参见[Github Pages](https://p4gefau1t.github.io/trojan-go)。
 
 下面是一个实现国内直连的选项，它将绕过中国大陆IP地址，中国大陆域名，以及内网IP等保留的私有IP地址，直接连接远端而不通过隧道代理。
 
@@ -324,7 +324,7 @@ Trojan-Go supports most features of the original trojan, including
 
 - TCP performance-related options, like TCP fast open, port reusing, etc.
 
-Note that the name of the TLS 1.2 cipher suite is slightly different in golang, and some of them has been deprecated and disabled. Using the original configuration file directly will cause a warning, but it will not affect the running. See wiki for more information.
+Note that the name of the TLS 1.2 cipher suite is slightly different in golang, and some of them has been deprecated and disabled. Using the original configuration file directly will cause a warning, but it will not affect the running.
 
 The format of the configuration file is compatible, see [here](https://trojan-gfw.github.io/trojan/config).
 
