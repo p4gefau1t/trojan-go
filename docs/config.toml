@@ -1,0 +1,120 @@
+baseURL = "https://example.com"
+
+languageCode = "en-us"
+DefaultContentLanguage = "en"
+title = "Trojan-Go"
+theme = "hugo-theme-techdoc"
+
+hasCJKLanguage = true
+metaDataFormat = "yaml"
+
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir= false
+enableMissingTranslationPlaceholders = false
+
+[params]
+
+    # Source Code repository section
+    description = "An unidentifiable mechanism that helps you bypass GFW. "
+    github_repository = "https://github.com/p4gefau1t/trojan-go"
+    version = "0.1.3"
+
+    # Documentation repository section
+    # documentation repository (set edit link to documentation repository)
+    github_doc_repository = "https://github.com/p4gefau1t/trojan-go/docs"
+
+    # Analytic section
+    google_analytics_id = "" # Your Google Analytics tracking id
+    tag_manager_container_id = "" # Your Google Tag Manager container id
+    google_site_verification = "" # Your Google Site Verification for Search Console
+
+    # Open Graph and Twitter Cards settings section
+    # Open Graph settings for each page are set on the front matter.
+    # See https://gohugo.io/templates/internal/#open-graph
+    # See https://gohugo.io/templates/internal/#twitter-cards
+    title = "Hugo Techdoc Theme"
+    images = ["images/og-image.png"] # Open graph images are placed in `static/images`
+
+    # Theme settings section
+    # Theme color
+    # See color value reference https://developer.mozilla.org/en-US/docs/Web/CSS/color
+    custom_font_color = ""
+    custom_background_color = ""
+
+    # Documentation Menu section
+    # Menu style settings
+    menu_style = "open-menu" # "open-menu" or "slide-menu"
+
+    # Date format
+    dateformat = "" # default "2 Jan 2006"
+    # See the format reference https://gohugo.io/functions/format/#hugo-date-and-time-templating-reference
+
+    # path name excluded from documentation menu
+    menu_exclusion = [
+        "archives",
+        "archive",
+        "blog",
+        "entry",
+        "post",
+        "posts",
+    ]
+
+    # Algolia site search section
+    # See https://www.algolia.com/doc/
+    algolia_search_enable = true
+    algolia_indexName = "hugo-demo-techdoc"
+    algolia_appId = "7W4SAN4PLK"
+    algolia_apiKey = "cbf12a63ff72d9c5dc0c10c195cf9128" # Search-Only API Key
+
+# Global menu section
+# See https://gohugo.io/content-management/menus/
+[menu]
+    [[menu.main]]
+        name = "Home"
+        url = "/"
+        weight = 1
+
+    [[menu.main]]
+        name = "GitHub"
+        url = "https://github.com/p4gefau1t"
+        weight = 2
+        
+    [[menu.main]]
+        name = "Twitter"
+        url = "https://twitter.com/p4gefau1t"
+        weight = 3
+
+# Markup configure section
+# See https://gohugo.io/getting-started/configuration-markup/
+[markup]
+    defaultMarkdownHandler = "goldmark"
+    [markup.goldmark.renderer]
+        unsafe= true
+    [markup.tableOfContents]
+        startLevel = 2
+        endLevel = 4
+        ordered = false
+
+# Algolia Search configure section
+[outputFormats.Algolia]
+    baseName = "algolia"
+    isPlainText = true
+    mediaType = "application/json"
+    notAlternative = true
+
+[params.algolia]
+    vars = [
+        "title",
+        "summary",
+        "content",
+        "date",
+        "publishdate",
+        "description",
+        "permalink",
+        "keywords",
+        "lastmod",
+    ]
+    params = [
+        "tags",
+        "categories",
+    ]

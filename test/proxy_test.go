@@ -339,6 +339,10 @@ func TestWebsocketMuxClientServer(t *testing.T) {
 }
 
 func BenchmarkNormalClientToServer(b *testing.B) {
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8000", nil)
+		log.Error(err)
+	}()
 	config1 := &conf.GlobalConfig{
 		LogLevel:   5,
 		LocalIP:    getLocalIP(),
@@ -413,6 +417,68 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 		RemoteAddr: getLocalAddr(80),
 		TLS:        getTLSConfig(),
 		Hash:       getHash("pass123"),
+	}
+	s := server.Server{}
+	s.Build(config2)
+	go s.Run()
+
+	target := RunBlackHoleTCPServer()
+	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	common.Must(err)
+	conn, err := dialer.Dial("tcp", target.String())
+	common.Must(err)
+	mbytes := 512
+	payload := GeneratePayload(1024 * 1024 * mbytes)
+	t1 := time.Now()
+	conn.Write(payload)
+	t2 := time.Now()
+	speed := float64(mbytes) / t2.Sub(t1).Seconds()
+	b.Log("Speed: ", speed, "MB/s")
+	conn.Close()
+}
+
+func BenchmarkWebsocketClientToServer(b *testing.B) {
+	config1 := &conf.GlobalConfig{
+		LogLevel:   5,
+		LocalIP:    getLocalIP(),
+		LocalPort:  4444,
+		LocalAddr:  getLocalAddr(4444),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 4445,
+		RemoteAddr: getLocalAddr(4445),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Mux: conf.MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			IdleTimeout: 30,
+		},
+		Websocket: conf.WebsocketConfig{
+			Enabled:  true,
+			HostName: "localhost",
+			Path:     "/ws",
+			Password: "password",
+		},
+	}
+	c := client.Client{}
+	c.Build(config1)
+	go c.Run()
+
+	config2 := &conf.GlobalConfig{
+		LocalIP:    getLocalIP(),
+		LocalPort:  4445,
+		LocalAddr:  getLocalAddr(4445),
+		RemoteIP:   getLocalIP(),
+		RemotePort: 80,
+		RemoteAddr: getLocalAddr(80),
+		TLS:        getTLSConfig(),
+		Hash:       getHash("pass123"),
+		Websocket: conf.WebsocketConfig{
+			Enabled:  true,
+			HostName: "localhost",
+			Path:     "/ws",
+			Password: "password",
+		},
 	}
 	s := server.Server{}
 	s.Build(config2)

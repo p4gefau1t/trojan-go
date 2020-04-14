@@ -43,7 +43,7 @@ func (f *Forward) Run() error {
 			default:
 			}
 			log.Error(err)
-			continue
+			return err
 		}
 		go f.handleConn(conn)
 	}

@@ -212,8 +212,7 @@ func (s *Server) Run() error {
 				return nil
 			default:
 			}
-			log.Warn(err)
-			continue
+			return err
 		}
 		go func(conn net.Conn) {
 			tlsConn := tls.Server(conn, tlsConfig)
