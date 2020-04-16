@@ -15,26 +15,28 @@ import (
 
 func parseHTTPRequest(httpRequest *http.Request) *protocol.Request {
 	request := &protocol.Request{
-		NetworkType: "tcp",
-		Port:        80,
-		Command:     protocol.Connect,
+		Address: &common.Address{
+			NetworkType: "tcp",
+			Port:        80,
+		},
+		Command: protocol.Connect,
 	}
 	host, port, err := net.SplitHostPort(httpRequest.Host)
 	if err != nil {
 		if ip := net.ParseIP(httpRequest.Host); ip != nil {
 			request.IP = ip
 			if ip.To4() != nil {
-				request.AddressType = protocol.IPv4
+				request.AddressType = common.IPv4
 			} else {
-				request.AddressType = protocol.IPv6
+				request.AddressType = common.IPv6
 			}
 		} else {
-			request.DomainName = []byte(httpRequest.Host)
-			request.AddressType = protocol.DomainName
+			request.DomainName = httpRequest.Host
+			request.AddressType = common.DomainName
 		}
 	} else {
-		request.DomainName = []byte(host)
-		request.AddressType = protocol.DomainName
+		request.DomainName = host
+		request.AddressType = common.DomainName
 		n, err := strconv.ParseInt(port, 10, 16)
 		common.Must(err)
 		request.Port = int(n)

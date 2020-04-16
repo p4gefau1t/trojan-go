@@ -43,14 +43,16 @@ func (i *NATInboundConnSession) parseRequest() error {
 		return common.NewError("failed to get original dst").Base(err)
 	}
 	req := &protocol.Request{
-		IP:      addr.IP,
-		Port:    addr.Port,
+		Address: &common.Address{
+			IP:   addr.IP,
+			Port: addr.Port,
+		},
 		Command: protocol.Connect,
 	}
 	if addr.IP.To4() != nil {
-		req.AddressType = protocol.IPv4
+		req.AddressType = common.IPv4
 	} else {
-		req.AddressType = protocol.IPv6
+		req.AddressType = common.IPv6
 	}
 	i.reqeust = req
 	return nil
@@ -135,14 +137,16 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 	i.tableMutex.Unlock()
 	log.Debug("tproxy UDP packet from", src, "to", dst)
 	req := &protocol.Request{
-		IP:          dst.IP,
-		Port:        dst.Port,
-		NetworkType: "udp",
+		Address: &common.Address{
+			IP:          dst.IP,
+			Port:        dst.Port,
+			NetworkType: "udp",
+		},
 	}
 	if dst.IP.To4() != nil {
-		req.AddressType = protocol.IPv4
+		req.AddressType = common.IPv4
 	} else {
-		req.AddressType = protocol.IPv6
+		req.AddressType = common.IPv6
 	}
 	return req, buf[0:n], nil
 }
@@ -153,9 +157,13 @@ func (i *NATInboundPacketSession) Close() error {
 }
 
 func NewInboundPacketSession(config *conf.GlobalConfig) (protocol.PacketSession, error) {
+	localIP, err := config.LocalAddress.ResolveIP(false)
+	if err != nil {
+		return nil, err
+	}
 	addr := &net.UDPAddr{
-		IP:   config.LocalIP,
-		Port: int(config.LocalPort),
+		IP:   localIP,
+		Port: int(config.LocalAddress.Port),
 	}
 	conn, err := tproxy.ListenUDP("udp", addr)
 	if err != nil {

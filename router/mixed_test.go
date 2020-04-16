@@ -22,8 +22,10 @@ func TestSimpleMixedRouter(t *testing.T) {
 	})
 	common.Must(err)
 	p, err := r.RouteRequest(&protocol.Request{
-		AddressType: protocol.IPv4,
-		IP:          net.ParseIP("10.1.1.1"),
+		Address: &common.Address{
+			AddressType: common.IPv4,
+			IP:          net.ParseIP("10.1.1.1"),
+		},
 	})
 	common.Must(err)
 	if p != Bypass {
@@ -31,8 +33,10 @@ func TestSimpleMixedRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		AddressType: protocol.IPv4,
-		IP:          net.ParseIP("1.1.1.1"),
+		Address: &common.Address{
+			AddressType: common.IPv4,
+			IP:          net.ParseIP("1.1.1.1"),
+		},
 	})
 	common.Must(err)
 	if p != Proxy {
@@ -40,8 +44,10 @@ func TestSimpleMixedRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		AddressType: protocol.DomainName,
-		DomainName:  []byte("www.baidu.com"),
+		Address: &common.Address{
+			AddressType: common.DomainName,
+			DomainName:  "www.baidu.com",
+		},
 	})
 	common.Must(err)
 	if p != Bypass {
@@ -49,8 +55,10 @@ func TestSimpleMixedRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		AddressType: protocol.DomainName,
-		DomainName:  []byte("im.qq.com"),
+		Address: &common.Address{
+			AddressType: common.DomainName,
+			DomainName:  "im.qq.com",
+		},
 	})
 	common.Must(err)
 	if p != Bypass {
@@ -58,8 +66,10 @@ func TestSimpleMixedRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		AddressType: protocol.DomainName,
-		DomainName:  []byte("www.google.com"),
+		Address: &common.Address{
+			AddressType: common.DomainName,
+			DomainName:  "www.google.com",
+		},
 	})
 	common.Must(err)
 	if p != Proxy {
@@ -84,16 +94,20 @@ func TestMixedRouter(t *testing.T) {
 	})
 
 	policy, err := r.RouteRequest(&protocol.Request{
-		AddressType: protocol.DomainName,
-		DomainName:  []byte("baidu.com"),
+		Address: &common.Address{
+			AddressType: common.DomainName,
+			DomainName:  "baidu.com",
+		},
 	})
 	if policy != Bypass {
 		log.Fatal("wrong result")
 	}
 
 	policy, err = r.RouteRequest(&protocol.Request{
-		AddressType: protocol.DomainName,
-		DomainName:  []byte("api.github.com"),
+		Address: &common.Address{
+			AddressType: common.DomainName,
+			DomainName:  "api.github.com",
+		},
 	})
 	if policy != Proxy {
 		log.Fatal("wrong result")

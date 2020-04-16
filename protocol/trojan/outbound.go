@@ -2,7 +2,6 @@ package trojan
 
 import (
 	"bufio"
-	"crypto/tls"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -58,38 +57,6 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 }
 
 func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
-	if conn == nil {
-		tlsConfig := &tls.Config{
-			CipherSuites:           config.TLS.CipherSuites,
-			RootCAs:                config.TLS.CertPool,
-			ServerName:             config.TLS.SNI,
-			InsecureSkipVerify:     !config.TLS.Verify,
-			SessionTicketsDisabled: !config.TLS.SessionTicket,
-			ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
-		}
-		tlsConn, err := tls.Dial("tcp", config.RemoteAddr.String(), tlsConfig)
-		if err != nil {
-			return nil, common.NewError("cannot dial to the remote server").Base(err)
-		}
-		if config.LogLevel == 0 {
-			state := tlsConn.ConnectionState()
-			chain := state.VerifiedChains
-			log.Debug("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
-			for i := range chain {
-				for j := range chain[i] {
-					log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
-				}
-			}
-		}
-		conn = tlsConn
-		if config.Websocket.Enabled {
-			ws, err := NewOutboundWebosocket(tlsConn, config)
-			if err != nil {
-				return nil, common.NewError("failed to start websocket connection").Base(err)
-			}
-			conn = ws
-		}
-	}
 	o := &TrojanOutboundConnSession{
 		request:       req,
 		config:        config,

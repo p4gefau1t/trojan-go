@@ -18,8 +18,10 @@ func TestDirectOutbound(t *testing.T) {
 	outbound, _ := NewOutboundPacketSession()
 	for i := 0; i < 30; i++ {
 		req := &protocol.Request{
-			IP:   net.ParseIP("127.0.0.1"),
-			Port: 6543,
+			Address: &common.Address{
+				IP:   net.ParseIP("127.0.0.1"),
+				Port: 6543,
+			},
 		}
 		req.Port += rand.Intn(10)
 		packet := []byte(fmt.Sprintf("hello motherfucker %d, port=%d", i, req.Port))

@@ -39,11 +39,17 @@ func (m *muxPoolManager) newMuxClient() (*muxClientInfo, error) {
 		return nil, common.NewError("duplicated id")
 	}
 	req := &protocol.Request{
-		Command:     protocol.Mux,
-		DomainName:  []byte("MUX_CONN"),
-		AddressType: protocol.DomainName,
+		Command: protocol.Mux,
+		Address: &common.Address{
+			DomainName:  "MUX_CONN",
+			AddressType: common.DomainName,
+		},
 	}
-	conn, err := trojan.NewOutboundConnSession(req, nil, m.config)
+	rwc, err := DialTLSToServer(m.config)
+	if err != nil {
+		return nil, common.NewError("failed to dail to remote server").Base(err)
+	}
+	conn, err := trojan.NewOutboundConnSession(req, rwc, m.config)
 	if err != nil {
 		log.Error(common.NewError("failed to dial tls tunnel").Base(err))
 		return nil, err

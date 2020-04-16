@@ -31,7 +31,7 @@ func (r *ListRouter) isSubdomain(fulldomain, domain string) bool {
 
 func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 	switch req.AddressType {
-	case protocol.DomainName:
+	case common.DomainName:
 		domain := string(req.DomainName)
 		if ip := net.ParseIP(domain); ip != nil {
 			for _, net := range r.ipList {
@@ -46,13 +46,15 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 			if err != nil {
 				return Unknown, err
 			}
-			atype := protocol.IPv6
+			atype := common.IPv6
 			if addr.IP.To4() != nil {
-				atype = protocol.IPv4
+				atype = common.IPv4
 			}
 			return r.RouteRequest(&protocol.Request{
-				IP:          addr.IP,
-				AddressType: atype,
+				Address: &common.Address{
+					IP:          addr.IP,
+					AddressType: atype,
+				},
 			})
 		}
 		for _, d := range r.domainList {
@@ -65,17 +67,19 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 			if err != nil {
 				return Unknown, err
 			}
-			atype := protocol.IPv6
+			atype := common.IPv6
 			if addr.IP.To4() != nil {
-				atype = protocol.IPv4
+				atype = common.IPv4
 			}
 			return r.RouteRequest(&protocol.Request{
-				IP:          addr.IP,
-				AddressType: atype,
+				Address: &common.Address{
+					IP:          addr.IP,
+					AddressType: atype,
+				},
 			})
 		}
 		return r.nonMatchPolicy, nil
-	case protocol.IPv4, protocol.IPv6:
+	case common.IPv4, common.IPv6:
 		ip := req.IP
 		for _, ipNet := range r.ipList {
 			if ipNet.Contains(ip) {

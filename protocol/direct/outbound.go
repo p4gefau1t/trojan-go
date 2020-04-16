@@ -99,7 +99,7 @@ func (o *DirectOutboundPacketSession) ReadPacket() (*protocol.Request, []byte, e
 
 func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
 	var remote *net.UDPAddr
-	if req.AddressType == protocol.DomainName {
+	if req.AddressType == common.DomainName {
 		remote, err := net.ResolveUDPAddr("", string(req.DomainName))
 		if err != nil {
 			return 0, err

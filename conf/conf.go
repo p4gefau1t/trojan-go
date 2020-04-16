@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"net"
+
+	"github.com/p4gefau1t/trojan-go/common"
 )
 
 type RunType string
@@ -13,6 +15,7 @@ const (
 	Server  RunType = "server"
 	NAT     RunType = "nat"
 	Forward RunType = "forward"
+	Relay   RunType = "relay"
 )
 
 type TLSConfig struct {
@@ -97,10 +100,11 @@ type RouterConfig struct {
 }
 
 type WebsocketConfig struct {
-	Enabled  bool   `json:"enabled"`
-	HostName string `json:"hostname"`
-	Path     string `json:"path"`
-	Password string `json:"password"`
+	Enabled   bool   `json:"enabled"`
+	HostName  string `json:"hostname"`
+	Path      string `json:"path"`
+	DoubleTLS bool   `json:"double_tls"`
+	Password  string `json:"password"`
 }
 
 type GlobalConfig struct {
@@ -108,6 +112,8 @@ type GlobalConfig struct {
 	LogLevel   int             `json:"log_level"`
 	LocalHost  string          `json:"local_addr"`
 	LocalPort  int             `json:"local_port"`
+	TargetHost string          `json:"target_addr"`
+	TargetPort int             `json:"target_port"`
 	RemoteHost string          `json:"remote_addr"`
 	RemotePort int             `json:"remote_port"`
 	Passwords  []string        `json:"password"`
@@ -119,9 +125,14 @@ type GlobalConfig struct {
 	Router     RouterConfig    `json:"router"`
 	Websocket  WebsocketConfig `json:"websocket"`
 
-	LocalAddr  net.Addr
-	LocalIP    net.IP
-	RemoteAddr net.Addr
-	RemoteIP   net.IP
-	Hash       map[string]string
+	LocalAddress  *common.Address
+	RemoteAddress *common.Address
+	TargetAddress *common.Address
+	/*
+		LocalAddr  net.Addr
+		LocalIP    net.IP
+		RemoteAddr net.Addr
+		RemoteIP   net.IP
+	*/
+	Hash map[string]string
 }

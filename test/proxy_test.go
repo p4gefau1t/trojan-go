@@ -137,14 +137,9 @@ func TestServerJSON(t *testing.T) {
 
 func TestClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		Hash:          getHash("pass123"),
 	}
 	c := client.Client{}
 	c.Build(config)
@@ -153,14 +148,10 @@ func TestClient(t *testing.T) {
 
 func TestServer(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	s := server.Server{}
 	s.Build(config)
@@ -169,14 +160,10 @@ func TestServer(t *testing.T) {
 
 func TestNAT(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	n := client.NAT{}
 	n.Build(config)
@@ -185,14 +172,10 @@ func TestNAT(t *testing.T) {
 
 func TestMuxClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
 			Enabled:     true,
 			Concurrency: 8,
@@ -206,14 +189,10 @@ func TestMuxClient(t *testing.T) {
 
 func TestRouterClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Router: conf.RouterConfig{
 			Enabled:       true,
 			BypassList:    []byte("baidu.com\nqq.com\n\n192.168.0.0/16\n"),
@@ -227,14 +206,10 @@ func TestRouterClient(t *testing.T) {
 
 func TestWebsocketClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
 			Enabled:  true,
 			HostName: "127.0.0.1",
@@ -249,14 +224,10 @@ func TestWebsocketClient(t *testing.T) {
 
 func TestWebsocketMuxClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
 			Enabled:  true,
 			HostName: "127.0.0.1",
@@ -276,14 +247,10 @@ func TestWebsocketMuxClient(t *testing.T) {
 
 func TestWebsocketServer(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
 			Enabled:  true,
 			HostName: "127.0.0.1",
@@ -294,6 +261,19 @@ func TestWebsocketServer(t *testing.T) {
 	s := server.Server{}
 	s.Build(config)
 	common.Must(s.Run())
+}
+
+func TestForward(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TargetAddress: common.NewAddress("192.168.2.1", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
+	}
+	f := client.Forward{}
+	f.Build(config)
+	common.Must(f.Run())
 }
 
 func TestClientAndServer(t *testing.T) {
@@ -338,38 +318,35 @@ func TestWebsocketMuxClientServer(t *testing.T) {
 	TestWebsocketMuxClient(t)
 }
 
+func TestForwardAndServer(t *testing.T) {
+	go TestForward(t)
+	TestServer(t)
+}
+
 func BenchmarkNormalClientToServer(b *testing.B) {
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8000", nil)
 		log.Error(err)
 	}()
-	config1 := &conf.GlobalConfig{
-		LogLevel:   5,
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+	clientConfig := &conf.GlobalConfig{
+		LogLevel:      5,
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	c := client.Client{}
-	c.Build(config1)
+	c.Build(clientConfig)
 	go c.Run()
 
-	config2 := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+	serverConfig := &conf.GlobalConfig{
+		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	s := server.Server{}
-	s.Build(config2)
+	s.Build(serverConfig)
 	go s.Run()
 
 	target := RunBlackHoleTCPServer()
@@ -389,15 +366,11 @@ func BenchmarkNormalClientToServer(b *testing.B) {
 
 func BenchmarkMuxClientToServer(b *testing.B) {
 	config1 := &conf.GlobalConfig{
-		LogLevel:   5,
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LogLevel:      5,
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
 			Enabled:     true,
 			Concurrency: 8,
@@ -409,21 +382,17 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 	go c.Run()
 
 	config2 := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	s := server.Server{}
 	s.Build(config2)
 	go s.Run()
 
 	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
 	common.Must(err)
 	conn, err := dialer.Dial("tcp", target.String())
 	common.Must(err)
@@ -439,15 +408,11 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 
 func BenchmarkWebsocketClientToServer(b *testing.B) {
 	config1 := &conf.GlobalConfig{
-		LogLevel:   5,
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LogLevel:      5,
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
 			Enabled:     true,
 			Concurrency: 8,
@@ -457,7 +422,7 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 			Enabled:  true,
 			HostName: "localhost",
 			Path:     "/ws",
-			Password: "password",
+			//Password: "password",
 		},
 	}
 	c := client.Client{}
@@ -465,19 +430,15 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 	go c.Run()
 
 	config2 := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("0.0.0.0", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
 			Enabled:  true,
 			HostName: "localhost",
 			Path:     "/ws",
-			Password: "password",
+			//Password: "password",
 		},
 	}
 	s := server.Server{}
@@ -485,7 +446,7 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 	go s.Run()
 
 	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
 	common.Must(err)
 	conn, err := dialer.Dial("tcp", target.String())
 	common.Must(err)
@@ -501,36 +462,27 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 
 func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
 	config1 := &conf.GlobalConfig{
-		LogLevel:   5,
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	c := client.Client{}
 	c.Build(config1)
 	go c.Run()
 
 	config2 := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	s := server.Server{}
 	s.Build(config2)
 	go s.Run()
 
 	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
 	common.Must(err)
 
 	connNum := 128
@@ -560,15 +512,11 @@ func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
 
 func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
 	config1 := &conf.GlobalConfig{
-		LogLevel:   5,
-		LocalIP:    getLocalIP(),
-		LocalPort:  4444,
-		LocalAddr:  getLocalAddr(4444),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 4445,
-		RemoteAddr: getLocalAddr(4445),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LogLevel:      5,
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
 			Enabled:     true,
 			Concurrency: 8,
@@ -580,21 +528,17 @@ func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
 	go c.Run()
 
 	config2 := &conf.GlobalConfig{
-		LocalIP:    getLocalIP(),
-		LocalPort:  4445,
-		LocalAddr:  getLocalAddr(4445),
-		RemoteIP:   getLocalIP(),
-		RemotePort: 80,
-		RemoteAddr: getLocalAddr(80),
-		TLS:        getTLSConfig(),
-		Hash:       getHash("pass123"),
+		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
 	}
 	s := server.Server{}
 	s.Build(config2)
 	go s.Run()
 
 	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
 	common.Must(err)
 
 	connNum := 128

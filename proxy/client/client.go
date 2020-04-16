@@ -3,6 +3,8 @@ package client
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"io"
 	"net"
 	"time"
 
@@ -18,6 +20,44 @@ import (
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/router"
 )
+
+func DialTLSToServer(config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
+	tlsConfig := &tls.Config{
+		CipherSuites:           config.TLS.CipherSuites,
+		RootCAs:                config.TLS.CertPool,
+		ServerName:             config.TLS.SNI,
+		InsecureSkipVerify:     !config.TLS.Verify,
+		SessionTicketsDisabled: !config.TLS.SessionTicket,
+		ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
+	}
+	network := "tcp"
+	if config.TCP.PreferIPV4 {
+		network = "tcp4"
+	}
+	tlsConn, err := tls.Dial(network, config.RemoteAddress.String(), tlsConfig)
+	if err != nil {
+		return nil, common.NewError("cannot dial to the remote server").Base(err)
+	}
+	if config.LogLevel == 0 {
+		state := tlsConn.ConnectionState()
+		chain := state.VerifiedChains
+		log.Debug("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		for i := range chain {
+			for j := range chain[i] {
+				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
+			}
+		}
+	}
+	var conn io.ReadWriteCloser = tlsConn
+	if config.Websocket.Enabled {
+		ws, err := trojan.NewOutboundWebosocket(tlsConn, config)
+		if err != nil {
+			return nil, common.NewError("failed to start websocket connection").Base(err)
+		}
+		conn = ws
+	}
+	return conn, nil
+}
 
 type packetInfo struct {
 	request *protocol.Request
@@ -36,45 +76,6 @@ type Client struct {
 	router         router.Router
 }
 
-func (c *Client) listenUDP() {
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   c.config.LocalIP,
-		Port: int(c.config.LocalPort),
-	})
-	if err != nil {
-		log.Fatal("failed to listen udp")
-	}
-	inbound, err := socks.NewInboundPacketSession(listener)
-	common.Must(err)
-	for {
-		for t := <-c.associatedChan; time.Now().Sub(t) > protocol.UDPTimeout; t = <-c.associatedChan {
-			log.Debug("expired udp request, skipping")
-		}
-		log.Debug("associated signal")
-		req := &protocol.Request{
-			DomainName:  []byte("UDP_CONN"),
-			AddressType: protocol.DomainName,
-			Command:     protocol.Associate,
-		}
-		tunnel, err := trojan.NewOutboundConnSession(req, nil, c.config)
-		if err != nil {
-			log.Error(common.NewError("failed to open udp tunnel").Base(err))
-			continue
-		}
-		trojanOutbound, err := trojan.NewPacketSession(tunnel)
-		common.Must(err)
-		directOutbound, err := direct.NewOutboundPacketSession()
-		common.Must(err)
-		table := map[router.Policy]protocol.PacketReadWriter{
-			router.Proxy:  trojanOutbound,
-			router.Bypass: directOutbound,
-		}
-		proxy.ProxyPacketWithRouter(inbound, table, c.router)
-		trojanOutbound.Close()
-		directOutbound.Close()
-	}
-}
-
 func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 	inboundConn, err := socks.NewInboundConnSession(conn, rw)
 	if err != nil {
@@ -87,12 +88,17 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 	if req.Command == protocol.Associate {
 		//setting up the bind address to respond
 		//listenUDP() will handle the incoming udp packets
-		req.IP = c.config.LocalIP
-		req.Port = c.config.LocalPort
-		if c.config.LocalIP.To4() != nil {
-			req.AddressType = protocol.IPv4
+		localIP, err := c.config.LocalAddress.ResolveIP(false)
+		if err != nil {
+			log.Error(common.NewError("invalid local address").Base(err))
+			return
+		}
+		req.IP = localIP
+		req.Port = c.config.LocalAddress.Port
+		if localIP.To4() != nil {
+			req.AddressType = common.IPv4
 		} else {
-			req.AddressType = protocol.IPv6
+			req.AddressType = common.IPv6
 		}
 		//notify listenUDP to get ready for relaying udp packets
 		select {
@@ -154,7 +160,12 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
 		proxy.ProxyConn(inboundConn, outboundConn)
 	} else {
-		outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
+		rwc, err := DialTLSToServer(c.config)
+		if err != nil {
+			log.Error(common.NewError("failed to dail to remote server").Base(err))
+			return
+		}
+		outboundConn, err := trojan.NewOutboundConnSession(req, rwc, c.config)
 		if err != nil {
 			log.Error(common.NewError("failed to start new outbound session").Base(err))
 			return
@@ -216,7 +227,12 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
 			proxy.ProxyConn(inboundConn, outboundConn)
 		} else {
-			outboundConn, err := trojan.NewOutboundConnSession(req, nil, c.config)
+			rwc, err := DialTLSToServer(c.config)
+			if err != nil {
+				log.Error(common.NewError("failed to dail to remote server").Base(err))
+				return
+			}
+			outboundConn, err := trojan.NewOutboundConnSession(req, rwc, c.config)
 			if err != nil {
 				log.Error(common.NewError("failed to start new outbound session").Base(err))
 				return
@@ -262,7 +278,12 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 						}
 						log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", packet.request, "mux id", info.id)
 					} else {
-						outboundConn, err = trojan.NewOutboundConnSession(packet.request, nil, c.config)
+						rwc, err := DialTLSToServer(c.config)
+						if err != nil {
+							log.Error(common.NewError("failed to dail to remote server").Base(err))
+							return
+						}
+						outboundConn, err = trojan.NewOutboundConnSession(packet.request, rwc, c.config)
 						if err != nil {
 							log.Error(err)
 							continue
@@ -299,15 +320,62 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 	}
 }
 
-func (c *Client) Run() error {
-	go c.listenUDP()
-	listener, err := net.Listen("tcp", c.config.LocalAddr.String())
+func (c *Client) listenUDP(errChan chan error) {
+	localIP, err := c.config.LocalAddress.ResolveIP(false)
 	if err != nil {
-		return common.NewError("failed to listen local address").Base(err)
+		errChan <- common.NewError("invalid local address").Base(err)
+	}
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{
+		IP:   localIP,
+		Port: c.config.LocalAddress.Port,
+	})
+	if err != nil {
+		errChan <- common.NewError("failed to listen udp").Base(err)
+	}
+	inbound, err := socks.NewInboundPacketSession(listener)
+	common.Must(err)
+	for {
+		for t := <-c.associatedChan; time.Now().Sub(t) > protocol.UDPTimeout; t = <-c.associatedChan {
+			log.Debug("expired udp request, skipping")
+		}
+		log.Debug("associated signal")
+		req := &protocol.Request{
+			Address: &common.Address{
+				DomainName:  "UDP_CONN",
+				AddressType: common.DomainName,
+			},
+			Command: protocol.Associate,
+		}
+		rwc, err := DialTLSToServer(c.config)
+		if err != nil {
+			log.Error(common.NewError("failed to dail to remote server").Base(err))
+			return
+		}
+		tunnel, err := trojan.NewOutboundConnSession(req, rwc, c.config)
+		if err != nil {
+			log.Error(common.NewError("failed to open udp tunnel").Base(err))
+			continue
+		}
+		trojanOutbound, err := trojan.NewPacketSession(tunnel)
+		common.Must(err)
+		directOutbound, err := direct.NewOutboundPacketSession()
+		common.Must(err)
+		table := map[router.Policy]protocol.PacketReadWriter{
+			router.Proxy:  trojanOutbound,
+			router.Bypass: directOutbound,
+		}
+		proxy.ProxyPacketWithRouter(inbound, table, c.router)
+		trojanOutbound.Close()
+		directOutbound.Close()
+	}
+}
+
+func (c *Client) listenTCP(errChan chan error) {
+	listener, err := net.Listen("tcp", c.config.LocalAddress.String())
+	if err != nil {
+		errChan <- common.NewError("failed to listen local address").Base(err)
 	}
 	defer listener.Close()
-
-	log.Info("client is running at", listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -330,6 +398,19 @@ func (c *Client) Run() error {
 		} else {
 			go c.handleHTTPConn(conn, rw)
 		}
+	}
+}
+
+func (c *Client) Run() error {
+	log.Info("client is running at", c.config.LocalAddress.String())
+	errChan := make(chan error, 2)
+	go c.listenUDP(errChan)
+	go c.listenTCP(errChan)
+	select {
+	case err := <-errChan:
+		return err
+	case <-c.ctx.Done():
+		return nil
 	}
 }
 

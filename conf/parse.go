@@ -42,19 +42,9 @@ func loadCommonConfig(config *GlobalConfig) error {
 	}
 
 	//address settings
-	localAddr, err := convertToAddr(config.TCP.PreferIPV4, config.LocalHost, config.LocalPort)
-	if err != nil {
-		return common.NewError("invalid local address").Base(err)
-	}
-	config.LocalAddr = localAddr
-	config.LocalIP = localAddr.IP
-
-	remoteAddr, err := convertToAddr(config.TCP.PreferIPV4, config.RemoteHost, config.RemotePort)
-	if err != nil {
-		return common.NewError("invalid remote address").Base(err)
-	}
-	config.RemoteAddr = remoteAddr
-	config.RemoteIP = remoteAddr.IP
+	config.LocalAddress = common.NewAddress(config.LocalHost, config.LocalPort, "tcp")
+	config.RemoteAddress = common.NewAddress(config.RemoteHost, config.RemotePort, "tcp")
+	config.TargetAddress = common.NewAddress(config.TargetHost, config.TargetPort, "tcp")
 
 	if config.TLS.FallbackPort != 0 {
 		fallbackAddr, err := convertToAddr(config.TCP.PreferIPV4, config.RemoteHost, config.TLS.FallbackPort)
@@ -287,6 +277,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Router.DefaultPolicy = "proxy"
 	config.Router.GeoIPFilename = common.GetProgramDir() + "/geoip.dat"
 	config.Router.GeoSiteFilename = common.GetProgramDir() + "/geosite.dat"
+	config.Websocket.DoubleTLS = true
 
 	err := json.Unmarshal(data, config)
 	if err != nil {

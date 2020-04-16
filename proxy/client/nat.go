@@ -53,7 +53,11 @@ func (n *NAT) handleConn(conn net.Conn) {
 		proxy.ProxyConn(inbound, outbound)
 		return
 	}
-	outbound, err := trojan.NewOutboundConnSession(req, nil, n.config)
+	rwc, err := DialTLSToServer(n.config)
+	if err != nil {
+		log.Error(common.NewError("failed to dail to remote server").Base(err))
+	}
+	outbound, err := trojan.NewOutboundConnSession(req, rwc, n.config)
 	if err != nil {
 		log.Error("failed to start outbound session", err)
 		return
@@ -63,20 +67,27 @@ func (n *NAT) handleConn(conn net.Conn) {
 	proxy.ProxyConn(inbound, outbound)
 }
 
-func (n *NAT) listenUDP() {
+func (n *NAT) listenUDP(errChan chan error) {
 	inbound, err := nat.NewInboundPacketSession(n.config)
 	if err != nil {
 		log.Fatal(err)
 	}
 	n.packetInbound = inbound
 	defer inbound.Close()
-	req := protocol.Request{
-		DomainName:  []byte("UDP_CONN"),
-		AddressType: protocol.DomainName,
-		Command:     protocol.Associate,
+	req := &protocol.Request{
+		Address: &common.Address{
+			DomainName:  "UDP_CONN",
+			AddressType: common.DomainName,
+		},
+		Command: protocol.Associate,
 	}
 	for {
-		tunnel, err := trojan.NewOutboundConnSession(&req, nil, n.config)
+		rwc, err := DialTLSToServer(n.config)
+		if err != nil {
+			log.Error(common.NewError("failed to dail to remote server").Base(err))
+			continue
+		}
+		tunnel, err := trojan.NewOutboundConnSession(req, rwc, n.config)
 		if err != nil {
 			select {
 			case <-n.ctx.Done():
@@ -93,15 +104,17 @@ func (n *NAT) listenUDP() {
 	}
 }
 
-func (n *NAT) Run() error {
-	go n.listenUDP()
-	log.Info("nat running at", n.config.LocalAddr)
+func (n *NAT) listenTCP(errChan chan error) {
+	localIP, err := n.config.LocalAddress.ResolveIP(false)
+	if err != nil {
+		errChan <- err
+	}
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
-		IP:   n.config.LocalIP,
-		Port: int(n.config.LocalPort),
+		IP:   localIP,
+		Port: int(n.config.LocalAddress.Port),
 	})
 	if err != nil {
-		return err
+		errChan <- err
 	}
 	n.listener = listener
 	defer listener.Close()
@@ -110,13 +123,26 @@ func (n *NAT) Run() error {
 		if err != nil {
 			select {
 			case <-n.ctx.Done():
-				return nil
+				return
 			default:
 			}
-			log.Error(err)
-			continue
+			errChan <- err
+			break
 		}
 		go n.handleConn(conn)
+	}
+}
+
+func (n *NAT) Run() error {
+	log.Info("nat running at", n.config.LocalAddress)
+	errChan := make(chan error, 2)
+	go n.listenUDP(errChan)
+	go n.listenTCP(errChan)
+	select {
+	case err := <-errChan:
+		return err
+	case <-n.ctx.Done():
+		return nil
 	}
 }
 

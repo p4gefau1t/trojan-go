@@ -19,8 +19,10 @@ func TestGeoRouter(t *testing.T) {
 	common.Must(r.LoadGeoData(geoipData, []string{"CN"}, geositeData, []string{"CN"}))
 
 	p, err := r.RouteRequest(&protocol.Request{
-		DomainName:  []byte("mail.google.com"),
-		AddressType: protocol.DomainName,
+		Address: &common.Address{
+			DomainName:  "mail.google.com",
+			AddressType: common.DomainName,
+		},
 	})
 	common.Must(err)
 	if p != Proxy {
@@ -28,8 +30,10 @@ func TestGeoRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		DomainName:  []byte("tupian.baidu.com"),
-		AddressType: protocol.DomainName,
+		Address: &common.Address{
+			DomainName:  "tupian.baidu.com",
+			AddressType: common.DomainName,
+		},
 	})
 	common.Must(err)
 	if p != Bypass {
@@ -37,8 +41,10 @@ func TestGeoRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		IP:          net.ParseIP("8.8.8.8"),
-		AddressType: protocol.IPv4,
+		Address: &common.Address{
+			IP:          net.ParseIP("8.8.8.8"),
+			AddressType: common.IPv4,
+		},
 	})
 	common.Must(err)
 	if p != Proxy {
@@ -46,8 +52,10 @@ func TestGeoRouter(t *testing.T) {
 	}
 
 	p, err = r.RouteRequest(&protocol.Request{
-		IP:          net.ParseIP("114.114.114.114"),
-		AddressType: protocol.IPv4,
+		Address: &common.Address{
+			IP:          net.ParseIP("114.114.114.114"),
+			AddressType: common.IPv4,
+		},
 	})
 	common.Must(err)
 	if p != Bypass {

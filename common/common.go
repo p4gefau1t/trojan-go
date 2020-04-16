@@ -34,25 +34,6 @@ func SHA224String(password string) string {
 	return str
 }
 
-const (
-	KiB = 1024
-	MiB = KiB * 1024
-	GiB = MiB * 1024
-)
-
-func HumanFriendlyTraffic(bytes int) string {
-	if bytes <= KiB {
-		return fmt.Sprintf("%d B", bytes)
-	}
-	if bytes <= MiB {
-		return fmt.Sprintf("%.2f KiB", float32(bytes)/KiB)
-	}
-	if bytes <= GiB {
-		return fmt.Sprintf("%.2f MiB", float32(bytes)/MiB)
-	}
-	return fmt.Sprintf("%.2f GiB", float32(bytes)/GiB)
-}
-
 func GetProgramDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {

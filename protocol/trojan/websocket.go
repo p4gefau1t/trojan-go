@@ -99,6 +99,9 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 		wsConn.Write(iv[:])
 		transport = NewObfReadWriteCloser(config.Websocket.Password, wsConn, iv[:])
 	}
+	if !config.Websocket.DoubleTLS {
+		return transport, nil
+	}
 	tlsConn := tls.Client(transport, tlsConfig)
 	if err := tlsConn.Handshake(); err != nil {
 		return nil, err
@@ -173,17 +176,20 @@ func NewInboundWebsocket(conn io.ReadWriteCloser, rw *bufio.ReadWriter, ctx cont
 	}
 
 	var transport net.Conn = wsConn
-	tlsConfig := &tls.Config{
-		Certificates:             config.TLS.KeyPair,
-		CipherSuites:             config.TLS.CipherSuites,
-		PreferServerCipherSuites: config.TLS.PreferServerCipher,
-		SessionTicketsDisabled:   !config.TLS.SessionTicket,
-	}
 	if config.Websocket.Password != "" {
 		iv := [aes.BlockSize]byte{}
 		rand.Reader.Read(iv[:])
 		wsConn.Read(iv[:])
 		transport = NewObfReadWriteCloser(config.Websocket.Password, wsConn, iv[:])
+	}
+	if !config.Websocket.DoubleTLS {
+		return transport, nil
+	}
+	tlsConfig := &tls.Config{
+		Certificates:             config.TLS.KeyPair,
+		CipherSuites:             config.TLS.CipherSuites,
+		PreferServerCipherSuites: config.TLS.PreferServerCipher,
+		SessionTicketsDisabled:   !config.TLS.SessionTicket,
 	}
 	tlsConn := tls.Server(transport, tlsConfig)
 	if err := tlsConn.Handshake(); err != nil {

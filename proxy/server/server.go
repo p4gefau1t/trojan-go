@@ -175,22 +175,23 @@ func (s *Server) Run() error {
 	}
 	defer s.auth.Close()
 	defer s.meter.Close()
-	log.Info("server is running at", s.config.LocalAddr)
+	log.Info("server is running at", s.config.LocalAddress)
 
 	var listener net.Listener
 	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
+		localIP, err := s.config.LocalAddress.ResolveIP(false)
 		listener, err = ListenWithTCPOption(
 			s.config.TCP.FastOpen,
 			s.config.TCP.ReusePort,
 			s.config.TCP.NoDelay,
-			s.config.LocalIP,
-			s.config.LocalAddr.String(),
+			localIP,
+			s.config.LocalAddress.String(),
 		)
 		if err != nil {
 			return err
 		}
 	} else {
-		listener, err = net.Listen("tcp", s.config.LocalAddr.String())
+		listener, err = net.Listen("tcp", s.config.LocalAddress.String())
 		if err != nil {
 			return err
 		}

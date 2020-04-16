@@ -96,13 +96,15 @@ func (r *GeoRouter) routeRequestByIP(domain string) (Policy, error) {
 	if err != nil {
 		return Unknown, err
 	}
-	atype := protocol.IPv6
+	atype := common.IPv6
 	if addr.IP.To4() != nil {
-		atype = protocol.IPv4
+		atype = common.IPv4
 	}
 	return r.RouteRequest(&protocol.Request{
-		IP:          addr.IP,
-		AddressType: atype,
+		Address: &common.Address{
+			IP:          addr.IP,
+			AddressType: atype,
+		},
 	})
 }
 
@@ -111,7 +113,7 @@ func (r *GeoRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 		return r.nonMatchPolicy, nil
 	}
 	switch req.AddressType {
-	case protocol.DomainName:
+	case common.DomainName:
 		domain := string(req.DomainName)
 		if r.routeByIP {
 			return r.routeRequestByIP(domain)
@@ -123,7 +125,7 @@ func (r *GeoRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 			return r.routeRequestByIP(domain)
 		}
 		return r.nonMatchPolicy, nil
-	case protocol.IPv4, protocol.IPv6:
+	case common.IPv4, common.IPv6:
 		if r.matchIP(req.IP) {
 			return r.matchPolicy, nil
 		}

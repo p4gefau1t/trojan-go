@@ -136,9 +136,8 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		if err != nil {
 			//no need to continue parsing
 			i.request = &protocol.Request{
-				IP:          i.config.RemoteIP,
-				Port:        i.config.RemotePort,
-				NetworkType: "tcp",
+				Address: config.RemoteAddress,
+				Command: protocol.Connect,
 			}
 			log.Warn("remote", conn.RemoteAddr(), "invalid websocket conn")
 			return i, nil
@@ -146,9 +145,8 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 	}
 	if err := i.parseRequest(); err != nil {
 		i.request = &protocol.Request{
-			IP:          i.config.RemoteIP,
-			Port:        i.config.RemotePort,
-			NetworkType: "tcp",
+			Address: i.config.RemoteAddress,
+			Command: protocol.Connect,
 		}
 		log.Warn("remote", conn.RemoteAddr(), "invalid hash or other protocol")
 	}
