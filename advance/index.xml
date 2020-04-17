@@ -39,11 +39,20 @@
     
     <item>
       <title>流量中继</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/relay/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/relay/</guid>
+      <description>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线</description>
+    </item>
+    
+    <item>
+      <title>DNS隧道和反向代理</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/forward/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/forward/</guid>
-      <description>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线</description>
+      <description>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子 {</description>
     </item>
     
     <item>

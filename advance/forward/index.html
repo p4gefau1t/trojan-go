@@ -3,7 +3,7 @@
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>流量中继 - Trojan-Go</title>
+<title>DNS隧道和反向代理 - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
 <meta name="generator" content="Hugo 0.69.0" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
@@ -16,8 +16,8 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="流量中继" />
-<meta property="og:description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线" />
+<meta property="og:title" content="DNS隧道和反向代理" />
+<meta property="og:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子 {" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/forward/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -25,12 +25,12 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="流量中继"/>
-<meta name="twitter:description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线"/>
-<meta itemprop="name" content="流量中继">
-<meta itemprop="description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线">
+<meta name="twitter:title" content="DNS隧道和反向代理"/>
+<meta name="twitter:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子 {"/>
+<meta itemprop="name" content="DNS隧道和反向代理">
+<meta itemprop="description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子 {">
 
-<meta itemprop="wordCount" content="291">
+<meta itemprop="wordCount" content="481">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.1.3</span>
+ <span class="version">Version 0.1.4</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -53,22 +53,39 @@
 </nav>
 </div>
 <div class="content-container">
-<main><h1>流量中继</h1>
-<p>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线路更好的服务器，作为中继，将你的流量转发给trojan服务器。</p>
-<p>Forward中继的配置很简单，下面是一个Forward的配置</p>
+<main><h1>DNS隧道和反向代理</h1>
+<p>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子</p>
 <pre><code>{
     &quot;run_type&quot;: &quot;forward&quot;,
-    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
-    &quot;local_port&quot;: 1234,
-    &quot;remote_addr&quot;: &quot;your_trojan_server&quot;,
+    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;local_port&quot;: 53,
+    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
     &quot;remote_port&quot;: 443,
+    &quot;target_addr&quot;: &quot;8.8.8.8&quot;,
+    &quot;target_port&quot;: 53,
+    &quot;password&quot;: [
+	    &quot;your_awesome_password&quot;
+    ]
 }
-
-</code></pre><p>Forwad启动后，客户端连接该主机的1234端口，和直接连接Trojan服务器443端口是等效的。为了保证安全性和稳定性，Forward只做简单的流量转发，本地不需要任何的证书文件和密钥文件。</p>
-<p>你可以使用多个Forward链接起来作为多重跳板，如果你忍受这种做法带来的延迟升高和吞吐量下降的话。</p>
+</code></pre><p>forward本质上是一个客户端，不过你需要填入<code>target_addr</code>和<code>target_port</code>字段，指明反向代理的目标。</p>
+<p>使用这份配置文件后，本地53的TCP和UDP端口将被监听，所有的向本地53端口发送的TCP或者UDP数据，都会通过TLS隧道转发给远端服务器your_awesome_server，远端服务器得到回应后，数据会通过隧道返回到本地53端口。 也就是说，你可以将127.0.0.1当作一个DNS服务器，本地查询的结果和远端服务器查询的结果是一致的。你可以使用这个配置避开DNS污染。</p>
+<p>同样的原理，你可以在本地搭建一个Google的镜像</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;forward&quot;,
+    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;local_port&quot;: 53,
+    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
+    &quot;remote_port&quot;: 443,
+    &quot;target_addr&quot;: &quot;www.google.com&quot;,
+    &quot;target_port&quot;: 443,
+    &quot;password&quot;: [
+	    &quot;your_awesome_password&quot;
+    ]
+}
+</code></pre><p>访问https://127.0.0.1即可访问谷歌主页，但是注意这里由于谷歌服务器提供的https证书是google.com的证书，而当前域名为127.0.0.1，因此浏览器会引发一个证书错误的警告。</p>
 <div class="edit-meta">
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/forward.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/router/" title="使用路由功能实现国内直连和广告屏蔽"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用路由功能实现国内直连和广告屏蔽</a>
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/forward.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/relay/" title="流量中继"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 流量中继</a>
 <a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/config/" title="完整的配置文件">Next - 完整的配置文件 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
@@ -93,7 +110,8 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
-<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
 </ul>
   
