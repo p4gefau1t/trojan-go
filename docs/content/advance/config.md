@@ -40,7 +40,7 @@ weight: 10
         "cipher": "",
         "cipher_tls13": "",
         "prefer_server_cipher": false,
-        "sni": "your_domain_name",
+        "sni": "",
         "session_ticket": true,
         "plain_http_response": "",
         "fallback_port":0
@@ -74,11 +74,11 @@ weight: 10
     },
     "mysql": {
         "enabled": false,
-        "server_addr": "127.0.0.1",
-        "server_port": 3306,
-        "database": "trojan",
-        "username": "root",
-        "password": "password",
+        "server_addr": "",
+        "server_port": 0,
+        "database": "",
+        "username": "",
+        "password": "",
         "check_rate": 60
     }
 }
@@ -160,9 +160,15 @@ Websocket传输是Trojan-Go的特性。在直接连接服务器的情况下，�
 
 ```password```混淆密码，留空则不启用混淆。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果设置了密码，服务端和客户端必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
 
-### 数据库选项
+### ```mysql```数据库选项
 
-只有当```mysql```选项存在，并且```enabled```设置为true，trojan-go才会使用数据库。users表结构和trojan原版一致，下面是一个创建users表的命令。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。Trojan-Go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
+```enabled```表示是否启用mysql数据库进行用户验证。
+
+```check_rate```是Trojan-Go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。
+
+其他选项可以顾名思义，不再赘述。
+
+users表结构和trojan原版一致，下面是一个创建users表的命令。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。Trojan-Go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
 
 ```
 CREATE TABLE users (
@@ -176,5 +182,3 @@ CREATE TABLE users (
     INDEX (password)
 );
 ```
-
-```check_rate```是Trojan-Go从MySQL更新用户数据缓存的间隔时间，单位是秒。
