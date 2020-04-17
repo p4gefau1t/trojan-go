@@ -7,11 +7,27 @@
   </url>
   
   <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/developer/overview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/developer/trojan/</loc>
+  </url>
+  
+  <url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/websocket/</loc>
   </url>
   
   <url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/router/</loc>
+  </url>
+  
+  <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/developer/mux/</loc>
+  </url>
+  
+  <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/developer/websocket/</loc>
   </url>
   
   <url>
@@ -44,6 +60,10 @@
   
   <url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/</loc>
+  </url>
+  
+  <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/developer/</loc>
   </url>
   
   <url>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>实现细节和开发指南 on Trojan-Go</title>
+    <link>https://p4gefau1t.github.io/trojan-go/developer/</link>
+    <description>Recent content in 实现细节和开发指南 on Trojan-Go</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://p4gefau1t.github.io/trojan-go/developer/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>基本介绍</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/overview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/overview/</guid>
+      <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用Protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹</description>
+    </item>
+    
+    <item>
+      <title>Trojan协议</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/trojan/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/trojan/</guid>
+      <description>Trojan-Go遵循原始的Trojan协议，具体格式可以参考Trojan文档，这里不再赘述。 默认情况下，Trojan协议使用TLS作为承载</description>
+    </item>
+    
+    <item>
+      <title>多路复用</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/mux/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/mux/</guid>
+      <description>Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常Tro</description>
+    </item>
+    
+    <item>
+      <title>Websocket</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/websocket/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/websocket/</guid>
+      <description>开启Websocket的客户端可以使用password字段开启混淆/启用双重TLS以确保连接安全性。 由于使用CDN中转时，HTTPS对CDN</description>
+    </item>
+    
+  </channel>
+</rss>

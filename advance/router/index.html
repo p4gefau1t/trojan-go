@@ -3,7 +3,7 @@
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>使用路由功能实现国内直连和广告屏蔽 - Trojan-Go</title>
+<title>国内直连和广告屏蔽 - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
 <meta name="generator" content="Hugo 0.69.0" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
@@ -16,7 +16,7 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="使用路由功能实现国内直连和广告屏蔽" />
+<meta property="og:title" content="国内直连和广告屏蔽" />
 <meta property="og:description" content="Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 下面是一个例子 { &quot;run_type&quot;: &quot;client&quot;, &quot;local_addr&quot;: &quot;127.0.0.1&quot;, &quot;local_port&quot;: 1080, &quot;remote_addr&quot;: &quot;your_server&quot;, &quot;remote_port&quot;: 443, &quot;password&quot;: [ &quot;your_password&quot; ], &quot;ssl&quot;: { &quot;sni&quot;: &quot;your_domain_name&quot;" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/router/" />
@@ -25,12 +25,12 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="使用路由功能实现国内直连和广告屏蔽"/>
+<meta name="twitter:title" content="国内直连和广告屏蔽"/>
 <meta name="twitter:description" content="Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 下面是一个例子 { &quot;run_type&quot;: &quot;client&quot;, &quot;local_addr&quot;: &quot;127.0.0.1&quot;, &quot;local_port&quot;: 1080, &quot;remote_addr&quot;: &quot;your_server&quot;, &quot;remote_port&quot;: 443, &quot;password&quot;: [ &quot;your_password&quot; ], &quot;ssl&quot;: { &quot;sni&quot;: &quot;your_domain_name&quot;"/>
-<meta itemprop="name" content="使用路由功能实现国内直连和广告屏蔽">
+<meta itemprop="name" content="国内直连和广告屏蔽">
 <meta itemprop="description" content="Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 下面是一个例子 { &quot;run_type&quot;: &quot;client&quot;, &quot;local_addr&quot;: &quot;127.0.0.1&quot;, &quot;local_port&quot;: 1080, &quot;remote_addr&quot;: &quot;your_server&quot;, &quot;remote_port&quot;: 443, &quot;password&quot;: [ &quot;your_password&quot; ], &quot;ssl&quot;: { &quot;sni&quot;: &quot;your_domain_name&quot;">
 
-<meta itemprop="wordCount" content="744">
+<meta itemprop="wordCount" content="748">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -53,7 +53,7 @@
 </nav>
 </div>
 <div class="content-container">
-<main><h1>使用路由功能实现国内直连和广告屏蔽</h1>
+<main><h1>国内直连和广告屏蔽</h1>
 <p>Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。</p>
 <p>下面是一个例子</p>
 <pre><code>{
@@ -77,6 +77,9 @@
             &quot;geosite:cn&quot;,
             &quot;geoip:cn&quot;,
             &quot;geoip:private&quot;
+        ],
+        &quot;block&quot;: [
+            &quot;geosite:category-ads&quot;
         ]
     }
 }
@@ -153,12 +156,23 @@
 <li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
-<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
 </ul>
   
 </li>

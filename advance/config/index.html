@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于一个服务器server，key和cert为必填。 其余未填的选项，用下面给出的值进行填">
 
-<meta itemprop="wordCount" content="3453">
+<meta itemprop="wordCount" content="3458">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -93,7 +93,7 @@
         &quot;cipher&quot;: &quot;&quot;,
         &quot;cipher_tls13&quot;: &quot;&quot;,
         &quot;prefer_server_cipher&quot;: false,
-        &quot;sni&quot;: &quot;your_domain_name&quot;,
+        &quot;sni&quot;: &quot;&quot;,
         &quot;session_ticket&quot;: true,
         &quot;plain_http_response&quot;: &quot;&quot;,
         &quot;fallback_port&quot;:0
@@ -127,11 +127,11 @@
     },
     &quot;mysql&quot;: {
         &quot;enabled&quot;: false,
-        &quot;server_addr&quot;: &quot;127.0.0.1&quot;,
-        &quot;server_port&quot;: 3306,
-        &quot;database&quot;: &quot;trojan&quot;,
-        &quot;username&quot;: &quot;root&quot;,
-        &quot;password&quot;: &quot;password&quot;,
+        &quot;server_addr&quot;: &quot;&quot;,
+        &quot;server_port&quot;: 0,
+        &quot;database&quot;: &quot;&quot;,
+        &quot;username&quot;: &quot;&quot;,
+        &quot;password&quot;: &quot;&quot;,
         &quot;check_rate&quot;: 60
     }
 }
@@ -196,8 +196,11 @@
 <p><code>hostname</code>websocket握手时使用的主机名，如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。</p>
 <p><code>double_tls</code>是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于使CDN运营商（或MITM攻击者）也无法查看流量内容。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
 <p><code>password</code>混淆密码，留空则不启用混淆。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果设置了密码，服务端和客户端必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
-<h3 id="数据库选项">数据库选项</h3>
-<p>只有当<code>mysql</code>选项存在，并且<code>enabled</code>设置为true，trojan-go才会使用数据库。users表结构和trojan原版一致，下面是一个创建users表的命令。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。Trojan-Go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload&gt;quota，trojan-go服务器将拒绝该用户的连接。</p>
+<h3 id="mysql数据库选项"><code>mysql</code>数据库选项</h3>
+<p><code>enabled</code>表示是否启用mysql数据库进行用户验证。</p>
+<p><code>check_rate</code>是Trojan-Go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。</p>
+<p>其他选项可以顾名思义，不再赘述。</p>
+<p>users表结构和trojan原版一致，下面是一个创建users表的命令。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。Trojan-Go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload&gt;quota，trojan-go服务器将拒绝该用户的连接。</p>
 <pre><code>CREATE TABLE users (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     username VARCHAR(64) NOT NULL,
@@ -208,11 +211,10 @@
     PRIMARY KEY (id),
     INDEX (password)
 );
-</code></pre><p><code>check_rate</code>是Trojan-Go从MySQL更新用户数据缓存的间隔时间，单位是秒。</p>
-<div class="edit-meta">
+</code></pre><div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/config.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/forward/" title="DNS隧道和反向代理"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - DNS隧道和反向代理</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/mux/" title="使用多路复用提升并发性能">Next - 使用多路复用提升并发性能 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南">Next - 实现细节和开发指南 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -233,12 +235,23 @@
 <li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
 <li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
 </ul>
   
 </li>

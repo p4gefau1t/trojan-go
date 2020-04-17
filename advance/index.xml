@@ -11,7 +11,7 @@
     
     
     <item>
-      <title>使用多路复用提升并发性能</title>
+      <title>启用多路复用提升并发性能</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/mux/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -25,11 +25,11 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/websocket/</guid>
-      <description>Trojan-Go支持使用TLS+Websocket+TLS（多重TLS）承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性</description>
+      <description>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的同时考虑了将来GFW</description>
     </item>
     
     <item>
-      <title>使用路由功能实现国内直连和广告屏蔽</title>
+      <title>国内直连和广告屏蔽</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/router/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       

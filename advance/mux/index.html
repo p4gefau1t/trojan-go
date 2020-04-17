@@ -3,7 +3,7 @@
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>使用多路复用提升并发性能 - Trojan-Go</title>
+<title>启用多路复用提升并发性能 - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
 <meta name="generator" content="Hugo 0.69.0" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
@@ -16,7 +16,7 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="使用多路复用提升并发性能" />
+<meta property="og:title" content="启用多路复用提升并发性能" />
 <meta property="og:description" content="Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/mux/" />
@@ -25,12 +25,12 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="使用多路复用提升并发性能"/>
+<meta name="twitter:title" content="启用多路复用提升并发性能"/>
 <meta name="twitter:description" content="Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步"/>
-<meta itemprop="name" content="使用多路复用提升并发性能">
+<meta itemprop="name" content="启用多路复用提升并发性能">
 <meta itemprop="description" content="Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步">
 
-<meta itemprop="wordCount" content="687">
+<meta itemprop="wordCount" content="757">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -53,12 +53,12 @@
 </nav>
 </div>
 <div class="content-container">
-<main><h1>使用多路复用提升并发性能</h1>
+<main><h1>启用多路复用提升并发性能</h1>
 <p>Trojan-Go支持使用多路复用提升并发性能。</p>
 <p>Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步骤确保后续通讯的安全性。这个过程即为TLS握手。</p>
 <p>目前GFW对于TLS握手有审查和干扰，同时由于出口网络拥塞的原因，普通的线路完成TLS握手通常需要将近一秒甚至更长的时间。这可能会使得浏览网页和观看视频的延迟提高。</p>
 <p>Trojan-Go使用多路复用的方式解决这一问题。每个建立的TLS连接将承载多个TCP连接。当新的代理请求到来时，不需要和服务器握手发起一个新的TLS连接，而是尽可能重复使用已有的TLS连接。这样就可以减少TLS握手的带来的延迟。在高并发的情况下，如浏览含有大量图片的网页时，优势尤其突出。</p>
-<p>激活mux模块，只需要将<code>mux</code>选项中<code>enabled</code>字段设为true即可，下面是一个例子</p>
+<p>激活mux模块，只需要将<code>mux</code>选项中<code>enabled</code>字段设为true即可，下面是一个客户端的例子</p>
 <pre><code>{
     &quot;run_type&quot;: &quot;client&quot;,
     &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
@@ -72,7 +72,8 @@
         &quot;enabled&quot;: true
     }
 }
-</code></pre><p>完整的mux配置如下</p>
+</code></pre><p>服务端也需要添加<code>mux</code>选项，服务端开启后可以同时支持一般Trojan流量和多路复用流量。注意，原版Trojan服务器不支持这个特性。</p>
+<p>完整的mux配置如下</p>
 <pre><code>&quot;mux&quot;: {
     &quot;enabled&quot;: false,
     &quot;concurrency&quot;: 8,
@@ -104,12 +105,23 @@
 <li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
-<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">使用多路复用提升并发性能</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">使用路由功能实现国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
 </ul>
   
 </li>
