@@ -55,11 +55,11 @@ type NeedRespond interface {
 }
 
 type PacketReader interface {
-	ReadPacket() (*Request, []byte, error)
+	ReadPacket() (req *Request, payload []byte, err error)
 }
 
 type PacketWriter interface {
-	WritePacket(req *Request, packet []byte) (int, error)
+	WritePacket(req *Request, payload []byte) (n int, err error)
 }
 
 type PacketReadWriter interface {

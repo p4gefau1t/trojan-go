@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
+	"fmt"
 	"net"
 	"reflect"
 
@@ -41,18 +42,25 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	defer inboundConn.Close()
 	req := inboundConn.GetRequest()
-	if req.Command != protocol.Connect {
-		log.Error("mux only support tcp now")
+	switch req.Command {
+	case protocol.Connect:
+		outboundConn, err := direct.NewOutboundConnSession(nil, req)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		log.Info("user", passwordHash, "mux tunneling to", req.String())
+		defer outboundConn.Close()
+		proxy.ProxyConn(inboundConn, outboundConn)
+	case protocol.Associate:
+		outboundPacket, err := direct.NewOutboundPacketSession()
+		common.Must(err)
+		inboundPacket, err := trojan.NewPacketSession(inboundConn)
+		proxy.ProxyPacket(inboundPacket, outboundPacket)
+	default:
+		log.Error(fmt.Sprintf("invalid command %d", req.Command))
 		return
 	}
-	outboundConn, err := direct.NewOutboundConnSession(nil, req)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Info("user", passwordHash, "mux tunneling to", req.String())
-	defer outboundConn.Close()
-	proxy.ProxyConn(inboundConn, outboundConn)
 }
 
 func (s *Server) handleConn(conn net.Conn) {
@@ -230,10 +238,8 @@ func (s *Server) Run() error {
 
 func (s *Server) Close() error {
 	log.Info("shutting down server..")
-	if s.listener != nil {
-		s.listener.Close()
-	}
 	s.cancel()
+	s.listener.Close()
 	return nil
 }
 

@@ -42,7 +42,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 			log.Error(common.NewError("failed to open mux stream").Base(err))
 			return
 		}
-		outbound, err := mux.NewOutboundMuxConnSession(stream, req)
+		outbound, err := mux.NewOutboundConnSession(stream, req)
 		if err != nil {
 			stream.Close()
 			log.Error(common.NewError("failed to start mux outbound session").Base(err))

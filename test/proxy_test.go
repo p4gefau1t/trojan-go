@@ -267,7 +267,20 @@ func TestForward(t *testing.T) {
 	config := &conf.GlobalConfig{
 		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
 		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
-		TargetAddress: common.NewAddress("192.168.2.1", 80, "tcp"),
+		TargetAddress: common.NewAddress("localhost", 8080, "tcp"),
+		TLS:           getTLSConfig(),
+		Hash:          getHash("pass123"),
+	}
+	f := client.Forward{}
+	f.Build(config)
+	common.Must(f.Run())
+}
+
+func TestUDPForward(t *testing.T) {
+	config := &conf.GlobalConfig{
+		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		TargetAddress: common.NewAddress("8.8.8.8", 53, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -320,6 +333,11 @@ func TestWebsocketMuxClientServer(t *testing.T) {
 
 func TestForwardAndServer(t *testing.T) {
 	go TestForward(t)
+	TestServer(t)
+}
+
+func TestUDPForwardAndServer(t *testing.T) {
+	go TestUDPForward(t)
 	TestServer(t)
 }
 

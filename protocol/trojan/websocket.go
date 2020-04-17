@@ -109,7 +109,7 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	if config.LogLevel == 0 {
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Debug("Websocket TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite))
+		log.Debug("websocket TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite))
 		for i := range chain {
 			for j := range chain[i] {
 				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)

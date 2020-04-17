@@ -14,7 +14,7 @@ type Buildable interface {
 	Build(config *conf.GlobalConfig) (common.Runnable, error)
 }
 
-func ProxyConn(a, b io.ReadWriteCloser) {
+func ProxyConn(a, b io.ReadWriter) {
 	errChan := make(chan error, 2)
 	copyConn := func(dst io.Writer, src io.Reader) {
 		_, err := io.Copy(dst, src)

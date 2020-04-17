@@ -150,7 +150,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 
-		outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
+		outboundConn, err := mux.NewOutboundConnSession(stream, req)
 		if err != nil {
 			stream.Close()
 			log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
@@ -218,7 +218,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				return
 			}
 			defer stream.Close()
-			outboundConn, err := mux.NewOutboundMuxConnSession(stream, req)
+			outboundConn, err := mux.NewOutboundConnSession(stream, req)
 			if err != nil {
 				log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 				return
@@ -271,7 +271,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 							log.Error(common.NewError("failed to open mux stream").Base(err))
 							continue
 						}
-						outboundConn, err = mux.NewOutboundMuxConnSession(stream, packet.request)
+						outboundConn, err = mux.NewOutboundConnSession(stream, packet.request)
 						if err != nil {
 							log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 							continue

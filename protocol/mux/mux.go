@@ -85,7 +85,7 @@ func NewInboundMuxConnSession(conn io.ReadWriteCloser, passwordHash string) (pro
 	return m, nil
 }
 
-func NewOutboundMuxConnSession(conn io.ReadWriteCloser, req *protocol.Request) (protocol.ConnSession, error) {
+func NewOutboundConnSession(conn io.ReadWriteCloser, req *protocol.Request) (protocol.ConnSession, error) {
 	m := &MuxConnSession{
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),

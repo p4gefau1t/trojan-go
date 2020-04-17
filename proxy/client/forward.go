@@ -2,26 +2,133 @@ package client
 
 import (
 	"context"
+	"io"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/socks"
+	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 )
+
+type dispatchInfo struct {
+	addr    *net.UDPAddr
+	payload []byte
+}
 
 type Forward struct {
 	common.Runnable
 	proxy.Buildable
 
-	config *conf.GlobalConfig
-	ctx    context.Context
-	cancel context.CancelFunc
-	mux    *muxPoolManager
+	config        *conf.GlobalConfig
+	ctx           context.Context
+	cancel        context.CancelFunc
+	mux           *muxPoolManager
+	clientPackets chan *dispatchInfo
+	outboundsLock sync.Mutex
+	outbounds     map[string]protocol.PacketSession
+	udpListener   *net.UDPConn
+	tcpListener   net.Listener
+}
+
+func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
+	for {
+		f.outboundsLock.Lock()
+		outbound, found := f.outbounds[addr.String()]
+		f.outboundsLock.Unlock()
+		if !found {
+			panic("key not found")
+		}
+		payloadChan := make(chan []byte)
+		go func() {
+			_, payload, err := outbound.ReadPacket()
+			if err != nil { //expired
+				return
+			}
+			payloadChan <- payload
+		}()
+		select {
+		case payload := <-payloadChan:
+			_, err := f.udpListener.WriteTo(payload, addr)
+			if err != nil { //closed
+				return
+			}
+		case <-time.After(protocol.UDPTimeout):
+			outbound.Close()
+			f.outboundsLock.Lock()
+			delete(f.outbounds, addr.String())
+			f.outboundsLock.Unlock()
+			log.Debug("udp timeout, exiting..")
+			return
+		case <-f.ctx.Done():
+			log.Debug("forward closed, exiting..")
+			return
+		}
+	}
+}
+
+func (f *Forward) dispatchClientPacket() {
+	fixedReq := &protocol.Request{
+		Address: f.config.TargetAddress,
+	}
+	associateReq := &protocol.Request{
+		Address: &common.Address{
+			DomainName:  "UDP_CONN",
+			AddressType: common.DomainName,
+		},
+		Command: protocol.Associate,
+	}
+	for {
+		select {
+		case packet := <-f.clientPackets:
+			f.outboundsLock.Lock()
+			outbound, found := f.outbounds[packet.addr.String()]
+			var err error
+			if !found {
+				var transport io.ReadWriteCloser
+				if f.config.Mux.Enabled {
+					muxConn, info, err := f.mux.OpenMuxConn()
+					if err != nil {
+						log.Error(common.NewError("failed to start mux conn").Base(err))
+						continue
+					}
+					log.Info("mux udp conn id", info.id)
+					transport, err = mux.NewOutboundConnSession(muxConn, associateReq)
+					if err != nil {
+						log.Error(err)
+						continue
+					}
+				} else {
+					tlsConn, err := DialTLSToServer(f.config)
+					if err != nil {
+						log.Error(err)
+						continue
+					}
+					transport, err = trojan.NewOutboundConnSession(associateReq, tlsConn, f.config)
+					if err != nil {
+						log.Error(err)
+						continue
+					}
+				}
+				outbound, err = trojan.NewPacketSession(transport)
+				if err != nil {
+					log.Error(common.NewError("failed to start udp outbound session").Base(err))
+					continue
+				}
+				f.outbounds[packet.addr.String()] = outbound
+				go f.dispatchServerPacket(packet.addr)
+			}
+			f.outboundsLock.Unlock()
+			outbound.WritePacket(fixedReq, packet.payload)
+		case <-f.ctx.Done():
+			return
+		}
+	}
 }
 
 func (f *Forward) listenUDP(errChan chan error) {
@@ -34,31 +141,20 @@ func (f *Forward) listenUDP(errChan chan error) {
 		errChan <- common.NewError("failed to listen udp")
 		return
 	}
-	inbound, err := socks.NewInboundPacketSession(listener)
-	common.Must(err)
-	req := &protocol.Request{
-		Address: &common.Address{
-			DomainName:  "UDP_CONN",
-			AddressType: common.DomainName,
-		},
-		Command: protocol.Associate,
-	}
+	f.udpListener = listener
+	go f.dispatchClientPacket()
 	for {
-		rwc, err := DialTLSToServer(f.config)
+		buf := make([]byte, protocol.MaxUDPPacketSize)
+		n, addr, err := listener.ReadFromUDP(buf)
 		if err != nil {
-			log.Error(common.NewError("failed dial tls to remote server").Base(err))
-			time.Sleep(time.Second)
-			continue
+			errChan <- err
+			return
 		}
-		tunnel, err := trojan.NewOutboundConnSession(req, rwc, f.config)
-		if err != nil {
-			log.Error(common.NewError("failed to open udp tunnel").Base(err))
-			continue
+		info := &dispatchInfo{
+			addr:    addr,
+			payload: buf[0:n],
 		}
-		trojanOutbound, err := trojan.NewPacketSession(tunnel)
-		common.Must(err)
-		proxy.ProxyPacket(inbound, trojanOutbound)
-		trojanOutbound.Close()
+		f.clientPackets <- info
 	}
 }
 
@@ -67,6 +163,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 	if err != nil {
 		errChan <- common.NewError("failed to listen local address").Base(err)
 	}
+	f.tcpListener = listener
 	defer listener.Close()
 	log.Info("forward is running at", listener.Addr())
 	req := &protocol.Request{
@@ -82,7 +179,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 		handle := func(inboundConn net.Conn) {
 			tlsConn, err := DialTLSToServer(f.config)
 			if err != nil {
-				log.Error(common.NewError("failed to dial to remote server").Base(err))
+				log.Error(err)
 			}
 			outboundConn, err := trojan.NewOutboundConnSession(req, tlsConn, f.config)
 			if err != nil {
@@ -109,6 +206,8 @@ func (f *Forward) Run() error {
 func (f *Forward) Close() error {
 	log.Info("shutting down forward..")
 	f.cancel()
+	f.tcpListener.Close()
+	f.udpListener.Close()
 	return nil
 }
 
@@ -122,6 +221,8 @@ func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 			log.Fatal(err)
 		}
 	}
+	f.clientPackets = make(chan *dispatchInfo, 512)
+	f.outbounds = make(map[string]protocol.PacketSession)
 	f.config = config
 	return f, nil
 }
