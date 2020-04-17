@@ -146,6 +146,7 @@ func (f *Forward) listenUDP(errChan chan error) {
 	for {
 		buf := make([]byte, protocol.MaxUDPPacketSize)
 		n, addr, err := listener.ReadFromUDP(buf)
+		log.Info("packet from", addr, "tunneling to", f.config.TargetAddress)
 		if err != nil {
 			errChan <- err
 			return
@@ -165,7 +166,6 @@ func (f *Forward) listenTCP(errChan chan error) {
 	}
 	f.tcpListener = listener
 	defer listener.Close()
-	log.Info("forward is running at", listener.Addr())
 	req := &protocol.Request{
 		Address: f.config.TargetAddress,
 		Command: protocol.Connect,
@@ -177,11 +177,25 @@ func (f *Forward) listenTCP(errChan chan error) {
 			return
 		}
 		handle := func(inboundConn net.Conn) {
-			tlsConn, err := DialTLSToServer(f.config)
-			if err != nil {
-				log.Error(err)
+			var transport io.ReadWriteCloser
+			if f.config.Mux.Enabled {
+				muxConn, info, err := f.mux.OpenMuxConn()
+				if err != nil {
+					log.Error(err)
+					return
+				}
+				transport = muxConn
+				log.Info("conn from", inboundConn.RemoteAddr(), "mux tunneling to", f.config.TargetAddress, "id", info.id)
+			} else {
+				tlsConn, err := DialTLSToServer(f.config)
+				if err != nil {
+					log.Error(err)
+					return
+				}
+				transport = tlsConn
+				log.Info("conn from", inboundConn.RemoteAddr(), "tunneling to", f.config.TargetAddress)
 			}
-			outboundConn, err := trojan.NewOutboundConnSession(req, tlsConn, f.config)
+			outboundConn, err := trojan.NewOutboundConnSession(req, transport, f.config)
 			if err != nil {
 				log.Error(common.NewError("failed to start outbound session").Base(err))
 			}
@@ -192,6 +206,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 }
 
 func (f *Forward) Run() error {
+	log.Info("forward is running at", f.config.LocalAddress)
 	errChan := make(chan error, 2)
 	go f.listenUDP(errChan)
 	go f.listenTCP(errChan)

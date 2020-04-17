@@ -28,6 +28,7 @@ func (f *Relay) handleConn(conn net.Conn) {
 }
 
 func (f *Relay) Run() error {
+	log.Info("relay is running at", f.config.LocalAddress)
 	listener, err := net.Listen("tcp", f.config.LocalAddress.String())
 	f.listener = listener
 	if err != nil {
@@ -50,7 +51,7 @@ func (f *Relay) Run() error {
 }
 
 func (f *Relay) Close() error {
-	log.Info("shutting down forward..")
+	log.Info("shutting down relay..")
 	f.listener.Close()
 	f.cancel()
 	return nil
@@ -63,5 +64,5 @@ func (f *Relay) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 }
 
 func init() {
-	proxy.RegisterProxy(conf.Forward, &Relay{})
+	proxy.RegisterProxy(conf.Relay, &Relay{})
 }

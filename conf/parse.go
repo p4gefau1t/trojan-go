@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"strings"
@@ -14,27 +13,17 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 )
 
-func convertToAddr(preferV4 bool, host string, port int) (*net.TCPAddr, error) {
-	ip := net.ParseIP(host)
-	if ip != nil {
-		return &net.TCPAddr{
-			IP:   ip,
-			Port: port,
-		}, nil
-	}
-	if preferV4 {
-		return net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:%d", host, port))
-	}
-	return net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", host, port))
-}
-
 func loadCommonConfig(config *GlobalConfig) error {
 	//log level
 	log.SetLogLevel(log.LogLevel(config.LogLevel))
 
 	//password settings
 	if len(config.Passwords) == 0 {
-		return common.NewError("no password found")
+		if config.RunType == Client {
+			return common.NewError("no password found")
+		} else {
+			log.Warn("password is not specified in config file")
+		}
 	}
 	config.Hash = make(map[string]string)
 	for _, password := range config.Passwords {
@@ -47,11 +36,7 @@ func loadCommonConfig(config *GlobalConfig) error {
 	config.TargetAddress = common.NewAddress(config.TargetHost, config.TargetPort, "tcp")
 
 	if config.TLS.FallbackPort != 0 {
-		fallbackAddr, err := convertToAddr(config.TCP.PreferIPV4, config.RemoteHost, config.TLS.FallbackPort)
-		if err != nil {
-			return common.NewError("invalid tls fallback address").Base(err)
-		}
-		config.TLS.FallbackAddr = fallbackAddr
+		config.TLS.FallbackAddress = common.NewAddress(config.RemoteHost, config.TLS.FallbackPort, "tcp")
 	}
 
 	//tls settings
@@ -289,7 +274,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	}
 
 	switch config.RunType {
-	case Client, NAT:
+	case Client, NAT, Forward:
 		if err := loadClientConfig(config); err != nil {
 			return nil, err
 		}
@@ -297,7 +282,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		if err := loadServerConfig(config); err != nil {
 			return nil, err
 		}
-	case Forward:
+	case Relay:
 	default:
 		return nil, common.NewError("invalid run type:" + string(config.RunType))
 	}

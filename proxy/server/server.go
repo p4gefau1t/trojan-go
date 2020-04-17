@@ -124,7 +124,7 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 		return
 	}
 
-	if s.config.TLS.FallbackAddr != nil {
+	if s.config.TLS.FallbackAddress != nil {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("recovered", r)
@@ -136,7 +136,7 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 		buf := v.FieldByName("rawInput").FieldByName("buf").Bytes()
 		log.Debug("payload:" + string(buf))
 
-		remote, err := net.Dial("tcp", s.config.TLS.FallbackAddr.String())
+		remote, err := net.Dial("tcp", s.config.TLS.FallbackAddress.String())
 		if err != nil {
 			log.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
 			return

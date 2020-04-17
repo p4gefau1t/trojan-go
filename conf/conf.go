@@ -3,7 +3,6 @@ package conf
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
 )
@@ -31,7 +30,7 @@ type TLSConfig struct {
 	HTTPFile           string `json:"plain_http_response"`
 	FallbackPort       int    `json:"fallback_port"`
 
-	FallbackAddr     net.Addr
+	FallbackAddress  *common.Address
 	CertPool         *x509.CertPool
 	KeyPair          []tls.Certificate
 	HTTPResponse     []byte
