@@ -8,9 +8,12 @@
 
 支持使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
 
+[Telegram交流反馈群](https://t.me/trojan_go_chat)
+
 **完整配置教程参见[这里](https://p4gefau1t.github.io/trojan-go)。**
 
-[English](#English)
+
+[English Version](#English)
 
 ## 使用方法
 
@@ -283,6 +286,8 @@ Supports multiplexing and traffic routing.
 Supports CDN traffic transferring, based on WebSocket over TLS/SSL
 
 Uses the ACME protocol to automatically request and renew HTTPS certificates from Let's Encrypt.
+
+[Telegram Group](https://t.me/trojan_go_chat)
 
 ## Usage
 

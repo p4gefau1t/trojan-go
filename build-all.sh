@@ -44,7 +44,7 @@ wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosi
 wget https://raw.githubusercontent.com/v2ray/geoip/release/geoip.dat -O geoip.dat
 cp ../data/* ./
 
-for name in trojan-go*;do
+for name in trojan-go-*;do
   zip $name.zip client.json server.json trojan-go.service geoip.dat geosite.dat $name
   sha1sum $name.zip > $name.zip.sha1
   rm $name

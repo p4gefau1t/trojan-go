@@ -127,11 +127,5 @@ type GlobalConfig struct {
 	LocalAddress  *common.Address
 	RemoteAddress *common.Address
 	TargetAddress *common.Address
-	/*
-		LocalAddr  net.Addr
-		LocalIP    net.IP
-		RemoteAddr net.Addr
-		RemoteIP   net.IP
-	*/
-	Hash map[string]string
+	Hash          map[string]string
 }

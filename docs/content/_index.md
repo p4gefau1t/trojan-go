@@ -37,3 +37,5 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 - Websocket，用于支持CDN流量中转(基于WebSocket over TLS/SSL)和对抗GFW中间人攻击
 
 - 自动化HTTPS证书申请，使用ACME协议从Let's Encrypt自动申请和更新HTTPS证书
+
+[Telegram交流反馈群](https://t.me/trojan_go_chat)
