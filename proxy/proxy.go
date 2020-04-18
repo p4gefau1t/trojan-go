@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -14,7 +15,7 @@ type Buildable interface {
 	Build(config *conf.GlobalConfig) (common.Runnable, error)
 }
 
-func ProxyConn(a, b io.ReadWriter) {
+func ProxyConn(ctx context.Context, a, b io.ReadWriter) {
 	errChan := make(chan error, 2)
 	copyConn := func(dst io.Writer, src io.Reader) {
 		_, err := io.Copy(dst, src)
@@ -22,13 +23,15 @@ func ProxyConn(a, b io.ReadWriter) {
 	}
 	go copyConn(a, b)
 	go copyConn(b, a)
-	err := <-errChan
-	if err != nil {
+	select {
+	case err := <-errChan:
 		log.Debug(common.NewError("conn proxy ends").Base(err))
+	case <-ctx.Done():
+		return
 	}
 }
 
-func ProxyPacket(a, b protocol.PacketReadWriter) {
+func ProxyPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
 	errChan := make(chan error, 2)
 	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
 		for {
@@ -46,13 +49,15 @@ func ProxyPacket(a, b protocol.PacketReadWriter) {
 	}
 	go copyPacket(a, b)
 	go copyPacket(b, a)
-	err := <-errChan
-	if err != nil {
+	select {
+	case err := <-errChan:
 		log.Debug(common.NewError("packet proxy ends").Base(err))
+	case <-ctx.Done():
+		return
 	}
 }
 
-func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Policy]protocol.PacketReadWriter, router router.Router) {
+func ProxyPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, table map[router.Policy]protocol.PacketReadWriter, router router.Router) {
 	errChan := make(chan error, 1+len(table))
 	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
 		for {
@@ -82,7 +87,7 @@ func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Poli
 			}
 			to, found := table[policy]
 			if !found {
-				log.Debug("policy not found, skipping:", policy)
+				log.Debug("policy not found, skiped:", policy)
 				continue
 			}
 			log.Debug("udp packet ", req, "routing policy:", policy)
@@ -98,9 +103,11 @@ func ProxyPacketWithRouter(from protocol.PacketReadWriter, table map[router.Poli
 		go copyPacket(from, to)
 	}
 	go copyToDst()
-	err := <-errChan
-	if err != nil {
+	select {
+	case err := <-errChan:
 		log.Debug(common.NewError("packet proxy with routing ends").Base(err))
+	case <-ctx.Done():
+		return
 	}
 }
 

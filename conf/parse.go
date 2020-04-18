@@ -72,6 +72,8 @@ func loadCommonConfig(config *GlobalConfig) error {
 			log.Warn(list[0 : len(list)-1])
 			config.TLS.CipherSuites = nil
 		}
+	} else {
+		config.TLS.CipherSuites = nil
 	}
 
 	//websocket settings

@@ -25,24 +25,26 @@ type Forward struct {
 	common.Runnable
 	proxy.Buildable
 
-	config        *conf.GlobalConfig
-	ctx           context.Context
-	cancel        context.CancelFunc
-	mux           *muxPoolManager
-	clientPackets chan *dispatchInfo
-	outboundsLock sync.Mutex
-	outbounds     map[string]protocol.PacketSession
-	udpListener   *net.UDPConn
-	tcpListener   net.Listener
+	config              *conf.GlobalConfig
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	mux                 *muxPoolManager
+	clientPackets       chan *dispatchInfo
+	packetOutboundLock  sync.Mutex
+	packetOutboundTable map[string]protocol.PacketSession
+	udpListener         *net.UDPConn
+	tcpListener         net.Listener
 }
 
 func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 	for {
-		f.outboundsLock.Lock()
-		outbound, found := f.outbounds[addr.String()]
-		f.outboundsLock.Unlock()
+		f.packetOutboundLock.Lock()
+		//use src addr as the key
+		outbound, found := f.packetOutboundTable[addr.String()]
+		f.packetOutboundLock.Unlock()
 		if !found {
-			panic("key not found")
+			log.Error("addr key not found")
+			return
 		}
 		payloadChan := make(chan []byte)
 		go func() {
@@ -60,9 +62,9 @@ func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 			}
 		case <-time.After(protocol.UDPTimeout):
 			outbound.Close()
-			f.outboundsLock.Lock()
-			delete(f.outbounds, addr.String())
-			f.outboundsLock.Unlock()
+			f.packetOutboundLock.Lock()
+			delete(f.packetOutboundTable, addr.String())
+			f.packetOutboundLock.Unlock()
 			log.Debug("udp timeout, exiting..")
 			return
 		case <-f.ctx.Done():
@@ -86,8 +88,8 @@ func (f *Forward) dispatchClientPacket() {
 	for {
 		select {
 		case packet := <-f.clientPackets:
-			f.outboundsLock.Lock()
-			outbound, found := f.outbounds[packet.addr.String()]
+			f.packetOutboundLock.Lock()
+			outbound, found := f.packetOutboundTable[packet.addr.String()]
 			var err error
 			if !found {
 				var transport io.ReadWriteCloser
@@ -116,14 +118,11 @@ func (f *Forward) dispatchClientPacket() {
 					}
 				}
 				outbound, err = trojan.NewPacketSession(transport)
-				if err != nil {
-					log.Error(common.NewError("failed to start udp outbound session").Base(err))
-					continue
-				}
-				f.outbounds[packet.addr.String()] = outbound
+				common.Must(err)
+				f.packetOutboundTable[packet.addr.String()] = outbound
 				go f.dispatchServerPacket(packet.addr)
 			}
-			f.outboundsLock.Unlock()
+			f.packetOutboundLock.Unlock()
 			outbound.WritePacket(fixedReq, packet.payload)
 		case <-f.ctx.Done():
 			return
@@ -151,11 +150,10 @@ func (f *Forward) listenUDP(errChan chan error) {
 			errChan <- err
 			return
 		}
-		info := &dispatchInfo{
+		f.clientPackets <- &dispatchInfo{
 			addr:    addr,
 			payload: buf[0:n],
 		}
-		f.clientPackets <- info
 	}
 }
 
@@ -163,6 +161,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 	listener, err := net.Listen("tcp", f.config.LocalAddress.String())
 	if err != nil {
 		errChan <- common.NewError("failed to listen local address").Base(err)
+		return
 	}
 	f.tcpListener = listener
 	defer listener.Close()
@@ -199,7 +198,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 			if err != nil {
 				log.Error(common.NewError("failed to start outbound session").Base(err))
 			}
-			proxy.ProxyConn(inboundConn, outboundConn)
+			proxy.ProxyConn(f.ctx, inboundConn, outboundConn)
 		}
 		go handle(inboundConn)
 	}
@@ -237,7 +236,7 @@ func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		}
 	}
 	f.clientPackets = make(chan *dispatchInfo, 512)
-	f.outbounds = make(map[string]protocol.PacketSession)
+	f.packetOutboundTable = make(map[string]protocol.PacketSession)
 	f.config = config
 	return f, nil
 }

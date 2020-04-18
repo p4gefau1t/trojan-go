@@ -14,21 +14,21 @@ import (
 	"github.com/xtaci/smux"
 )
 
-type muxID uint32
+type MuxID uint32
 
-func generateMuxID() muxID {
-	return muxID(rand.Uint32())
+func generateMuxID() MuxID {
+	return MuxID(rand.Uint32())
 }
 
 type muxClientInfo struct {
-	id             muxID
+	id             MuxID
 	client         *smux.Session
 	lastActiveTime time.Time
 }
 
 type muxPoolManager struct {
 	sync.Mutex
-	muxPool map[muxID]*muxClientInfo
+	muxPool map[MuxID]*muxClientInfo
 	config  *conf.GlobalConfig
 	ctx     context.Context
 }
@@ -153,7 +153,7 @@ func NewMuxPoolManager(ctx context.Context, config *conf.GlobalConfig) (*muxPool
 	m := &muxPoolManager{
 		ctx:     ctx,
 		config:  config,
-		muxPool: make(map[muxID]*muxClientInfo),
+		muxPool: make(map[MuxID]*muxClientInfo),
 	}
 	go m.checkAndCloseIdleMuxClient()
 	return m, nil

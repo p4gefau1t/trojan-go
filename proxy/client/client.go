@@ -136,7 +136,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 		log.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
-		proxy.ProxyConn(inboundConn, outboundConn)
+		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 		return
 	} else if policy == router.Block {
 		log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
@@ -158,7 +158,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		}
 		defer outboundConn.Close()
 		log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-		proxy.ProxyConn(inboundConn, outboundConn)
+		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	} else {
 		rwc, err := DialTLSToServer(c.config)
 		if err != nil {
@@ -173,7 +173,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		defer outboundConn.Close()
 
 		log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
-		proxy.ProxyConn(inboundConn, outboundConn)
+		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	}
 }
 
@@ -204,13 +204,13 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				return
 			}
 			log.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
-			proxy.ProxyConn(inboundConn, outboundConn)
+			proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 			return
 		} else if policy == router.Block {
 			log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 			return
 		}
-
+		var outboundConn protocol.ConnSession
 		if c.config.Mux.Enabled {
 			stream, info, err := c.mux.OpenMuxConn()
 			if err != nil {
@@ -218,39 +218,38 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				return
 			}
 			defer stream.Close()
-			outboundConn, err := mux.NewOutboundConnSession(stream, req)
+			outboundConn, err = mux.NewOutboundConnSession(stream, req)
 			if err != nil {
 				log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 				return
 			}
-			defer outboundConn.Close()
 			log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-			proxy.ProxyConn(inboundConn, outboundConn)
 		} else {
 			rwc, err := DialTLSToServer(c.config)
 			if err != nil {
 				log.Error(common.NewError("failed to dail to remote server").Base(err))
 				return
 			}
-			outboundConn, err := trojan.NewOutboundConnSession(req, rwc, c.config)
+			outboundConn, err = trojan.NewOutboundConnSession(req, rwc, c.config)
 			if err != nil {
 				log.Error(common.NewError("failed to start new outbound session").Base(err))
 				return
 			}
-			defer outboundConn.Close()
-
 			log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
-			proxy.ProxyConn(inboundConn, outboundConn)
 		}
+		defer outboundConn.Close()
+		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	} else {
 		defer inboundPacket.Close()
-		packetChan := make(chan *packetInfo, 128)
+		packetChan := make(chan *packetInfo, 512)
+		errChan := make(chan error, 1)
 
 		readHTTPPackets := func() {
 			for {
 				req, packet, err := inboundPacket.ReadPacket()
 				if err != nil {
 					log.Error(err)
+					errChan <- err
 					return
 				}
 				packetChan <- &packetInfo{
@@ -263,6 +262,8 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		writeHTTPPackets := func() {
 			for {
 				select {
+				case <-errChan:
+					return
 				case packet := <-packetChan:
 					var outboundConn protocol.ConnSession
 					if c.config.Mux.Enabled {
@@ -364,7 +365,7 @@ func (c *Client) listenUDP(errChan chan error) {
 			router.Proxy:  trojanOutbound,
 			router.Bypass: directOutbound,
 		}
-		proxy.ProxyPacketWithRouter(inbound, table, c.router)
+		proxy.ProxyPacketWithRouter(c.ctx, inbound, table, c.router)
 		trojanOutbound.Close()
 		directOutbound.Close()
 	}

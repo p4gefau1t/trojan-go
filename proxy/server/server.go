@@ -51,12 +51,12 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 		}
 		log.Info("user", passwordHash, "mux tunneling to", req.String())
 		defer outboundConn.Close()
-		proxy.ProxyConn(inboundConn, outboundConn)
+		proxy.ProxyConn(s.ctx, inboundConn, outboundConn)
 	case protocol.Associate:
 		outboundPacket, err := direct.NewOutboundPacketSession()
 		common.Must(err)
 		inboundPacket, err := trojan.NewPacketSession(inboundConn)
-		proxy.ProxyPacket(inboundPacket, outboundPacket)
+		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
 	default:
 		log.Error(fmt.Sprintf("invalid command %d", req.Command))
 		return
@@ -98,8 +98,8 @@ func (s *Server) handleConn(conn net.Conn) {
 			return
 		}
 		defer outboundPacket.Close()
-		log.Info("UDP associated")
-		proxy.ProxyPacket(inboundPacket, outboundPacket)
+		log.Info("UDP tunnel established")
+		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
 		log.Info("UDP tunnel closed")
 		return
 	}
@@ -113,7 +113,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer outboundConn.Close()
 
 	log.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
-	proxy.ProxyConn(inboundConn, outboundConn)
+	proxy.ProxyConn(s.ctx, inboundConn, outboundConn)
 }
 
 func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
@@ -143,11 +143,10 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 		}
 		log.Warn("proxying this invalid tls conn to the tls fallback server")
 		remote.Write(buf)
-		proxy.ProxyConn(conn, remote)
+		proxy.ProxyConn(s.ctx, conn, remote)
 	} else {
-		log.Warn("fallback port is unspecified, closing")
+		log.Warn("tls fallback port is unspecified, closing")
 	}
-
 }
 
 func (s *Server) Run() error {

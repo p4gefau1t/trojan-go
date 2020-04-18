@@ -19,12 +19,14 @@ type Relay struct {
 }
 
 func (f *Relay) handleConn(conn net.Conn) {
+	defer conn.Close()
 	newConn, err := net.Dial("tcp", f.config.RemoteAddress.String())
 	if err != nil {
 		log.Error("failed to connect to remote endpoint:", err)
 		return
 	}
-	proxy.ProxyConn(newConn, conn)
+	defer newConn.Close()
+	proxy.ProxyConn(f.ctx, newConn, conn)
 }
 
 func (f *Relay) Run() error {

@@ -9,7 +9,9 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) Base(err error) *Error {
-	e.info += " | " + err.Error()
+	if err != nil {
+		e.info += " | " + err.Error()
+	}
 	return e
 }
 

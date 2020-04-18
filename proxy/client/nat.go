@@ -50,7 +50,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 		}
 		defer outbound.Close()
 		log.Info("[transparent]conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-		proxy.ProxyConn(inbound, outbound)
+		proxy.ProxyConn(n.ctx, inbound, outbound)
 		return
 	}
 	rwc, err := DialTLSToServer(n.config)
@@ -64,7 +64,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 	}
 	defer outbound.Close()
 	log.Info("[transparent]conn from", conn.RemoteAddr(), "tunneling to", req)
-	proxy.ProxyConn(inbound, outbound)
+	proxy.ProxyConn(n.ctx, inbound, outbound)
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
@@ -99,7 +99,7 @@ func (n *NAT) listenUDP(errChan chan error) {
 		}
 		outbound, err := trojan.NewPacketSession(tunnel)
 		common.Must(err)
-		proxy.ProxyPacket(inbound, outbound)
+		proxy.ProxyPacket(n.ctx, inbound, outbound)
 		tunnel.Close()
 	}
 }
