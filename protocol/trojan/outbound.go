@@ -24,6 +24,10 @@ type TrojanOutboundConnSession struct {
 	meter         stat.TrafficMeter
 }
 
+func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
+	o.meter = meter
+}
+
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
 	n, err := o.bufReadWriter.Write(p)
 	o.meter.Count("", uint64(n), 0)
@@ -54,10 +58,7 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 	o.bufReadWriter.Write([]byte(hash))
 	o.bufReadWriter.Write(crlf)
 	o.bufReadWriter.WriteByte(byte(o.request.Command))
-	err := protocol.WriteAddress(o.bufReadWriter, o.request)
-	if err != nil {
-		return common.NewError("failed to write address").Base(err)
-	}
+	protocol.WriteAddress(o.bufReadWriter, o.request)
 	o.bufReadWriter.Write(crlf)
 	return o.bufReadWriter.Flush()
 }

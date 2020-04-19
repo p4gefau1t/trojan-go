@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -19,6 +20,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/router"
+	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 func DialTLSToServer(config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
@@ -74,6 +76,7 @@ type Client struct {
 	mux            *muxPoolManager
 	associatedChan chan time.Time
 	router         router.Router
+	meter          stat.TrafficMeter
 }
 
 func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
@@ -142,7 +145,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 		return
 	}
-
+	var outboundConn protocol.ConnSession
 	if c.config.Mux.Enabled {
 		stream, info, err := c.mux.OpenMuxConn()
 		if err != nil {
@@ -150,31 +153,29 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 
-		outboundConn, err := mux.NewOutboundConnSession(stream, req)
+		outboundConn, err = mux.NewOutboundConnSession(stream, req)
 		if err != nil {
 			stream.Close()
 			log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
 			return
 		}
-		defer outboundConn.Close()
 		log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	} else {
-		rwc, err := DialTLSToServer(c.config)
+		tlsConn, err := DialTLSToServer(c.config)
 		if err != nil {
 			log.Error(common.NewError("failed to dail to remote server").Base(err))
 			return
 		}
-		outboundConn, err := trojan.NewOutboundConnSession(req, rwc, c.config)
+		outboundConn, err = trojan.NewOutboundConnSession(req, tlsConn, c.config)
 		if err != nil {
 			log.Error(common.NewError("failed to start new outbound session").Base(err))
 			return
 		}
-		defer outboundConn.Close()
-
 		log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
-		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	}
+	defer outboundConn.Close()
+	outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
+	proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 }
 
 func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
@@ -237,6 +238,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			}
 			log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
 		}
+		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 		defer outboundConn.Close()
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	} else {
@@ -407,6 +409,9 @@ func (c *Client) Run() error {
 	errChan := make(chan error, 2)
 	go c.listenUDP(errChan)
 	go c.listenTCP(errChan)
+	if c.config.API.Enabled {
+		go api.RunClientAPIService(c.ctx, c.config, c.meter)
+	}
 	select {
 	case err := <-errChan:
 		return err
@@ -426,6 +431,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.router = &router.EmptyRouter{
 		DefaultPolicy: router.Proxy,
 	}
+	c.meter = &stat.MemoryTrafficMeter{}
 	c.associatedChan = make(chan time.Time, 1)
 	var err error
 	if config.Mux.Enabled {

@@ -46,5 +46,5 @@ type updateOption struct {
 }
 
 func init() {
-
+	// TODO auto updating
 }
