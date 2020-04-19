@@ -13,8 +13,8 @@ import (
 
 type trafficInfo struct {
 	passwordHash string
-	recv         int
-	sent         int
+	recv         uint64
+	sent         uint64
 }
 
 type DBTrafficMeter struct {
@@ -26,7 +26,12 @@ type DBTrafficMeter struct {
 	updateDuration time.Duration
 }
 
-func (c *DBTrafficMeter) Count(passwordHash string, sent int, recv int) {
+func (c *DBTrafficMeter) Query(passwordHash string) (uint64, uint64) {
+	// TODO Query method
+	return 0, 0
+}
+
+func (c *DBTrafficMeter) Count(passwordHash string, sent uint64, recv uint64) {
 	c.trafficChan <- &trafficInfo{
 		passwordHash: passwordHash,
 		sent:         sent,
@@ -99,7 +104,7 @@ func (c *DBTrafficMeter) dbDaemon() {
 func NewDBTrafficMeter(config *conf.GlobalConfig, db *sql.DB) (TrafficMeter, error) {
 	c := &DBTrafficMeter{
 		db:             db,
-		trafficChan:    make(chan *trafficInfo, 1024),
+		trafficChan:    make(chan *trafficInfo, 1024*8),
 		ctx:            context.Background(),
 		updateDuration: time.Duration(config.MySQL.CheckRate) * time.Second,
 	}
@@ -150,7 +155,7 @@ func (a *DBAuthenticator) updateDaemon() {
 				break
 			}
 			if download+upload < quota || quota < 0 {
-				newValidUsers[passwordHash] = "valid"
+				newValidUsers[passwordHash] = ""
 			}
 		}
 		//delete those out of quota

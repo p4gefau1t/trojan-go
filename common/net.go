@@ -86,7 +86,7 @@ const (
 	GiB = MiB * 1024
 )
 
-func HumanFriendlyTraffic(bytes int) string {
+func HumanFriendlyTraffic(bytes uint64) string {
 	if bytes <= KiB {
 		return fmt.Sprintf("%d B", bytes)
 	}

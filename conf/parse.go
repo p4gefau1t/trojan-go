@@ -21,9 +21,8 @@ func loadCommonConfig(config *GlobalConfig) error {
 	if len(config.Passwords) == 0 {
 		if config.RunType == Client {
 			return common.NewError("no password found")
-		} else {
-			log.Warn("password is not specified in config file")
 		}
+		log.Warn("password is not specified in config file")
 	}
 	config.Hash = make(map[string]string)
 	for _, password := range config.Passwords {
@@ -37,6 +36,11 @@ func loadCommonConfig(config *GlobalConfig) error {
 
 	if config.TLS.FallbackPort != 0 {
 		config.TLS.FallbackAddress = common.NewAddress(config.RemoteHost, config.TLS.FallbackPort, "tcp")
+	}
+
+	//api settings
+	if config.API.Enabled {
+		config.API.APIAddress = common.NewAddress(config.API.APIHost, config.API.APIPort, "tcp")
 	}
 
 	//tls settings

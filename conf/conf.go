@@ -106,6 +106,14 @@ type WebsocketConfig struct {
 	Password  string `json:"password"`
 }
 
+type APIConfig struct {
+	Enabled bool   `json:"enabled"`
+	APIHost string `json:"api_addr"`
+	APIPort int    `json:"api_port"`
+
+	APIAddress *common.Address
+}
+
 type GlobalConfig struct {
 	RunType    RunType         `json:"run_type"`
 	LogLevel   int             `json:"log_level"`
@@ -123,6 +131,7 @@ type GlobalConfig struct {
 	Mux        MuxConfig       `json:"mux"`
 	Router     RouterConfig    `json:"router"`
 	Websocket  WebsocketConfig `json:"websocket"`
+	API        APIConfig       `json:"api"`
 
 	LocalAddress  *common.Address
 	RemoteAddress *common.Address

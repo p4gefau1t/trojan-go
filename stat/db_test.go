@@ -33,8 +33,8 @@ func TestDBTrafficMeter(t *testing.T) {
 	}
 	simulation := func() {
 		for i := 0; i < 100; i++ {
-			c.Count(hash, rand.Intn(500), rand.Intn(500))
-			time.Sleep(time.Duration(int64(time.Millisecond) * rand.Int63n(300)))
+			c.Count(hash, uint64(rand.Intn(500)), uint64(rand.Intn(500)))
+			time.Sleep(time.Duration(int64(time.Millisecond) * rand.Int63n(100)))
 		}
 		fmt.Println("done")
 	}

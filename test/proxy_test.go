@@ -137,8 +137,8 @@ func TestServerJSON(t *testing.T) {
 
 func TestClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		Hash:          getHash("pass123"),
 	}
 	c := client.Client{}
@@ -148,8 +148,8 @@ func TestClient(t *testing.T) {
 
 func TestServer(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -160,8 +160,8 @@ func TestServer(t *testing.T) {
 
 func TestNAT(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -172,8 +172,8 @@ func TestNAT(t *testing.T) {
 
 func TestMuxClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
@@ -189,8 +189,8 @@ func TestMuxClient(t *testing.T) {
 
 func TestRouterClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Router: conf.RouterConfig{
@@ -206,8 +206,8 @@ func TestRouterClient(t *testing.T) {
 
 func TestWebsocketClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
@@ -224,8 +224,8 @@ func TestWebsocketClient(t *testing.T) {
 
 func TestWebsocketMuxClient(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
@@ -247,8 +247,8 @@ func TestWebsocketMuxClient(t *testing.T) {
 
 func TestWebsocketServer(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
@@ -265,9 +265,9 @@ func TestWebsocketServer(t *testing.T) {
 
 func TestForward(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
-		TargetAddress: common.NewAddress("localhost", 8080, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
+		TargetAddress: common.NewAddress("127.0.0.1", 8080, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -278,8 +278,8 @@ func TestForward(t *testing.T) {
 
 func TestUDPForward(t *testing.T) {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TargetAddress: common.NewAddress("8.8.8.8", 53, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
@@ -348,8 +348,8 @@ func BenchmarkNormalClientToServer(b *testing.B) {
 	}()
 	clientConfig := &conf.GlobalConfig{
 		LogLevel:      5,
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -358,8 +358,8 @@ func BenchmarkNormalClientToServer(b *testing.B) {
 	go c.Run()
 
 	serverConfig := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -385,8 +385,8 @@ func BenchmarkNormalClientToServer(b *testing.B) {
 func BenchmarkMuxClientToServer(b *testing.B) {
 	config1 := &conf.GlobalConfig{
 		LogLevel:      5,
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
@@ -400,8 +400,8 @@ func BenchmarkMuxClientToServer(b *testing.B) {
 	go c.Run()
 
 	config2 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -428,7 +428,7 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 	config1 := &conf.GlobalConfig{
 		LogLevel:      5,
 		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
@@ -438,9 +438,9 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 		},
 		Websocket: conf.WebsocketConfig{
 			Enabled:  true,
-			HostName: "localhost",
+			HostName: "127.0.0.1",
 			Path:     "/ws",
-			//Password: "password",
+			Password: "password",
 		},
 	}
 	c := client.Client{}
@@ -449,14 +449,14 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 
 	config2 := &conf.GlobalConfig{
 		LocalAddress:  common.NewAddress("0.0.0.0", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Websocket: conf.WebsocketConfig{
 			Enabled:  true,
-			HostName: "localhost",
+			HostName: "127.0.0.1",
 			Path:     "/ws",
-			//Password: "password",
+			Password: "password",
 		},
 	}
 	s := server.Server{}
@@ -480,8 +480,8 @@ func BenchmarkWebsocketClientToServer(b *testing.B) {
 
 func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
 	config1 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -491,7 +491,7 @@ func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
 
 	config2 := &conf.GlobalConfig{
 		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}
@@ -531,8 +531,8 @@ func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
 func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
 	config1 := &conf.GlobalConfig{
 		LogLevel:      5,
-		LocalAddress:  common.NewAddress("localhost", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 		Mux: conf.MuxConfig{
@@ -546,8 +546,8 @@ func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
 	go c.Run()
 
 	config2 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("localhost", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("localhost", 80, "tcp"),
+		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("pass123"),
 	}

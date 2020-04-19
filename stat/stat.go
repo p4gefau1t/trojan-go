@@ -5,7 +5,8 @@ import (
 )
 
 type TrafficMeter interface {
-	Count(passwordHash string, sent int, recv int)
+	Count(passwordHash string, sent uint64, recv uint64)
+	Query(passwordHash string) (sent uint64, recv uint64)
 	io.Closer
 }
 

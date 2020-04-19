@@ -22,20 +22,20 @@ type MuxConnSession struct {
 	conn          io.ReadWriteCloser
 	passwordHash  string
 	meter         stat.TrafficMeter
-	recv          int
-	sent          int
+	recv          uint64
+	sent          uint64
 }
 
 func (m *MuxConnSession) Read(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Read(p)
-	m.recv += n
+	m.recv += uint64(n)
 	return n, err
 }
 
 func (m *MuxConnSession) Write(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Write(p)
 	m.bufReadWriter.Flush()
-	m.sent += n
+	m.sent += uint64(n)
 	return n, err
 }
 

@@ -26,8 +26,8 @@ type TrojanInboundConnSession struct {
 	conn          io.ReadWriteCloser
 	auth          stat.Authenticator
 	meter         stat.TrafficMeter
-	sent          int
-	recv          int
+	sent          uint64
+	recv          uint64
 	passwordHash  string
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -36,8 +36,9 @@ type TrojanInboundConnSession struct {
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 	n, err := i.bufReadWriter.Write(p)
+	i.meter.Count(i.passwordHash, uint64(n), 0)
+	i.sent += uint64(n)
 	i.bufReadWriter.Flush()
-	i.sent += n
 	return n, err
 }
 
@@ -50,13 +51,13 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 		return n, err
 	}
 	n, err := i.bufReadWriter.Read(p)
-	i.recv += n
+	i.meter.Count(i.passwordHash, uint64(n), 0)
+	i.recv += uint64(n)
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Close() error {
 	log.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
-	i.meter.Count(i.passwordHash, i.sent, i.recv)
 	i.cancel()
 	return i.conn.Close()
 }

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package api;
+
+service TrojanService {
+    rpc QueryStats(StatsRequest) returns(StatsReply){}
+}
+
+message StatsRequest{
+    string password = 1; //reserved for server api
+}
+
+message StatsReply {
+    uint64 upload = 1;
+    uint64 download = 2;
+}

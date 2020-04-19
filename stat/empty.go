@@ -4,8 +4,13 @@ type EmptyTrafficMeter struct {
 	TrafficMeter
 }
 
-func (t *EmptyTrafficMeter) Count(string, int, int) {
+func (t *EmptyTrafficMeter) Count(string, uint64, uint64) {
 	//do nothing
+}
+
+func (t *EmptyTrafficMeter) Query(string) (uint64, uint64) {
+	//do nothing
+	return 0, 0
 }
 
 func (t *EmptyTrafficMeter) Close() error {
