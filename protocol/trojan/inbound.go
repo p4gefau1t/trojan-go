@@ -37,7 +37,9 @@ type TrojanInboundConnSession struct {
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 	n, err := i.bufReadWriter.Write(p)
-	i.meter.Count(i.passwordHash, uint64(n), 0)
+	if i.meter != nil {
+		i.meter.Count(i.passwordHash, uint64(n), 0)
+	}
 	i.sent += uint64(n)
 	i.bufReadWriter.Flush()
 	return n, err
@@ -52,7 +54,9 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 		return n, err
 	}
 	n, err := i.bufReadWriter.Read(p)
-	i.meter.Count(i.passwordHash, uint64(n), 0)
+	if i.meter != nil {
+		i.meter.Count(i.passwordHash, 0, uint64(n))
+	}
 	i.recv += uint64(n)
 	return n, err
 }
@@ -123,7 +127,6 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		config:        config,
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),
-		meter:         &stat.EmptyTrafficMeter{},
 		auth:          auth,
 		passwordHash:  "INVALID_HASH",
 		ctx:           ctx,

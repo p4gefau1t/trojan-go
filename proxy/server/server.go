@@ -169,7 +169,6 @@ func (s *Server) Run() error {
 		s.auth = &stat.ConfigUserAuthenticator{
 			Config: s.config,
 		}
-		s.meter = &stat.EmptyTrafficMeter{}
 	} else {
 		s.auth, err = stat.NewMixedAuthenticator(s.config, db)
 		if err != nil {
@@ -181,7 +180,9 @@ func (s *Server) Run() error {
 		}
 	}
 	defer s.auth.Close()
-	defer s.meter.Close()
+	if s.meter != nil {
+		defer s.meter.Close()
+	}
 	log.Info("server is running at", s.config.LocalAddress)
 
 	var listener net.Listener

@@ -30,6 +30,9 @@ type SimpleSocksConnSession struct {
 func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Read(p)
 	m.recv += uint64(n)
+	if m.meter != nil {
+		m.meter.Count(m.passwordHash, 0, uint64(n))
+	}
 	return n, err
 }
 
@@ -37,11 +40,13 @@ func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Write(p)
 	m.bufReadWriter.Flush()
 	m.sent += uint64(n)
+	if m.meter != nil {
+		m.meter.Count(m.passwordHash, uint64(n), 0)
+	}
 	return n, err
 }
 
 func (m *SimpleSocksConnSession) Close() error {
-	m.meter.Count(m.passwordHash, m.sent, m.recv)
 	log.Info("mux conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
 	return m.conn.Close()
 }
@@ -91,7 +96,6 @@ func NewInboundSimpleSocksConnSession(conn io.ReadWriteCloser, passwordHash stri
 	m := &SimpleSocksConnSession{
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),
-		meter:         &stat.EmptyTrafficMeter{},
 	}
 	if err := m.parseRequest(); err != nil {
 		return nil, common.NewError("failed to parse mux request").Base(err)
@@ -103,7 +107,6 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser) (pro
 	m := &SimpleSocksConnSession{
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),
-		meter:         &stat.EmptyTrafficMeter{},
 		passwordHash:  "LOCAL_USER",
 	}
 	if err := m.writeRequest(req); err != nil {
