@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="Websocket" />
-<meta property="og:description" content="开启Websocket的客户端可以使用password字段开启混淆/启用双重TLS以确保连接安全性。 由于使用CDN中转时，HTTPS对CDN" />
+<meta property="og:description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/websocket/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="Websocket"/>
-<meta name="twitter:description" content="开启Websocket的客户端可以使用password字段开启混淆/启用双重TLS以确保连接安全性。 由于使用CDN中转时，HTTPS对CDN"/>
+<meta name="twitter:description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&"/>
 <meta itemprop="name" content="Websocket">
-<meta itemprop="description" content="开启Websocket的客户端可以使用password字段开启混淆/启用双重TLS以确保连接安全性。 由于使用CDN中转时，HTTPS对CDN">
+<meta itemprop="description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&">
 
-<meta itemprop="wordCount" content="278">
+<meta itemprop="wordCount" content="538">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.1.4</span>
+ <span class="version">Version 0.1.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -54,9 +54,10 @@
 </div>
 <div class="content-container">
 <main><h1>Websocket</h1>
-<p>开启Websocket的客户端可以使用<code>password</code>字段开启混淆/启用双重TLS以确保连接安全性。</p>
 <p>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&quot;\r\n&quot;等），为了保证不被审查和传输安全，默认情况下还会进行一次AES加密(混淆层)和TLS连接(双重TLS)。</p>
-<p>混淆层使用AES-CTR-128加密方式，使用<code>password</code>的md5作为主密钥对承载流量进行加密。</p>
+<p>开启Websocket的客户端可以使用<code>password</code>字段开启混淆，以及使用<code>double_tls</code>启用双重TLS以确保连接安全性。</p>
+<p>混淆层使用AES-CTR-128加密方式，使用<code>password</code>的md5作为主密钥对承载流量进行加密，这层加密作用仅仅是混淆流量特征，而不是保护数据安全。它不保证数据完整性和身份认证，因此可能遭受中间人攻击和重放攻击。如果CDN不可信，或者遭受了基于HTTPS劫持的中间人攻击，应启用双重TLS保证数据传输安全。</p>
+<p>如果使用了双重TLS，握手造成的延迟可能略有增加，但是只要开启<code>session_reuse</code>，<code>session_ticket</code>复用TLS连接，以及开启<code>mux</code>启用TLS多路复用，只会刚刚开启Trojan-Go时察觉明显的延迟。</p>
 <p>协议栈如下：</p>
 <table>
 <thead>
@@ -69,7 +70,13 @@
 <td>真实流量</td>
 </tr>
 <tr>
-<td>Trojan</td>
+<td>simplesocks(如果使用mux)</td>
+</tr>
+<tr>
+<td>smux(如果使用mux)</td>
+</tr>
+<tr>
+<td>trojan</td>
 </tr>
 <tr>
 <td>TLS(如果开启双重TLS)</td>

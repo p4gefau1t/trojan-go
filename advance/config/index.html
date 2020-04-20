@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于一个服务器server，key和cert为必填。 其余未填的选项，用下面给出的值进行填">
 
-<meta itemprop="wordCount" content="3458">
+<meta itemprop="wordCount" content="3549">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.1.4</span>
+ <span class="version">Version 0.1.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -87,6 +87,7 @@
     ],
     &quot;ssl&quot;: {
         &quot;verify&quot;: true,
+        &quot;verify_hostname&quot;: true,
         &quot;cert&quot;: &quot;your_crt_file(optional for a client/nat)&quot;,
         &quot;key&quot;: &quot;your_key_file&quot;,
         &quot;key_password&quot;: &quot;&quot;,
@@ -95,6 +96,7 @@
         &quot;prefer_server_cipher&quot;: false,
         &quot;sni&quot;: &quot;&quot;,
         &quot;session_ticket&quot;: true,
+        &quot;reuse_session&quot;: true,
         &quot;plain_http_response&quot;: &quot;&quot;,
         &quot;fallback_port&quot;:0
     },
@@ -152,7 +154,8 @@
 </li>
 </ul>
 <h3 id="ssl选项"><code>ssl</code>选项</h3>
-<p><code>verify</code>用于client/nat，表示客户端是否校验服务端提供的证书，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
+<p><code>verify</code>表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
+<p><code>verify_hostname</code>表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI是否相符。</p>
 <p>server必须填入<code>cert</code>和<code>key</code>，对应服务器的证书和私钥文件，请注意证书是否有效/过期。client可以不填写。如果使用自签名或者自签发的证书，应当在client的<code>cert</code>处填入服务器证书文件，否则可能导致校验失败。</p>
 <p><code>sni</code>指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
 <p><code>cipher</code>和<code>cipher13</code>指client/server使用的密码学套件。只有在你明确知道自己在做什么的情况下，你才应该去填写cipher/cipher_tls13以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔。Golang的TLS库中中弃用了TLS1.2不安全的密码学套件，完全支持TLS1.3。如果你需要较高的安全性，而不担心跨硬件和软件平台的兼容性和性能，你可以强制要求trojan-go只使用TLS1.3密码学套件，设置cipher或者cipher13如下（填写cipher13和cipher是一样的）：</p>

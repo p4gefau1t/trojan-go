@@ -25,7 +25,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/trojan/</guid>
-      <description>Trojan-Go遵循原始的Trojan协议，具体格式可以参考Trojan文档，这里不再赘述。 默认情况下，Trojan协议使用TLS作为承载</description>
+      <description>Trojan-Go遵循原始的trojan协议，具体格式可以参考Trojan文档，这里不再赘述。 默认情况下，trojan协议使用TLS来承载，</description>
     </item>
     
     <item>
@@ -34,7 +34,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/mux/</guid>
-      <description>Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常Tro</description>
+      <description>Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/websocket/</guid>
-      <description>开启Websocket的客户端可以使用password字段开启混淆/启用双重TLS以确保连接安全性。 由于使用CDN中转时，HTTPS对CDN</description>
+      <description>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&amp;</description>
     </item>
     
   </channel>
