@@ -5,6 +5,7 @@ package client
 import (
 	"context"
 	"net"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -48,25 +49,21 @@ func (n *NAT) openOutboundConn(req *protocol.Request) (protocol.ConnSession, err
 }
 
 func (n *NAT) handleConn(conn net.Conn) {
-	inbound, err := nat.NewInboundConnSession(conn)
+	inboundConn, err := nat.NewInboundConnSession(conn)
 	if err != nil {
 		log.Error(common.NewError("failed to start inbound session").Base(err))
 		return
 	}
-	req := inbound.GetRequest()
-	defer inbound.Close()
-	rwc, err := n.transport.DialToServer()
+	req := inboundConn.GetRequest()
+	defer inboundConn.Close()
+	outboundConn, err := n.openOutboundConn(req)
 	if err != nil {
-		log.Error(common.NewError("failed to dail to remote server").Base(err))
-	}
-	outbound, err := trojan.NewOutboundConnSession(req, rwc, n.config)
-	if err != nil {
-		log.Error("failed to start outbound session", err)
+		log.Error(err)
 		return
 	}
-	defer outbound.Close()
+	defer outboundConn.Close()
 	log.Info("[transparent]conn from", conn.RemoteAddr(), "tunneling to", req)
-	proxy.ProxyConn(n.ctx, inbound, outbound)
+	proxy.ProxyConn(n.ctx, inboundConn, outboundConn)
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
@@ -87,6 +84,7 @@ func (n *NAT) listenUDP(errChan chan error) {
 		outboundConn, err := n.openOutboundConn(req)
 		if err != nil {
 			log.Error(err)
+			time.Sleep(time.Second)
 			continue
 		}
 		outboundPacket, err := trojan.NewPacketSession(outboundConn)

@@ -80,7 +80,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
-				log.Debug("mux conn from", conn.RemoteAddr(), "closed: ", err)
+				log.Debug("mux conn from", conn.RemoteAddr(), "closed:", err)
 				return
 			}
 			go s.handleMuxConn(stream, hash)

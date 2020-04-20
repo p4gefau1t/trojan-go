@@ -263,6 +263,7 @@ func (c *Client) listenUDP(errChan chan error) {
 	})
 	if err != nil {
 		errChan <- common.NewError("failed to listen udp").Base(err)
+		return
 	}
 	inbound, err := socks.NewInboundPacketSession(listener)
 	common.Must(err)
@@ -301,6 +302,7 @@ func (c *Client) listenTCP(errChan chan error) {
 	listener, err := net.Listen("tcp", c.config.LocalAddress.String())
 	if err != nil {
 		errChan <- common.NewError("failed to listen local address").Base(err)
+		return
 	}
 	defer listener.Close()
 	for {

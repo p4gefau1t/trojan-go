@@ -127,6 +127,16 @@ func TestClientJSON(t *testing.T) {
 	common.Must(c.Run())
 }
 
+func TestNATJSON(t *testing.T) {
+	data, err := ioutil.ReadFile("nat.json")
+	common.Must(err)
+	config, err := conf.ParseJSON(data)
+	common.Must(err)
+	c := client.NAT{}
+	c.Build(config)
+	common.Must(c.Run())
+}
+
 func TestServerJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("server.json")
 	common.Must(err)

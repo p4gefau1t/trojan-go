@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net"
 
@@ -82,6 +83,10 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	i.bufReadWriter.Discard(56 + 2)
 
 	cmd, err := i.bufReadWriter.ReadByte()
+	if err != nil {
+		return common.NewError("failed to read cmd").Base(err)
+	}
+
 	network := "tcp"
 	switch protocol.Command(cmd) {
 	case protocol.Connect, protocol.Mux:
@@ -89,10 +94,7 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 	case protocol.Associate:
 		network = "udp"
 	default:
-		return common.NewError("invalid command")
-	}
-	if err != nil {
-		return common.NewError("failed to read cmd").Base(err)
+		return common.NewError(fmt.Sprintf("invalid command %d", cmd))
 	}
 
 	req, err := protocol.ParseAddress(i.bufReadWriter)
