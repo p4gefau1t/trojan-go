@@ -3,7 +3,6 @@ package client
 import (
 	"bufio"
 	"context"
-	"crypto/tls"
 	"io"
 	"net"
 	"time"
@@ -15,7 +14,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/http"
-	"github.com/p4gefau1t/trojan-go/protocol/mux"
+	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
@@ -23,42 +22,8 @@ import (
 	"github.com/p4gefau1t/trojan-go/stat"
 )
 
-func DialTLSToServer(config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
-	tlsConfig := &tls.Config{
-		CipherSuites:           config.TLS.CipherSuites,
-		RootCAs:                config.TLS.CertPool,
-		ServerName:             config.TLS.SNI,
-		InsecureSkipVerify:     !config.TLS.Verify,
-		SessionTicketsDisabled: !config.TLS.SessionTicket,
-		ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
-	}
-	network := "tcp"
-	if config.TCP.PreferIPV4 {
-		network = "tcp4"
-	}
-	tlsConn, err := tls.Dial(network, config.RemoteAddress.String(), tlsConfig)
-	if err != nil {
-		return nil, common.NewError("cannot dial to the remote server").Base(err)
-	}
-	if config.LogLevel == 0 {
-		state := tlsConn.ConnectionState()
-		chain := state.VerifiedChains
-		log.Debug("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
-		for i := range chain {
-			for j := range chain[i] {
-				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
-			}
-		}
-	}
-	var conn io.ReadWriteCloser = tlsConn
-	if config.Websocket.Enabled {
-		ws, err := trojan.NewOutboundWebosocket(tlsConn, config)
-		if err != nil {
-			return nil, common.NewError("failed to start websocket connection").Base(err)
-		}
-		conn = ws
-	}
-	return conn, nil
+type TransportManager interface {
+	DialToServer() (io.ReadWriteCloser, error)
 }
 
 type packetInfo struct {
@@ -73,10 +38,29 @@ type Client struct {
 	config         *conf.GlobalConfig
 	ctx            context.Context
 	cancel         context.CancelFunc
-	mux            *muxPoolManager
 	associatedChan chan time.Time
 	router         router.Router
 	meter          stat.TrafficMeter
+	transport      TransportManager
+}
+
+func (c *Client) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
+	var outboundConn protocol.ConnSession
+	//transport layer
+	transport, err := c.transport.DialToServer()
+	if err != nil {
+		return nil, common.NewError("failed to init transport layer").Base(err)
+	}
+	//application layer
+	if c.config.Mux.Enabled {
+		outboundConn, err = simplesocks.NewOutboundConnSession(req, transport)
+	} else {
+		outboundConn, err = trojan.NewOutboundConnSession(req, transport, c.config)
+	}
+	if err != nil {
+		return nil, common.NewError("fail to start conn session").Base(err)
+	}
+	return outboundConn, nil
 }
 
 func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
@@ -104,9 +88,10 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 			req.AddressType = common.IPv6
 		}
 		//notify listenUDP to get ready for relaying udp packets
+		//associateChan cap = 1
 		select {
 		case <-c.associatedChan:
-			log.Debug("replacing older udp associate request..")
+			log.Debug("replacing older udp associate request")
 		default:
 		}
 		c.associatedChan <- time.Now()
@@ -145,33 +130,10 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 		return
 	}
-	var outboundConn protocol.ConnSession
-	if c.config.Mux.Enabled {
-		stream, info, err := c.mux.OpenMuxConn()
-		if err != nil {
-			log.Error(common.NewError("failed to open mux stream").Base(err))
-			return
-		}
-
-		outboundConn, err = mux.NewOutboundConnSession(stream, req)
-		if err != nil {
-			stream.Close()
-			log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
-			return
-		}
-		log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-	} else {
-		tlsConn, err := DialTLSToServer(c.config)
-		if err != nil {
-			log.Error(common.NewError("failed to dail to remote server").Base(err))
-			return
-		}
-		outboundConn, err = trojan.NewOutboundConnSession(req, tlsConn, c.config)
-		if err != nil {
-			log.Error(common.NewError("failed to start new outbound session").Base(err))
-			return
-		}
-		log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+	outboundConn, err := c.openOutboundConn(req)
+	if err != nil {
+		log.Error(common.NewError("failed to open transport").Base(err))
+		return
 	}
 	defer outboundConn.Close()
 	outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
@@ -184,7 +146,8 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		log.Error(common.NewError("failed to start new inbound session:").Base(err))
 		return
 	}
-	if inboundConn != nil {
+
+	if inboundConn != nil { //CONNECT request
 		defer inboundConn.Close()
 		req := inboundConn.GetRequest()
 
@@ -211,37 +174,17 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
 			return
 		}
-		var outboundConn protocol.ConnSession
-		if c.config.Mux.Enabled {
-			stream, info, err := c.mux.OpenMuxConn()
-			if err != nil {
-				log.Error(common.NewError("failed to open mux stream").Base(err))
-				return
-			}
-			defer stream.Close()
-			outboundConn, err = mux.NewOutboundConnSession(stream, req)
-			if err != nil {
-				log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
-				return
-			}
-			log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-		} else {
-			rwc, err := DialTLSToServer(c.config)
-			if err != nil {
-				log.Error(common.NewError("failed to dail to remote server").Base(err))
-				return
-			}
-			outboundConn, err = trojan.NewOutboundConnSession(req, rwc, c.config)
-			if err != nil {
-				log.Error(common.NewError("failed to start new outbound session").Base(err))
-				return
-			}
-			log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+
+		outboundConn, err := c.openOutboundConn(req)
+		if err != nil {
+			log.Error(common.NewError("fail to start conn session").Base(err))
+			return
 		}
-		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 		defer outboundConn.Close()
+		log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
-	} else {
+	} else { //GET/POST
 		defer inboundPacket.Close()
 		packetChan := make(chan *packetInfo, 512)
 		errChan := make(chan error, 1)
@@ -267,30 +210,10 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 				case <-errChan:
 					return
 				case packet := <-packetChan:
-					var outboundConn protocol.ConnSession
-					if c.config.Mux.Enabled {
-						stream, info, err := c.mux.OpenMuxConn()
-						if err != nil {
-							log.Error(common.NewError("failed to open mux stream").Base(err))
-							continue
-						}
-						outboundConn, err = mux.NewOutboundConnSession(stream, packet.request)
-						if err != nil {
-							log.Error(common.NewError("fail to start trojan session over mux conn").Base(err))
-							continue
-						}
-						log.Info("conn from", conn.RemoteAddr(), "mux tunneling to", packet.request, "mux id", info.id)
-					} else {
-						rwc, err := DialTLSToServer(c.config)
-						if err != nil {
-							log.Error(common.NewError("failed to dail to remote server").Base(err))
-							return
-						}
-						outboundConn, err = trojan.NewOutboundConnSession(packet.request, rwc, c.config)
-						if err != nil {
-							log.Error(err)
-							continue
-						}
+					outboundConn, err := c.openOutboundConn(packet.request)
+					if err != nil {
+						log.Error(err)
+						continue
 					}
 					_, err = outboundConn.Write(packet.packet)
 					if err != nil {
@@ -349,27 +272,22 @@ func (c *Client) listenUDP(errChan chan error) {
 			},
 			Command: protocol.Associate,
 		}
-		rwc, err := DialTLSToServer(c.config)
+		outboundConn, err := c.openOutboundConn(req)
 		if err != nil {
-			log.Error(common.NewError("failed to dail to remote server").Base(err))
-			return
-		}
-		tunnel, err := trojan.NewOutboundConnSession(req, rwc, c.config)
-		if err != nil {
-			log.Error(common.NewError("failed to open udp tunnel").Base(err))
+			log.Error(common.NewError("failed to init udp tunnel").Base(err))
 			continue
 		}
-		trojanOutbound, err := trojan.NewPacketSession(tunnel)
+		outboundPacket, err := trojan.NewPacketSession(outboundConn)
 		common.Must(err)
-		directOutbound, err := direct.NewOutboundPacketSession()
+		directOutboundPacket, err := direct.NewOutboundPacketSession()
 		common.Must(err)
 		table := map[router.Policy]protocol.PacketReadWriter{
-			router.Proxy:  trojanOutbound,
-			router.Bypass: directOutbound,
+			router.Proxy:  outboundPacket,
+			router.Bypass: directOutboundPacket,
 		}
 		proxy.ProxyPacketWithRouter(c.ctx, inbound, table, c.router)
-		trojanOutbound.Close()
-		directOutbound.Close()
+		outboundPacket.Close()
+		directOutboundPacket.Close()
 	}
 }
 
@@ -436,10 +354,9 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	var err error
 	if config.Mux.Enabled {
 		log.Info("mux enabled")
-		c.mux, err = NewMuxPoolManager(c.ctx, config)
-		if err != nil {
-			log.Fatal(err)
-		}
+		c.transport = NewMuxPoolManager(c.ctx, config)
+	} else {
+		c.transport = NewTLSManager(config)
 	}
 	if config.Router.Enabled {
 		log.Info("router enabled")

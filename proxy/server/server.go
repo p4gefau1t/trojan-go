@@ -13,7 +13,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
-	"github.com/p4gefau1t/trojan-go/protocol/mux"
+	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/stat"
@@ -33,7 +33,7 @@ type Server struct {
 }
 
 func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
-	inboundConn, err := mux.NewInboundMuxConnSession(stream, passwordHash)
+	inboundConn, err := simplesocks.NewInboundSimpleSocksConnSession(stream, passwordHash)
 	if err != nil {
 		stream.Close()
 		log.Error(common.NewError("cannot start inbound session").Base(err))

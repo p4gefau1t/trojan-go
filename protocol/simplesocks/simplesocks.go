@@ -1,4 +1,4 @@
-package mux
+package simplesocks
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/stat"
 )
 
-type MuxConnSession struct {
+type SimpleSocksConnSession struct {
 	protocol.ConnSession
 	protocol.NeedMeter
 	protocol.HasRequest
@@ -26,34 +26,34 @@ type MuxConnSession struct {
 	sent          uint64
 }
 
-func (m *MuxConnSession) Read(p []byte) (int, error) {
+func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Read(p)
 	m.recv += uint64(n)
 	return n, err
 }
 
-func (m *MuxConnSession) Write(p []byte) (int, error) {
+func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
 	n, err := m.bufReadWriter.Write(p)
 	m.bufReadWriter.Flush()
 	m.sent += uint64(n)
 	return n, err
 }
 
-func (m *MuxConnSession) Close() error {
+func (m *SimpleSocksConnSession) Close() error {
 	m.meter.Count(m.passwordHash, m.sent, m.recv)
 	log.Info("mux conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
 	return m.conn.Close()
 }
 
-func (m *MuxConnSession) SetMeter(meter stat.TrafficMeter) {
+func (m *SimpleSocksConnSession) SetMeter(meter stat.TrafficMeter) {
 	m.meter = meter
 }
 
-func (m *MuxConnSession) GetRequest() *protocol.Request {
+func (m *SimpleSocksConnSession) GetRequest() *protocol.Request {
 	return m.request
 }
 
-func (m *MuxConnSession) parseRequest() error {
+func (m *SimpleSocksConnSession) parseRequest() error {
 	req, err := protocol.ParseAddress(m.bufReadWriter)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (m *MuxConnSession) parseRequest() error {
 	return nil
 }
 
-func (m *MuxConnSession) writeRequest(req *protocol.Request) error {
+func (m *SimpleSocksConnSession) writeRequest(req *protocol.Request) error {
 	err := protocol.WriteAddress(m.bufReadWriter, req)
 	if err != nil {
 		return err
@@ -73,8 +73,8 @@ func (m *MuxConnSession) writeRequest(req *protocol.Request) error {
 	return m.bufReadWriter.Flush()
 }
 
-func NewInboundMuxConnSession(conn io.ReadWriteCloser, passwordHash string) (protocol.ConnSession, error) {
-	m := &MuxConnSession{
+func NewInboundSimpleSocksConnSession(conn io.ReadWriteCloser, passwordHash string) (protocol.ConnSession, error) {
+	m := &SimpleSocksConnSession{
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),
 		meter:         &stat.EmptyTrafficMeter{},
@@ -85,8 +85,8 @@ func NewInboundMuxConnSession(conn io.ReadWriteCloser, passwordHash string) (pro
 	return m, nil
 }
 
-func NewOutboundConnSession(conn io.ReadWriteCloser, req *protocol.Request) (protocol.ConnSession, error) {
-	m := &MuxConnSession{
+func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser) (protocol.ConnSession, error) {
+	m := &SimpleSocksConnSession{
 		conn:          conn,
 		bufReadWriter: common.NewBufReadWriter(conn),
 		meter:         &stat.EmptyTrafficMeter{},

@@ -29,6 +29,7 @@ type TLSConfig struct {
 	SNI                string `json:"sni"`
 	HTTPFile           string `json:"plain_http_response"`
 	FallbackPort       int    `json:"fallback_port"`
+	ReuseSession       bool   `json:"reuse_session"`
 
 	FallbackAddress  *common.Address
 	CertPool         *x509.CertPool
@@ -36,7 +37,6 @@ type TLSConfig struct {
 	HTTPResponse     []byte
 	CipherSuites     []uint16
 	CipherSuiteTLS13 []uint16
-	ReuseSession     bool
 	SessionTicket    bool
 	Curves           string
 }

@@ -262,6 +262,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.TLS.Verify = true
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true
+	config.TLS.ReuseSession = true
 	config.Mux.IdleTimeout = 60
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60

@@ -10,8 +10,8 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/mux"
 	"github.com/p4gefau1t/trojan-go/protocol/nat"
+	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 )
@@ -23,9 +23,28 @@ type NAT struct {
 	config        *conf.GlobalConfig
 	ctx           context.Context
 	cancel        context.CancelFunc
-	packetInbound protocol.PacketSession
+	inboundPacket protocol.PacketSession
 	listener      net.Listener
-	mux           *muxPoolManager
+	transport     TransportManager
+}
+
+func (n *NAT) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
+	var outboundConn protocol.ConnSession
+	//transport layer
+	transport, err := n.transport.DialToServer()
+	if err != nil {
+		return nil, common.NewError("failed to init transport layer").Base(err)
+	}
+	//application layer
+	if n.config.Mux.Enabled {
+		outboundConn, err = simplesocks.NewOutboundConnSession(req, transport)
+	} else {
+		outboundConn, err = trojan.NewOutboundConnSession(req, transport, n.config)
+	}
+	if err != nil {
+		return nil, common.NewError("fail to start conn session").Base(err)
+	}
+	return outboundConn, nil
 }
 
 func (n *NAT) handleConn(conn net.Conn) {
@@ -36,24 +55,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 	}
 	req := inbound.GetRequest()
 	defer inbound.Close()
-	if n.config.Mux.Enabled {
-		stream, info, err := n.mux.OpenMuxConn()
-		if err != nil {
-			log.Error(common.NewError("failed to open mux stream").Base(err))
-			return
-		}
-		outbound, err := mux.NewOutboundConnSession(stream, req)
-		if err != nil {
-			stream.Close()
-			log.Error(common.NewError("failed to start mux outbound session").Base(err))
-			return
-		}
-		defer outbound.Close()
-		log.Info("[transparent]conn from", conn.RemoteAddr(), "mux tunneling to", req, "mux id", info.id)
-		proxy.ProxyConn(n.ctx, inbound, outbound)
-		return
-	}
-	rwc, err := DialTLSToServer(n.config)
+	rwc, err := n.transport.DialToServer()
 	if err != nil {
 		log.Error(common.NewError("failed to dail to remote server").Base(err))
 	}
@@ -68,12 +70,12 @@ func (n *NAT) handleConn(conn net.Conn) {
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
-	inbound, err := nat.NewInboundPacketSession(n.config)
+	inboundPacket, err := nat.NewInboundPacketSession(n.config)
 	if err != nil {
 		log.Fatal(err)
 	}
-	n.packetInbound = inbound
-	defer inbound.Close()
+	n.inboundPacket = inboundPacket
+	defer inboundPacket.Close()
 	req := &protocol.Request{
 		Address: &common.Address{
 			DomainName:  "UDP_CONN",
@@ -82,25 +84,15 @@ func (n *NAT) listenUDP(errChan chan error) {
 		Command: protocol.Associate,
 	}
 	for {
-		rwc, err := DialTLSToServer(n.config)
+		outboundConn, err := n.openOutboundConn(req)
 		if err != nil {
-			log.Error(common.NewError("failed to dail to remote server").Base(err))
-			continue
-		}
-		tunnel, err := trojan.NewOutboundConnSession(req, rwc, n.config)
-		if err != nil {
-			select {
-			case <-n.ctx.Done():
-				return
-			default:
-			}
 			log.Error(err)
 			continue
 		}
-		outbound, err := trojan.NewPacketSession(tunnel)
+		outboundPacket, err := trojan.NewPacketSession(outboundConn)
 		common.Must(err)
-		proxy.ProxyPacket(n.ctx, inbound, outbound)
-		tunnel.Close()
+		proxy.ProxyPacket(n.ctx, inboundPacket, outboundPacket)
+		outboundPacket.Close()
 	}
 }
 
@@ -150,7 +142,7 @@ func (n *NAT) Close() error {
 	log.Info("shutting down nat...")
 	n.cancel()
 	n.listener.Close()
-	n.packetInbound.Close()
+	n.inboundPacket.Close()
 	return nil
 }
 
@@ -158,11 +150,10 @@ func (n *NAT) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	n.ctx, n.cancel = context.WithCancel(context.Background())
 	n.config = config
 	if config.Mux.Enabled {
-		mux, err := NewMuxPoolManager(n.ctx, config)
-		if err != nil {
-			log.Fatal(err)
-		}
-		n.mux = mux
+		log.Info("mux enabled")
+		n.transport = NewMuxPoolManager(n.ctx, config)
+	} else {
+		n.transport = NewTLSManager(config)
 	}
 	return n, nil
 }

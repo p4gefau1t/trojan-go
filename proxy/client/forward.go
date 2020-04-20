@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -11,7 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/mux"
+	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 )
@@ -28,12 +27,31 @@ type Forward struct {
 	config              *conf.GlobalConfig
 	ctx                 context.Context
 	cancel              context.CancelFunc
-	mux                 *muxPoolManager
 	clientPackets       chan *dispatchInfo
 	packetOutboundLock  sync.Mutex
 	packetOutboundTable map[string]protocol.PacketSession
 	udpListener         *net.UDPConn
 	tcpListener         net.Listener
+	transport           TransportManager
+}
+
+func (f *Forward) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
+	var outboundConn protocol.ConnSession
+	//transport layer
+	transport, err := f.transport.DialToServer()
+	if err != nil {
+		return nil, common.NewError("failed to init transport layer").Base(err)
+	}
+	//application layer
+	if f.config.Mux.Enabled {
+		outboundConn, err = simplesocks.NewOutboundConnSession(req, transport)
+	} else {
+		outboundConn, err = trojan.NewOutboundConnSession(req, transport, f.config)
+	}
+	if err != nil {
+		return nil, common.NewError("fail to start conn session").Base(err)
+	}
+	return outboundConn, nil
 }
 
 func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
@@ -46,7 +64,7 @@ func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 			log.Error("addr key not found")
 			return
 		}
-		payloadChan := make(chan []byte)
+		payloadChan := make(chan []byte, 64)
 		go func() {
 			_, payload, err := outbound.ReadPacket()
 			if err != nil { //expired
@@ -90,36 +108,15 @@ func (f *Forward) dispatchClientPacket() {
 		case packet := <-f.clientPackets:
 			f.packetOutboundLock.Lock()
 			outbound, found := f.packetOutboundTable[packet.addr.String()]
-			var err error
 			if !found {
-				var transport io.ReadWriteCloser
-				if f.config.Mux.Enabled {
-					muxConn, info, err := f.mux.OpenMuxConn()
-					if err != nil {
-						log.Error(common.NewError("failed to start mux conn").Base(err))
-						continue
-					}
-					log.Info("mux udp conn id", info.id)
-					transport, err = mux.NewOutboundConnSession(muxConn, associateReq)
-					if err != nil {
-						log.Error(err)
-						continue
-					}
-				} else {
-					tlsConn, err := DialTLSToServer(f.config)
-					if err != nil {
-						log.Error(err)
-						continue
-					}
-					transport, err = trojan.NewOutboundConnSession(associateReq, tlsConn, f.config)
-					if err != nil {
-						log.Error(err)
-						continue
-					}
+				outboundConn, err := f.openOutboundConn(associateReq)
+				if err != nil {
+					log.Error(outboundConn)
+					continue
 				}
-				outbound, err = trojan.NewPacketSession(transport)
+				outboundPacket, err := trojan.NewPacketSession(outboundConn)
 				common.Must(err)
-				f.packetOutboundTable[packet.addr.String()] = outbound
+				f.packetOutboundTable[packet.addr.String()] = outboundPacket
 				go f.dispatchServerPacket(packet.addr)
 			}
 			f.packetOutboundLock.Unlock()
@@ -176,28 +173,11 @@ func (f *Forward) listenTCP(errChan chan error) {
 			return
 		}
 		handle := func(inboundConn net.Conn) {
-			var transport io.ReadWriteCloser
-			if f.config.Mux.Enabled {
-				muxConn, info, err := f.mux.OpenMuxConn()
-				if err != nil {
-					log.Error(err)
-					return
-				}
-				transport = muxConn
-				log.Info("conn from", inboundConn.RemoteAddr(), "mux tunneling to", f.config.TargetAddress, "id", info.id)
-			} else {
-				tlsConn, err := DialTLSToServer(f.config)
-				if err != nil {
-					log.Error(err)
-					return
-				}
-				transport = tlsConn
-				log.Info("conn from", inboundConn.RemoteAddr(), "tunneling to", f.config.TargetAddress)
-			}
-			outboundConn, err := trojan.NewOutboundConnSession(req, transport, f.config)
+			outboundConn, err := f.openOutboundConn(req)
 			if err != nil {
 				log.Error(common.NewError("failed to start outbound session").Base(err))
 			}
+			defer outboundConn.Close()
 			proxy.ProxyConn(f.ctx, inboundConn, outboundConn)
 		}
 		go handle(inboundConn)
@@ -227,13 +207,11 @@ func (f *Forward) Close() error {
 
 func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	f.ctx, f.cancel = context.WithCancel(context.Background())
-	var err error
 	if config.Mux.Enabled {
 		log.Info("mux enabled")
-		f.mux, err = NewMuxPoolManager(f.ctx, config)
-		if err != nil {
-			log.Fatal(err)
-		}
+		f.transport = NewMuxPoolManager(f.ctx, config)
+	} else {
+		f.transport = NewTLSManager(config)
 	}
 	f.clientPackets = make(chan *dispatchInfo, 512)
 	f.packetOutboundTable = make(map[string]protocol.PacketSession)

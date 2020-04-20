@@ -88,11 +88,13 @@ func getTLSConfig() conf.TLSConfig {
 		panic("invalid cert")
 	}
 	c := conf.TLSConfig{
+		SNI:            "localhost",
 		CertPool:       pool,
 		KeyPair:        KeyPair,
 		Verify:         true,
 		VerifyHostname: true,
-		SNI:            "localhost",
+		ReuseSession:   true,
+		SessionTicket:  true,
 	}
 	return c
 }
