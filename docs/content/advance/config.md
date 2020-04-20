@@ -34,6 +34,7 @@ weight: 10
     ],
     "ssl": {
         "verify": true,
+        "verify_hostname": true,
         "cert": "your_crt_file(optional for a client/nat)",
         "key": "your_key_file",
         "key_password": "",
@@ -42,6 +43,7 @@ weight: 10
         "prefer_server_cipher": false,
         "sni": "",
         "session_ticket": true,
+        "reuse_session": true,
         "plain_http_response": "",
         "fallback_port":0
     },
@@ -98,7 +100,9 @@ weight: 10
 
 ### ```ssl```选项
 
-```verify```用于client/nat，表示客户端是否校验服务端提供的证书，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启```verify```会导致校验失败。这种情况下，应当保持```verify```开启，然后在```cert```中填写服务端的证书，即可正常连接。
+```verify```表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启```verify```会导致校验失败。这种情况下，应当保持```verify```开启，然后在```cert```中填写服务端的证书，即可正常连接。
+
+```verify_hostname```表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI是否相符。
 
 server必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。client可以不填写。如果使用自签名或者自签发的证书，应当在client的```cert```处填入服务器证书文件，否则可能导致校验失败。
 

@@ -10,8 +10,7 @@
 
 [Telegram交流反馈群](https://t.me/trojan_go_chat)
 
-**完整配置教程参见[这里](https://p4gefau1t.github.io/trojan-go)。**
-
+### **完整配置教程和配置介绍参见[这里](https://p4gefau1t.github.io/trojan-go)。**
 
 [English Version](#English)
 
@@ -69,7 +68,7 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 ### 易用
 
-配置文件格式与原版兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见Github pages。
+配置文件格式与原版兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
 
 服务器配置文件
 
@@ -160,6 +159,8 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 }
 ```
 
+完整的选项说明参见[Github Pages](https://p4gefau1t.github.io/trojan-go)。
+
 服务端可以省略```hostname```, 但是服务器和客户端的```path```必须相同。服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
 
 由于原版Trojan并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。
@@ -181,6 +182,8 @@ Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使�
     "enabled": true
 }
 ```
+
+完整的选项说明参见[Github Pages](https://p4gefau1t.github.io/trojan-go)。
 
 你只需要设置客户端的配置文件即可，服务端会自动检测是否启用多路复用并提供支持。
 

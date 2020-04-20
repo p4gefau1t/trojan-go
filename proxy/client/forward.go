@@ -28,8 +28,8 @@ type Forward struct {
 	ctx                 context.Context
 	cancel              context.CancelFunc
 	clientPackets       chan *dispatchInfo
-	packetOutboundLock  sync.Mutex
-	packetOutboundTable map[string]protocol.PacketSession
+	outboundPacketLock  sync.Mutex
+	outboundPacketTable map[string]protocol.PacketSession
 	udpListener         *net.UDPConn
 	tcpListener         net.Listener
 	transport           TransportManager
@@ -56,17 +56,17 @@ func (f *Forward) openOutboundConn(req *protocol.Request) (protocol.ConnSession,
 
 func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 	for {
-		f.packetOutboundLock.Lock()
+		f.outboundPacketLock.Lock()
 		//use src addr as the key
-		outbound, found := f.packetOutboundTable[addr.String()]
-		f.packetOutboundLock.Unlock()
+		outboundPacket, found := f.outboundPacketTable[addr.String()]
+		f.outboundPacketLock.Unlock()
 		if !found {
 			log.Error("addr key not found")
 			return
 		}
 		payloadChan := make(chan []byte, 64)
 		go func() {
-			_, payload, err := outbound.ReadPacket()
+			_, payload, err := outboundPacket.ReadPacket()
 			if err != nil { //expired
 				return
 			}
@@ -79,10 +79,10 @@ func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 				return
 			}
 		case <-time.After(protocol.UDPTimeout):
-			outbound.Close()
-			f.packetOutboundLock.Lock()
-			delete(f.packetOutboundTable, addr.String())
-			f.packetOutboundLock.Unlock()
+			outboundPacket.Close()
+			f.outboundPacketLock.Lock()
+			delete(f.outboundPacketTable, addr.String())
+			f.outboundPacketLock.Unlock()
 			log.Debug("udp timeout, exiting..")
 			return
 		case <-f.ctx.Done():
@@ -106,8 +106,8 @@ func (f *Forward) dispatchClientPacket() {
 	for {
 		select {
 		case packet := <-f.clientPackets:
-			f.packetOutboundLock.Lock()
-			outbound, found := f.packetOutboundTable[packet.addr.String()]
+			f.outboundPacketLock.Lock()
+			outbound, found := f.outboundPacketTable[packet.addr.String()]
 			if !found {
 				outboundConn, err := f.openOutboundConn(associateReq)
 				if err != nil {
@@ -116,10 +116,10 @@ func (f *Forward) dispatchClientPacket() {
 				}
 				outboundPacket, err := trojan.NewPacketSession(outboundConn)
 				common.Must(err)
-				f.packetOutboundTable[packet.addr.String()] = outboundPacket
+				f.outboundPacketTable[packet.addr.String()] = outboundPacket
 				go f.dispatchServerPacket(packet.addr)
 			}
-			f.packetOutboundLock.Unlock()
+			f.outboundPacketLock.Unlock()
 			outbound.WritePacket(fixedReq, packet.payload)
 		case <-f.ctx.Done():
 			return
@@ -214,7 +214,7 @@ func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		f.transport = NewTLSManager(config)
 	}
 	f.clientPackets = make(chan *dispatchInfo, 512)
-	f.packetOutboundTable = make(map[string]protocol.PacketSession)
+	f.outboundPacketTable = make(map[string]protocol.PacketSession)
 	f.config = config
 	return f, nil
 }

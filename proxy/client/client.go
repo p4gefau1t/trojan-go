@@ -192,6 +192,12 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		readHTTPPackets := func() {
 			for {
 				req, packet, err := inboundPacket.ReadPacket()
+				if req.String() == c.config.LocalAddress.String() { //loop
+					err := common.NewError("HTTP loop detected")
+					errChan <- err
+					log.Error(err)
+					return
+				}
 				if err != nil {
 					log.Error(err)
 					errChan <- err

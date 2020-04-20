@@ -142,6 +142,7 @@ func TestClient(t *testing.T) {
 		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		Hash:          getHash("pass123"),
+		TLS:           getTLSConfig(),
 	}
 	c := client.Client{}
 	c.Build(config)

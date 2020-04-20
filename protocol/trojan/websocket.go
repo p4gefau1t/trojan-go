@@ -73,6 +73,8 @@ func (w *wsHttpResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return w.Conn, w.ReadWriter, nil
 }
 
+var tlsSessionCache = tls.NewLRUClientSessionCache(-1)
+
 func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
 	url := "wss://" + config.Websocket.HostName + config.Websocket.Path
 	origin := "https://" + config.Websocket.HostName
@@ -84,14 +86,6 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	if err != nil {
 		return nil, err
 	}
-	tlsConfig := &tls.Config{
-		CipherSuites:           config.TLS.CipherSuites,
-		RootCAs:                config.TLS.CertPool,
-		ServerName:             config.TLS.SNI,
-		SessionTicketsDisabled: !config.TLS.SessionTicket,
-		ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
-		//InsecureSkipVerify:     !config.TLS.Verify, //must verify it
-	}
 	var transport net.Conn = wsConn
 	if config.Websocket.Password != "" {
 		iv := [aes.BlockSize]byte{}
@@ -102,6 +96,14 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	if !config.Websocket.DoubleTLS {
 		return transport, nil
 	}
+	tlsConfig := &tls.Config{
+		CipherSuites:           config.TLS.CipherSuites,
+		RootCAs:                config.TLS.CertPool,
+		ServerName:             config.TLS.SNI,
+		SessionTicketsDisabled: !config.TLS.SessionTicket,
+		ClientSessionCache:     tlsSessionCache,
+		//InsecureSkipVerify:     !config.TLS.Verify, //must verify it
+	}
 	tlsConn := tls.Client(transport, tlsConfig)
 	if err := tlsConn.Handshake(); err != nil {
 		return nil, err
@@ -109,7 +111,7 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	if config.LogLevel == 0 {
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Debug("websocket TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite))
+		log.Debug("websocket TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
 				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)

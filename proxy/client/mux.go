@@ -108,6 +108,7 @@ func (m *MuxManager) DialToServer() (io.ReadWriteCloser, error) {
 		log.Info("somthing wrong with mux", info.id, ", closing")
 		return nil, err
 	}
+	log.Debug("new mux conn", info.id)
 	info.lastActiveTime = time.Now()
 	return stream, nil
 }
