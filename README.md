@@ -185,7 +185,7 @@ Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使�
 
 完整的选项说明参见[Github Pages](https://p4gefau1t.github.io/trojan-go)。
 
-你只需要设置客户端的配置文件即可，服务端会自动检测是否启用多路复用并提供支持。
+客户端与服务端均需添加 mux 选项，服务端会自动检测是否启用多路复用并提供支持。
 
 ### 路由模块
 
