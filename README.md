@@ -75,7 +75,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
     - 客户端
 
         ```
-        ./trojan-go local -remote example.com -local 127.0.0.1:1080 -password your_password
+        ./trojan-go -client -remote example.com:443 -local 127.0.0.1:1080 -password your_password
         ```
 
 - 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
