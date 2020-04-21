@@ -3,11 +3,11 @@
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>高级配置 - Trojan-Go</title>
+<title>API - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
 <meta name="generator" content="Hugo 0.69.0" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
-<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/developer/api/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
 <script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
@@ -16,19 +16,26 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="高级配置" />
-<meta property="og:description" content="An unidentifiable mechanism that helps you bypass GFW. " />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/" />
+<meta property="og:title" content="API" />
+<meta property="og:description" content="Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &quot;api&quot;:" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/api/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 <meta property="og:site_name" content="Hugo Techdoc Theme" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="高级配置"/>
-<meta name="twitter:description" content="An unidentifiable mechanism that helps you bypass GFW. "/>
-<meta itemprop="name" content="高级配置">
-<meta itemprop="description" content="An unidentifiable mechanism that helps you bypass GFW. "></head>
+<meta name="twitter:title" content="API"/>
+<meta name="twitter:description" content="Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &quot;api&quot;:"/>
+<meta itemprop="name" content="API">
+<meta itemprop="description" content="Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &quot;api&quot;:">
+
+<meta itemprop="wordCount" content="114">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
@@ -46,11 +53,18 @@
 </nav>
 </div>
 <div class="content-container">
-<main><h1>高级配置</h1><p>这一部分内容将介绍更复杂的Trojan-Go配置方法</p>
+<main><h1>API</h1>
+<p>Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加<code>api</code>选项激活API模块。下面是一个例子</p>
+<pre><code>&quot;api&quot;: {
+    &quot;enabled&quot;: true,
+    &quot;api_addr&quot;: &quot;127.0.0.1&quot;,
+    &quot;api_port&quot;: 10000
+}
+</code></pre><p>目前API处于开发阶段，使用方法可以参考api下api.proto文件。</p>
 <div class="edit-meta">
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/_index.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/" title="完整的配置文件"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 完整的配置文件</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/mux/" title="启用多路复用提升并发性能">Next - 启用多路复用提升并发性能 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/api.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/websocket/" title="Websocket"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - Websocket</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/overview/" title="基本介绍">Next - 基本介绍 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -69,7 +83,7 @@
   
 </li>
 
-<li class=" active"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
@@ -81,14 +95,14 @@
   
 </li>
 
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
 </ul>
   
 </li>

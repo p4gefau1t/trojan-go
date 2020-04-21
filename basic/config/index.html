@@ -30,7 +30,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名">
 
-<meta itemprop="wordCount" content="1655">
+<meta itemprop="wordCount" content="1683">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.1.5</span>
+ <span class="version">Version 0.2.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -131,10 +131,11 @@
 }
 </code></pre><p>这个客户端配置使Trojan-Go开启一个监听在本地1080端口的socks5/http代理（自动识别），远端服务器为your_awesome_server:443，your_awesome_server可以是IP或者域名。</p>
 <p>如果你在<code>remote_addr</code>中填写的是域名，<code>sni</code>可以省略。<code>sni</code>字段应当填写你申请证书的对应域名，或者你自己签发证书时证书的Common Name，而且必须一致。注意，<code>sni</code>字段目前的在TLS协议中是规定<strong>明文传送</strong>的(目的是使服务器提供相应证书)，所以不要填写类似google.com等已经被封锁的域名，否则很有可能导致你的服务器也被封锁。</p>
+<p>更多关于配置文件的信息，可以在左侧导航栏中找到相应介绍。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/basic/config.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/basic/trojan/" title="Trojan基本原理"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - Trojan基本原理</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/" title="高级配置">Next - 高级配置 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/" title="完整的配置文件">Next - 完整的配置文件 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -148,6 +149,7 @@
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
 <li class="active"><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/">完整的配置文件</a></li>
 </ul>
   
 </li>
@@ -160,7 +162,6 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
 </ul>
   
 </li>
@@ -172,6 +173,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
 </ul>
   
 </li>

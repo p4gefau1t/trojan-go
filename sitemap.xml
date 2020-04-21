@@ -35,11 +35,11 @@
   </url>
   
   <url>
-    <loc>https://p4gefau1t.github.io/trojan-go/advance/forward/</loc>
+    <loc>https://p4gefau1t.github.io/trojan-go/developer/api/</loc>
   </url>
   
   <url>
-    <loc>https://p4gefau1t.github.io/trojan-go/advance/config/</loc>
+    <loc>https://p4gefau1t.github.io/trojan-go/advance/forward/</loc>
   </url>
   
   <url>
@@ -56,6 +56,10 @@
   
   <url>
     <loc>https://p4gefau1t.github.io/trojan-go/basic/config/</loc>
+  </url>
+  
+  <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</loc>
   </url>
   
   <url>

@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="流量中继" />
-<meta property="og:description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线" />
+<meta property="og:description" content="注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/relay/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="流量中继"/>
-<meta name="twitter:description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线"/>
+<meta name="twitter:description" content="注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务"/>
 <meta itemprop="name" content="流量中继">
-<meta itemprop="description" content="Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线">
+<meta itemprop="description" content="注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务">
 
-<meta itemprop="wordCount" content="278">
+<meta itemprop="wordCount" content="304">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.1.5</span>
+ <span class="version">Version 0.2.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -54,6 +54,7 @@
 </div>
 <div class="content-container">
 <main><h1>流量中继</h1>
+<h3 id="注意原版trojan-gfw客户端不支持这个特性">注意，原版Trojan-GFW客户端不支持这个特性。</h3>
 <p>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线路更好的服务器，作为中继，将你的流量转发给trojan服务器。</p>
 <p>中继的配置很简单，下面是一个例子</p>
 <pre><code>{
@@ -83,6 +84,7 @@
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/">完整的配置文件</a></li>
 </ul>
   
 </li>
@@ -95,7 +97,6 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/config/">完整的配置文件</a></li>
 </ul>
   
 </li>
@@ -107,6 +108,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
 </ul>
   
 </li>

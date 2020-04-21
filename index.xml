@@ -16,7 +16,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/mux/</guid>
-      <description>Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步</description>
+      <description>注意，原版Trojan-GFW服务端不支持这个特性。 Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS</description>
     </item>
     
     <item>
@@ -25,7 +25,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/overview/</guid>
-      <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用Protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹</description>
+      <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/websocket/</guid>
-      <description>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的同时考虑了将来GFW</description>
+      <description>注意，原版Trojan-GFW服务端不支持这个特性。 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN</description>
     </item>
     
     <item>
@@ -52,7 +52,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/router/</guid>
-      <description>Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 下面是一个例子 { &amp;quot;run_type&amp;quot;: &amp;quot;client&amp;quot;, &amp;quot;local_addr&amp;quot;: &amp;quot;127.0.0.1&amp;quot;, &amp;quot;local_port&amp;quot;: 1080, &amp;quot;remote_addr&amp;quot;: &amp;quot;your_server&amp;quot;, &amp;quot;remote_port&amp;quot;: 443, &amp;quot;password&amp;quot;: [ &amp;quot;your_password&amp;quot; ], &amp;quot;ssl&amp;quot;: { &amp;quot;sni&amp;quot;: &amp;quot;your_domain_name&amp;quot;</description>
+      <description>注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。</description>
     </item>
     
     <item>
@@ -79,7 +79,16 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/relay/</guid>
-      <description>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线</description>
+      <description>注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务</description>
+    </item>
+    
+    <item>
+      <title>API</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/api/</guid>
+      <description>Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &amp;quot;api&amp;quot;:</description>
     </item>
     
     <item>
@@ -89,15 +98,6 @@
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/forward/</guid>
       <description>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子 {</description>
-    </item>
-    
-    <item>
-      <title>完整的配置文件</title>
-      <link>https://p4gefau1t.github.io/trojan-go/advance/config/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://p4gefau1t.github.io/trojan-go/advance/config/</guid>
-      <description>下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于一个服务器server，key和cert为必填。 其余未填的选项，用下面给出的值进行填</description>
     </item>
     
     <item>
@@ -116,6 +116,15 @@
       
       <guid>https://p4gefau1t.github.io/trojan-go/basic/config/</guid>
       <description>下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名</description>
+    </item>
+    
+    <item>
+      <title>完整的配置文件</title>
+      <link>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</guid>
+      <description>下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo</description>
     </item>
     
   </channel>
