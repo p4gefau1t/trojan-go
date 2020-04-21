@@ -53,7 +53,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 		defer outboundConn.Close()
 		proxy.ProxyConn(s.ctx, inboundConn, outboundConn)
 	case protocol.Associate:
-		outboundPacket, err := direct.NewOutboundPacketSession()
+		outboundPacket, err := direct.NewOutboundPacketSession(s.ctx)
 		common.Must(err)
 		inboundPacket, err := trojan.NewPacketSession(inboundConn)
 		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
@@ -64,7 +64,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	inboundConn, err := trojan.NewInboundConnSession(conn, s.config, s.auth)
+	inboundConn, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth)
 	if err != nil {
 		log.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
@@ -92,7 +92,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		inboundPacket, _ := trojan.NewPacketSession(inboundConn)
 		defer inboundPacket.Close()
 
-		outboundPacket, err := direct.NewOutboundPacketSession()
+		outboundPacket, err := direct.NewOutboundPacketSession(s.ctx)
 		if err != nil {
 			log.Error(err)
 			return
@@ -100,7 +100,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		defer outboundPacket.Close()
 		log.Info("UDP tunnel established")
 		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
-		log.Info("UDP tunnel closed")
+		log.Debug("UDP tunnel closed")
 		return
 	}
 

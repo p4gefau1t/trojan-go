@@ -67,9 +67,10 @@ func (n *NAT) handleConn(conn net.Conn) {
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
-	inboundPacket, err := nat.NewInboundPacketSession(n.config)
+	inboundPacket, err := nat.NewInboundPacketSession(n.ctx, n.config)
 	if err != nil {
-		log.Fatal(err)
+		errChan <- err
+		return
 	}
 	n.inboundPacket = inboundPacket
 	defer inboundPacket.Close()
@@ -98,6 +99,7 @@ func (n *NAT) listenTCP(errChan chan error) {
 	localIP, err := n.config.LocalAddress.ResolveIP(false)
 	if err != nil {
 		errChan <- err
+		return
 	}
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
 		IP:   localIP,
@@ -139,8 +141,12 @@ func (n *NAT) Run() error {
 func (n *NAT) Close() error {
 	log.Info("shutting down nat...")
 	n.cancel()
-	n.listener.Close()
-	n.inboundPacket.Close()
+	if n.listener != nil {
+		n.listener.Close()
+	}
+	if n.inboundPacket != nil {
+		n.inboundPacket.Close()
+	}
 	return nil
 }
 

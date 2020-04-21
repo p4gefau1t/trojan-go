@@ -121,8 +121,8 @@ func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet 
 	return n, err
 }
 
-func NewOutboundPacketSession() (protocol.PacketSession, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+func NewOutboundPacketSession(ctx context.Context) (protocol.PacketSession, error) {
+	ctx, cancel := context.WithCancel(ctx)
 	return &DirectOutboundPacketSession{
 		ctx:        ctx,
 		cancel:     cancel,

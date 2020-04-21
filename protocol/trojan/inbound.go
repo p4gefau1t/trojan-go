@@ -121,7 +121,7 @@ func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
 	i.meter = meter
 }
 
-func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
+func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	i := &TrojanInboundConnSession{
 		config:        config,
@@ -133,7 +133,7 @@ func NewInboundConnSession(conn net.Conn, config *conf.GlobalConfig, auth stat.A
 		cancel:        cancel,
 	}
 	if i.config.Websocket.Enabled {
-		ws, err := NewInboundWebsocket(conn, i.bufReadWriter, i.ctx, config)
+		ws, err := NewInboundWebsocket(i.ctx, conn, i.bufReadWriter, config)
 		if ws != nil {
 			log.Debug("websocket conn")
 			i.conn = ws

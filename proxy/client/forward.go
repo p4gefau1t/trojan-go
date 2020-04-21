@@ -107,20 +107,20 @@ func (f *Forward) dispatchClientPacket() {
 		select {
 		case packet := <-f.clientPackets:
 			f.outboundPacketLock.Lock()
-			outbound, found := f.outboundPacketTable[packet.addr.String()]
+			outboundPacket, found := f.outboundPacketTable[packet.addr.String()]
 			if !found {
 				outboundConn, err := f.openOutboundConn(associateReq)
 				if err != nil {
-					log.Error(outboundConn)
+					log.Error(err)
 					continue
 				}
-				outboundPacket, err := trojan.NewPacketSession(outboundConn)
+				outboundPacket, err = trojan.NewPacketSession(outboundConn)
 				common.Must(err)
 				f.outboundPacketTable[packet.addr.String()] = outboundPacket
 				go f.dispatchServerPacket(packet.addr)
 			}
 			f.outboundPacketLock.Unlock()
-			outbound.WritePacket(fixedReq, packet.payload)
+			outboundPacket.WritePacket(fixedReq, packet.payload)
 		case <-f.ctx.Done():
 			return
 		}
@@ -169,13 +169,13 @@ func (f *Forward) listenTCP(errChan chan error) {
 	for {
 		inboundConn, err := listener.Accept()
 		if err != nil {
-			errChan <- err
-			return
+			errChan <- common.NewError("error occured when accpeting conn").Base(err)
 		}
 		handle := func(inboundConn net.Conn) {
 			outboundConn, err := f.openOutboundConn(req)
 			if err != nil {
 				log.Error(common.NewError("failed to start outbound session").Base(err))
+				return
 			}
 			defer outboundConn.Close()
 			proxy.ProxyConn(f.ctx, inboundConn, outboundConn)
@@ -200,8 +200,12 @@ func (f *Forward) Run() error {
 func (f *Forward) Close() error {
 	log.Info("shutting down forward..")
 	f.cancel()
-	f.tcpListener.Close()
-	f.udpListener.Close()
+	if f.udpListener != nil {
+		f.udpListener.Close()
+	}
+	if f.tcpListener != nil {
+		f.tcpListener.Close()
+	}
 	return nil
 }
 

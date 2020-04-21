@@ -121,7 +121,7 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	return tlsConn, nil
 }
 
-func NewInboundWebsocket(conn io.ReadWriteCloser, rw *bufio.ReadWriter, ctx context.Context, config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
+func NewInboundWebsocket(ctx context.Context, conn io.ReadWriteCloser, rw *bufio.ReadWriter, config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
 	correct := "GET " + config.Websocket.Path + " HTTP/1.1\r\n"
 	first, err := rw.Peek(len(correct))
 	if err != nil {

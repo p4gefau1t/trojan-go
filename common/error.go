@@ -26,3 +26,9 @@ func Must(err error) {
 		panic(err)
 	}
 }
+
+func Must2(_ interface{}, err error) {
+	if err != nil {
+		panic(err)
+	}
+}

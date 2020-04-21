@@ -42,6 +42,8 @@ type Client struct {
 	router         router.Router
 	meter          stat.TrafficMeter
 	transport      TransportManager
+	tcpListener    net.Listener
+	udpListener    *net.UDPConn
 }
 
 func (c *Client) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
@@ -192,6 +194,10 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 		readHTTPPackets := func() {
 			for {
 				req, packet, err := inboundPacket.ReadPacket()
+				if err != nil {
+					log.Error(common.NewError("failed to parse packet").Base(err))
+					return
+				}
 				if req.String() == c.config.LocalAddress.String() { //loop
 					err := common.NewError("HTTP loop detected")
 					errChan <- err
@@ -265,12 +271,10 @@ func (c *Client) listenUDP(errChan chan error) {
 		errChan <- common.NewError("failed to listen udp").Base(err)
 		return
 	}
-	inbound, err := socks.NewInboundPacketSession(listener)
+	c.udpListener = listener
+	inboundPacket, err := socks.NewInboundPacketSession(c.ctx, listener)
 	common.Must(err)
-	for {
-		for t := <-c.associatedChan; time.Now().Sub(t) > protocol.UDPTimeout; t = <-c.associatedChan {
-			log.Debug("expired udp request, skipping")
-		}
+	handlePacket := func() {
 		log.Debug("associated signal")
 		req := &protocol.Request{
 			Address: &common.Address{
@@ -282,19 +286,29 @@ func (c *Client) listenUDP(errChan chan error) {
 		outboundConn, err := c.openOutboundConn(req)
 		if err != nil {
 			log.Error(common.NewError("failed to init udp tunnel").Base(err))
-			continue
+			return
 		}
 		outboundPacket, err := trojan.NewPacketSession(outboundConn)
 		common.Must(err)
-		directOutboundPacket, err := direct.NewOutboundPacketSession()
+		directOutboundPacket, err := direct.NewOutboundPacketSession(c.ctx)
 		common.Must(err)
 		table := map[router.Policy]protocol.PacketReadWriter{
 			router.Proxy:  outboundPacket,
 			router.Bypass: directOutboundPacket,
 		}
-		proxy.ProxyPacketWithRouter(c.ctx, inbound, table, c.router)
+		proxy.ProxyPacketWithRouter(c.ctx, inboundPacket, table, c.router)
 		outboundPacket.Close()
 		directOutboundPacket.Close()
+	}
+	for {
+		select {
+		case t := <-c.associatedChan:
+			if time.Now().Sub(t) <= protocol.UDPTimeout {
+				handlePacket()
+			}
+		case <-c.ctx.Done():
+			return
+		}
 	}
 }
 
@@ -304,16 +318,13 @@ func (c *Client) listenTCP(errChan chan error) {
 		errChan <- common.NewError("failed to listen local address").Base(err)
 		return
 	}
+	c.tcpListener = listener
 	defer listener.Close()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			select {
-			case <-c.ctx.Done():
-			default:
-			}
-			log.Error(common.NewError("error occured when accpeting conn").Base(err))
-			continue
+			errChan <- common.NewError("error occured when accpeting conn").Base(err)
+			return
 		}
 		rw := common.NewBufReadWriter(conn)
 		tmp, err := rw.Peek(1)
@@ -349,6 +360,12 @@ func (c *Client) Run() error {
 func (c *Client) Close() error {
 	log.Info("shutting down client..")
 	c.cancel()
+	if c.udpListener != nil {
+		c.udpListener.Close()
+	}
+	if c.tcpListener != nil {
+		c.tcpListener.Close()
+	}
 	return nil
 }
 

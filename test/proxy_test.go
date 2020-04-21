@@ -1,12 +1,11 @@
 package test
 
 import (
+	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"net"
-	"net/http"
-	"sync"
 	"testing"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
-	"github.com/p4gefau1t/trojan-go/log"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
@@ -99,17 +97,6 @@ func getTLSConfig() conf.TLSConfig {
 	return c
 }
 
-func getLocalAddr(port int) net.Addr {
-	return &net.TCPAddr{
-		IP:   net.IPv4(127, 0, 0, 1),
-		Port: port,
-	}
-}
-
-func getLocalIP() net.IP {
-	return net.IPv4(127, 0, 0, 1)
-}
-
 func getHash(password string) map[string]string {
 	hash := common.SHA224String(password)
 	m := make(map[string]string)
@@ -117,273 +104,150 @@ func getHash(password string) map[string]string {
 	return m
 }
 
-func TestClientJSON(t *testing.T) {
-	data, err := ioutil.ReadFile("client.json")
-	common.Must(err)
-	config, err := conf.ParseJSON(data)
-	common.Must(err)
-	c := client.Client{}
-	c.Build(config)
-	common.Must(c.Run())
-}
-
-func TestNATJSON(t *testing.T) {
-	data, err := ioutil.ReadFile("nat.json")
-	common.Must(err)
-	config, err := conf.ParseJSON(data)
-	common.Must(err)
-	c := client.NAT{}
-	c.Build(config)
-	common.Must(c.Run())
-}
-
-func TestServerJSON(t *testing.T) {
-	data, err := ioutil.ReadFile("server.json")
-	common.Must(err)
-	config, err := conf.ParseJSON(data)
-	common.Must(err)
-	c := server.Server{}
-	c.Build(config)
-	common.Must(c.Run())
-}
-
-func TestClient(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		Hash:          getHash("pass123"),
-		TLS:           getTLSConfig(),
-	}
-	c := client.Client{}
-	c.Build(config)
-	common.Must(c.Run())
-}
-
-func TestServer(t *testing.T) {
+func getBasicServerConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
 		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
+		Hash:          getHash("trojanpassword"),
 	}
-	s := server.Server{}
-	s.Build(config)
-	common.Must(s.Run())
+	return config
 }
 
-func TestNAT(t *testing.T) {
+func getBasicClientConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
 		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
+		Hash:          getHash("trojanpassword"),
 	}
-	n := client.NAT{}
-	n.Build(config)
-	common.Must(n.Run())
+	return config
 }
 
-func TestMuxClient(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Mux: conf.MuxConfig{
-			Enabled:     true,
-			Concurrency: 8,
-			IdleTimeout: 30,
-		},
+func addWsConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.Websocket = conf.WebsocketConfig{
+		Enabled:  true,
+		HostName: "127.0.0.1",
+		Path:     "/websocket",
+		Password: "wspassword",
 	}
-	client := client.Client{}
-	client.Build(config)
-	client.Run()
+	return config
 }
 
-func TestRouterClient(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Router: conf.RouterConfig{
-			Enabled:       true,
-			BypassList:    []byte("baidu.com\nqq.com\n\n192.168.0.0/16\n"),
-			DefaultPolicy: "proxy",
-		},
+func addMuxConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.Mux = conf.MuxConfig{
+		Enabled:     true,
+		Concurrency: 8,
+		IdleTimeout: 30,
 	}
+	return config
+}
+
+func addRouterConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.Router = conf.RouterConfig{
+		Enabled:       true,
+		BypassList:    []byte("127.0.0.1\nlocalhost"),
+		DefaultPolicy: "proxy",
+	}
+	return config
+}
+
+func RunClient(ctx context.Context, config *conf.GlobalConfig) {
 	c := client.Client{}
-	c.Build(config)
-	common.Must(c.Run())
+	common.Must2(c.Build(config))
+	go c.Run()
+	<-ctx.Done()
+	c.Close()
 }
 
-func TestWebsocketClient(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Websocket: conf.WebsocketConfig{
-			Enabled:  true,
-			HostName: "127.0.0.1",
-			Path:     "/websocket",
-			Password: "testpassword",
-		},
-	}
-	c := client.Client{}
-	c.Build(config)
-	common.Must(c.Run())
-}
-
-func TestWebsocketMuxClient(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Websocket: conf.WebsocketConfig{
-			Enabled:  true,
-			HostName: "127.0.0.1",
-			Path:     "/websocket",
-			Password: "testpassword",
-		},
-		Mux: conf.MuxConfig{
-			Enabled:     true,
-			Concurrency: 8,
-			IdleTimeout: 30,
-		},
-	}
-	c := client.Client{}
-	c.Build(config)
-	common.Must(c.Run())
-}
-
-func TestWebsocketServer(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Websocket: conf.WebsocketConfig{
-			Enabled:  true,
-			HostName: "127.0.0.1",
-			Path:     "/websocket",
-			Password: "testpassword",
-		},
-	}
-	s := server.Server{}
-	s.Build(config)
-	common.Must(s.Run())
-}
-
-func TestForward(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TargetAddress: common.NewAddress("127.0.0.1", 8080, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
+func RunForward(ctx context.Context, config *conf.GlobalConfig) {
 	f := client.Forward{}
-	f.Build(config)
-	common.Must(f.Run())
+	common.Must2(f.Build(config))
+	go f.Run()
+	<-ctx.Done()
+	f.Close()
 }
 
-func TestUDPForward(t *testing.T) {
-	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TargetAddress: common.NewAddress("8.8.8.8", 53, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
-	f := client.Forward{}
-	f.Build(config)
-	common.Must(f.Run())
-}
-
-func TestClientAndServer(t *testing.T) {
-	go func() {
-		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.Error(err)
-	}()
-	go TestClient(t)
-	TestServer(t)
-}
-
-func TestMuxClientAndServer(t *testing.T) {
-	go func() {
-		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.Error(err)
-	}()
-	go TestMuxClient(t)
-	TestServer(t)
-}
-
-func TestRouterClientAndServer(t *testing.T) {
-	go func() {
-		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.Error(err)
-	}()
-	go TestRouterClient(t)
-	TestServer(t)
-}
-
-func TestClientServerJSON(t *testing.T) {
-	go TestServerJSON(t)
-	TestClientJSON(t)
-}
-
-func TestWebsocketClientServer(t *testing.T) {
-	go TestWebsocketServer(t)
-	TestWebsocketClient(t)
-}
-
-func TestWebsocketMuxClientServer(t *testing.T) {
-	go TestWebsocketServer(t)
-	TestWebsocketMuxClient(t)
-}
-
-func TestForwardAndServer(t *testing.T) {
-	go TestForward(t)
-	TestServer(t)
-}
-
-func TestUDPForwardAndServer(t *testing.T) {
-	go TestUDPForward(t)
-	TestServer(t)
-}
-
-func BenchmarkNormalClientToServer(b *testing.B) {
-	go func() {
-		err := http.ListenAndServe("0.0.0.0:8000", nil)
-		log.Error(err)
-	}()
-	clientConfig := &conf.GlobalConfig{
-		LogLevel:      5,
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
-	c := client.Client{}
-	c.Build(clientConfig)
-	go c.Run()
-
-	serverConfig := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
+func RunServer(ctx context.Context, config *conf.GlobalConfig) {
 	s := server.Server{}
-	s.Build(serverConfig)
+	common.Must2(s.Build(config))
 	go s.Run()
+	<-ctx.Done()
+	s.Close()
+}
 
-	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", getLocalAddr(4444).String(), nil, nil)
+func CheckClientServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
+	time.Sleep(time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	go RunEchoTCPServer(ctx)
+	go RunServer(ctx, serverConfig)
+	go RunClient(ctx, clientConfig)
+
+	time.Sleep(time.Second)
+
+	payloadSize := 1024
+	sendBuf := GeneratePayload(payloadSize)
+	recvBuf := make([]byte, payloadSize)
+
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
 	common.Must(err)
-	conn, err := dialer.Dial("tcp", target.String())
+	conn, err := dialer.Dial("tcp", "127.0.0.1:5000")
+	common.Must(err)
+	common.Must2(conn.Write(sendBuf))
+	common.Must2(conn.Read(recvBuf))
+	if !bytes.Equal(sendBuf, recvBuf) {
+		t.Fatal("not equal")
+	}
+	conn.Close()
+
+	cancel()
+}
+
+func CheckForwardServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
+	time.Sleep(time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	clientConfig.TargetAddress = common.NewAddress("127.0.0.1", 5000, "tcp")
+	go RunEchoTCPServer(ctx)
+	go RunEchoUDPServer(ctx)
+	go RunServer(ctx, serverConfig)
+	go RunForward(ctx, clientConfig)
+
+	time.Sleep(time.Second)
+
+	payloadSize := 1024
+	sendBuf := GeneratePayload(payloadSize)
+	recvBuf := make([]byte, payloadSize)
+
+	conn, err := net.Dial("tcp", "127.0.0.1:4444")
+	common.Must(err)
+	common.Must2(conn.Write(sendBuf))
+	common.Must2(conn.Read(recvBuf))
+	if !bytes.Equal(sendBuf, recvBuf) {
+		t.Fatal("not equal")
+	}
+
+	conn.Close()
+	conn, err = net.Dial("udp", "127.0.0.1:4444")
+	common.Must2(conn.Write(sendBuf))
+	common.Must2(conn.Read(recvBuf))
+	if !bytes.Equal(sendBuf, recvBuf) {
+		t.Fatal("not equal")
+	}
+	conn.Close()
+	cancel()
+}
+
+func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
+	time.Sleep(time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	go RunBlackHoleTCPServer(ctx)
+	go RunServer(ctx, serverConfig)
+	go RunClient(ctx, clientConfig)
+
+	time.Sleep(time.Second)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
+	common.Must(err)
+	conn, err := dialer.Dial("tcp", "127.0.0.1:5000")
 	common.Must(err)
 	mbytes := 512
 	payload := GeneratePayload(1024 * 1024 * mbytes)
@@ -391,208 +255,39 @@ func BenchmarkNormalClientToServer(b *testing.B) {
 	conn.Write(payload)
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	b.Log("Speed: ", speed, "MB/s")
+	b.Log("Single thread link speed:", speed, "MB/s")
 	conn.Close()
+	cancel()
 }
 
-func BenchmarkMuxClientToServer(b *testing.B) {
-	config1 := &conf.GlobalConfig{
-		LogLevel:      5,
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Mux: conf.MuxConfig{
-			Enabled:     true,
-			Concurrency: 8,
-			IdleTimeout: 30,
-		},
-	}
-	c := client.Client{}
-	c.Build(config1)
-	go c.Run()
-
-	config2 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
-	s := server.Server{}
-	s.Build(config2)
-	go s.Run()
-
-	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
-	common.Must(err)
-	conn, err := dialer.Dial("tcp", target.String())
-	common.Must(err)
-	mbytes := 512
-	payload := GeneratePayload(1024 * 1024 * mbytes)
-	t1 := time.Now()
-	conn.Write(payload)
-	t2 := time.Now()
-	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	b.Log("Speed: ", speed, "MB/s")
-	conn.Close()
+func TestNormal(t *testing.T) {
+	CheckClientServer(t, getBasicClientConfig(), getBasicServerConfig())
+	CheckForwardServer(t, getBasicClientConfig(), getBasicServerConfig())
 }
 
-func BenchmarkWebsocketClientToServer(b *testing.B) {
-	config1 := &conf.GlobalConfig{
-		LogLevel:      5,
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Mux: conf.MuxConfig{
-			Enabled:     true,
-			Concurrency: 8,
-			IdleTimeout: 30,
-		},
-		Websocket: conf.WebsocketConfig{
-			Enabled:  true,
-			HostName: "127.0.0.1",
-			Path:     "/ws",
-			Password: "password",
-		},
-	}
-	c := client.Client{}
-	c.Build(config1)
-	go c.Run()
-
-	config2 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("0.0.0.0", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Websocket: conf.WebsocketConfig{
-			Enabled:  true,
-			HostName: "127.0.0.1",
-			Path:     "/ws",
-			Password: "password",
-		},
-	}
-	s := server.Server{}
-	s.Build(config2)
-	go s.Run()
-
-	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
-	common.Must(err)
-	conn, err := dialer.Dial("tcp", target.String())
-	common.Must(err)
-	mbytes := 512
-	payload := GeneratePayload(1024 * 1024 * mbytes)
-	t1 := time.Now()
-	conn.Write(payload)
-	t2 := time.Now()
-	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	b.Log("Speed: ", speed, "MB/s")
-	conn.Close()
+func TestMux(t *testing.T) {
+	clientConfig := addMuxConfig(getBasicClientConfig())
+	serverConfig := getBasicServerConfig()
+	CheckClientServer(t, clientConfig, serverConfig)
+	CheckForwardServer(t, clientConfig, serverConfig)
 }
 
-func BenchmarkNormalClientToServerHighConcurrency(b *testing.B) {
-	config1 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
-	c := client.Client{}
-	c.Build(config1)
-	go c.Run()
-
-	config2 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
-	s := server.Server{}
-	s.Build(config2)
-	go s.Run()
-
-	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
-	common.Must(err)
-
-	connNum := 128
-	mbytes := 128
-	payload := GeneratePayload(1024 * 1024 * mbytes)
-
-	wg := sync.WaitGroup{}
-	sender := func(wg *sync.WaitGroup) {
-		conn, err := dialer.Dial("tcp", target.String())
-		common.Must(err)
-		conn.Write(payload)
-		conn.Close()
-		wg.Done()
-	}
-
-	wg.Add(connNum)
-
-	t1 := time.Now()
-	for i := 0; i < connNum; i++ {
-		go sender(&wg)
-	}
-	wg.Wait()
-	t2 := time.Now()
-	speed := float64(mbytes) * float64(connNum) / t2.Sub(t1).Seconds()
-	b.Log("Speed: ", speed, "MB/s")
+func TestWebsocket(t *testing.T) {
+	clientConfig := addWsConfig(getBasicClientConfig())
+	serverConfig := addWsConfig(getBasicServerConfig())
+	CheckClientServer(t, clientConfig, serverConfig)
+	CheckForwardServer(t, clientConfig, serverConfig)
 }
 
-func BenchmarkMuxClientToServerHighConcurrency(b *testing.B) {
-	config1 := &conf.GlobalConfig{
-		LogLevel:      5,
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-		Mux: conf.MuxConfig{
-			Enabled:     true,
-			Concurrency: 8,
-			IdleTimeout: 30,
-		},
-	}
-	c := client.Client{}
-	c.Build(config1)
-	go c.Run()
+func TestWebsocketMux(t *testing.T) {
+	clientConfig := addMuxConfig(addWsConfig(getBasicClientConfig()))
+	serverConfig := addWsConfig(getBasicServerConfig())
+	CheckClientServer(t, clientConfig, serverConfig)
+	CheckForwardServer(t, clientConfig, serverConfig)
+}
 
-	config2 := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
-		TLS:           getTLSConfig(),
-		Hash:          getHash("pass123"),
-	}
-	s := server.Server{}
-	s.Build(config2)
-	go s.Run()
-
-	target := RunBlackHoleTCPServer()
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
-	common.Must(err)
-
-	connNum := 128
-	mbytes := 128
-	payload := GeneratePayload(1024 * 1024 * mbytes)
-
-	wg := sync.WaitGroup{}
-	sender := func(wg *sync.WaitGroup) {
-		conn, err := dialer.Dial("tcp", target.String())
-		common.Must(err)
-		conn.Write(payload)
-		conn.Close()
-		wg.Done()
-	}
-
-	wg.Add(connNum)
-
-	t1 := time.Now()
-	for i := 0; i < connNum; i++ {
-		go sender(&wg)
-	}
-	wg.Wait()
-	t2 := time.Now()
-	speed := float64(mbytes) * float64(connNum) / t2.Sub(t1).Seconds()
-	b.Log("Speed: ", speed, "MB/s")
+func BenchmarkNormal(b *testing.B) {
+	clientConfig := getBasicClientConfig()
+	serverConfig := getBasicServerConfig()
+	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
 }

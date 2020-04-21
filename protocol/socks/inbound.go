@@ -228,8 +228,8 @@ func (i *SocksInboundPacketSession) Close() error {
 	return i.conn.Close()
 }
 
-func NewInboundPacketSession(conn *net.UDPConn) (*SocksInboundPacketSession, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+func NewInboundPacketSession(ctx context.Context, conn *net.UDPConn) (*SocksInboundPacketSession, error) {
+	ctx, cancel := context.WithCancel(ctx)
 	conn.SetWriteBuffer(0)
 	i := &SocksInboundPacketSession{
 		ctx:          ctx,

@@ -156,7 +156,7 @@ func (i *NATInboundPacketSession) Close() error {
 	return nil
 }
 
-func NewInboundPacketSession(config *conf.GlobalConfig) (protocol.PacketSession, error) {
+func NewInboundPacketSession(ctx context.Context, config *conf.GlobalConfig) (protocol.PacketSession, error) {
 	localIP, err := config.LocalAddress.ResolveIP(false)
 	if err != nil {
 		return nil, err
@@ -169,7 +169,7 @@ func NewInboundPacketSession(config *conf.GlobalConfig) (protocol.PacketSession,
 	if err != nil {
 		return nil, common.NewError("failed to listen UDP addr").Base(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	i := &NATInboundPacketSession{
 		conn:         conn,
 		sessionTable: make(map[string]*udpSession, 1024),
