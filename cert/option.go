@@ -39,6 +39,6 @@ func (c *certOption) Handle() error {
 
 func init() {
 	common.RegisterOptionHandler(&certOption{
-		args: flag.String("cert", "INVALID", "Simple letsencrpyt cert acme client. Use \"-cert request\" to request a cert or \"-cert renew\" to renew a cert"),
+		args: flag.String("autocert", "INVALID", "Simple letsencrpyt cert acme client. Use \"-autocert request\" to request a cert or \"-autocert renew\" to renew a cert"),
 	})
 }
