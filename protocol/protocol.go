@@ -89,63 +89,61 @@ type PacketSession interface {
 	io.Closer
 }
 
-func ParseAddress(r io.Reader) (*Request, error) {
-	var buf1 [1]byte
-	_, err := io.ReadFull(r, buf1[:])
+func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
+	byteBuf := [1]byte{}
+	_, err := conn.Read(byteBuf[:])
 	if err != nil {
 		return nil, common.NewError("cannot read atype").Base(err)
 	}
-	atype := common.AddressType(buf1[0])
-	req := &Request{
-		Address: &common.Address{
-			AddressType: atype,
-		},
+	addr := &common.Address{
+		AddressType: common.AddressType(byteBuf[0]),
 	}
-	switch atype {
+	switch addr.AddressType {
 	case common.IPv4:
 		var buf [6]byte
-		_, err := io.ReadFull(r, buf[:])
+		_, err := conn.Read(buf[:])
 		if err != nil {
 			return nil, common.NewError("failed to read ipv4").Base(err)
 		}
-		req.IP = buf[0:4]
-		req.Port = int(binary.BigEndian.Uint16(buf[4:6]))
+		addr.IP = buf[0:4]
+		addr.Port = int(binary.BigEndian.Uint16(buf[4:6]))
 	case common.IPv6:
 		var buf [18]byte
-		_, err := io.ReadFull(r, buf[:])
+		conn.Read(buf[:])
 		if err != nil {
 			return nil, common.NewError("failed to read ipv6").Base(err)
 		}
-		req.IP = buf[0:16]
-		req.Port = int(binary.BigEndian.Uint16(buf[16:18]))
+		addr.IP = buf[0:16]
+		addr.Port = int(binary.BigEndian.Uint16(buf[16:18]))
 	case common.DomainName:
-		_, err := io.ReadFull(r, buf1[:])
+		_, err := conn.Read(byteBuf[:])
+		length := byteBuf[0]
 		if err != nil {
 			return nil, common.NewError("failed to read length")
 		}
-		length := buf1[0]
 		buf := make([]byte, length+2)
-		_, err = io.ReadFull(r, buf)
+		_, err = conn.Read(buf)
 		if err != nil {
 			return nil, common.NewError("failed to read domain")
 		}
 		//the fucking browser uses ip as a domain name sometimes
 		host := buf[0:length]
 		if ip := net.ParseIP(string(host)); ip != nil {
-			req.IP = ip
+			addr.IP = ip
 			if ip.To4() != nil {
-				req.AddressType = common.IPv4
+				addr.AddressType = common.IPv4
 			} else {
-				req.AddressType = common.IPv6
+				addr.AddressType = common.IPv6
 			}
 		} else {
-			req.DomainName = string(host)
+			addr.DomainName = string(host)
 		}
-		req.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
+		addr.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
 		return nil, common.NewError("invalid dest type")
 	}
-	return req, nil
+	addr.NetworkType = network
+	return addr, nil
 }
 
 func WriteAddress(w io.Writer, request *Request) error {

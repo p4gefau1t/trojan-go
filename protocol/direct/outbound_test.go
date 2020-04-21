@@ -1,6 +1,7 @@
 package direct
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"net"
@@ -13,9 +14,9 @@ import (
 
 func TestDirectOutbound(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		go test.RunEchoUDPServer(6543 + i)
+		go test.RunEchoUDPServer(context.Background())
 	}
-	outbound, _ := NewOutboundPacketSession()
+	outbound, _ := NewOutboundPacketSession(context.Background())
 	for i := 0; i < 30; i++ {
 		req := &protocol.Request{
 			Address: &common.Address{

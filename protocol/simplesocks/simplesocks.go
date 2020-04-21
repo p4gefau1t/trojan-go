@@ -2,7 +2,6 @@ package simplesocks
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -64,23 +63,14 @@ func (m *SimpleSocksConnSession) parseRequest() error {
 	if err != nil {
 		return common.NewError("failed to read cmd").Base(err)
 	}
-
-	network := "tcp"
-	switch protocol.Command(cmd) {
-	case protocol.Connect, protocol.Mux:
-		network = "tcp"
-	case protocol.Associate:
-		network = "udp"
-	default:
-		return common.NewError(fmt.Sprintf("invalid command %d", cmd))
-	}
-
-	req, err := protocol.ParseAddress(m.bufReadWriter)
+	addr, err := protocol.ParseAddress(m.bufReadWriter, "tcp")
 	if err != nil {
-		return err
+		return common.NewError("failed to parse addr").Base(err)
 	}
-	req.NetworkType = network
-	req.Command = protocol.Command(cmd)
+	req := &protocol.Request{
+		Address: addr,
+		Command: protocol.Command(cmd),
+	}
 	m.request = req
 	return nil
 }

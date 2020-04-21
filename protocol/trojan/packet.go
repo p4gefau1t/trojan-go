@@ -15,9 +15,12 @@ type TrojanPacketSession struct {
 }
 
 func (i *TrojanPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
-	req, err := protocol.ParseAddress(i.conn)
+	addr, err := protocol.ParseAddress(i.conn, "udp")
 	if err != nil {
-		return nil, nil, common.NewError("failed to parse req").Base(err)
+		return nil, nil, common.NewError("failed to parse addr").Base(err)
+	}
+	req := &protocol.Request{
+		Address: addr,
 	}
 	lengthBuf := [2]byte{}
 	_, err = io.ReadFull(i.conn, lengthBuf[:])

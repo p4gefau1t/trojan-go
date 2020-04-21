@@ -124,6 +124,7 @@ type GlobalConfig struct {
 	RemoteHost string          `json:"remote_addr"`
 	RemotePort int             `json:"remote_port"`
 	Passwords  []string        `json:"password"`
+	DNS        []string        `json:"dns"`
 	TLS        TLSConfig       `json:"ssl"`
 	TCP        TCPConfig       `json:"tcp"`
 	MySQL      MySQLConfig     `json:"mysql"`

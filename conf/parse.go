@@ -259,6 +259,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config := &GlobalConfig{}
 
 	//default settings
+	config.LogLevel = 1
 	config.TLS.Verify = true
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true

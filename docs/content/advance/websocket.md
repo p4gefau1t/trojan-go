@@ -4,7 +4,9 @@ draft: false
 weight: 2
 ---
 
-Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的同时考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go支持使用多重TLS，即使遭受GFW的HTTPS中间人攻击，**在正确的配置下**，连接的安全性依然能得到保证。
+### **注意，原版Trojan-GFW服务端不支持这个特性。**
+
+Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的设计考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go支持使用多重TLS，即使遭受GFW的HTTPS中间人攻击，**在正确的配置下**，连接的安全性依然能得到保证。
 
 服务器和客户端配置文件中同时添加websocket选项，并将其```enabled```字段设置为true，并填写```path```字段即可启用Websocket支持。下面是一个完整的Websocket选项
 

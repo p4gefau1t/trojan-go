@@ -16,7 +16,9 @@ weight: 10
 
 - ```remote_port```
 
-对于一个服务器server，```key```和```cert```为必填。
+对于服务器server，```key```和```cert```为必填。
+
+对于客户端client，反向代理隧道forward，以及透明代理nat，```password```必填
 
 其余未填的选项，用下面给出的值进行填充。
 
@@ -27,7 +29,7 @@ weight: 10
     "local_port":  your_port1,
     "remote_addr": "example.com",
     "remote_port": your_port2,
-    "log_level": 0,
+    "log_level": 1,
     "password": [
         "password1",
         "password2"
@@ -35,8 +37,8 @@ weight: 10
     "ssl": {
         "verify": true,
         "verify_hostname": true,
-        "cert": "your_crt_file(optional for a client/nat)",
-        "key": "your_key_file",
+        "cert": "your_crt_file(optional for a client/forward/nat)",
+        "key": "your_key_file(optional for a client/forward/nat)",
         "key_password": "",
         "cipher": "",
         "cipher_tls13": "",

@@ -62,13 +62,14 @@ func (i *SocksConnInboundSession) parseRequest() error {
 		return common.NewError("invalid command")
 	}
 
-	request, err := protocol.ParseAddress(i.bufReadWriter)
+	addr, err := protocol.ParseAddress(i.bufReadWriter, "tcp")
 	if err != nil {
 		return common.NewError("cannot read request").Base(err)
 	}
-	request.Command = protocol.Command(cmd)
-	request.NetworkType = "tcp"
-
+	request := &protocol.Request{
+		Address: addr,
+		Command: protocol.Command(cmd),
+	}
 	i.request = request
 	return nil
 }
@@ -146,11 +147,14 @@ func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Req
 	if frag != 0 {
 		return nil, nil, common.NewError("fragment is not supported")
 	}
-	request, err := protocol.ParseAddress(buf)
+	addr, err := protocol.ParseAddress(buf, "udp")
 	if err != nil {
 		return nil, nil, common.NewError("cannot parse udp request").Base(err)
 	}
-	request.NetworkType = "udp"
+	//command make no sense here
+	request := &protocol.Request{
+		Address: addr,
+	}
 	return request, buf.Bytes(), nil
 }
 

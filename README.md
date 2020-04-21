@@ -10,7 +10,7 @@
 
 [Telegram交流反馈群](https://t.me/trojan_go_chat)
 
-### **完整配置教程和配置介绍参见[这里](https://p4gefau1t.github.io/trojan-go)。**
+### 下面的说明为简单介绍，完整配置教程和配置介绍参见[这里](https://p4gefau1t.github.io/trojan-go)。
 
 [English Version](#English)
 
