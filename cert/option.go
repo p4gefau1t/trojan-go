@@ -8,7 +8,9 @@ import (
 )
 
 type certOption struct {
-	args *string
+	mode     *string
+	httpPort *string
+	tlsPort  *string
 	common.OptionHandler
 }
 
@@ -21,17 +23,21 @@ func (*certOption) Priority() int {
 }
 
 func (c *certOption) Handle() error {
-	switch *c.args {
+	switch *c.mode {
 	case "request":
+		tlsPort = *c.tlsPort
+		httpPort = *c.httpPort
 		RequestCertGuide()
 		return nil
 	case "renew":
+		tlsPort = *c.tlsPort
+		httpPort = *c.httpPort
 		RenewCertGuide()
 		return nil
 	case "INVALID":
 		return common.NewError("not specified")
 	default:
-		err := common.NewError("invalid args " + *c.args)
+		err := common.NewError("invalid args " + *c.mode)
 		log.Error(err)
 		return common.NewError("invalid args")
 	}
@@ -39,6 +45,8 @@ func (c *certOption) Handle() error {
 
 func init() {
 	common.RegisterOptionHandler(&certOption{
-		args: flag.String("autocert", "INVALID", "Simple letsencrpyt cert acme client. Use \"-autocert request\" to request a cert or \"-autocert renew\" to renew a cert"),
+		mode:     flag.String("autocert", "INVALID", "Simple letsencrpyt cert ACME client. Use \"-autocert request\" to request a cert or \"-autocert renew\" to renew a cert"),
+		tlsPort:  flag.String("autocert-tls-port", "443", "autocert TLS acme challenge port"),
+		httpPort: flag.String("autocert-http-port", "80", "autocert HTTP acme challenge port"),
 	})
 }

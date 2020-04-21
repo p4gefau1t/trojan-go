@@ -30,7 +30,11 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 
 - TCP性能方面的选项，如TCP Fast Open，端口复用等
 
-同时，Trojan-Go还支持更多高效易用的功能：
+同时，Trojan-Go还有更多高效易用的功能特性：
+
+- 简易模式，快速部署使用
+
+- 多平台和多操作系统支持，无特殊依赖
 
 - 多路复用，显著提升并发性能
 
@@ -42,9 +46,10 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 
 如果你遇到配置方面的问题，或是遇到了软件Bug，或是有更好的想法，欢迎加入[Telegram交流反馈群](https://t.me/trojan_go_chat)
 
+
+
 ----
 
 > Across the Great Wall, we can reach every corner in the world.
 >
 > (越过长城，走向世界。)
-

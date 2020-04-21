@@ -12,37 +12,9 @@
 
 ### 下面的说明为简单介绍，完整配置教程和配置介绍参见[这里](https://p4gefau1t.github.io/trojan-go)。
 
-[English Version](#English)
+Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不限于：
 
-## 使用方法
-
-自动申请证书:
-
-```
-sudo ./trojan-go -cert request
-```
-
-(**注意备份生成的证书和密钥，并确保其安全**)
-
-为证书续期:
-
-```
-sudo ./trojan-go -cert renew
-```
-
-关于证书申请[更详细的说明](#证书申请)
-
-运行客户端/服务端/透明代理/中继:
-
-```
-./trojan-go -config 你的配置文件.json
-```
-
-配置文件格式和Trojan相同, 完整说明可以参考Trojan-Go的[文档](https://p4gefau1t.github.io/trojan-go)。
-
-Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
-
-- TLS隧道传输
+- TLS/SSL隧道传输
 
 - 透明代理 (NAT模式，iptables设置参见[这里](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
 
@@ -58,7 +30,58 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括
 
 - TCP性能方面的选项，如TCP Fast Open，端口复用等
 
-注意， TLS 1.2密码学套件的名称在golang中有一些不同，并且不安全的TLS 1.2套件已经被弃用，直接使用包含这些套件的原版Trojan配置文件会引发一个警告，但不影响运行。
+同时，Trojan-Go还有更多高效易用的功能特性：
+
+- 简易模式，快速部署使用
+
+- 多平台和多操作系统支持，无特殊依赖
+
+- 多路复用，显著提升并发性能
+
+- 自定义路由模块，可实现国内直连/广告屏蔽等功能
+
+- Websocket，用于支持CDN流量中转(基于WebSocket over TLS/SSL)和对抗GFW中间人攻击
+
+- 自动化HTTPS证书申请，使用ACME协议从Let's Encrypt自动申请和更新HTTPS证书
+
+## 使用方法
+
+自动申请证书:
+
+```
+sudo ./trojan-go -autocert request
+```
+
+(**注意备份生成的证书和密钥，并确保其安全**)
+
+为证书续期:
+
+```
+sudo ./trojan-go -autocert renew
+```
+
+关于证书申请[更详细的说明](#证书申请)
+
+
+快速启动服务器和客户端（简易模式）
+
+服务端
+
+```
+sudo ./trojan-go server -remote 127.0.0.1:80 -local 0.0.0.0:443 -key ./your_key.key -cert ./your_cert.crt -password your_password
+```
+
+客户端
+
+```
+./trojan-go local -remote example.com -local 127.0.0.1:1080 -password your_password
+```
+
+使用配置文件运行客户端/服务端/透明代理/中继:
+
+```
+./trojan-go -config 你的配置文件.json
+```
 
 ## 特性
 
@@ -114,7 +137,7 @@ client.json
 使用
 
 ```
-sudo ./trojan-go -cert request
+sudo ./trojan-go -autocert request
 ```
 
 向Let's Encrypt申请证书
@@ -122,6 +145,8 @@ sudo ./trojan-go -cert request
 申请过程中，按照ACME协议要求，trojan-go需要和letsencrypt服务器交互，因此需要暂时占用本地443和80端口，此时请暂时关闭nginx，apache，或者trojan等服务。
 
 Linux下，绑定80和443端口需要root权限，因此你需要使用sudo执行trojan-go才能正常证书申请流程。
+
+你也可以指定自定义端口，然后使用nginx等web服务器进行443和80分流，将acme协议代理到自定义端口上。
 
 如果申请成功，本目录下会得到
 
@@ -276,241 +301,3 @@ https://github.com/LiamHaworth/go-tproxy
 https://github.com/valyala/tcplisten
 
 
----------
-
-<a name="English"></a>
-
-# Trojan-Go
-
-Full-featured Trojan proxy written in golang, compatiable with the original Trojan protocol and config file. It's safe, efficient, lightweight and easy to use.
-
-Supports multiplexing and traffic routing.
-
-Supports CDN traffic transferring, based on WebSocket over TLS/SSL
-
-Uses the ACME protocol to automatically request and renew HTTPS certificates from Let's Encrypt.
-
-[Telegram Group](https://t.me/trojan_go_chat)
-
-## Usage
-
-To request a certificate automatically:
-
-```
-./trojan-go -cert request
-```
-
-**Don't forget to backup the .key file and .crt file.**
-
-To renew a certificate:
-
-```
-./trojan-go -cert renew
-```
-
-Run a client/server/transparent proxy/forwarder:
-
-```
-./trojan-go -config your_awesome_config_file.json
-```
-
-Trojan-Go supports most features of the original trojan, including
-
-- TLS tunneling
-
-- Transparent proxy (NAT mode, see [here](https://github.com/shadowsocks/shadowsocks-libev/tree/v3.3.1#transparent-proxy))
-
-- UDP Relaying
-
-- Mechanism against passive and active detection of GFW
-
-- MySQL Database support
-
-- Traffic statistics, quota limits for each user
-
-- Authentication by users record in database
-
-- TCP performance-related options, like TCP fast open, port reusing, etc.
-
-Note that the name of the TLS 1.2 cipher suite is slightly different in golang, and some of them has been deprecated and disabled. Using the original configuration file directly will cause a warning, but it will not affect the running.
-
-The format of the configuration file is compatible, see [here](https://trojan-gfw.github.io/trojan/config).
-
-## Features
-
-### Portable
-
-It's written in Golang, so it will be statically linked by default, which means that you can execute the compiled single executable directly on the target machine without having to consider dependencies. You can easily compile (or cross compile) it and deploy it on your server, PC, Raspberry Pi, or even a router.
-
-### Easy to use
-
-Trojan-go's configuration file format is compatible with Trojan's, while it's being simplyfied. Unspecified fields will be filled in with a default value. You can launch your server and client much easier. Here's an example:
-
-server.json
-```
-{
-    "run_type": "server",
-    "local_addr": "0.0.0.0",
-    "local_port": 443,
-    "remote_addr": "127.0.0.1",
-    "remote_port": 80,
-    "password": [
-        "your_awesome_password"
-    ],
-    "ssl": {
-        "cert": "your_cert.crt",
-        "key": "your_key.key"
-    }
-}
-
-```
-
-client.json
-```
-{
-    "run_type": "client",
-    "local_addr": "127.0.0.1",
-    "local_port": 1080,
-    "remote_addr": "www.your_awesome_domain_name.com",
-    "remote_port": 443,
-    "password": [
-        "your_awesome_password"
-    ]
-}
-```
-## Certificate requesting
-
-Use
-
-`` `
-sudo ./trojan-go -cert request
-`` `
-
-to request a certificate from Let's Encrypt.
-
-During the process, according to ACME protocol requirements, trojan-go needs to interact with letsencrypt server, so it needs to temporarily occupy local ports 443 and 80. At this time, please temporarily close services such as nginx, apache, or trojan.
-
-Binding port 80 and 443 under Linux requires root privileges, so you may need to use sudo to execute trojan-go for the certificate requesting.
-
-If everything goes well, you will get
-
-- server.key: server private key
-
-- server.crt: server certificate signed by Let's Encrypt
-
-- user.key: The private key corresponding to the user's email
-
-- domain_info.json: domain name and user email information
-
-Please back up these files and keep them in a safe place. You can fill the server private key and certificate file name into your configuration file, and start your trojan-go server.
-
-If the certificate has expired, use
-
-`` `
-sudo ./trojan-go -cert renew
-`` `
-
-To renew the certificate. Make sure that the files mentioned above are in the same directory where trojan-go is located. Trojan-Go will automatically update the certificate file.
-
-#WebSocket
-
-Trojan-Go can use WebSocket over TLS/SSL to carry the Trojan traffic, making it possible to exploit CDN to proxy traffic.
-
-Websocket support can be enabled by adding the "websocket" option to both server and client configuration files, for example
-
-```
-"websocket": {
-    "enabled": true,
-    "path": "/im_a_url_path",
-    "hostname": "www.your_awesome_domain_name.com"
-}
-```
-
-The server can omit ```hostname``` field, but the ```path``` of the server and client must be the same. After Websocket support is enabled on the server, Websocket and general Trojan traffic can be supported at the same time. Clients without Websocket options will still work.
-
-Since the original Trojan does not support Websocket, if you want to use Websocket to carry traffic, please make sure that both endpoints use Trojan-Go.
-
-### Multiplexing
-
-TLS handshaking may takes much time in a poor network condition.
-Trojan-go supports multiplexing([smux](https://github.com/xtaci/smux)), which imporves the performance in the high-concurrency scenario by forcing one single TLS tunnel connection carries mutiple TCP connections.
-
-Enabling multiplexing does not increase the bandwidth you get from a speed test, but it will speed up the network experience when you have a large number of concurrent requests, such as browsing web pages containing a large number of images, etc.
-
-Note that this feature is not compatible with the original Trojan , so for compatibility reasons, this feature is turned off by default. But you can enable it by setting the "mux" field in the tcp options. as follows
-
-```
-"mux": {
-    "enabled": true
-}
-```
-
-You only need to set up the client's configuration file, and the server will automatically detect whether to enable multiplexing.
-
-### Routing
-
-A simple and practical routing module is built into the Trojan-Go client.
-
-There are three routing strategies
-
-- Proxy. The request is proxied through the TLS tunnel, and the trojan server will connect to the destination remote endpoints.
-
-- Bypass. Local client will connect to the remote endpoints directly without using the TLS tunnel.
-
-- Block. Close the incoming connection immediately.
-
-To activate the module, setup the "router" option in your config file, for example:
-
-```
-"router": {
-    "enabled": true,
-    "bypass": [
-        "geoip:tag1",
-        "geosite:tag2",
-        "bypass_list1.txt",
-        "bypass_list2.txt"
-    ],
-    "block": [
-        "block_list.txt"
-    ]
-    "proxy": [
-        "proxy_list.txt"
-    ]
-}
-```
-
-## Build
-
-Just make sure your golang version >= 1.13
-
-
-```
-git clone https://github.com/p4gefau1t/trojan-go.git
-cd trojan-go
-go build
-```
-
-You can cross-compile it by setting up the environment vars, for example
-```
-CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
-```
-
-or
-
-```
-CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
-```
-
-## Credits
-
-https://github.com/trojan-gfw/trojan
-
-https://github.com/v2ray/
-
-https://github.com/xtaci/smux
-
-https://github.com/go-acme/lego
-
-https://github.com/LiamHaworth/go-tproxy
-
-https://github.com/valyala/tcplisten
