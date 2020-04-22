@@ -18,16 +18,19 @@ type Buildable interface {
 func ProxyConn(ctx context.Context, a, b io.ReadWriter) {
 	errChan := make(chan error, 2)
 	copyConn := func(dst io.Writer, src io.Reader) {
-		_, err := io.Copy(dst, src)
+		//_, err := io.Copy(dst, src)
+		buf := make([]byte, 1024*1024*1024*2)
+		_, err := io.CopyBuffer(dst, src, buf)
 		errChan <- err
 	}
 	go copyConn(a, b)
 	go copyConn(b, a)
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("conn proxy ends").Base(err))
+		if err != nil {
+			log.Debug(common.NewError("conn proxy ends").Base(err))
+		}
 	case <-ctx.Done():
-		return
 	}
 }
 

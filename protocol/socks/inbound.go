@@ -1,7 +1,6 @@
 package socks
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"io"
@@ -17,13 +16,12 @@ import (
 type SocksConnInboundSession struct {
 	protocol.ConnSession
 	protocol.NeedRespond
-	request       *protocol.Request
-	conn          io.ReadWriteCloser
-	bufReadWriter *bufio.ReadWriter
+	request *protocol.Request
+	rwc     *common.RewindReadWriteCloser
 }
 
 func (i *SocksConnInboundSession) checkVersion() error {
-	version, err := i.bufReadWriter.ReadByte()
+	version, err := i.rwc.ReadByte()
 	if err != nil {
 		return err
 	}
@@ -37,12 +35,12 @@ func (i *SocksConnInboundSession) auth() error {
 	if err := i.checkVersion(); err != nil {
 		return err
 	}
-	nmethods, err := i.bufReadWriter.ReadByte()
+	nmethods, err := i.rwc.ReadByte()
 	if err != nil {
 		return err
 	}
-	i.bufReadWriter.Discard(int(nmethods))
-	i.conn.Write([]byte{0x5, 0x0})
+	i.rwc.Discard(int(nmethods))
+	i.rwc.Write([]byte{0x5, 0x0})
 	return nil
 }
 
@@ -50,11 +48,11 @@ func (i *SocksConnInboundSession) parseRequest() error {
 	if err := i.checkVersion(); err != nil {
 		return err
 	}
-	cmd, err := i.bufReadWriter.ReadByte()
+	cmd, err := i.rwc.ReadByte()
 	if err != nil {
 		return common.NewError("cannot read cmd").Base(err)
 	}
-	i.bufReadWriter.Discard(1)
+	i.rwc.Discard(1)
 
 	switch protocol.Command(cmd) {
 	case protocol.Connect, protocol.Associate:
@@ -62,7 +60,7 @@ func (i *SocksConnInboundSession) parseRequest() error {
 		return common.NewError("invalid command")
 	}
 
-	addr, err := protocol.ParseAddress(i.bufReadWriter, "tcp")
+	addr, err := protocol.ParseAddress(i.rwc, "tcp")
 	if err != nil {
 		return common.NewError("cannot read request").Base(err)
 	}
@@ -78,47 +76,37 @@ func (i *SocksConnInboundSession) Respond() error {
 	if i.request.Command == protocol.Connect {
 		i.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 		return nil
-	} else {
-		resp := bytes.NewBuffer([]byte{0x05, 0x00, 0x00})
-		common.Must(protocol.WriteAddress(resp, i.request))
-		_, err := i.Write(resp.Bytes())
-		return err
 	}
+	//associate
+	resp := bytes.NewBuffer([]byte{0x05, 0x00, 0x00})
+	common.Must(protocol.WriteAddress(resp, i.request))
+	_, err := i.Write(resp.Bytes())
+	return err
 }
 
 func (i *SocksConnInboundSession) Read(p []byte) (int, error) {
-	return i.bufReadWriter.Read(p)
+	return i.rwc.Read(p)
 }
 
 func (i *SocksConnInboundSession) Write(p []byte) (int, error) {
-	n, err := i.bufReadWriter.Write(p)
-	i.bufReadWriter.Flush()
-	return n, err
+	return i.rwc.Write(p)
 }
 
 func (i *SocksConnInboundSession) Close() error {
-	return i.conn.Close()
+	return i.rwc.Close()
 }
 
-func (i *SocksConnInboundSession) GetRequest() *protocol.Request {
-	return i.request
-}
-
-func NewInboundConnSession(conn io.ReadWriteCloser, rw *bufio.ReadWriter) (protocol.ConnSession, error) {
-	i := &SocksConnInboundSession{}
-	i.conn = conn
-	if rw == nil {
-		i.bufReadWriter = common.NewBufReadWriter(conn)
-	} else {
-		i.bufReadWriter = rw
+func NewInboundConnSession(rwc *common.RewindReadWriteCloser) (protocol.ConnSession, *protocol.Request, error) {
+	i := &SocksConnInboundSession{
+		rwc: rwc,
 	}
 	if err := i.auth(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if err := i.parseRequest(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return i, nil
+	return i, i.request, nil
 }
 
 type udpSession struct {

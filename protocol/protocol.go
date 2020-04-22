@@ -42,10 +42,6 @@ func (r *Request) String() string {
 	return r.Address.String()
 }
 
-type HasRequest interface {
-	GetRequest() *Request
-}
-
 type HasHash interface {
 	GetHash() string
 }
@@ -81,7 +77,6 @@ type NeedMeter interface {
 
 type ConnSession interface {
 	io.ReadWriteCloser
-	HasRequest
 }
 
 type PacketSession interface {

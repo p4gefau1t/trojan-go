@@ -11,10 +11,9 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a
 	github.com/xtaci/smux v2.0.1+incompatible
-	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4
-	google.golang.org/grpc v1.28.1
-	google.golang.org/protobuf v1.21.0 // indirect
+	golang.org/x/crypto v0.0.0-20200420201142-3c4aac89819a
+	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
+	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
+	google.golang.org/grpc v1.29.0
 	v2ray.com/core v4.19.1+incompatible
 )

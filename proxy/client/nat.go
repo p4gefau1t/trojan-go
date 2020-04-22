@@ -49,12 +49,11 @@ func (n *NAT) openOutboundConn(req *protocol.Request) (protocol.ConnSession, err
 }
 
 func (n *NAT) handleConn(conn net.Conn) {
-	inboundConn, err := nat.NewInboundConnSession(conn)
+	inboundConn, req, err := nat.NewInboundConnSession(conn)
 	if err != nil {
 		log.Error(common.NewError("failed to start inbound session").Base(err))
 		return
 	}
-	req := inboundConn.GetRequest()
 	defer inboundConn.Close()
 	outboundConn, err := n.openOutboundConn(req)
 	if err != nil {

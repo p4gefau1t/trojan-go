@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -212,6 +213,19 @@ func loadClientConfig(config *GlobalConfig) error {
 }
 
 func loadServerConfig(config *GlobalConfig) error {
+
+	//check web server
+	resp, err := http.Get("http://" + config.RemoteAddress.String())
+	if err != nil {
+		return common.NewError(config.RemoteAddress.String() + " is not a valid web server").Base(err)
+	}
+	buf := [128]byte{}
+	_, err = resp.Body.Read(buf[:])
+	if err != nil {
+		return common.NewError(config.RemoteAddress.String() + " is not a valid web server").Base(err)
+	}
+	log.Debug(string(buf[:]))
+
 	if config.TLS.KeyPassword != "" {
 		keyFile, err := ioutil.ReadFile(config.TLS.KeyPath)
 		if err != nil {

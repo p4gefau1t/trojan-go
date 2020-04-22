@@ -1,8 +1,6 @@
 package trojan
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"io"
 	"net"
@@ -18,41 +16,30 @@ type TrojanInboundConnSession struct {
 	protocol.ConnSession
 	protocol.NeedAuth
 	protocol.NeedMeter
-	protocol.HasHash
 
-	config        *conf.GlobalConfig
-	request       *protocol.Request
-	bufReadWriter *bufio.ReadWriter
-	conn          io.ReadWriteCloser
-	auth          stat.Authenticator
-	meter         stat.TrafficMeter
-	sent          uint64
-	recv          uint64
-	passwordHash  string
-	ctx           context.Context
-	cancel        context.CancelFunc
-	readBytes     *bytes.Buffer
+	rwc          io.ReadWriteCloser
+	ctx          context.Context
+	config       *conf.GlobalConfig
+	request      *protocol.Request
+	auth         stat.Authenticator
+	meter        stat.TrafficMeter
+	sent         uint64
+	recv         uint64
+	passwordHash string
+	cancel       context.CancelFunc
 }
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
-	n, err := i.bufReadWriter.Write(p)
+	n, err := i.rwc.Write(p)
 	if i.meter != nil {
 		i.meter.Count(i.passwordHash, uint64(n), 0)
 	}
 	i.sent += uint64(n)
-	i.bufReadWriter.Flush()
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
-	if i.readBytes != nil {
-		n, err := i.readBytes.Read(p)
-		if err == io.EOF {
-			i.readBytes = nil
-		}
-		return n, err
-	}
-	n, err := i.bufReadWriter.Read(p)
+	n, err := i.rwc.Read(p)
 	if i.meter != nil {
 		i.meter.Count(i.passwordHash, 0, uint64(n))
 	}
@@ -63,34 +50,29 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 func (i *TrojanInboundConnSession) Close() error {
 	log.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
 	i.cancel()
-	return i.conn.Close()
+	return i.rwc.Close()
 }
 
-func (i *TrojanInboundConnSession) GetRequest() *protocol.Request {
-	return i.request
-}
-
-func (i *TrojanInboundConnSession) GetHash() string {
-	return i.passwordHash
-}
-
-func (i *TrojanInboundConnSession) parseRequest() error {
-	userHash, err := i.bufReadWriter.Peek(56)
-	if err != nil {
+func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
+	userHash := [56]byte{}
+	n, err := r.Read(userHash[:])
+	if err != nil || n != 56 {
 		return common.NewError("failed to read hash").Base(err)
 	}
-	if !i.auth.CheckHash(string(userHash)) {
-		return common.NewError("invalid hash:" + string(userHash))
+	if !i.auth.CheckHash(string(userHash[:])) {
+		return common.NewError("invalid hash:" + string(userHash[:]))
 	}
-	i.passwordHash = string(userHash)
-	i.bufReadWriter.Discard(56 + 2)
+	i.passwordHash = string(userHash[:])
 
-	cmd, err := i.bufReadWriter.ReadByte()
+	crlf := [2]byte{}
+	r.Read(crlf[:])
+
+	cmd, err := r.ReadByte()
 	if err != nil {
 		return common.NewError("failed to read cmd").Base(err)
 	}
 
-	addr, err := protocol.ParseAddress(i.bufReadWriter, "tcp")
+	addr, err := protocol.ParseAddress(r, "tcp")
 	if err != nil {
 		return common.NewError("failed to parse address").Base(err)
 	}
@@ -99,53 +81,74 @@ func (i *TrojanInboundConnSession) parseRequest() error {
 		Address: addr,
 	}
 	i.request = req
-
-	i.bufReadWriter.Discard(2)
+	r.Read(crlf[:])
 	return nil
-}
-
-func (i *TrojanInboundConnSession) SetAuth(auth stat.Authenticator) {
-	i.auth = auth
 }
 
 func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
 	i.meter = meter
 }
 
-func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
+func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, *protocol.Request, error) {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	rwc := common.NewRewindReadWriteCloser(conn)
 	i := &TrojanInboundConnSession{
-		config:        config,
-		conn:          conn,
-		bufReadWriter: common.NewBufReadWriter(conn),
-		auth:          auth,
-		passwordHash:  "INVALID_HASH",
-		ctx:           ctx,
-		cancel:        cancel,
+		config:       config,
+		auth:         auth,
+		passwordHash: "INVALID_HASH",
+		ctx:          ctx,
+		cancel:       cancel,
+		rwc:          rwc,
 	}
+	//start buffering
+	rwc.SetBufferSize(512)
 	if i.config.Websocket.Enabled {
-		ws, err := NewInboundWebsocket(i.ctx, conn, i.bufReadWriter, config)
-		if ws != nil {
-			log.Debug("websocket conn")
-			i.conn = ws
-			i.bufReadWriter = common.NewBufReadWriter(ws)
-		}
+		//try to treat it as a websocket connection first
+		ws, err := NewInboundWebsocket(i.ctx, conn, rwc.RewindReader, config)
 		if err != nil {
-			//no need to continue parsing
+			//websocket with wrong url path/origin, no need to continue parsing
+			rwc.Rewind()
+			rwc.StopBuffering()
 			i.request = &protocol.Request{
 				Address: config.RemoteAddress,
 				Command: protocol.Connect,
 			}
-			log.Warn("remote", conn.RemoteAddr(), "invalid websocket conn")
-			return i, nil
+			log.Warn("remote", conn.RemoteAddr(), "is a invalid websocket conn")
+			return i, i.request, nil
 		}
+		if ws != nil {
+			//a websocket conn, try to verify it
+			log.Debug("websocket conn")
+			//disable the read buffer, use ws as new transport layer
+			rwc.SetBufferSize(0)
+			rwc = common.NewRewindReadWriteCloser(ws)
+			i.rwc = rwc
+			//parse it with trojan protocol format
+			if err := i.parseRequest(rwc.RewindReader); err != nil {
+				//not valid, just simply close it
+				ws.Close()
+				return nil, nil, common.NewError("invalid trojan over ws conn").Base(err)
+			}
+			return i, i.request, nil
+		}
+		//not a websocket conn, it might be a normal trojan conn
+		rwc.Rewind()
 	}
-	if err := i.parseRequest(); err != nil {
+
+	//normal trojan conn
+	if err := i.parseRequest(rwc.RewindReader); err != nil {
+		//not a valid trojan request, proxy it to the remote_addr
+		rwc.Rewind()
+		rwc.StopBuffering()
 		i.request = &protocol.Request{
 			Address: i.config.RemoteAddress,
 			Command: protocol.Connect,
 		}
-		log.Warn("remote", conn.RemoteAddr(), "invalid hash or other protocol")
+		log.Warn(common.NewError("invalid trojan protocol over websocket from " + conn.RemoteAddr().String()).Base(err))
+		return i, i.request, nil
 	}
-	return i, nil
+	rwc.SetBufferSize(0)
+	rwc.StopBuffering()
+	return i, i.request, nil
 }

@@ -58,14 +58,14 @@ func (i *NATInboundConnSession) parseRequest() error {
 	return nil
 }
 
-func NewInboundConnSession(conn net.Conn) (protocol.ConnSession, error) {
+func NewInboundConnSession(conn net.Conn) (protocol.ConnSession, *protocol.Request, error) {
 	i := &NATInboundConnSession{
 		conn: conn,
 	}
 	if err := i.parseRequest(); err != nil {
-		return nil, common.NewError("failed to parse request").Base(err)
+		return nil, nil, common.NewError("failed to parse request").Base(err)
 	}
-	return i, nil
+	return i, i.reqeust, nil
 }
 
 type udpSession struct {

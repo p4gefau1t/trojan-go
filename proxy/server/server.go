@@ -32,24 +32,22 @@ type Server struct {
 	cancel   context.CancelFunc
 }
 
-func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
-	inboundConn, err := simplesocks.NewInboundSimpleSocksConnSession(stream, passwordHash)
+func (s *Server) handleMuxConn(stream *smux.Stream) {
+	inboundConn, req, err := simplesocks.NewInboundConnSession(stream)
 	if err != nil {
 		stream.Close()
 		log.Error(common.NewError("cannot start inbound session").Base(err))
 		return
 	}
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
-	defer inboundConn.Close()
-	req := inboundConn.GetRequest()
 	switch req.Command {
 	case protocol.Connect:
-		outboundConn, err := direct.NewOutboundConnSession(nil, req)
+		outboundConn, err := direct.NewOutboundConnSession(req)
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		log.Info("user", passwordHash, "mux tunneling to", req.String())
+		log.Info("mux tunneling to", req.String())
 		defer outboundConn.Close()
 		proxy.ProxyConn(s.ctx, inboundConn, outboundConn)
 	case protocol.Associate:
@@ -64,14 +62,11 @@ func (s *Server) handleMuxConn(stream *smux.Stream, passwordHash string) {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	inboundConn, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth)
+	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth)
 	if err != nil {
 		log.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
 	}
-
-	req := inboundConn.GetRequest()
-	hash := inboundConn.(protocol.HasHash).GetHash()
 
 	if req.Command == protocol.Mux {
 		muxServer, err := smux.Server(inboundConn, nil)
@@ -83,7 +78,7 @@ func (s *Server) handleConn(conn net.Conn) {
 				log.Debug("mux conn from", conn.RemoteAddr(), "closed:", err)
 				return
 			}
-			go s.handleMuxConn(stream, hash)
+			go s.handleMuxConn(stream)
 		}
 	}
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
@@ -105,7 +100,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	}
 
 	defer inboundConn.Close()
-	outboundConn, err := direct.NewOutboundConnSession(nil, req)
+	outboundConn, err := direct.NewOutboundConnSession(req)
 	if err != nil {
 		log.Error(err)
 		return

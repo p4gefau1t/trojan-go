@@ -48,32 +48,23 @@ type HTTPInboundTunnelConnSession struct {
 	protocol.ConnSession
 	protocol.NeedRespond
 
-	request       *protocol.Request
-	httpRequest   *http.Request
-	conn          io.ReadWriteCloser
-	bufReadWriter *bufio.ReadWriter
-	bodyReader    io.Reader
-}
-
-func (i *HTTPInboundTunnelConnSession) GetRequest() *protocol.Request {
-	return i.request
+	request     *protocol.Request
+	httpRequest *http.Request
+	bufReader   *bufio.Reader
+	rwc         io.ReadWriteCloser
+	bodyReader  io.Reader
 }
 
 func (i *HTTPInboundTunnelConnSession) Read(p []byte) (int, error) {
-	if n, err := i.bodyReader.Read(p); err == nil {
-		return n, err
-	}
-	return i.bufReadWriter.Read(p)
+	return i.bufReader.Read(p)
 }
 
 func (i *HTTPInboundTunnelConnSession) Write(p []byte) (int, error) {
-	n, err := i.bufReadWriter.Write(p)
-	i.bufReadWriter.Flush()
-	return n, err
+	return i.rwc.Write(p)
 }
 
 func (i *HTTPInboundTunnelConnSession) Close() error {
-	return i.conn.Close()
+	return i.rwc.Close()
 }
 
 func (i *HTTPInboundTunnelConnSession) Respond() error {
@@ -82,45 +73,35 @@ func (i *HTTPInboundTunnelConnSession) Respond() error {
 	return err
 }
 
-func (i *HTTPInboundTunnelConnSession) parseRequest() error {
-	httpRequest, err := http.ReadRequest(i.bufReadWriter.Reader)
+func (i *HTTPInboundTunnelConnSession) parseRequest() (bool, error) {
+	httpRequest, err := http.ReadRequest(i.bufReader)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if httpRequest.Method != "CONNECT" {
-		return common.NewError("not a connection")
+		return true, common.NewError("not a connection")
 	}
 	i.bodyReader = httpRequest.Body
 	i.httpRequest = httpRequest
 	i.request = parseHTTPRequest(httpRequest)
-	return nil
+	return true, nil
 }
 
 type HTTPInboundPacketSession struct {
 	protocol.PacketSession
 
-	conn          io.ReadWriteCloser
-	bufReadWriter *bufio.ReadWriter
-	request       *protocol.Request
-	httpRequest   *http.Request
+	rwc         io.ReadWriteCloser
+	bufReader   *bufio.Reader
+	request     *protocol.Request
+	httpRequest *http.Request
 }
 
 func (i *HTTPInboundPacketSession) Close() error {
-	return i.conn.Close()
-}
-
-func (i *HTTPInboundPacketSession) GetRequest() *protocol.Request {
-	httpRequest, err := http.ReadRequest(i.bufReadWriter.Reader)
-	if err != nil {
-		return nil
-	}
-	i.httpRequest = httpRequest
-	i.request = parseHTTPRequest(httpRequest)
-	return i.request
+	return i.rwc.Close()
 }
 
 func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
-	httpRequest, err := http.ReadRequest(i.bufReadWriter.Reader)
+	httpRequest, err := http.ReadRequest(i.bufReader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -128,39 +109,38 @@ func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, erro
 	buf := bytes.NewBuffer([]byte{})
 	err = httpRequest.Write(buf)
 	common.Must(err)
+	httpRequest.Body.Close()
 	return request, buf.Bytes(), nil
 }
 
 func (i *HTTPInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	n, err := i.bufReadWriter.Write(packet)
-	i.bufReadWriter.Flush()
+	n, err := i.rwc.Write(packet)
 	return n, err
 }
 
-func NewHTTPInbound(conn io.ReadWriteCloser, rw *bufio.ReadWriter) (protocol.ConnSession, protocol.PacketSession, error) {
-	var bufReadWriter *bufio.ReadWriter
-	if rw == nil {
-		bufReadWriter = common.NewBufReadWriter(conn)
-	} else {
-		bufReadWriter = rw
+func NewHTTPInbound(rwc *common.RewindReadWriteCloser) (protocol.ConnSession, *protocol.Request, protocol.PacketSession, error) {
+	connSession := &HTTPInboundTunnelConnSession{
+		rwc:       rwc,
+		bufReader: bufio.NewReader(rwc),
 	}
-	method, err := bufReadWriter.Peek(7)
+	//rwc.SetBufferSize(128)
+	//DO NOT set buffer again
+	isHTTP, err := connSession.parseRequest()
+	if !isHTTP {
+		//invalid http format
+		return nil, nil, nil, common.NewError("failed to parse http header").Base(err)
+	}
 	if err != nil {
-		return nil, nil, err
+		//http tunnel
+		rwc.SetBufferSize(0)
+		return connSession, connSession.request, nil, nil
 	}
-	if bytes.Equal(method, []byte("CONNECT")) {
-		i := &HTTPInboundTunnelConnSession{
-			bufReadWriter: bufReadWriter,
-			conn:          conn,
-		}
-		if err := i.parseRequest(); err != nil {
-			return nil, nil, common.NewError("failed to parse http header").Base(err)
-		}
-		return i, nil, nil
+	rwc.Rewind()
+	rwc.StopBuffering()
+	packetSession := &HTTPInboundPacketSession{
+		rwc:       rwc,
+		bufReader: bufio.NewReader(rwc),
 	}
-	i := &HTTPInboundPacketSession{
-		bufReadWriter: bufReadWriter,
-		conn:          conn,
-	}
-	return nil, i, nil
+	// TODO release the read buffer
+	return nil, nil, packetSession, nil
 }

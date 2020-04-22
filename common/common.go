@@ -19,7 +19,10 @@ type Runnable interface {
 	Close() error
 }
 
-func NewBufReadWriter(rw io.ReadWriter) *bufio.ReadWriter {
+func NewBufReadWriter2(rw io.ReadWriter) *bufio.ReadWriter {
+	if bufrw, ok := rw.(*bufio.ReadWriter); ok {
+		return bufrw
+	}
 	return bufio.NewReadWriter(bufio.NewReader(rw), bufio.NewWriter(rw))
 }
 

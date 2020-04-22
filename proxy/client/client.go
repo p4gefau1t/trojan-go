@@ -1,11 +1,9 @@
 package client
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"net"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
@@ -35,15 +33,15 @@ type Client struct {
 	common.Runnable
 	proxy.Buildable
 
-	config         *conf.GlobalConfig
-	ctx            context.Context
-	cancel         context.CancelFunc
-	associatedChan chan time.Time
-	router         router.Router
-	meter          stat.TrafficMeter
-	transport      TransportManager
-	tcpListener    net.Listener
-	udpListener    *net.UDPConn
+	config      *conf.GlobalConfig
+	ctx         context.Context
+	cancel      context.CancelFunc
+	associated  common.Notifier
+	router      router.Router
+	meter       stat.TrafficMeter
+	transport   TransportManager
+	tcpListener net.Listener
+	udpListener *net.UDPConn
 }
 
 func (c *Client) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
@@ -65,14 +63,15 @@ func (c *Client) openOutboundConn(req *protocol.Request) (protocol.ConnSession, 
 	return outboundConn, nil
 }
 
-func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
-	inboundConn, err := socks.NewInboundConnSession(conn, rw)
+func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
+	inboundConn, req, err := socks.NewInboundConnSession(rwc)
 	if err != nil {
 		log.Error(common.NewError("failed to start new inbound session").Base(err))
+		rwc.Close()
 		return
 	}
 	defer inboundConn.Close()
-	req := inboundConn.GetRequest()
+	rwc.SetBufferSize(0)
 
 	if req.Command == protocol.Associate {
 		//setting up the bind address to respond
@@ -89,14 +88,9 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		} else {
 			req.AddressType = common.IPv6
 		}
+
 		//notify listenUDP to get ready for relaying udp packets
-		//associateChan cap = 1
-		select {
-		case <-c.associatedChan:
-			log.Debug("replacing older udp associate request")
-		default:
-		}
-		c.associatedChan <- time.Now()
+		c.associated.Signal()
 		log.Info("UDP associated, req", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			log.Error("failed to repsond")
@@ -104,7 +98,7 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 
 		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
-		_, err = conn.Read(buf[:])
+		_, err = rwc.Read(buf[:])
 		log.Debug(common.NewError("UDP conn ends").Base(err))
 		return
 	}
@@ -120,21 +114,21 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 		return
 	}
 	if policy == router.Bypass {
-		outboundConn, err := direct.NewOutboundConnSession(nil, req)
+		outboundConn, err := direct.NewOutboundConnSession(req)
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		log.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+		log.Info("[bypass] conn to", req)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 		return
 	} else if policy == router.Block {
-		log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+		log.Info("[block] conn to", req)
 		return
 	}
 	outboundConn, err := c.openOutboundConn(req)
 	if err != nil {
-		log.Error(common.NewError("failed to open transport").Base(err))
+		log.Error(err)
 		return
 	}
 	defer outboundConn.Close()
@@ -142,16 +136,16 @@ func (c *Client) handleSocksConn(conn net.Conn, rw *bufio.ReadWriter) {
 	proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 }
 
-func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
-	inboundConn, inboundPacket, err := http.NewHTTPInbound(conn, rw)
+func (c *Client) handleHTTPConn(rwc *common.RewindReadWriteCloser) {
+	inboundConn, req, inboundPacket, err := http.NewHTTPInbound(rwc)
 	if err != nil {
 		log.Error(common.NewError("failed to start new inbound session:").Base(err))
 		return
 	}
+	rwc.SetBufferSize(0)
 
 	if inboundConn != nil { //CONNECT request
 		defer inboundConn.Close()
-		req := inboundConn.GetRequest()
 
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			log.Error(common.NewError("failed to respond").Base(err))
@@ -164,16 +158,16 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 		if policy == router.Bypass {
-			outboundConn, err := direct.NewOutboundConnSession(nil, req)
+			outboundConn, err := direct.NewOutboundConnSession(req)
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			log.Info("[bypass]conn from", conn.RemoteAddr(), "to", req)
+			log.Info("[bypass]conn to", req)
 			proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 			return
 		} else if policy == router.Block {
-			log.Info("[block]conn from", conn.RemoteAddr(), "to", req)
+			log.Info("[block]conn to", req)
 			return
 		}
 
@@ -183,7 +177,7 @@ func (c *Client) handleHTTPConn(conn net.Conn, rw *bufio.ReadWriter) {
 			return
 		}
 		defer outboundConn.Close()
-		log.Info("conn from", conn.RemoteAddr(), "tunneling to", req)
+		log.Info("conn tunneling to", req)
 		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
 	} else { //GET/POST
@@ -274,38 +268,33 @@ func (c *Client) listenUDP(errChan chan error) {
 	c.udpListener = listener
 	inboundPacket, err := socks.NewInboundPacketSession(c.ctx, listener)
 	common.Must(err)
-	handlePacket := func() {
-		log.Debug("associated signal")
-		req := &protocol.Request{
-			Address: &common.Address{
-				DomainName:  "UDP_CONN",
-				AddressType: common.DomainName,
-			},
-			Command: protocol.Associate,
-		}
-		outboundConn, err := c.openOutboundConn(req)
-		if err != nil {
-			log.Error(common.NewError("failed to init udp tunnel").Base(err))
-			return
-		}
-		outboundPacket, err := trojan.NewPacketSession(outboundConn)
-		common.Must(err)
-		directOutboundPacket, err := direct.NewOutboundPacketSession(c.ctx)
-		common.Must(err)
-		table := map[router.Policy]protocol.PacketReadWriter{
-			router.Proxy:  outboundPacket,
-			router.Bypass: directOutboundPacket,
-		}
-		proxy.ProxyPacketWithRouter(c.ctx, inboundPacket, table, c.router)
-		outboundPacket.Close()
-		directOutboundPacket.Close()
-	}
 	for {
 		select {
-		case t := <-c.associatedChan:
-			if time.Now().Sub(t) <= protocol.UDPTimeout {
-				handlePacket()
+		case <-c.associated.Wait():
+			log.Debug("associated signal")
+			req := &protocol.Request{
+				Address: &common.Address{
+					DomainName:  "UDP_CONN",
+					AddressType: common.DomainName,
+				},
+				Command: protocol.Associate,
 			}
+			outboundConn, err := c.openOutboundConn(req)
+			if err != nil {
+				log.Error(common.NewError("failed to init udp tunnel").Base(err))
+				return
+			}
+			outboundPacket, err := trojan.NewPacketSession(outboundConn)
+			common.Must(err)
+			directOutboundPacket, err := direct.NewOutboundPacketSession(c.ctx)
+			common.Must(err)
+			table := map[router.Policy]protocol.PacketReadWriter{
+				router.Proxy:  outboundPacket,
+				router.Bypass: directOutboundPacket,
+			}
+			proxy.ProxyPacketWithRouter(c.ctx, inboundPacket, table, c.router)
+			outboundPacket.Close()
+			directOutboundPacket.Close()
 		case <-c.ctx.Done():
 			return
 		}
@@ -326,17 +315,20 @@ func (c *Client) listenTCP(errChan chan error) {
 			errChan <- common.NewError("error occured when accpeting conn").Base(err)
 			return
 		}
-		rw := common.NewBufReadWriter(conn)
-		tmp, err := rw.Peek(1)
+		//rw := common.NewBufReadWriter2(conn)
+		rwc := common.NewRewindReadWriteCloser(conn)
+		rwc.SetBufferSize(128)
+		first, err := rwc.ReadByte()
 		if err != nil {
 			log.Error(common.NewError("failed to obtain proxy type").Base(err))
-			conn.Close()
+			rwc.Close()
 			continue
 		}
-		if tmp[0] == 0x05 {
-			go c.handleSocksConn(conn, rw)
+		rwc.Rewind()
+		if first == 0x05 {
+			go c.handleSocksConn(rwc)
 		} else {
-			go c.handleHTTPConn(conn, rw)
+			go c.handleHTTPConn(rwc)
 		}
 	}
 }
@@ -375,7 +367,6 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		DefaultPolicy: router.Proxy,
 	}
 	c.meter = &stat.MemoryTrafficMeter{}
-	c.associatedChan = make(chan time.Time, 1)
 	var err error
 	if config.Mux.Enabled {
 		log.Info("mux enabled")

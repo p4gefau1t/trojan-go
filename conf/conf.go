@@ -123,6 +123,7 @@ type GlobalConfig struct {
 	TargetPort int             `json:"target_port"`
 	RemoteHost string          `json:"remote_addr"`
 	RemotePort int             `json:"remote_port"`
+	BufferSize int             `json:"buffer_size"`
 	Passwords  []string        `json:"password"`
 	DNS        []string        `json:"dns"`
 	TLS        TLSConfig       `json:"ssl"`

@@ -2,7 +2,6 @@ package trojan
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -73,6 +72,7 @@ func (w *wsHttpResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return w.Conn, w.ReadWriter, nil
 }
 
+// TODO wrap this with a struct
 var tlsSessionCache = tls.NewLRUClientSessionCache(-1)
 
 func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
@@ -121,22 +121,15 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	return tlsConn, nil
 }
 
-func NewInboundWebsocket(ctx context.Context, conn io.ReadWriteCloser, rw *bufio.ReadWriter, config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
-	correct := "GET " + config.Websocket.Path + " HTTP/1.1\r\n"
-	first, err := rw.Peek(len(correct))
+func NewInboundWebsocket(ctx context.Context, conn net.Conn, r *common.RewindReader, config *conf.GlobalConfig) (io.ReadWriteCloser, error) {
+	bufrw := bufio.NewReadWriter(bufio.NewReader(r), bufio.NewWriter(conn))
+	httpRequest, err := http.ReadRequest(bufrw.Reader)
 	if err != nil {
-		return nil, err
-	}
-	if !bytes.Equal([]byte(correct), first) {
-		//it may be a normal trojan conn
-		log.Debug("not a ws conn", string(first))
 		return nil, nil
 	}
 
-	httpRequest, err := http.ReadRequest(rw.Reader)
-	if err != nil {
-		//malformed http request
-		return nil, err
+	if httpRequest.Host != config.Websocket.HostName || httpRequest.URL.Path != config.Websocket.Path || httpRequest.Header.Get("Upgrade") != "websocket" {
+		return nil, common.NewError("invalid ws url or hostname")
 	}
 
 	url := "wss://" + config.Websocket.HostName + config.Websocket.Path
@@ -155,6 +148,7 @@ func NewInboundWebsocket(ctx context.Context, conn io.ReadWriteCloser, rw *bufio
 			//this function will NOT return unless the connection is ended
 			//or the websocket will be closed by ServeHTTP method
 			<-ctx.Done()
+			log.Debug("websocket closed")
 		},
 		Handshake: func(wsConfig *websocket.Config, httpRequest *http.Request) error {
 			log.Debug("websocket url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
@@ -163,8 +157,8 @@ func NewInboundWebsocket(ctx context.Context, conn io.ReadWriteCloser, rw *bufio
 	}
 
 	responseWriter := &wsHttpResponseWriter{
-		Conn:       conn.(net.Conn),
-		ReadWriter: rw,
+		Conn:       conn,
+		ReadWriter: bufrw,
 	}
 	go wsServer.ServeHTTP(responseWriter, httpRequest)
 

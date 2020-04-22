@@ -129,7 +129,7 @@ func addWsConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 		Enabled:  true,
 		HostName: "127.0.0.1",
 		Path:     "/websocket",
-		Password: "wspassword",
+		//Password: "wspassword",
 	}
 	return config
 }
@@ -225,9 +225,10 @@ func CheckForwardServer(t *testing.T, clientConfig *conf.GlobalConfig, serverCon
 	if !bytes.Equal(sendBuf, recvBuf) {
 		t.Fatal("not equal")
 	}
-
 	conn.Close()
+
 	conn, err = net.Dial("udp", "127.0.0.1:4444")
+	common.Must(err)
 	common.Must2(conn.Write(sendBuf))
 	common.Must2(conn.Read(recvBuf))
 	if !bytes.Equal(sendBuf, recvBuf) {
@@ -289,5 +290,17 @@ func TestWebsocketMux(t *testing.T) {
 func BenchmarkNormal(b *testing.B) {
 	clientConfig := getBasicClientConfig()
 	serverConfig := getBasicServerConfig()
+	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+}
+
+func BenchmarkMux(b *testing.B) {
+	clientConfig := addMuxConfig(getBasicClientConfig())
+	serverConfig := getBasicServerConfig()
+	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+}
+
+func BenchmarkWebsocket(b *testing.B) {
+	clientConfig := addWsConfig(getBasicClientConfig())
+	serverConfig := addWsConfig(getBasicServerConfig())
 	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
 }

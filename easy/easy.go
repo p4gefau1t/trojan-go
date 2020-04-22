@@ -3,7 +3,6 @@ package easy
 import (
 	"flag"
 	"fmt"
-	"net/http"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -94,17 +93,6 @@ func (o *EasyOption) Handle() error {
 		if *o.remote == "" {
 			log.Fatal("-remote is empty, you should fill in a valid web server address, e.g. 127.0.0.1:80")
 		}
-		//check web server
-		resp, err := http.Get("http://" + *o.remote)
-		if err != nil {
-			log.Fatal(common.NewError(*o.remote + " is not a valid web server").Base(err))
-		}
-		buf := [128]byte{}
-		_, err = resp.Body.Read(buf[:])
-		if err != nil {
-			log.Fatal(common.NewError(*o.remote + " is not a valid web server").Base(err))
-		}
-		log.Debug(string(buf[:]))
 		if *o.local == "" {
 			log.Warn("server local addr is unspecified, using 0.0.0.0:443")
 			*o.local = "0.0.0.0:443"

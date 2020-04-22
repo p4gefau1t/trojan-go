@@ -1,7 +1,7 @@
 package trojan
 
 import (
-	"bufio"
+	"bytes"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -15,13 +15,12 @@ type TrojanOutboundConnSession struct {
 	protocol.ConnSession
 	protocol.NeedMeter
 
-	config        *conf.GlobalConfig
-	conn          io.ReadWriteCloser
-	bufReadWriter *bufio.ReadWriter
-	request       *protocol.Request
-	sent          uint64
-	recv          uint64
-	meter         stat.TrafficMeter
+	config  *conf.GlobalConfig
+	rwc     io.ReadWriteCloser
+	request *protocol.Request
+	sent    uint64
+	recv    uint64
+	meter   stat.TrafficMeter
 }
 
 func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
@@ -29,17 +28,16 @@ func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
 }
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
-	n, err := o.bufReadWriter.Write(p)
+	n, err := o.rwc.Write(p)
 	if o.meter != nil {
 		o.meter.Count("", uint64(n), 0)
 	}
 	o.sent += uint64(n)
-	o.bufReadWriter.Flush()
 	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
-	n, err := o.bufReadWriter.Read(p)
+	n, err := o.rwc.Read(p)
 	if o.meter != nil {
 		o.meter.Count("", 0, uint64(n))
 	}
@@ -49,7 +47,7 @@ func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
 
 func (o *TrojanOutboundConnSession) Close() error {
 	log.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
-	return o.conn.Close()
+	return o.rwc.Close()
 }
 
 func (o *TrojanOutboundConnSession) writeRequest() error {
@@ -58,21 +56,22 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 		hash = k
 		break
 	}
+	buf := bytes.NewBuffer(make([]byte, 0, 128))
 	crlf := []byte("\r\n")
-	o.bufReadWriter.Write([]byte(hash))
-	o.bufReadWriter.Write(crlf)
-	o.bufReadWriter.WriteByte(byte(o.request.Command))
-	protocol.WriteAddress(o.bufReadWriter, o.request)
-	o.bufReadWriter.Write(crlf)
-	return o.bufReadWriter.Flush()
+	buf.Write([]byte(hash))
+	buf.Write(crlf)
+	buf.WriteByte(byte(o.request.Command))
+	protocol.WriteAddress(buf, o.request)
+	buf.Write(crlf)
+	_, err := o.rwc.Write(buf.Bytes())
+	return err
 }
 
-func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
+func NewOutboundConnSession(req *protocol.Request, rwc io.ReadWriteCloser, config *conf.GlobalConfig) (protocol.ConnSession, error) {
 	o := &TrojanOutboundConnSession{
-		request:       req,
-		config:        config,
-		conn:          conn,
-		bufReadWriter: common.NewBufReadWriter(conn),
+		request: req,
+		config:  config,
+		rwc:     rwc,
 	}
 	if err := o.writeRequest(); err != nil {
 		return nil, common.NewError("failed to write request").Base(err)

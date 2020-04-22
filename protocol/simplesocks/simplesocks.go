@@ -1,7 +1,7 @@
 package simplesocks
 
 import (
-	"bufio"
+	"bytes"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -14,20 +14,18 @@ import (
 type SimpleSocksConnSession struct {
 	protocol.ConnSession
 	protocol.NeedMeter
-	protocol.HasRequest
 
-	config        *conf.GlobalConfig
-	request       *protocol.Request
-	bufReadWriter *bufio.ReadWriter
-	conn          io.ReadWriteCloser
-	passwordHash  string
-	meter         stat.TrafficMeter
-	recv          uint64
-	sent          uint64
+	config       *conf.GlobalConfig
+	request      *protocol.Request
+	rwc          io.ReadWriteCloser
+	passwordHash string
+	meter        stat.TrafficMeter
+	recv         uint64
+	sent         uint64
 }
 
 func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
-	n, err := m.bufReadWriter.Read(p)
+	n, err := m.rwc.Read(p)
 	m.recv += uint64(n)
 	if m.meter != nil {
 		m.meter.Count(m.passwordHash, 0, uint64(n))
@@ -36,8 +34,7 @@ func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
 }
 
 func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
-	n, err := m.bufReadWriter.Write(p)
-	m.bufReadWriter.Flush()
+	n, err := m.rwc.Write(p)
 	m.sent += uint64(n)
 	if m.meter != nil {
 		m.meter.Count(m.passwordHash, uint64(n), 0)
@@ -46,8 +43,8 @@ func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
 }
 
 func (m *SimpleSocksConnSession) Close() error {
-	log.Info("mux conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
-	return m.conn.Close()
+	log.Info("simplesocks conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
+	return m.rwc.Close()
 }
 
 func (m *SimpleSocksConnSession) SetMeter(meter stat.TrafficMeter) {
@@ -59,11 +56,11 @@ func (m *SimpleSocksConnSession) GetRequest() *protocol.Request {
 }
 
 func (m *SimpleSocksConnSession) parseRequest() error {
-	cmd, err := m.bufReadWriter.ReadByte()
+	cmd, err := common.ReadByte(m.rwc)
 	if err != nil {
 		return common.NewError("failed to read cmd").Base(err)
 	}
-	addr, err := protocol.ParseAddress(m.bufReadWriter, "tcp")
+	addr, err := protocol.ParseAddress(m.rwc, "tcp")
 	if err != nil {
 		return common.NewError("failed to parse addr").Base(err)
 	}
@@ -76,28 +73,28 @@ func (m *SimpleSocksConnSession) parseRequest() error {
 }
 
 func (m *SimpleSocksConnSession) writeRequest(req *protocol.Request) error {
-	m.bufReadWriter.WriteByte(byte(req.Command))
-	common.Must(protocol.WriteAddress(m.bufReadWriter, req))
+	buf := bytes.NewBuffer(make([]byte, 0, 64))
+	common.Must(buf.WriteByte(byte(req.Command)))
+	common.Must(protocol.WriteAddress(buf, req))
 	m.request = req
-	return m.bufReadWriter.Flush()
+	_, err := m.rwc.Write(buf.Bytes())
+	return err
 }
 
-func NewInboundSimpleSocksConnSession(conn io.ReadWriteCloser, passwordHash string) (protocol.ConnSession, error) {
+func NewInboundConnSession(conn io.ReadWriteCloser) (protocol.ConnSession, *protocol.Request, error) {
 	m := &SimpleSocksConnSession{
-		conn:          conn,
-		bufReadWriter: common.NewBufReadWriter(conn),
+		rwc: conn,
 	}
 	if err := m.parseRequest(); err != nil {
-		return nil, common.NewError("failed to parse mux request").Base(err)
+		return nil, nil, common.NewError("failed to parse mux request").Base(err)
 	}
-	return m, nil
+	return m, m.request, nil
 }
 
 func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser) (protocol.ConnSession, error) {
 	m := &SimpleSocksConnSession{
-		conn:          conn,
-		bufReadWriter: common.NewBufReadWriter(conn),
-		passwordHash:  "LOCAL_USER",
+		rwc:          conn,
+		passwordHash: "LOCAL_USER",
 	}
 	if err := m.writeRequest(req); err != nil {
 		return nil, common.NewError("failed to write mux request").Base(err)
