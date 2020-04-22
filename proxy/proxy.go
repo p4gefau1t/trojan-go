@@ -15,11 +15,10 @@ type Buildable interface {
 	Build(config *conf.GlobalConfig) (common.Runnable, error)
 }
 
-func ProxyConn(ctx context.Context, a, b io.ReadWriter) {
+func ProxyConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
 	errChan := make(chan error, 2)
 	copyConn := func(dst io.Writer, src io.Reader) {
-		//_, err := io.Copy(dst, src)
-		buf := make([]byte, 1024*1024*1024*2)
+		buf := make([]byte, bufferSize)
 		_, err := io.CopyBuffer(dst, src, buf)
 		errChan <- err
 	}

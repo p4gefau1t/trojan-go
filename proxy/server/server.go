@@ -49,7 +49,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		}
 		log.Info("mux tunneling to", req.String())
 		defer outboundConn.Close()
-		proxy.ProxyConn(s.ctx, inboundConn, outboundConn)
+		proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 	case protocol.Associate:
 		outboundPacket, err := direct.NewOutboundPacketSession(s.ctx)
 		common.Must(err)
@@ -108,7 +108,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer outboundConn.Close()
 
 	log.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
-	proxy.ProxyConn(s.ctx, inboundConn, outboundConn)
+	proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 }
 
 func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
@@ -138,7 +138,7 @@ func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
 		}
 		log.Warn("proxying this invalid tls conn to the tls fallback server")
 		remote.Write(buf)
-		proxy.ProxyConn(s.ctx, conn, remote)
+		proxy.ProxyConn(s.ctx, conn, remote, s.config.BufferSize)
 	} else {
 		log.Warn("tls fallback port is unspecified, closing")
 	}

@@ -18,6 +18,13 @@ func loadCommonConfig(config *GlobalConfig) error {
 	//log level
 	log.SetLogLevel(log.LogLevel(config.LogLevel))
 
+	//buffer size, 4KiB to 4MB
+	if config.BufferSize < 4 || config.BufferSize > 4096 {
+		return common.NewError("invalid buffer size, 4 < buffer_size < 4096")
+	}
+
+	config.BufferSize *= 1024
+
 	//password settings
 	if len(config.Passwords) == 0 {
 		if config.RunType == Client {
@@ -274,6 +281,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 
 	//default settings
 	config.LogLevel = 1
+	config.BufferSize = 512
 	config.TLS.Verify = true
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true

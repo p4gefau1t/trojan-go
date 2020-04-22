@@ -5,10 +5,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"net"
 	"testing"
 	"time"
 
+	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -17,6 +20,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
 	"golang.org/x/net/proxy"
+	"golang.org/x/net/websocket"
 )
 
 var cert string = `
@@ -104,12 +108,18 @@ func getHash(password string) map[string]string {
 	return m
 }
 
+func getPasswords(password string) []string {
+	return []string{password}
+}
+
 func getBasicServerConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
 		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
-		RemoteAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
+		RemoteAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("trojanpassword"),
+		Passwords:     getPasswords("trojanpassword"),
+		BufferSize:    512 * 1024,
 	}
 	return config
 }
@@ -120,16 +130,18 @@ func getBasicClientConfig() *conf.GlobalConfig {
 		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("trojanpassword"),
+		Passwords:     getPasswords("trojanpassword"),
+		BufferSize:    512 * 1024,
 	}
 	return config
 }
 
 func addWsConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 	config.Websocket = conf.WebsocketConfig{
-		Enabled:  true,
-		HostName: "127.0.0.1",
-		Path:     "/websocket",
-		//Password: "wspassword",
+		Enabled:     true,
+		HostName:    "127.0.0.1",
+		Path:        "/websocket",
+		Obfsucation: true,
 	}
 	return config
 }
@@ -303,4 +315,43 @@ func BenchmarkWebsocket(b *testing.B) {
 	clientConfig := addWsConfig(getBasicClientConfig())
 	serverConfig := addWsConfig(getBasicServerConfig())
 	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+}
+
+func TestHTTPProxy(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go RunHelloHTTPServer(ctx)
+	serverConfig := addWsConfig(getBasicServerConfig())
+	go RunServer(ctx, serverConfig)
+	time.Sleep(time.Second)
+
+	//test http
+	httpClient := &http.Client{
+		//some config
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	resp, err := httpClient.Get("https://127.0.0.1:4445")
+	common.Must(err)
+	body, err := ioutil.ReadAll(resp.Body)
+	common.Must(err)
+	if string(body) != "HelloWorld" {
+		t.Fatal("server http proxy failed")
+	}
+
+	//test websocket
+	conn, err := tls.Dial("tcp", "127.0.0.1:4445", &tls.Config{InsecureSkipVerify: true})
+	common.Must(err)
+	wsConfig, err := websocket.NewConfig("wss://127.0.0.1/websocket", "https://127.0.0.1")
+	common.Must(err)
+	wsClient, err := websocket.NewClient(wsConfig, conn)
+	common.Must(err)
+	buf := [100]byte{}
+	common.Must2(wsClient.Write([]byte("I'm GFW")))
+	wsClient.Read(buf[:])
+	fmt.Println(buf)
+	common.Must(err)
+	cancel()
 }

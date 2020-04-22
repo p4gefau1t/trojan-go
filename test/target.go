@@ -6,10 +6,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
+	"golang.org/x/net/websocket"
 )
 
 func RunEchoUDPServer(ctx context.Context) {
@@ -75,6 +77,31 @@ func RunBlackHoleTCPServer(ctx context.Context) {
 		}
 	}()
 	<-ctx.Done()
+}
+
+func RunHelloHTTPServer(ctx context.Context) {
+	httpHello := func(w http.ResponseWriter, req *http.Request) {
+		w.Write([]byte("HelloWorld"))
+	}
+
+	wsConfig, err := websocket.NewConfig("wss://127.0.0.1/websocket", "https://127.0.0.1")
+	common.Must(err)
+	wsServer := websocket.Server{
+		Config: *wsConfig,
+		Handler: func(conn *websocket.Conn) {
+			conn.Write([]byte("HelloWorld"))
+		},
+		Handshake: func(wsConfig *websocket.Config, httpRequest *http.Request) error {
+			log.Debug("websocket url", httpRequest.URL, "origin", httpRequest.Header.Get("Origin"))
+			return nil
+		},
+	}
+	http.HandleFunc("/", httpHello)
+	http.HandleFunc("/websocket", wsServer.ServeHTTP)
+	server := http.Server{Addr: "127.0.0.1:10080"}
+	server.ListenAndServe()
+	<-ctx.Done()
+	server.Close()
 }
 
 func GeneratePayload(length int) []byte {

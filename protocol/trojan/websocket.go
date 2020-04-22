@@ -5,8 +5,8 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha1"
 	"crypto/tls"
 	"io"
 	"net"
@@ -17,14 +17,16 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/net/websocket"
 )
 
-//this AES layer is used for obfuscation purpose
+//this AES layer is used for obfuscation purpose only
 type obfReadWriteCloser struct {
 	*websocket.Conn
-	r cipher.StreamReader
-	w cipher.StreamWriter
+	r     cipher.StreamReader
+	w     cipher.StreamWriter
+	bufrw *bufio.ReadWriter
 }
 
 func (rwc *obfReadWriteCloser) Read(p []byte) (int, error) {
@@ -32,30 +34,68 @@ func (rwc *obfReadWriteCloser) Read(p []byte) (int, error) {
 }
 
 func (rwc *obfReadWriteCloser) Write(p []byte) (int, error) {
-	return rwc.w.Write(p)
+	n, err := rwc.w.Write(p)
+	rwc.bufrw.Flush()
+	return n, err
 }
 
 func (rwc *obfReadWriteCloser) Close() error {
 	return rwc.Conn.Close()
 }
 
-func NewObfReadWriteCloser(password string, conn *websocket.Conn, iv []byte) *obfReadWriteCloser {
-	md5Hash := md5.New()
-	md5Hash.Write([]byte(password))
-	key := md5Hash.Sum(nil)
+func NewOutboundObfReadWriteCloser(password string, conn *websocket.Conn) *obfReadWriteCloser {
+	//use bufio to avoid fixed ws packet length
+	bufrw := common.NewBufioReadWriter(conn)
+	randomBytes := [aes.BlockSize + 8]byte{}
+	common.Must2(io.ReadFull(rand.Reader, randomBytes[:]))
+	bufrw.Write(randomBytes[:])
+
+	iv := randomBytes[:aes.BlockSize]
+	salt := randomBytes[aes.BlockSize:]
+	key := pbkdf2.Key([]byte(password), salt, 32, aes.BlockSize, sha1.New)
 	block, err := aes.NewCipher(key)
 	common.Must(err)
+
 	return &obfReadWriteCloser{
-		Conn: conn,
 		r: cipher.StreamReader{
-			S: cipher.NewCTR(block, iv),
-			R: conn,
+			S: cipher.NewCTR(block, iv[:]),
+			R: bufrw,
 		},
 		w: cipher.StreamWriter{
-			S: cipher.NewCTR(block, iv),
-			W: conn,
+			S: cipher.NewCTR(block, iv[:]),
+			W: bufrw,
 		},
+		Conn:  conn,
+		bufrw: bufrw,
 	}
+}
+
+func NewInboundObfReadWriteCloser(password string, conn *websocket.Conn) (*obfReadWriteCloser, error) {
+	bufrw := common.NewBufioReadWriter(conn)
+	randomBytes := [aes.BlockSize + 8]byte{}
+	_, err := bufrw.Read(randomBytes[:])
+	if err != nil {
+		return nil, err
+	}
+
+	iv := randomBytes[:aes.BlockSize]
+	salt := randomBytes[aes.BlockSize:]
+	key := pbkdf2.Key([]byte(password), salt, 32, aes.BlockSize, sha1.New)
+	block, err := aes.NewCipher(key)
+	common.Must(err)
+
+	return &obfReadWriteCloser{
+		r: cipher.StreamReader{
+			S: cipher.NewCTR(block, iv[:]),
+			R: bufrw,
+		},
+		w: cipher.StreamWriter{
+			S: cipher.NewCTR(block, iv[:]),
+			W: bufrw,
+		},
+		Conn:  conn,
+		bufrw: bufrw,
+	}, nil
 }
 
 //Fake response writer
@@ -87,11 +127,8 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 		return nil, err
 	}
 	var transport net.Conn = wsConn
-	if config.Websocket.Password != "" {
-		iv := [aes.BlockSize]byte{}
-		rand.Reader.Read(iv[:])
-		wsConn.Write(iv[:])
-		transport = NewObfReadWriteCloser(config.Websocket.Password, wsConn, iv[:])
+	if config.Websocket.Obfsucation {
+		transport = NewOutboundObfReadWriteCloser(config.Passwords[0], wsConn)
 	}
 	if !config.Websocket.DoubleTLS {
 		return transport, nil
@@ -172,11 +209,11 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, r *common.RewindRea
 	}
 
 	var transport net.Conn = wsConn
-	if config.Websocket.Password != "" {
-		iv := [aes.BlockSize]byte{}
-		rand.Reader.Read(iv[:])
-		wsConn.Read(iv[:])
-		transport = NewObfReadWriteCloser(config.Websocket.Password, wsConn, iv[:])
+	if config.Websocket.Obfsucation {
+		transport, err = NewInboundObfReadWriteCloser(config.Passwords[0], wsConn)
+		if err != nil {
+			return nil, common.NewError("failed to init obf layer").Base(err)
+		}
 	}
 	if !config.Websocket.DoubleTLS {
 		return transport, nil

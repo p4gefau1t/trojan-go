@@ -120,7 +120,7 @@ func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
 			return
 		}
 		log.Info("[bypass] conn to", req)
-		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
+		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 		return
 	} else if policy == router.Block {
 		log.Info("[block] conn to", req)
@@ -133,7 +133,7 @@ func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
 	}
 	defer outboundConn.Close()
 	outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
-	proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
+	proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 }
 
 func (c *Client) handleHTTPConn(rwc *common.RewindReadWriteCloser) {
@@ -164,7 +164,7 @@ func (c *Client) handleHTTPConn(rwc *common.RewindReadWriteCloser) {
 				return
 			}
 			log.Info("[bypass]conn to", req)
-			proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
+			proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 			return
 		} else if policy == router.Block {
 			log.Info("[block]conn to", req)
@@ -179,7 +179,7 @@ func (c *Client) handleHTTPConn(rwc *common.RewindReadWriteCloser) {
 		defer outboundConn.Close()
 		log.Info("conn tunneling to", req)
 		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
-		proxy.ProxyConn(c.ctx, inboundConn, outboundConn)
+		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 	} else { //GET/POST
 		defer inboundPacket.Close()
 		packetChan := make(chan *packetInfo, 512)

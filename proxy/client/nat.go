@@ -62,7 +62,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 	}
 	defer outboundConn.Close()
 	log.Info("[transparent]conn from", conn.RemoteAddr(), "tunneling to", req)
-	proxy.ProxyConn(n.ctx, inboundConn, outboundConn)
+	proxy.ProxyConn(n.ctx, inboundConn, outboundConn, n.config.BufferSize)
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
