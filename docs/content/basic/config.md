@@ -19,7 +19,7 @@ weight: 22
 为了伪装成一个正常的HTTPS站点，也为了保证传输的安全，我们需要一份经过权威证书机构签名的证书。Trojan-Go支持从Let's Encrypt自动申请证书。首先将你的域名正确解析到你的服务器IP。然后准备好一个邮箱地址，合乎邮箱地址规则即可，不需要真实邮箱地址。保证你的服务器443和80端口没有被其他程序（nginx，apache，正在运行的Trojan等）占用。然后执行
 
 ```
-sudo ./trojan-go -cert request
+sudo ./trojan-go -autocert request
 ```
 
 按照屏幕提示填入相关信息。如果操作成功，当前目录下将得到四个文件
@@ -38,10 +38,10 @@ sudo ./trojan-go -cert request
 
 
 ```
-sudo ./trojan-go -cert renew
+sudo ./trojan-go -autocert renew
 ```
 
-进行证书更新。更新之前请确保同目录下有上述的四个文件。
+进行证书更新。更新之前请确保同目录下有上述的四个文件。如果你没有制定ACME challenge使用的端口，Trojan-Go将默认使用443和80端口，请确保这两个端口没有被Trojan-Go或者其他程序（nginx, caddy等等）占用。
 
 ### 服务端配置
 

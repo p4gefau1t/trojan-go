@@ -53,7 +53,7 @@ weight: 30
         "no_delay": false,
         "reuse_port": false,
         "prefer_ipv4": false,
-        "fast_open": false,
+        "fast_open": false
     },
     "mux": {
         "enabled": false,
@@ -92,21 +92,21 @@ weight: 30
 
 ### 一般选项
 
-- 对于client或者nat，```remote_xxxx```应当填写你的trojan服务器地址和端口号，```local_xxxx```对应本地开放的socks5/http代理地址（自动适配）
+对于client/nat/forward，```remote_xxxx```应当填写你的trojan服务器地址和端口号，```local_xxxx```对应本地开放的socks5/http代理地址（自动适配）
 
-- 对于server，```local_xxxx```对应trojan服务器监听地址（强烈建议使用443端口），```remote_xxxx```填写发现非trojan流量时代理到的Web服务地址，通常填写本地80端口。
+对于server，```local_xxxx```对应trojan服务器监听地址（强烈建议使用443端口），```remote_xxxx```填写发现非trojan流量时代理到的Web服务地址，通常填写本地80端口。
 
-- ```log_level```是日志等级，等级越高，输出的信息越少，0输出所有信息，1输出Info以上信息，2输出Warning以上信息，3输出Error以上信息，4输出Fatal以上信息，5完全不输出日志。
+```log_level```是日志等级，等级越高，输出的信息越少，0输出所有日志，1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。
 
-- ```password```可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，与服务端配置文件中或者在数据库中的密码记录一致，才能使用trojan代理。
+```password```可以填入多个密码。除了使用配置文件配置密码之外，Trojan-Go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
 
 ### ```ssl```选项
 
 ```verify```表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启```verify```会导致校验失败。这种情况下，应当保持```verify```开启，然后在```cert```中填写服务端的证书，即可正常连接。
 
-```verify_hostname```表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI是否相符。
+```verify_hostname```表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI字段的一致性。
 
-server必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。client可以不填写。如果使用自签名或者自签发的证书，应当在client的```cert```处填入服务器证书文件，否则可能导致校验失败。
+服务端必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写```cert```。如果使用自签名或者自签发的证书，应当在的```cert```处填入服务器证书文件，否则可能导致校验失败。
 
 ```sni```指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
@@ -116,7 +116,9 @@ server必须填入```cert```和```key```，对应服务器的证书和私钥文�
 cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384"
 ```
 
-TLS Fallback(```fallback_port```)是Trojan-Go的特性，此特性可以更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问http://your_domain_name.com:443进行验证。
+```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
+
+```fallback_port```指TLS握手失败时，Trojan-Go将该连接代理到该端口上。这是Trojan-Go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问http://your_domain_name.com:443进行验证。
 
 ### ```mux```多路复用选项
 
@@ -140,6 +142,8 @@ TLS Fallback(```fallback_port```)是Trojan-Go的特性，此特性可以更好�
 
 在```proxy```, ```bypass```, ```block```字段中填入对应列表文件名或者geoip/geosite标签名，Trojan-Go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，Trojan-Go会自动识别。
 
+```enabled```是否开启路由模块。
+
 ```route_by_ip``` 开启后，所有域名会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS泄露。
 
 ```route_by_ip_on_nonmatch```开启后，如果一个域名不在三个列表中，则会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS泄露。
@@ -148,23 +152,23 @@ TLS Fallback(```fallback_port```)是Trojan-Go的特性，此特性可以更好�
 
 ### ```websocket```选项
 
-Websocket传输是Trojan-Go的特性。在直接连接服务器的情况下，开启这个选项不会提升线路质量，也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
+Websocket传输是Trojan-Go的特性。在**正常的直接连接服务器节点**的情况下，开启这个选项不会提升线路质量（甚至有可能下降），也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
 
 - 你需要利用CDN进行流量中转
 
-- 你到代理节点的TLS连接遭到了GFW的中间人攻击
+- 你到代理节点的直接TLS连接遭到了GFW的中间人攻击
 
 *警告：由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以查看Websocket流量传输内容。如果你使用了国内CDN，务必开启double_tls进行双重加密，并使用password进行流量混淆*
 
-```enabled```表示是否启用websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。
+```enabled```表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。
 
-```path```指的是websocket使用的URL路径，必须以斜杠("/")开头，并且服务器和客户端必须一致。
+```path```指的是Websocket使用的URL路径，必须以斜杠("/")开头，如"/longlongwebsocketpath"，并且服务器和客户端必须一致。
 
-```hostname```websocket握手时使用的主机名，如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
+```hostname```Websocket握手时使用的主机名，如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
 
-```double_tls```是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于使CDN运营商（或MITM攻击者）也无法查看流量内容。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+```double_tls```是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，如果需要更改，请自行斟酌安全性和性能的平衡。
 
-```password```混淆密码，留空则不启用混淆。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果设置了密码，服务端和客户端必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+```password```混淆密码，留空则不启用混淆。用于加密混淆Websocket连接内容以消除Websocket所承载流量（Trojan或者TLS）的特征。如果设置了密码，服务端和客户端必须相同。只使用混淆而不使用双重TLS有可能导致遭到重放攻击。这个选项对性能有一定影响，如果需要更改，请自行斟酌安全性和性能的平衡。
 
 ### ```mysql```数据库选项
 
