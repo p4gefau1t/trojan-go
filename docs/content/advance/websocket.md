@@ -15,7 +15,7 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
     "enabled": true,
     "path": "/imaurlpath",
     "hostname": "www.your_awesome_domain_name.com",
-    "password": "another_password",
+    "obfuscation": true,
     "double_tls": true
 }
 ```
@@ -30,7 +30,7 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 ```double_tls```表示是否开启双重TLS，如果省略，默认设置为true。因为Trojan-Go与CDN进行了TLS握手，对于CDN而言，TLS流量内容是明文。为了保证安全性，Trojan-Go默认将在Websocket连接上再建立一次TLS连接（双重TLS）。此时传输实际上经过了两次TLS握手，并且这个TLS隧道的证书校验被**强制开启**。
 
-```password```是流量混淆密码。如果你使用了国内的CDN，建议设置```password```字段进行流量混淆，Trojan-Go将使用该密码对Websocket承载的流量再进行一次加密(AES-128-CTR)。注意这个字段的作用仅仅是**混淆**TLS的特征，防止被国内的CDN识别和封锁Trojan流量。无论是否使用二次加密，传输的安全性都可以由第二层TLS隧道保证。注意确保服务端和客户端混淆密码一致。
+```obfuscation```是否启用websocket流量加密。如果你使用了国内的CDN，建议设置```obfuscation```字段进行流量加密，Trojan-Go将对Websocket承载的流量再进行一次加密(AES-128-CTR，密钥派生自```password```)。注意这个字段的主要目的仅仅是**混淆**TLS的特征，防止被国内的CDN识别和封锁Trojan流量，**它无法确保传输数据安全性**。传输的安全性都应该由第二层TLS隧道保证。
 
 如果你想提高传输的性能和吞吐量，可以将```double_tls```设为false或者将```password```设为空，此时websocket将会直接承载Trojan协议。但是出于安全性考虑，还是建议至少开启混淆和双重TLS中至少一项。
 

@@ -34,6 +34,7 @@ func (o *EasyOption) Handle() error {
 	if *o.password == "" {
 		log.Fatal("empty password is not allowed")
 	}
+	log.Info("easy mode enabled, trojan-go will NOT use the config file")
 	if *o.client {
 		clientConfigFormat := `
 {
@@ -53,14 +54,15 @@ func (o *EasyOption) Handle() error {
 		}
 		localHost, localPort, err := net.SplitHostPort(*o.local)
 		if err != nil {
-			log.Fatal(common.NewError("invalid local addr format").Base(err))
+			log.Fatal(common.NewError("invalid local addr format:" + *o.local).Base(err))
 		}
 		remoteHost, remotePort, err := net.SplitHostPort(*o.remote)
 		if err != nil {
-			log.Fatal(common.NewError("invalid remote addr format").Base(err))
+			log.Fatal(common.NewError("invalid remote addr format:" + *o.remote).Base(err))
 		}
 		clientConfigJSON := fmt.Sprintf(clientConfigFormat, localHost, localPort, remoteHost, remotePort, *o.password)
-		log.Debug(clientConfigJSON)
+		log.Info("generated config:")
+		log.Info(clientConfigJSON)
 		config, err := conf.ParseJSON([]byte(clientConfigJSON))
 		if err != nil {
 			log.Fatal(config)
@@ -91,7 +93,8 @@ func (o *EasyOption) Handle() error {
 }
 		`
 		if *o.remote == "" {
-			log.Fatal("-remote is empty, you should fill in a valid web server address, e.g. 127.0.0.1:80")
+			log.Warn("server remote addr is unspecified, using 127.0.0.1:80")
+			*o.remote = "127.0.0.1:80"
 		}
 		if *o.local == "" {
 			log.Warn("server local addr is unspecified, using 0.0.0.0:443")
@@ -99,14 +102,15 @@ func (o *EasyOption) Handle() error {
 		}
 		localHost, localPort, err := net.SplitHostPort(*o.local)
 		if err != nil {
-			log.Fatal(common.NewError("invalid local addr format").Base(err))
+			log.Fatal(common.NewError("invalid local addr format:" + *o.local).Base(err))
 		}
 		remoteHost, remotePort, err := net.SplitHostPort(*o.remote)
 		if err != nil {
-			log.Fatal(common.NewError("invalid remote addr format").Base(err))
+			log.Fatal(common.NewError("invalid remote addr format:" + *o.remote).Base(err))
 		}
 		serverConfigJSON := fmt.Sprintf(serverConfigFormat, localHost, localPort, remoteHost, remotePort, *o.password, *o.cert, *o.key)
-		log.Debug(serverConfigJSON)
+		log.Info("generated config:")
+		log.Info(serverConfigJSON)
 		config, err := conf.ParseJSON([]byte(serverConfigJSON))
 		if err != nil {
 			log.Fatal(err)
