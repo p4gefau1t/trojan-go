@@ -47,9 +47,11 @@ sudo ./trojan-go -autocert renew
 
 我们的目标是，使得你的服务器和正常的HTTPS网站表现相同。
 
-首先你需要一个配置Web服务器，可以使用nginx，apache，caddy等。Web服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。
+首先你需要一个HTTP服务器，可以使用nginx，apache，caddy等配置一个本地HTTP服务器，也可以使用别人的HTTP服务器。HTTP服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。
 
-这是一份比较安全的服务器配置，需要你在本地80端口配置一个HTTP服务（必要），在1234端口配置一个HTTPS服务（可选，可以删除fallback_port字段，跳过这个步骤）
+**你需要在```remote_addr```和```remote_port```指定这个HTTP服务器的地址。```remote_addr```可以是IP或者域名。Trojan-Go将会测试这个HTTP服务器是否工作正常，如果不正常，Trojan-Go会拒绝启动。**
+
+下面是一份比较安全的服务器配置，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如"remote_addr": "example.com"），在1234端口配置一个HTTPS服务（可选，可以删除```fallback_port```字段，跳过这个步骤）
 
 ```
 {
@@ -71,7 +73,7 @@ sudo ./trojan-go -autocert renew
 
 这个配置文件使Trojan-Go在服务器的所有网卡上(0.0.0.0)监听443端口，使用server.crt和server.key作为证书和密钥进行TLS握手。你应该使用尽可能复杂的密码，同时确保客户端和服务端```password```是一致的。
 
-如果TLS连接建立后，检测到TLS的内容非法，将TLS连接代理到本地127.0.0.1:80上的HTTP服务，这时远端看起来就是一个HTTPS的网站页面。
+如果TLS连接建立后，检测到TLS的内容非法，将TLS连接代理到本地127.0.0.1:80上的HTTP服务，这时远端看起来，Trojan-Go就是一个HTTPS的网站。
 
 如果TLS握手失败了，说明对方使用的不是TLS协议进行主动探测，此时Trojan-Go将连接代理到本地127.0.0.1:1234上运行的HTTPS服务，本地HTTPS服务器也会检测到连接不是TLS连接，返回一个400 Bad Reqeust的HTTP页面。```fallback_port```是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。
 
