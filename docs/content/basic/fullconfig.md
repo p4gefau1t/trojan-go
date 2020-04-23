@@ -34,6 +34,7 @@ weight: 30
         "password1",
         "password2"
     ],
+    "buffer_size": 512,
     "ssl": {
         "verify": true,
         "verify_hostname": true,
@@ -99,6 +100,8 @@ weight: 30
 ```log_level```是日志等级，等级越高，输出的信息越少，0输出所有日志，1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。
 
 ```password```可以填入多个密码。除了使用配置文件配置密码之外，Trojan-Go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
+
+```buffer_size```为单个连接缓冲区大小，单位KiB，默认512KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。
 
 ### ```ssl```选项
 
