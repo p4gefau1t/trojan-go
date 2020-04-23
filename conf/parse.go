@@ -228,10 +228,8 @@ func loadServerConfig(config *GlobalConfig) error {
 	}
 	buf := [128]byte{}
 	_, err = resp.Body.Read(buf[:])
-	if err != nil {
-		return common.NewError(config.RemoteAddress.String() + " is not a valid web server").Base(err)
-	}
-	log.Debug(string(buf[:]))
+	log.Debug("body:\n" + string(buf[:]))
+	resp.Body.Close()
 
 	if config.TLS.KeyPassword != "" {
 		keyFile, err := ioutil.ReadFile(config.TLS.KeyPath)
