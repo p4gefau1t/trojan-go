@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>完整的配置文件 - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
-<meta name="generator" content="Hugo 0.69.0" />
+<meta name="generator" content="Hugo 0.69.1" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
 <link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="3897">
+<meta itemprop="wordCount" content="3919">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.2.0</span>
+ <span class="version">Version 0.3.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -86,6 +86,7 @@
         &quot;password1&quot;,
         &quot;password2&quot;
     ],
+    &quot;buffer_size&quot;: 512,
     &quot;ssl&quot;: {
         &quot;verify&quot;: true,
         &quot;verify_hostname&quot;: true,
@@ -125,7 +126,7 @@
         &quot;enabled&quot;: false,
         &quot;path&quot;: &quot;&quot;,
         &quot;hostname&quot;: &quot;&quot;,
-        &quot;password&quot;: &quot;&quot;,
+        &quot;obfuscation&quot;: true,
         &quot;double_tls&quot;: true
     },
     &quot;mysql&quot;: {
@@ -144,6 +145,7 @@
 <p>对于server，<code>local_xxxx</code>对应trojan服务器监听地址（强烈建议使用443端口），<code>remote_xxxx</code>填写发现非trojan流量时代理到的Web服务地址，通常填写本地80端口。</p>
 <p><code>log_level</code>是日志等级，等级越高，输出的信息越少，0输出所有日志，1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。</p>
 <p><code>password</code>可以填入多个密码。除了使用配置文件配置密码之外，Trojan-Go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。</p>
+<p><code>buffer_size</code>为单个连接缓冲区大小，单位KiB，默认512KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。</p>
 <h3 id="ssl选项"><code>ssl</code>选项</h3>
 <p><code>verify</code>表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
 <p><code>verify_hostname</code>表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI字段的一致性。</p>
@@ -190,8 +192,8 @@
 <p><code>enabled</code>表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。</p>
 <p><code>path</code>指的是Websocket使用的URL路径，必须以斜杠(&quot;/&quot;)开头，如&rdquo;/longlongwebsocketpath&rdquo;，并且服务器和客户端必须一致。</p>
 <p><code>hostname</code>Websocket握手时使用的主机名，如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。</p>
-<p><code>double_tls</code>是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，如果需要更改，请自行斟酌安全性和性能的平衡。</p>
-<p><code>password</code>混淆密码，留空则不启用混淆。用于加密混淆Websocket连接内容以消除Websocket所承载流量（Trojan或者TLS）的特征。如果设置了密码，服务端和客户端必须相同。只使用混淆而不使用双重TLS有可能导致遭到重放攻击。这个选项对性能有一定影响，如果需要更改，请自行斟酌安全性和性能的平衡。</p>
+<p><code>double_tls</code>是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，如果需要关闭，请自行斟酌安全性和性能的平衡。</p>
+<p><code>obfuscation</code>是否启用混淆。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果需要使用混淆，服务端和客户端必须同时开启这个选项。这个选项对性能有一定影响，如果需要关闭，请自行斟酌安全性和性能的平衡。</p>
 <h3 id="mysql数据库选项"><code>mysql</code>数据库选项</h3>
 <p><code>enabled</code>表示是否启用mysql数据库进行用户验证。</p>
 <p><code>check_rate</code>是Trojan-Go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。</p>
