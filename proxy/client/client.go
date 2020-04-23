@@ -36,7 +36,7 @@ type Client struct {
 	config      *conf.GlobalConfig
 	ctx         context.Context
 	cancel      context.CancelFunc
-	associated  common.Notifier
+	associated  *common.Notifier
 	router      router.Router
 	meter       stat.TrafficMeter
 	transport   TransportManager
@@ -63,7 +63,8 @@ func (c *Client) openOutboundConn(req *protocol.Request) (protocol.ConnSession, 
 	return outboundConn, nil
 }
 
-func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
+func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
+	rwc := common.NewRewindReadWriteCloser(conn)
 	inboundConn, req, err := socks.NewInboundConnSession(rwc)
 	if err != nil {
 		log.Error(common.NewError("failed to start new inbound session").Base(err))
@@ -71,7 +72,6 @@ func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
 		return
 	}
 	defer inboundConn.Close()
-	rwc.SetBufferSize(0)
 
 	if req.Command == protocol.Associate {
 		//setting up the bind address to respond
@@ -81,6 +81,7 @@ func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
 			log.Error(common.NewError("invalid local address").Base(err))
 			return
 		}
+		//bind port and IP
 		req.IP = localIP
 		req.Port = c.config.LocalAddress.Port
 		if localIP.To4() != nil {
@@ -91,9 +92,10 @@ func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
 
 		//notify listenUDP to get ready for relaying udp packets
 		c.associated.Signal()
-		log.Info("UDP associated, req", req)
+		log.Debug("UDP associated, req", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			log.Error("failed to repsond")
+			return
 		}
 
 		//stop relaying UDP once TCP connection is closed
@@ -136,13 +138,13 @@ func (c *Client) handleSocksConn(rwc *common.RewindReadWriteCloser) {
 	proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 }
 
-func (c *Client) handleHTTPConn(rwc *common.RewindReadWriteCloser) {
+func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
+	rwc := common.NewRewindReadWriteCloser(conn)
 	inboundConn, req, inboundPacket, err := http.NewHTTPInbound(rwc)
 	if err != nil {
 		log.Error(common.NewError("failed to start new inbound session:").Base(err))
 		return
 	}
-	rwc.SetBufferSize(0)
 
 	if inboundConn != nil { //CONNECT request
 		defer inboundConn.Close()
@@ -256,6 +258,7 @@ func (c *Client) listenUDP(errChan chan error) {
 	localIP, err := c.config.LocalAddress.ResolveIP(false)
 	if err != nil {
 		errChan <- common.NewError("invalid local address").Base(err)
+		return
 	}
 	listener, err := net.ListenUDP("udp", &net.UDPAddr{
 		IP:   localIP,
@@ -325,6 +328,7 @@ func (c *Client) listenTCP(errChan chan error) {
 			continue
 		}
 		rwc.Rewind()
+		rwc.StopBuffering()
 		if first == 0x05 {
 			go c.handleSocksConn(rwc)
 		} else {
@@ -363,6 +367,7 @@ func (c *Client) Close() error {
 
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.associated = common.NewNotifier()
 	c.router = &router.EmptyRouter{
 		DefaultPolicy: router.Proxy,
 	}

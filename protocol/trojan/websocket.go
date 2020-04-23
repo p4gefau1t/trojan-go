@@ -139,7 +139,7 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 		ServerName:             config.TLS.SNI,
 		SessionTicketsDisabled: !config.TLS.SessionTicket,
 		ClientSessionCache:     tlsSessionCache,
-		//InsecureSkipVerify:     !config.TLS.Verify, //must verify it
+		InsecureSkipVerify:     !config.Websocket.DoubleTLSVerify,
 	}
 	tlsConn := tls.Client(transport, tlsConfig)
 	if err := tlsConn.Handshake(); err != nil {
@@ -165,7 +165,9 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, r *common.RewindRea
 		return nil, nil
 	}
 
-	if httpRequest.Host != config.Websocket.HostName || httpRequest.URL.Path != config.Websocket.Path || httpRequest.Header.Get("Upgrade") != "websocket" {
+	if (config.Websocket.HostName != "" && httpRequest.Host != config.Websocket.HostName) || //check hostname
+		httpRequest.URL.Path != config.Websocket.Path || //check url path
+		httpRequest.Header.Get("Upgrade") != "websocket" { //check upgrade field
 		return nil, common.NewError("invalid ws url or hostname")
 	}
 

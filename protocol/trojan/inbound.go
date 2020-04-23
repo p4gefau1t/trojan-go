@@ -103,6 +103,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 	}
 	//start buffering
 	rwc.SetBufferSize(512)
+	defer rwc.StopBuffering()
 	if i.config.Websocket.Enabled {
 		//try to treat it as a websocket connection first
 		ws, err := NewInboundWebsocket(i.ctx, conn, rwc.RewindReader, config)
@@ -114,7 +115,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 				Address: config.RemoteAddress,
 				Command: protocol.Connect,
 			}
-			log.Warn("remote", conn.RemoteAddr(), "is a invalid websocket conn")
+			log.Warn("remote", conn.RemoteAddr(), "is a invalid websocket conn | ", err)
 			return i, i.request, nil
 		}
 		if ws != nil {

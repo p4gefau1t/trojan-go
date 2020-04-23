@@ -109,7 +109,6 @@ func (i *HTTPInboundPacketSession) ReadPacket() (*protocol.Request, []byte, erro
 	buf := bytes.NewBuffer([]byte{})
 	err = httpRequest.Write(buf)
 	common.Must(err)
-	httpRequest.Body.Close()
 	return request, buf.Bytes(), nil
 }
 
@@ -123,20 +122,20 @@ func NewHTTPInbound(rwc *common.RewindReadWriteCloser) (protocol.ConnSession, *p
 		rwc:       rwc,
 		bufReader: bufio.NewReader(rwc),
 	}
-	//rwc.SetBufferSize(128)
-	//DO NOT set buffer again
+	rwc.SetBufferSize(512)
+	defer rwc.StopBuffering()
 	isHTTP, err := connSession.parseRequest()
 	if !isHTTP {
 		//invalid http format
+		rwc.SetBufferSize(0)
 		return nil, nil, nil, common.NewError("failed to parse http header").Base(err)
 	}
-	if err != nil {
+	if err == nil {
 		//http tunnel
 		rwc.SetBufferSize(0)
 		return connSession, connSession.request, nil, nil
 	}
 	rwc.Rewind()
-	rwc.StopBuffering()
 	packetSession := &HTTPInboundPacketSession{
 		rwc:       rwc,
 		bufReader: bufio.NewReader(rwc),

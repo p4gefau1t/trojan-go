@@ -27,7 +27,7 @@ func (r *RewindReader) Read(p []byte) (int, error) {
 	if r.buffered {
 		r.buf = append(r.buf, p[:n]...)
 		if len(r.buf) > r.bufferSize {
-			panic("too long")
+			//panic("too long")
 		}
 	}
 	return n, err
@@ -79,7 +79,7 @@ func (r *RewindReader) SetBufferSize(size int) {
 		r.bufferSize = 0
 	} else {
 		if r.buffered {
-			panic("is buffering")
+			panic("is already buffering")
 		}
 		r.buffered = true
 		r.bufReadIdx = 0

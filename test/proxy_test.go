@@ -273,6 +273,13 @@ func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCo
 	cancel()
 }
 
+func TestIt(t *testing.T) {
+	clientConfig := getBasicClientConfig()
+	serverConfig := getBasicServerConfig()
+	go RunClient(context.Background(), clientConfig)
+	RunServer(context.Background(), serverConfig)
+}
+
 func TestNormal(t *testing.T) {
 	CheckClientServer(t, getBasicClientConfig(), getBasicServerConfig())
 	CheckForwardServer(t, getBasicClientConfig(), getBasicServerConfig())
