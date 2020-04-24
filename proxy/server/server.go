@@ -84,7 +84,8 @@ func (s *Server) handleConn(conn net.Conn) {
 	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 
 	if req.Command == protocol.Associate {
-		inboundPacket, _ := trojan.NewPacketSession(inboundConn)
+		inboundPacket, err := trojan.NewPacketSession(inboundConn)
+		common.Must(err)
 		defer inboundPacket.Close()
 
 		outboundPacket, err := direct.NewOutboundPacketSession(s.ctx)

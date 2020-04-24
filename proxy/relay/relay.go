@@ -54,8 +54,8 @@ func (f *Relay) Run() error {
 
 func (f *Relay) Close() error {
 	log.Info("shutting down relay..")
-	f.listener.Close()
 	f.cancel()
+	f.listener.Close()
 	return nil
 }
 

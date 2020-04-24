@@ -142,6 +142,7 @@ func addWsConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 		HostName:    "127.0.0.1",
 		Path:        "/websocket",
 		Obfsucation: true,
+		DoubleTLS:   true,
 	}
 	return config
 }
@@ -274,10 +275,10 @@ func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCo
 }
 
 func TestIt(t *testing.T) {
-	clientConfig := getBasicClientConfig()
-	serverConfig := getBasicServerConfig()
-	go RunClient(context.Background(), clientConfig)
-	RunServer(context.Background(), serverConfig)
+	//clientConfig := getBasicClientConfig()
+	//serverConfig := getBasicServerConfig()
+	//go RunClient(context.Background(), clientConfig)
+	//RunServer(context.Background(), serverConfig)
 }
 
 func TestNormal(t *testing.T) {

@@ -24,15 +24,15 @@ type Forward struct {
 	common.Runnable
 	proxy.Buildable
 
-	config              *conf.GlobalConfig
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	clientPackets       chan *dispatchInfo
-	outboundPacketLock  sync.Mutex
-	outboundPacketTable map[string]protocol.PacketSession
-	udpListener         *net.UDPConn
-	tcpListener         net.Listener
-	transport           TransportManager
+	config                  *conf.GlobalConfig
+	ctx                     context.Context
+	cancel                  context.CancelFunc
+	clientPackets           chan *dispatchInfo
+	outboundPacketTableLock sync.Mutex
+	outboundPacketTable     map[string]protocol.PacketSession
+	udpListener             *net.UDPConn
+	tcpListener             net.Listener
+	transport               TransportManager
 }
 
 func (f *Forward) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
@@ -56,10 +56,10 @@ func (f *Forward) openOutboundConn(req *protocol.Request) (protocol.ConnSession,
 
 func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 	for {
-		f.outboundPacketLock.Lock()
+		f.outboundPacketTableLock.Lock()
 		//use src addr as the key
 		outboundPacket, found := f.outboundPacketTable[addr.String()]
-		f.outboundPacketLock.Unlock()
+		f.outboundPacketTableLock.Unlock()
 		if !found {
 			log.Error("addr key not found")
 			return
@@ -80,9 +80,9 @@ func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
 			}
 		case <-time.After(protocol.UDPTimeout):
 			outboundPacket.Close()
-			f.outboundPacketLock.Lock()
+			f.outboundPacketTableLock.Lock()
 			delete(f.outboundPacketTable, addr.String())
-			f.outboundPacketLock.Unlock()
+			f.outboundPacketTableLock.Unlock()
 			log.Debug("udp timeout, exiting..")
 			return
 		case <-f.ctx.Done():
@@ -106,7 +106,7 @@ func (f *Forward) dispatchClientPacket() {
 	for {
 		select {
 		case packet := <-f.clientPackets:
-			f.outboundPacketLock.Lock()
+			f.outboundPacketTableLock.Lock()
 			outboundPacket, found := f.outboundPacketTable[packet.addr.String()]
 			if !found {
 				outboundConn, err := f.openOutboundConn(associateReq)
@@ -119,7 +119,7 @@ func (f *Forward) dispatchClientPacket() {
 				f.outboundPacketTable[packet.addr.String()] = outboundPacket
 				go f.dispatchServerPacket(packet.addr)
 			}
-			f.outboundPacketLock.Unlock()
+			f.outboundPacketTableLock.Unlock()
 			outboundPacket.WritePacket(fixedReq, packet.payload)
 		case <-f.ctx.Done():
 			return

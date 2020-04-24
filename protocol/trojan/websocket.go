@@ -128,11 +128,13 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	}
 	var transport net.Conn = wsConn
 	if config.Websocket.Obfsucation {
+		log.Debug("ws obfs enabled")
 		transport = NewOutboundObfReadWriteCloser(config.Passwords[0], wsConn)
 	}
 	if !config.Websocket.DoubleTLS {
 		return transport, nil
 	}
+	log.Debug("ws double TLS enabled")
 	tlsConfig := &tls.Config{
 		CipherSuites:           config.TLS.CipherSuites,
 		RootCAs:                config.TLS.CertPool,
@@ -214,7 +216,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, r *common.RewindRea
 	if config.Websocket.Obfsucation {
 		transport, err = NewInboundObfReadWriteCloser(config.Passwords[0], wsConn)
 		if err != nil {
-			return nil, common.NewError("failed to init obf layer").Base(err)
+			return nil, common.NewError("failed to init obfus layer").Base(err)
 		}
 	}
 	if !config.Websocket.DoubleTLS {
