@@ -361,7 +361,7 @@ func TestWebsocketShadow(t *testing.T) {
 	//test websocket
 	conn, err := tls.Dial("tcp", "127.0.0.1:4445", &tls.Config{InsecureSkipVerify: true})
 	common.Must(err)
-	wsConfig, err := websocket.NewConfig("wss://127.0.0.1/websocket", "https://127.0.0.1")
+	wsConfig, err := websocket.NewConfig("wss://127.0.0.1:65535/websocket", "https://127.0.0.1:65535")
 	common.Must(err)
 	wsClient, err := websocket.NewClient(wsConfig, conn)
 	common.Must(err)

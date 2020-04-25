@@ -100,11 +100,15 @@ func loadCommonConfig(config *GlobalConfig) error {
 		if config.Websocket.Path[0] != '/' {
 			return common.NewError("websocket path must start with \"/\"")
 		}
-		if config.RunType == Client && config.Websocket.HostName == "" {
-			log.Warn("Client websocket host_name is unspecified, using remote_addr \"", config.RemoteHost, "\" as host_name")
-			config.Websocket.HostName = config.RemoteHost
-			if ip := net.ParseIP(config.RemoteHost); ip != nil && ip.To4() == nil { //ipv6 address
-				config.Websocket.HostName = "[" + config.RemoteHost + "]"
+		if config.Websocket.HostName == "" {
+			if config.RunType == Client {
+				log.Warn("client websocket hostname is unspecified, using remote_addr \"", config.RemoteHost, "\" as host_name")
+				config.Websocket.HostName = config.RemoteHost
+				if ip := net.ParseIP(config.RemoteHost); ip != nil && ip.To4() == nil { //ipv6 address
+					config.Websocket.HostName = "[" + config.RemoteHost + "]"
+				}
+			} else if config.RunType == Server {
+				return common.NewError("server websocket hostname is required")
 			}
 		}
 		if config.Websocket.ObfuscationPassword != "" {
