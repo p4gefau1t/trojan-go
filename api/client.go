@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
+	"time"
 
-	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/stat"
@@ -13,26 +13,46 @@ import (
 
 type ClientAPIService struct {
 	TrojanServiceServer
-	meter stat.TrafficMeter
+	meter         stat.TrafficMeter
+	uploadSpeed   uint64
+	downloadSpeed uint64
+	lastSent      uint64
+	lastRecv      uint64
+	ctx           context.Context
 }
 
 func (s *ClientAPIService) QueryStats(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
 	log.Debug("query stats, password", req.Password)
-	password := req.Password
-	passwordHash := common.SHA224String(password)
-	sent, recv := s.meter.Query(passwordHash)
+	//password := req.Password
+	//passwordHash := common.SHA224String(password)
+	sent, recv := s.meter.Query("")
 	reply := &StatsReply{
-		Upload:   sent,
-		Download: recv,
+		UploadTraffic:   sent,
+		DownloadTraffic: recv,
+		UploadSpeed:     s.uploadSpeed,
+		DownloadSpeed:   s.downloadSpeed,
 	}
 	return reply, nil
+}
+
+func (s *ClientAPIService) calcSpeed() {
+	select {
+	case <-time.After(time.Second):
+		sent, recv := s.meter.Query("")
+		s.uploadSpeed = sent - s.lastSent
+		s.downloadSpeed = recv - s.lastRecv
+	case <-s.ctx.Done():
+		return
+	}
 }
 
 func RunClientAPIService(ctx context.Context, config *conf.GlobalConfig, meter stat.TrafficMeter) error {
 	server := grpc.NewServer()
 	service := &ClientAPIService{
 		meter: meter,
+		ctx:   ctx,
 	}
+	go service.calcSpeed()
 	RegisterTrojanServiceServer(server, service)
 	listener, err := net.Listen("tcp", config.API.APIAddress.String())
 	if err != nil {

@@ -1,6 +1,6 @@
 // +build linux
 
-package nat
+package tproxy
 
 import (
 	"net"

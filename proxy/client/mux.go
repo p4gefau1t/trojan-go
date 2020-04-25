@@ -105,10 +105,10 @@ func (m *MuxManager) DialToServer() (io.ReadWriteCloser, error) {
 		defer m.Unlock()
 		delete(m.muxPool, info.id)
 		info.client.Close()
-		log.Info("somthing wrong with mux", info.id, ", closing")
+		log.Info("somthing wrong with mux client", info.id, ", closing")
 		return nil, err
 	}
-	log.Debug("new mux conn", info.id)
+	log.Debug("new mux conn established, client", info.id)
 	info.lastActiveTime = time.Now()
 	return stream, nil
 }
@@ -146,7 +146,7 @@ func (m *MuxManager) checkAndCloseIdleMuxClient() {
 			m.Lock()
 			for id, info := range m.muxPool {
 				info.client.Close()
-				log.Info("mux", id, "closed")
+				log.Info("mux client", id, "closed")
 			}
 			m.Unlock()
 			return

@@ -1,6 +1,6 @@
 // +build linux
 
-package nat
+package tproxy
 
 import (
 	"context"
@@ -15,29 +15,29 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
 
-type NATInboundConnSession struct {
+type TProxyInboundConnSession struct {
 	protocol.ConnSession
 	reqeust *protocol.Request
 	conn    net.Conn
 }
 
-func (i *NATInboundConnSession) Read(p []byte) (int, error) {
+func (i *TProxyInboundConnSession) Read(p []byte) (int, error) {
 	return i.conn.Read(p)
 }
 
-func (i *NATInboundConnSession) Write(p []byte) (int, error) {
+func (i *TProxyInboundConnSession) Write(p []byte) (int, error) {
 	return i.conn.Write(p)
 }
 
-func (i *NATInboundConnSession) Close() error {
+func (i *TProxyInboundConnSession) Close() error {
 	return i.conn.Close()
 }
 
-func (i *NATInboundConnSession) GetRequest() *protocol.Request {
+func (i *TProxyInboundConnSession) GetRequest() *protocol.Request {
 	return i.reqeust
 }
 
-func (i *NATInboundConnSession) parseRequest() error {
+func (i *TProxyInboundConnSession) parseRequest() error {
 	addr, err := getOriginalTCPDest(i.conn.(*net.TCPConn))
 	if err != nil {
 		return common.NewError("failed to get original dst").Base(err)
@@ -59,7 +59,7 @@ func (i *NATInboundConnSession) parseRequest() error {
 }
 
 func NewInboundConnSession(conn net.Conn) (protocol.ConnSession, *protocol.Request, error) {
-	i := &NATInboundConnSession{
+	i := &TProxyInboundConnSession{
 		conn: conn,
 	}
 	if err := i.parseRequest(); err != nil {
@@ -135,7 +135,7 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 		expire: time.Now().Add(protocol.UDPTimeout),
 	}
 	i.tableMutex.Unlock()
-	log.Debug("tproxy UDP packet from", src, "to", dst)
+	log.Debug("tproxy udp packet from", src, "to", dst)
 	req := &protocol.Request{
 		Address: &common.Address{
 			IP:          dst.IP,
@@ -167,7 +167,7 @@ func NewInboundPacketSession(ctx context.Context, config *conf.GlobalConfig) (pr
 	}
 	conn, err := tproxy.ListenUDP("udp", addr)
 	if err != nil {
-		return nil, common.NewError("failed to listen UDP addr").Base(err)
+		return nil, common.NewError("failed to listen udp addr").Base(err)
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	i := &NATInboundPacketSession{

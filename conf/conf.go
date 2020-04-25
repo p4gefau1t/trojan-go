@@ -28,6 +28,7 @@ type TLSConfig struct {
 	PreferServerCipher bool   `json:"prefer_server_cipher"`
 	SNI                string `json:"sni"`
 	HTTPFile           string `json:"plain_http_response"`
+	FallbackHost       string `json:"fallback_addr"`
 	FallbackPort       int    `json:"fallback_port"`
 	ReuseSession       bool   `json:"reuse_session"`
 
@@ -102,7 +103,7 @@ type WebsocketConfig struct {
 	Enabled         bool   `json:"enabled"`
 	HostName        string `json:"hostname"`
 	Path            string `json:"path"`
-	Obfsucation     bool   `json:"obfuscation"`
+	Obfuscation     bool   `json:"obfuscation"`
 	DoubleTLS       bool   `json:"double_tls"`
 	DoubleTLSVerify bool   `json:"double_tls_verify"`
 }

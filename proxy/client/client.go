@@ -67,7 +67,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
 	inboundConn, req, err := socks.NewInboundConnSession(rwc)
 	if err != nil {
-		log.Error(common.NewError("failed to start new inbound session").Base(err))
+		log.Error(common.NewError("failed to handle socks requests").Base(err))
 		rwc.Close()
 		return
 	}
@@ -92,7 +92,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 
 		//notify listenUDP to get ready for relaying udp packets
 		c.associated.Signal()
-		log.Debug("UDP associated, req", req)
+		log.Debug("udp associated to", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
 			log.Error("failed to repsond")
 			return
@@ -101,7 +101,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
 		_, err = rwc.Read(buf[:])
-		log.Debug(common.NewError("UDP conn ends").Base(err))
+		log.Debug(common.NewError("udp conn ends").Base(err))
 		return
 	}
 
@@ -142,11 +142,12 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
 	inboundConn, req, inboundPacket, err := http.NewHTTPInbound(rwc)
 	if err != nil {
-		log.Error(common.NewError("failed to start new inbound session:").Base(err))
+		log.Error(common.NewError("failed to handle HTTP requests").Base(err))
+		rwc.Close()
 		return
 	}
 
-	if inboundConn != nil { //CONNECT request
+	if inboundConn != nil { //CONNECT requests
 		defer inboundConn.Close()
 
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
@@ -182,7 +183,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 		log.Info("conn tunneling to", req)
 		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
-	} else { //GET/POST
+	} else { //GET/POST requests
 		defer inboundPacket.Close()
 		packetChan := make(chan *packetInfo, 512)
 		errChan := make(chan error, 1)

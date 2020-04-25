@@ -10,6 +10,8 @@ message StatsRequest{
 }
 
 message StatsReply {
-    uint64 upload = 1;
-    uint64 download = 2;
+    uint64 upload_traffic = 1;
+    uint64 download_traffic = 2;
+    uint64 upload_speed = 3;
+    uint64 download_speed = 4;
 }

@@ -149,7 +149,7 @@ func (f *Forward) listenUDP(errChan chan error) {
 		}
 		f.clientPackets <- &dispatchInfo{
 			addr:    addr,
-			payload: buf[0:n],
+			payload: buf[:n],
 		}
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/shadow"
 	"github.com/p4gefau1t/trojan-go/stat"
 )
 
@@ -89,67 +90,61 @@ func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
 	i.meter = meter
 }
 
-func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, *protocol.Request, error) {
+func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator, shadowMan *shadow.ShadowManager) (protocol.ConnSession, *protocol.Request, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	rwc := common.NewRewindReadWriteCloser(conn)
+	//rwc := common.NewRewindReadWriteCloser(conn)
+	rewindConn := common.NewRewindConn(conn)
 	i := &TrojanInboundConnSession{
 		config:       config,
 		auth:         auth,
 		passwordHash: "INVALID_HASH",
 		ctx:          ctx,
 		cancel:       cancel,
-		rwc:          rwc,
+		rwc:          rewindConn,
 	}
 	//start buffering
-	rwc.SetBufferSize(512)
-	defer rwc.StopBuffering()
+	rewindConn.R.SetBufferSize(512)
+	defer rewindConn.R.StopBuffering()
+
 	if i.config.Websocket.Enabled {
 		//try to treat it as a websocket connection first
-		ws, err := NewInboundWebsocket(i.ctx, conn, rwc.RewindReader, config)
+		ws, err := NewInboundWebsocket(i.ctx, rewindConn, config, shadowMan)
 		if err != nil {
-			//websocket with wrong url path/origin, no need to continue parsing
-			rwc.Rewind()
-			rwc.StopBuffering()
-			i.request = &protocol.Request{
-				Address: config.RemoteAddress,
-				Command: protocol.Connect,
-			}
-			log.Warn("remote", conn.RemoteAddr(), "is a invalid websocket conn | ", err)
-			return i, i.request, nil
+			return nil, nil, common.NewError("invalid websocket request").Base(err)
 		}
 		if ws != nil {
 			//a websocket conn, try to verify it
 			log.Debug("websocket conn")
-			//disable the read buffer, use ws as new transport layer
-			rwc.SetBufferSize(0)
-			rwc = common.NewRewindReadWriteCloser(ws)
-			i.rwc = rwc
+			//disable the current read buffer, use ws as the new transport layer
+			rewindConn.R.SetBufferSize(0)
+			newTrapsport := common.NewRewindReadWriteCloser(ws)
+			i.rwc = newTrapsport
 			//parse it with trojan protocol format
-			if err := i.parseRequest(rwc.RewindReader); err != nil {
-				//not valid, just simply close it
+			if err := i.parseRequest(newTrapsport.RewindReader); err != nil {
+				//invalid ws, just simply close it
 				ws.Close()
 				return nil, nil, common.NewError("invalid trojan over ws conn").Base(err)
 			}
 			return i, i.request, nil
 		}
 		//not a websocket conn, it might be a normal trojan conn
-		rwc.Rewind()
+		rewindConn.R.Rewind()
 	}
 
 	//normal trojan conn
-	if err := i.parseRequest(rwc.RewindReader); err != nil {
+	if err := i.parseRequest(rewindConn.R); err != nil {
 		//not a valid trojan request, proxy it to the remote_addr
-		rwc.Rewind()
-		rwc.StopBuffering()
-		i.request = &protocol.Request{
-			Address: i.config.RemoteAddress,
-			Command: protocol.Connect,
-		}
-		log.Warn(common.NewError("invalid trojan protocol over websocket from " + conn.RemoteAddr().String()).Base(err))
-		return i, i.request, nil
+		rewindConn.R.Rewind()
+		err := common.NewError("invalid trojan protocol over websocket from " + conn.RemoteAddr().String()).Base(err)
+		shadowMan.CommitScapegoat(&shadow.Scapegoat{
+			Conn:          rewindConn,
+			ShadowAddress: i.config.RemoteAddress,
+			Info:          err.Error(),
+		})
+		return nil, nil, err
 	}
-	rwc.SetBufferSize(0)
-	rwc.StopBuffering()
+	//release the buffer
+	rewindConn.R.SetBufferSize(0)
 	return i, i.request, nil
 }

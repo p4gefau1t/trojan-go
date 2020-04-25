@@ -26,7 +26,7 @@ func (i *SocksConnInboundSession) checkVersion() error {
 		return err
 	}
 	if version != 0x5 {
-		return common.NewError("unsupported version")
+		return common.NewError("unsupported socks version")
 	}
 	return nil
 }
@@ -194,7 +194,7 @@ func (i *SocksInboundPacketSession) ReadPacket() (*protocol.Request, []byte, err
 	i.tableMutex.Lock()
 	i.sessionTable[req.String()] = session
 	i.tableMutex.Unlock()
-	log.Debug("UDP read from", src, "req", req)
+	log.Debug("udp read from", src, "req", req)
 	return req, payload, err
 }
 
@@ -211,7 +211,7 @@ func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []
 		return 0, common.NewError("session not found")
 	}
 	client.expire = time.Now().Add(protocol.UDPTimeout)
-	log.Debug("UDP write to", client.src, "req", req)
+	log.Debug("udp write to", client.src, "req", req)
 	return i.conn.WriteToUDP(w.Bytes(), client.src)
 }
 

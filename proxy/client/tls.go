@@ -29,7 +29,7 @@ func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
 	if m.config.LogLevel == 0 {
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Debug("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		log.Debug("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
 				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)

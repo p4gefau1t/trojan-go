@@ -292,7 +292,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Router.GeoSiteFilename = common.GetProgramDir() + "/geosite.dat"
 	config.Websocket.DoubleTLS = true
 	config.Websocket.DoubleTLSVerify = true
-	config.Websocket.Obfsucation = true
+	config.Websocket.Obfuscation = true
 
 	err := json.Unmarshal(data, config)
 	if err != nil {

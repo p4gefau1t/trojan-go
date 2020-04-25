@@ -11,8 +11,8 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/nat"
 	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
+	"github.com/p4gefau1t/trojan-go/protocol/tproxy"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 )
@@ -49,7 +49,7 @@ func (n *NAT) openOutboundConn(req *protocol.Request) (protocol.ConnSession, err
 }
 
 func (n *NAT) handleConn(conn net.Conn) {
-	inboundConn, req, err := nat.NewInboundConnSession(conn)
+	inboundConn, req, err := tproxy.NewInboundConnSession(conn)
 	if err != nil {
 		log.Error(common.NewError("failed to start inbound session").Base(err))
 		return
@@ -66,7 +66,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
-	inboundPacket, err := nat.NewInboundPacketSession(n.ctx, n.config)
+	inboundPacket, err := tproxy.NewInboundPacketSession(n.ctx, n.config)
 	if err != nil {
 		errChan <- err
 		return
@@ -125,7 +125,7 @@ func (n *NAT) listenTCP(errChan chan error) {
 }
 
 func (n *NAT) Run() error {
-	log.Info("nat running at", n.config.LocalAddress)
+	log.Info("tproxy running at", n.config.LocalAddress)
 	errChan := make(chan error, 2)
 	go n.listenUDP(errChan)
 	go n.listenTCP(errChan)
@@ -138,7 +138,7 @@ func (n *NAT) Run() error {
 }
 
 func (n *NAT) Close() error {
-	log.Info("shutting down nat...")
+	log.Info("shutting down tproxy...")
 	n.cancel()
 	if n.listener != nil {
 		n.listener.Close()

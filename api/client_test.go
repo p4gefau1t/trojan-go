@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -19,13 +20,14 @@ func TestClientAPI(t *testing.T) {
 		},
 	}, meter)
 	meter.Count("test", 123, 456)
+	time.Sleep(time.Second)
 	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
 	common.Must(err)
 	client := NewTrojanServiceClient(conn)
 	reply, err := client.QueryStats(context.Background(), &StatsRequest{})
 	common.Must(err)
-	fmt.Println(reply.Download, reply.Upload)
-	if reply.Download != 456 || reply.Upload != 123 {
+	fmt.Println(reply.DownloadTraffic, reply.UploadTraffic)
+	if reply.DownloadTraffic != 456 || reply.UploadTraffic != 123 {
 		t.Fatal("wrong result")
 	}
 }
@@ -36,5 +38,5 @@ func TestRealClientAPI(t *testing.T) {
 	client := NewTrojanServiceClient(conn)
 	reply, err := client.QueryStats(context.Background(), &StatsRequest{})
 	common.Must(err)
-	fmt.Println(reply.Download, reply.Upload)
+	fmt.Println(reply.DownloadTraffic, reply.UploadTraffic)
 }

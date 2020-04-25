@@ -1,6 +1,11 @@
 package common
 
-import "io"
+import (
+	"io"
+	"net"
+
+	"github.com/p4gefau1t/trojan-go/log"
+)
 
 type RewindReader struct {
 	io.Reader
@@ -26,8 +31,8 @@ func (r *RewindReader) Read(p []byte) (int, error) {
 	n, err := r.rawReader.Read(p)
 	if r.buffered {
 		r.buf = append(r.buf, p[:n]...)
-		if len(r.buf) > r.bufferSize {
-			//panic("too long")
+		if len(r.buf) > r.bufferSize*2 {
+			log.Debug("read buffer too long")
 		}
 	}
 	return n, err
@@ -118,4 +123,20 @@ func ReadByte(r io.Reader) (byte, error) {
 	buf := [1]byte{}
 	_, err := r.Read(buf[:])
 	return buf[0], err
+}
+
+type RewindConn struct {
+	R *RewindReader
+	net.Conn
+}
+
+func (c *RewindConn) Read(p []byte) (int, error) {
+	return c.R.Read(p)
+}
+
+func NewRewindConn(conn net.Conn) *RewindConn {
+	return &RewindConn{
+		Conn: conn,
+		R:    NewRewindReader(conn),
+	}
 }

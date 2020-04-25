@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
-	"reflect"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -16,6 +15,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
+	"github.com/p4gefau1t/trojan-go/shadow"
 	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
 )
@@ -28,6 +28,7 @@ type Server struct {
 	auth     stat.Authenticator
 	meter    stat.TrafficMeter
 	config   *conf.GlobalConfig
+	shadow   *shadow.ShadowManager
 	ctx      context.Context
 	cancel   context.CancelFunc
 }
@@ -62,8 +63,9 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth)
+	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth, s.shadow)
 	if err != nil {
+		//once the auth is failed, the conn will be took over by shadow manager. don't close it
 		log.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
 	}
@@ -94,9 +96,9 @@ func (s *Server) handleConn(conn net.Conn) {
 			return
 		}
 		defer outboundPacket.Close()
-		log.Info("UDP tunnel established")
+		log.Info("udp tunnel established")
 		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
-		log.Debug("UDP tunnel closed")
+		log.Debug("udp tunnel closed")
 		return
 	}
 
@@ -110,39 +112,6 @@ func (s *Server) handleConn(conn net.Conn) {
 
 	log.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
 	proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
-}
-
-func (s *Server) handleInvalidConn(conn net.Conn, tlsConn *tls.Conn) {
-	defer conn.Close()
-	if len(s.config.TLS.HTTPResponse) > 0 {
-		log.Warn("trying to response with a plain http response")
-		conn.Write(s.config.TLS.HTTPResponse)
-		return
-	}
-
-	if s.config.TLS.FallbackAddress != nil {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Error("recovered", r)
-			}
-		}()
-		//HACK
-		//obtain the bytes buffered by the tls conn
-		v := reflect.ValueOf(*tlsConn)
-		buf := v.FieldByName("rawInput").FieldByName("buf").Bytes()
-		log.Debug("payload:" + string(buf))
-
-		remote, err := net.Dial("tcp", s.config.TLS.FallbackAddress.String())
-		if err != nil {
-			log.Warn(common.NewError("failed to dial to tls fallback server").Base(err))
-			return
-		}
-		log.Warn("proxying this invalid tls conn to the tls fallback server")
-		remote.Write(buf)
-		proxy.ProxyConn(s.ctx, conn, remote, s.config.BufferSize)
-	} else {
-		log.Warn("tls fallback port is unspecified, closing")
-	}
 }
 
 func (s *Server) Run() error {
@@ -219,15 +188,36 @@ func (s *Server) Run() error {
 			}
 			return err
 		}
+		log.Info("conn accepted from", conn.RemoteAddr())
 		go func(conn net.Conn) {
-			tlsConn := tls.Server(conn, tlsConfig)
+			rewindConn := common.NewRewindConn(conn)
+			rewindConn.R.SetBufferSize(512)
+
+			tlsConn := tls.Server(rewindConn, tlsConfig)
 			err = tlsConn.Handshake()
+
+			rewindConn.R.StopBuffering()
+
 			if err != nil {
-				log.Warn(common.NewError("failed to perform tls handshake, remote:" + conn.RemoteAddr().String()).Base(err))
-				go s.handleInvalidConn(conn, tlsConn)
+				rewindConn.R.Rewind()
+				err = common.NewError("failed to perform tls handshake with " + conn.RemoteAddr().String()).Base(err)
+				log.Warn(err)
+				if s.config.TLS.FallbackAddress != nil {
+					s.shadow.CommitScapegoat(&shadow.Scapegoat{
+						Conn:          rewindConn,
+						ShadowAddress: s.config.TLS.FallbackAddress,
+						Info:          err.Error(),
+					})
+				} else if s.config.TLS.HTTPResponse != nil {
+					rewindConn.Write(s.config.TLS.HTTPResponse)
+					rewindConn.Close()
+				} else {
+					rewindConn.Close()
+				}
 				return
 			}
-			go s.handleConn(tlsConn)
+			defer tlsConn.Close()
+			s.handleConn(tlsConn)
 		}(conn)
 	}
 }
@@ -242,6 +232,7 @@ func (s *Server) Close() error {
 func (s *Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	s.config = config
 	s.ctx, s.cancel = context.WithCancel(context.Background())
+	s.shadow = shadow.NewShadowManager(s.ctx, s.config)
 	return s, nil
 }
 

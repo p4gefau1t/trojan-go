@@ -90,13 +90,14 @@ func getTLSConfig() conf.TLSConfig {
 		panic("invalid cert")
 	}
 	c := conf.TLSConfig{
-		SNI:            "localhost",
-		CertPool:       pool,
-		KeyPair:        KeyPair,
-		Verify:         true,
-		VerifyHostname: true,
-		ReuseSession:   true,
-		SessionTicket:  true,
+		SNI:             "localhost",
+		CertPool:        pool,
+		KeyPair:         KeyPair,
+		Verify:          true,
+		VerifyHostname:  true,
+		ReuseSession:    true,
+		SessionTicket:   true,
+		FallbackAddress: common.NewAddress("127.0.0.1", 80, "tcp"),
 	}
 	return c
 }
@@ -141,7 +142,7 @@ func addWsConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 		Enabled:     true,
 		HostName:    "127.0.0.1",
 		Path:        "/websocket",
-		Obfsucation: true,
+		Obfuscation: false,
 		DoubleTLS:   true,
 	}
 	return config
@@ -269,16 +270,16 @@ func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCo
 	conn.Write(payload)
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	b.Log("Single thread link speed:", speed, "MB/s")
+	b.Log("Single thread link speed:", speed*8/1024, "Gbps")
 	conn.Close()
 	cancel()
 }
 
 func TestIt(t *testing.T) {
-	//clientConfig := getBasicClientConfig()
-	//serverConfig := getBasicServerConfig()
-	//go RunClient(context.Background(), clientConfig)
-	//RunServer(context.Background(), serverConfig)
+	clientConfig := getBasicClientConfig()
+	serverConfig := getBasicServerConfig()
+	go RunClient(context.Background(), clientConfig)
+	RunServer(context.Background(), serverConfig)
 }
 
 func TestNormal(t *testing.T) {
@@ -357,9 +358,15 @@ func TestHTTPProxy(t *testing.T) {
 	wsClient, err := websocket.NewClient(wsConfig, conn)
 	common.Must(err)
 	buf := [100]byte{}
-	common.Must2(wsClient.Write([]byte("I'm GFW")))
-	wsClient.Read(buf[:])
+	common.Must2(wsClient.Write([]byte("I'm GFW1231231231231212391273871283719823791237912398721933123")))
+	common.Must2(wsClient.Read(buf[:]))
 	fmt.Println(buf)
 	common.Must(err)
+	conn.Close()
+
+	resp, err = http.Get("http://127.0.0.1:4445")
+	common.Must(err)
+	resp.Body.Read(buf[:])
+	fmt.Println(buf)
 	cancel()
 }
