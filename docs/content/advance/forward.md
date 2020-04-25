@@ -4,7 +4,7 @@ draft: false
 weight: 5
 ---
 
-你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子
+你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子
 
 ```
 {

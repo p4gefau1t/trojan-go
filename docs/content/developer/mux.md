@@ -12,8 +12,8 @@ Trojan-Go使用[smux](https://github.com/xtaci/smux)实现多路复用。同时�
 |协议| 
 |-|
 |真实流量|
-|simplesocks|
+|SimpleSocks|
 |smux|
-|trojan(只有头部，仅用于校验)|
+|Trojan(只有头部，仅用于校验)|
 |TLS|
 |TCP|

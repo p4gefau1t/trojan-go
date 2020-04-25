@@ -11,6 +11,6 @@ Trojan-Go遵循原始的trojan协议，具体格式可以参考[Trojan文档](ht
 |协议| 
 |-|
 |真实流量|
-|trojan|
+|Trojan|
 |TLS|
 |TCP|

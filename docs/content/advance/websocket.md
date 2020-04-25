@@ -1,10 +1,10 @@
 ---
-title: "使用Websocket进行CDN转发"
+title: "使用Websocket进行CDN转发和抵抗中间人攻击"
 draft: false
 weight: 2
 ---
 
-### **注意，原版Trojan-GFW服务端不支持这个特性。**
+### 注意，Trojan-GFW版本不支持这个特性。
 
 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的设计考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go支持使用多重TLS，即使遭受GFW的HTTPS中间人攻击，**在正确的配置下**，连接的安全性依然能得到保证。
 
@@ -20,13 +20,13 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 }
 ```
 
-```hostname```是主机名，一般填写域名。客户端```hostname```是可选的，填写你的域名。如果留空，将会使用```remote_addr```填充，服务端必须填写```hostname```，Trojan-Go可以以此转发websocket请求，以抵抗websocket的主动检测。
+```hostname```是主机名，一般填写域名。客户端```hostname```是可选的，填写你的域名。如果留空，将会使用```remote_addr```填充，服务端必须填写```hostname```，Trojan-Go可以以此转发Websocket请求，以抵抗针对Websocket的主动检测。
 
-```path```指的是websocket所在的URL路径，必须以斜杠("/")开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的```path```一致。```path```应当选择较长的字符串，以避免遭到GFW主动探测。
+```path```指的是websocket所在的URL路径，必须以斜杠("/")开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的```path```一致。```path```应当选择较长的字符串，以避免遭到GFW直接的主动探测。
 
 服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
 
-由于原版Trojan并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。
+由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的服务端仍然可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。
 
 ```double_tls```表示是否开启双重TLS，如果省略，默认设置为true。因为Trojan-Go与CDN进行了TLS握手，对于CDN而言，TLS流量内容是明文。为了保证安全性，Trojan-Go默认将在Websocket连接上再建立一次TLS连接（双重TLS）。此时传输实际上经过了两次TLS握手，并且这个TLS隧道的证书校验被**强制开启**。
 
@@ -36,7 +36,7 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 **如果你使用的是国内的CDN，务必保证两者均开启。最坏情况下也应当保持混淆和双重TLS之一是打开的。**
 
-CDN转发的场景和在GFW在2020年3月29日进行的HTTPS流量劫持和中间人攻击类似。它们的共同点是，第一层TLS承载的流量明文均可以被第三者窃听。**如果你使用了websocket模式**，你可以将客户端的```verify```字段填写为false，并指定```cert```字段。在这样的设置下，即使第一层TLS传输的明文遭到审查或攻击，由于第二层TLS的保护（证书校验被强制开启），传输的内容依旧安全。
+CDN转发的场景，和GFW在2020年3月29日进行的对包括github pages等站点进行的HTTPS流量劫持和中间人攻击,是类似的。它们的共同点是，第一层TLS承载的流量明文均可以被第三者窃听（CDN或GFW）。**如果你使用了Websocket模式**，你可以将客户端的```verify```字段填写为false，并指定```cert```字段。在这样的设置下，即使第一层TLS传输的明文遭到审查或攻击，由于第二层TLS的保护（证书校验被强制开启），传输的内容依旧安全。
 
 下面是一个客户端配置文件的例子
 
