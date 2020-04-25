@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Websocket - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
-<meta name="generator" content="Hugo 0.69.1" />
+<meta name="generator" content="Hugo 0.69.2" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
 <link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="Websocket" />
-<meta property="og:description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&" />
+<meta property="og:description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/websocket/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="Websocket"/>
-<meta name="twitter:description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&"/>
+<meta name="twitter:description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握"/>
 <meta itemprop="name" content="Websocket">
-<meta itemprop="description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&">
+<meta itemprop="description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握">
 
-<meta itemprop="wordCount" content="538">
+<meta itemprop="wordCount" content="839">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.3.0</span>
+ <span class="version">Version 0.4.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -54,44 +54,64 @@
 </div>
 <div class="content-container">
 <main><h1>Websocket</h1>
-<p>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议头部特征过于明显（SHA224，&quot;\r\n&quot;等），为了保证不被审查和传输安全，默认情况下还会进行一次AES加密(混淆层)和TLS连接(双重TLS)。</p>
-<p>开启Websocket的客户端可以使用<code>password</code>字段开启混淆，以及使用<code>double_tls</code>启用双重TLS以确保连接安全性。</p>
-<p>混淆层使用AES-CTR-128加密方式，使用<code>password</code>的md5作为主密钥对承载流量进行加密，这层加密作用仅仅是混淆流量特征，而不是保护数据安全。它不保证数据完整性和身份认证，因此可能遭受中间人攻击和重放攻击。如果CDN不可信，或者遭受了基于HTTPS劫持的中间人攻击，应启用双重TLS保证数据传输安全。</p>
-<p>如果使用了双重TLS，握手造成的延迟可能略有增加，但是只要开启<code>session_reuse</code>，<code>session_ticket</code>复用TLS连接，以及开启<code>mux</code>启用TLS多路复用，只会刚刚开启Trojan-Go时察觉明显的延迟。</p>
+<p>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握手特征也很明显。为了保证Websocket传输的隐蔽和安全，默认情况下还会进行一次AES加密(混淆层)和TLS连接(双重TLS)。其中TLS用于保证传输的安全性，AES加密仅仅只是用于混淆流量。</p>
+<p><strong>如果你使用的是国内的CDN，务必保证两者均开启。最坏情况下也应当保持混淆和双重TLS之一是打开的。</strong></p>
+<p>开启Websocket模块的客户端可以使用<code>obfuscation</code>字段开启混淆，以及使用<code>double_tls</code>启用双重TLS以确保连接安全性和隐蔽性。</p>
+<p>混淆层使用AES-CTR-128加密方式。加密主密钥派生自<code>obfuscation_password</code>，使用16字节随机salt和sha1散列算法，使用pbkdf2进行对<code>password</code>密码进行32次迭代，派生得到16字节的密钥。salt为硬编码的随机字节，定义为</p>
+<pre><code>salt := []byte{48, 149, 6, 18, 13, 193, 247, 116, 197, 135, 236, 175, 190, 209, 146, 48}
+</code></pre><p>在每次连接开始时，生成16字节的随机IV。根据主密钥和IV，使用AES-CTR-128加密方式对后续流量进行加密。Websocket承载的流量结构如下（IV随着Payload一起发送的，避免了长度特征）：</p>
+<pre><code>+----+-------------------+
+| IV | Encrypted Payload |
++----+-------------------+
+| 16 |     Variable      |
++----+-------------------+
+</code></pre><p>服务端得到IV之后用同样的密钥进行解密。</p>
+<p>注意，这层加密作用仅仅是增加字节流的熵，混淆流量特征，而不是保护数据安全。它不保证数据完整性和身份认证，因此可能遭受重放攻击。如果CDN不可信，或者遭受了基于HTTPS劫持的中间人攻击，应启用双重TLS保证数据传输安全。</p>
+<p>如果使用了双重TLS，握手造成的延迟可能略有增加，但是只要开启<code>session_reuse</code>，<code>session_ticket</code>复用TLS连接，以及开启<code>mux</code>启用TLS多路复用，只会在开启Trojan-Go时的最初几秒察觉明显的延迟。</p>
 <p>协议栈如下：</p>
 <table>
 <thead>
 <tr>
 <th>协议</th>
+<th>备注</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>真实流量</td>
+<td></td>
 </tr>
 <tr>
-<td>simplesocks(如果使用mux)</td>
+<td>simplesocks</td>
+<td>如果使用mux</td>
 </tr>
 <tr>
-<td>smux(如果使用mux)</td>
+<td>smux</td>
+<td>如果使用mux</td>
 </tr>
 <tr>
 <td>trojan</td>
-</tr>
-<tr>
-<td>TLS(如果开启双重TLS)</td>
-</tr>
-<tr>
-<td>混淆层(如果开启混淆)</td>
-</tr>
-<tr>
-<td>Websocket</td>
+<td></td>
 </tr>
 <tr>
 <td>TLS</td>
+<td></td>
+</tr>
+<tr>
+<td>混淆层</td>
+<td>如果开启混淆</td>
+</tr>
+<tr>
+<td>Websocket</td>
+<td></td>
+</tr>
+<tr>
+<td>TLS</td>
+<td></td>
 </tr>
 <tr>
 <td>TCP</td>
+<td></td>
 </tr>
 </tbody>
 </table>

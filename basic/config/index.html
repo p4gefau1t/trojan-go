@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>正确配置Trojan-Go - Trojan-Go</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
-<meta name="generator" content="Hugo 0.69.1" />
+<meta name="generator" content="Hugo 0.69.2" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
 <link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/config/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
@@ -30,7 +30,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名">
 
-<meta itemprop="wordCount" content="1776">
+<meta itemprop="wordCount" content="1998">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.3.0</span>
+ <span class="version">Version 0.4.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -91,8 +91,9 @@
 </code></pre><p>进行证书更新。更新之前请确保同目录下有上述的四个文件。如果你没有制定ACME challenge使用的端口，Trojan-Go将默认使用443和80端口，请确保这两个端口没有被Trojan-Go或者其他程序（nginx, caddy等等）占用。</p>
 <h3 id="服务端配置">服务端配置</h3>
 <p>我们的目标是，使得你的服务器和正常的HTTPS网站表现相同。</p>
-<p>首先你需要一个配置Web服务器，可以使用nginx，apache，caddy等。Web服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。</p>
-<p>这是一份比较安全的服务器配置，需要你在本地80端口配置一个HTTP服务（必要），在1234端口配置一个HTTPS服务（可选，可以删除fallback_port字段，跳过这个步骤）</p>
+<p>首先你需要一个HTTP服务器，可以使用nginx，apache，caddy等配置一个本地HTTP服务器，也可以使用别人的HTTP服务器。HTTP服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。</p>
+<p><strong>你需要在<code>remote_addr</code>和<code>remote_port</code>指定这个HTTP服务器的地址。<code>remote_addr</code>可以是IP或者域名。Trojan-Go将会测试这个HTTP服务器是否工作正常，如果不正常，Trojan-Go会拒绝启动。</strong></p>
+<p>下面是一份比较安全的服务器配置，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如&quot;remote_addr&rdquo;: &ldquo;example.com&rdquo;），在1234端口配置一个HTTPS服务（可选，可以删除<code>fallback_port</code>字段，跳过这个步骤）</p>
 <pre><code>{
     &quot;run_type&quot;: &quot;server&quot;,
     &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
@@ -109,7 +110,7 @@
     }
 }
 </code></pre><p>这个配置文件使Trojan-Go在服务器的所有网卡上(0.0.0.0)监听443端口，使用server.crt和server.key作为证书和密钥进行TLS握手。你应该使用尽可能复杂的密码，同时确保客户端和服务端<code>password</code>是一致的。</p>
-<p>如果TLS连接建立后，检测到TLS的内容非法，将TLS连接代理到本地127.0.0.1:80上的HTTP服务，这时远端看起来就是一个HTTPS的网站页面。</p>
+<p>如果TLS连接建立后，检测到TLS的内容非法，将TLS连接代理到本地127.0.0.1:80上的HTTP服务，这时远端看起来，Trojan-Go就是一个HTTPS的网站。</p>
 <p>如果TLS握手失败了，说明对方使用的不是TLS协议进行主动探测，此时Trojan-Go将连接代理到本地127.0.0.1:1234上运行的HTTPS服务，本地HTTPS服务器也会检测到连接不是TLS连接，返回一个400 Bad Reqeust的HTTP页面。<code>fallback_port</code>是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。</p>
 <p>如果TLS连接建立，并且确认是Trojan协议，而且密码正确，那么服务器将解析来自客户端的请求并进行代理。</p>
 <p>你可以通过使用浏览器访问你的域名 https://your_domain_name 来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用 http://your_domain_name:443 验证<code>fallback_port</code>工作是否正常。</p>
