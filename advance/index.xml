@@ -16,16 +16,16 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/mux/</guid>
-      <description>注意，原版Trojan-GFW服务端不支持这个特性。 Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS</description>
+      <description>注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连</description>
     </item>
     
     <item>
-      <title>使用Websocket进行CDN转发</title>
+      <title>使用Websocket进行CDN转发和抵抗中间人攻击</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/websocket/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/websocket/</guid>
-      <description>注意，原版Trojan-GFW服务端不支持这个特性。 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN</description>
+      <description>注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/relay/</guid>
-      <description>注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务</description>
+      <description>注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境</description>
     </item>
     
     <item>
@@ -52,7 +52,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/forward/</guid>
-      <description>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个纯净无污染的DNS服务器，下面是一个配置的例子 {</description>
+      <description>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &amp;quot;run_type&amp;quot;: &amp;quot;forward&amp;quot;,</description>
     </item>
     
   </channel>
