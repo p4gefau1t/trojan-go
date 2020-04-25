@@ -62,8 +62,8 @@ func (r *RewindReader) Discard(n int) (int, error) {
 }
 
 func (r *RewindReader) Rewind() {
-	if !r.buffered {
-		panic("not buffered yet")
+	if r.bufferSize == 0 {
+		panic("has no buffer")
 	}
 	r.rewinded = true
 	r.bufReadIdx = 0

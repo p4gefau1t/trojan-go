@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"crypto/aes"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 func loadCommonConfig(config *GlobalConfig) error {
@@ -103,6 +106,12 @@ func loadCommonConfig(config *GlobalConfig) error {
 			if ip := net.ParseIP(config.RemoteHost); ip != nil && ip.To4() == nil { //ipv6 address
 				config.Websocket.HostName = "[" + config.RemoteHost + "]"
 			}
+		}
+		if config.Websocket.ObfuscationPassword != "" {
+			log.Info("websocket obfs enabled")
+			password := []byte(config.Websocket.ObfuscationPassword)
+			salt := []byte{48, 149, 6, 18, 13, 193, 247, 116, 197, 135, 236, 175, 190, 209, 146, 48}
+			config.Websocket.ObfuscationKey = pbkdf2.Key(password, salt, 32, aes.BlockSize, sha256.New)
 		}
 	}
 	return nil
@@ -292,7 +301,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Router.GeoSiteFilename = common.GetProgramDir() + "/geosite.dat"
 	config.Websocket.DoubleTLS = true
 	config.Websocket.DoubleTLSVerify = true
-	config.Websocket.Obfuscation = true
+	config.Websocket.ObfuscationPassword = ""
 
 	err := json.Unmarshal(data, config)
 	if err != nil {

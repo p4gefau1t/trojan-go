@@ -92,9 +92,8 @@ func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
 
 func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator, shadowMan *shadow.ShadowManager) (protocol.ConnSession, *protocol.Request, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	//rwc := common.NewRewindReadWriteCloser(conn)
 	rewindConn := common.NewRewindConn(conn)
+
 	i := &TrojanInboundConnSession{
 		config:       config,
 		auth:         auth,
@@ -103,6 +102,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 		cancel:       cancel,
 		rwc:          rewindConn,
 	}
+
 	//start buffering
 	rewindConn.R.SetBufferSize(512)
 	defer rewindConn.R.StopBuffering()

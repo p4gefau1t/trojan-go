@@ -216,7 +216,6 @@ func (s *Server) Run() error {
 				}
 				return
 			}
-			defer tlsConn.Close()
 			s.handleConn(tlsConn)
 		}(conn)
 	}

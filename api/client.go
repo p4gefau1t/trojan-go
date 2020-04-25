@@ -41,6 +41,8 @@ func (s *ClientAPIService) calcSpeed() {
 		sent, recv := s.meter.Query("")
 		s.uploadSpeed = sent - s.lastSent
 		s.downloadSpeed = recv - s.lastRecv
+		s.lastSent = sent
+		s.lastRecv = recv
 	case <-s.ctx.Done():
 		return
 	}

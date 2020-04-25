@@ -100,12 +100,14 @@ type RouterConfig struct {
 }
 
 type WebsocketConfig struct {
-	Enabled         bool   `json:"enabled"`
-	HostName        string `json:"hostname"`
-	Path            string `json:"path"`
-	Obfuscation     bool   `json:"obfuscation"`
-	DoubleTLS       bool   `json:"double_tls"`
-	DoubleTLSVerify bool   `json:"double_tls_verify"`
+	Enabled             bool   `json:"enabled"`
+	HostName            string `json:"hostname"`
+	Path                string `json:"path"`
+	ObfuscationPassword string `json:"obfuscation_password"`
+	DoubleTLS           bool   `json:"double_tls"`
+	DoubleTLSVerify     bool   `json:"double_tls_verify"`
+
+	ObfuscationKey []byte
 }
 
 type APIConfig struct {

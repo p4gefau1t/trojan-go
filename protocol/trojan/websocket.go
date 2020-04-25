@@ -6,7 +6,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha1"
 	"crypto/tls"
 	"io"
 	"net"
@@ -18,7 +17,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/shadow"
-	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/net/websocket"
 )
 
@@ -44,16 +42,14 @@ func (rwc *obfReadWriteCloser) Close() error {
 	return rwc.Conn.Close()
 }
 
-func NewOutboundObfReadWriteCloser(password string, conn *websocket.Conn) *obfReadWriteCloser {
+func NewOutboundObfReadWriteCloser(key []byte, conn *websocket.Conn) *obfReadWriteCloser {
 	//use bufio to avoid fixed ws packet length
 	bufrw := common.NewBufioReadWriter(conn)
-	randomBytes := [aes.BlockSize + 8]byte{}
-	common.Must2(io.ReadFull(rand.Reader, randomBytes[:]))
-	bufrw.Write(randomBytes[:])
+	iv := [aes.BlockSize]byte{}
+	common.Must2(io.ReadFull(rand.Reader, iv[:]))
+	bufrw.Write(iv[:])
+	log.Debug("obfs sent iv", iv)
 
-	iv := randomBytes[:aes.BlockSize]
-	salt := randomBytes[aes.BlockSize:]
-	key := pbkdf2.Key([]byte(password), salt, 32, aes.BlockSize, sha1.New)
 	block, err := aes.NewCipher(key)
 	common.Must(err)
 
@@ -71,17 +67,15 @@ func NewOutboundObfReadWriteCloser(password string, conn *websocket.Conn) *obfRe
 	}
 }
 
-func NewInboundObfReadWriteCloser(password string, conn net.Conn) (*obfReadWriteCloser, error) {
+func NewInboundObfReadWriteCloser(key []byte, conn net.Conn) (*obfReadWriteCloser, error) {
 	bufrw := common.NewBufioReadWriter(conn)
-	randomBytes := [aes.BlockSize + 8]byte{}
-	_, err := bufrw.Read(randomBytes[:])
+	iv := [aes.BlockSize]byte{}
+	_, err := bufrw.Read(iv[:])
 	if err != nil {
 		return nil, err
 	}
+	log.Debug("obfs recv iv", iv)
 
-	iv := randomBytes[:aes.BlockSize]
-	salt := randomBytes[aes.BlockSize:]
-	key := pbkdf2.Key([]byte(password), salt, 32, aes.BlockSize, sha1.New)
 	block, err := aes.NewCipher(key)
 	common.Must(err)
 
@@ -128,9 +122,9 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 		return nil, err
 	}
 	var transport net.Conn = wsConn
-	if config.Websocket.Obfuscation {
+	if config.Websocket.ObfuscationPassword != "" {
 		log.Debug("ws obfs enabled")
-		transport = NewOutboundObfReadWriteCloser(config.Passwords[0], wsConn)
+		transport = NewOutboundObfReadWriteCloser(config.Websocket.ObfuscationKey, wsConn)
 	}
 	if !config.Websocket.DoubleTLS {
 		return transport, nil
@@ -194,7 +188,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	rewindConn.R.SetBufferSize(512)
 	defer rewindConn.R.StopBuffering()
 
-	bufrw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	bufrw := bufio.NewReadWriter(bufio.NewReader(rewindConn), bufio.NewWriter(rewindConn))
 	httpRequest, obfErr := http.ReadRequest(bufrw.Reader)
 	if obfErr != nil {
 		log.Debug(common.NewError("not a http request:").Base(obfErr))
@@ -258,19 +252,21 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		return nil, common.NewError("failed to perform websocket handshake")
 	}
 
+	//use ws to transport
 	var transport net.Conn
-	transport = common.NewRewindConn(wsConn)
+	rewindConn = common.NewRewindConn(wsConn)
+	transport = rewindConn
 
 	//start buffering the websocket payload
 	rewindConn.R.SetBufferSize(512)
 	defer rewindConn.R.StopBuffering()
 
-	if config.Websocket.Obfuscation {
+	if config.Websocket.ObfuscationPassword != "" {
 		log.Debug("ws obfs")
 
 		//deadline for sending the iv and hash
 		rewindConn.SetDeadline(time.Now().Add(protocol.TCPTimeout))
-		transport, obfErr = NewInboundObfReadWriteCloser(config.Passwords[0], rewindConn)
+		transport, obfErr = NewInboundObfReadWriteCloser(config.Websocket.ObfuscationKey, transport)
 		rewindConn.SetDeadline(time.Time{})
 
 		if obfErr != nil {
