@@ -1,5 +1,11 @@
-on: [push, pull_request]
-name: build
+on: 
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+name: dev-build
 jobs:
   build:
     strategy:
