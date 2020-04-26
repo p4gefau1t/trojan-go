@@ -48,7 +48,8 @@ weight: 30
         "session_ticket": true,
         "reuse_session": true,
         "plain_http_response": "",
-        "fallback_port":0
+        "fallback_port": 0,
+        "fingerprint": ""
     },
     "tcp": {
         "no_delay": false,
@@ -113,11 +114,27 @@ weight: 30
 
 ```sni```指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
-```cipher```和```cipher13```指client/server使用的密码学套件。只有在你明确知道自己在做什么的情况下，你才应该去填写cipher/cipher_tls13以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Golang的TLS库中中弃用了TLS1.2不安全的密码学套件，完全支持TLS1.3。如果你需要较高的安全性，而不担心跨硬件和软件平台的兼容性和性能，你可以强制要求trojan-go只使用TLS1.3密码学套件，设置cipher或者cipher13如下（填写cipher13和cipher是一样的）：
+```cipher```和```cipher13```指client/server使用的密码学套件。只有在你明确知道自己在做什么的情况下，你才应该去填写cipher/cipher_tls13以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，Trojan-Go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Golang的TLS库中中弃用了TLS1.2不安全的密码学套件，完全支持TLS1.3。例如，如果你需要较高的安全性，而不担心跨硬件和软件平台的兼容性和性能，你可以强制要求trojan-go只使用TLS1.3密码学套件，设置cipher或者cipher13如下（填写cipher13和cipher是一样的）：
 
 ```
 cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384"
 ```
+
+```fingerprint```用于指定TLS Client Hello指纹伪造类型。Trojan-Go使用utls[https://github.com/refraction-networking/utls]进行指纹伪造，避免遭到针对golang的TLS库的识别。合法的值有
+
+- ""(空)，默认，不使用指纹伪造
+
+- "auto"，自动选择(推荐)
+
+- "firefox"，伪造Firefox指纹
+
+- "chrome"，伪造Chrome指纹
+
+- "ios"，伪造ios指纹
+
+- "randomized"，随机指纹
+
+一旦指纹的值被设置，```cipher```字段将被忽略。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。
 
 ```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 

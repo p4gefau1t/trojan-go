@@ -10,7 +10,7 @@ weight: 4
 
 开启Websocket模块的客户端可以使用```obfuscation```字段开启混淆，以及使用```double_tls```启用双重TLS以确保连接安全性和隐蔽性。
 
-混淆层使用AES-CTR-128加密方式。加密主密钥派生自```obfuscation_password```，使用16字节的salt和sha1散列算法，使用pbkdf2进行对```obfuscation_password```密码进行32次迭代，派生得到16字节的密钥。salt为硬编码的随机字节，定义为
+混淆层使用AES-CTR-128加密方式。加密主密钥派生自```obfuscation_password```，使用16字节的salt和sha1散列算法，使用pbkdf2对```obfuscation_password```密码进行32次迭代，派生得到16字节的主密钥。salt为硬编码的随机字节，定义为
 
 ```
 salt := []byte{48, 149, 6, 18, 13, 193, 247, 116, 197, 135, 236, 175, 190, 209, 146, 48}
