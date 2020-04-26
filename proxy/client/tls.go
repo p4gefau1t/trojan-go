@@ -148,12 +148,12 @@ func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
 	if m.config.TLS.Fingerprint == "auto" {
 		//use utls roller
 		tlsConn, err = m.roller.Dial(network, m.config.RemoteAddress.String(), m.config.TLS.SNI)
-	} else if m.config.TLS.ClientHelloID.IsSet() {
+	} else if m.config.TLS.ClientHelloID != nil {
 		//use utls fixed fingerprint
 		log.Debug("using fingerprint", m.config.TLS.ClientHelloID.Str())
 		var conn net.Conn
 		conn, err = net.Dial(network, m.config.RemoteAddress.String())
-		tlsConn = utls.UClient(conn, m.utlsConfig, m.config.TLS.ClientHelloID)
+		tlsConn = utls.UClient(conn, m.utlsConfig, *m.config.TLS.ClientHelloID)
 	} else {
 		//normal golang tls
 		tlsConn, err = tls.Dial(network, m.config.RemoteAddress.String(), m.tlsConfig)

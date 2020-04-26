@@ -39,4 +39,5 @@ func TestRealClientAPI(t *testing.T) {
 	reply, err := client.QueryStats(context.Background(), &StatsRequest{})
 	common.Must(err)
 	fmt.Println(reply.DownloadTraffic, reply.UploadTraffic)
+	fmt.Println(reply.DownloadSpeed, reply.UploadSpeed)
 }

@@ -319,7 +319,6 @@ func (c *Client) listenTCP(errChan chan error) {
 			errChan <- common.NewError("error occured when accpeting conn").Base(err)
 			return
 		}
-		//rw := common.NewBufReadWriter2(conn)
 		rwc := common.NewRewindReadWriteCloser(conn)
 		rwc.SetBufferSize(128)
 		first, err := rwc.ReadByte()

@@ -198,13 +198,13 @@ func loadClientConfig(config *GlobalConfig) error {
 
 	//tls settings
 	if config.TLS.Fingerprint != "" && config.TLS.Fingerprint != "auto" {
-		table := map[string]utls.ClientHelloID{
-			"chrome":             utls.HelloChrome_Auto,
-			"firefox":            utls.HelloFirefox_Auto,
-			"ios":                utls.HelloIOS_Auto,
-			"randomized":         utls.HelloRandomized,
-			"randomized_alpn":    utls.HelloRandomizedALPN,
-			"randomized_no_alpn": utls.HelloRandomizedNoALPN,
+		table := map[string]*utls.ClientHelloID{
+			"chrome":             &utls.HelloChrome_Auto,
+			"firefox":            &utls.HelloFirefox_Auto,
+			"ios":                &utls.HelloIOS_Auto,
+			"randomized":         &utls.HelloRandomized,
+			"randomized_alpn":    &utls.HelloRandomizedALPN,
+			"randomized_no_alpn": &utls.HelloRandomizedNoALPN,
 		}
 		id, found := table[config.TLS.Fingerprint]
 		if found {

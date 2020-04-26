@@ -99,7 +99,7 @@ func getTLSConfig() conf.TLSConfig {
 		ReuseSession:    true,
 		SessionTicket:   true,
 		FallbackAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),
-		Fingerprint:     "auto",
+		Fingerprint:     "firefox",
 	}
 	return c
 }

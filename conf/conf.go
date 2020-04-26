@@ -34,7 +34,7 @@ type TLSConfig struct {
 	ReuseSession       bool   `json:"reuse_session"`
 	Fingerprint        string `json:"fingerprint"`
 
-	ClientHelloID    utls.ClientHelloID
+	ClientHelloID    *utls.ClientHelloID
 	FallbackAddress  *common.Address
 	CertPool         *x509.CertPool
 	KeyPair          []tls.Certificate
