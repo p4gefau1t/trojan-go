@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="4168">
+<meta itemprop="wordCount" content="4542">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.4.0</span>
+ <span class="version">Version v0.4.1</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -100,7 +100,8 @@
         &quot;session_ticket&quot;: true,
         &quot;reuse_session&quot;: true,
         &quot;plain_http_response&quot;: &quot;&quot;,
-        &quot;fallback_port&quot;:0
+        &quot;fallback_port&quot;: 0,
+        &quot;fingerprint&quot;: &quot;&quot;
     },
     &quot;tcp&quot;: {
         &quot;no_delay&quot;: false,
@@ -151,9 +152,31 @@
 <p><code>verify_hostname</code>表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI字段的一致性。</p>
 <p>服务端必须填入<code>cert</code>和<code>key</code>，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写<code>cert</code>。如果使用自签名或者自签发的证书，应当在的<code>cert</code>处填入服务器证书文件，否则可能导致校验失败。</p>
 <p><code>sni</code>指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
-<p><code>cipher</code>和<code>cipher13</code>指client/server使用的密码学套件。只有在你明确知道自己在做什么的情况下，你才应该去填写cipher/cipher_tls13以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔。Golang的TLS库中中弃用了TLS1.2不安全的密码学套件，完全支持TLS1.3。如果你需要较高的安全性，而不担心跨硬件和软件平台的兼容性和性能，你可以强制要求trojan-go只使用TLS1.3密码学套件，设置cipher或者cipher13如下（填写cipher13和cipher是一样的）：</p>
+<p><code>cipher</code>和<code>cipher13</code>指client/server使用的密码学套件。只有在你明确知道自己在做什么的情况下，你才应该去填写cipher/cipher_tls13以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，Trojan-Go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔。Golang的TLS库中中弃用了TLS1.2不安全的密码学套件，完全支持TLS1.3。例如，如果你需要较高的安全性，而不担心跨硬件和软件平台的兼容性和性能，你可以强制要求trojan-go只使用TLS1.3密码学套件，设置cipher或者cipher13如下（填写cipher13和cipher是一样的）：</p>
 <pre><code>cipher13:&quot;TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384&quot;
-</code></pre><p><code>plain_http_response</code>指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
+</code></pre><p><code>fingerprint</code>用于指定TLS Client Hello指纹伪造类型。Trojan-Go使用utls[https://github.com/refraction-networking/utls]进行指纹伪造，避免遭到针对golang的TLS库的识别。合法的值有</p>
+<ul>
+<li>
+<p>&ldquo;&quot;(空)，默认，不使用指纹伪造</p>
+</li>
+<li>
+<p>&ldquo;auto&rdquo;，自动选择(推荐)</p>
+</li>
+<li>
+<p>&ldquo;firefox&rdquo;，伪造Firefox指纹</p>
+</li>
+<li>
+<p>&ldquo;chrome&rdquo;，伪造Chrome指纹</p>
+</li>
+<li>
+<p>&ldquo;ios&rdquo;，伪造ios指纹</p>
+</li>
+<li>
+<p>&ldquo;randomized&rdquo;，随机指纹</p>
+</li>
+</ul>
+<p>一旦指纹的值被设置，<code>cipher</code>字段将被忽略。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。</p>
+<p><code>plain_http_response</code>指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
 <p><code>fallback_port</code>指TLS握手失败时，Trojan-Go将该连接代理到该端口上。这是Trojan-Go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问http://your_domain_name.com:443进行验证。</p>
 <h3 id="mux多路复用选项"><code>mux</code>多路复用选项</h3>
 <p>多路复用是Trojan-Go的特性。如果服务器和客户端都是Trojan-Go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。</p>
@@ -244,6 +267,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 </ul>
   
 </li>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>一种基于SNI代理的多路径分流中继方案 - Trojan-Go</title>
+<meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
+<meta name="generator" content="Hugo 0.69.2" />
+<link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="一种基于SNI代理的多路径分流中继方案" />
+<meta property="og:description" content="前言 Trojan 是一种通过 TLS 封装后进行加密数据传输的工具，利用其 TLS 的特性，我们可以通过 SNI 代理实现在同一主机端口上实现不同路径的分流中继。 所需工具及其他" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/" />
+<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:site_name" content="Hugo Techdoc Theme" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+<meta name="twitter:title" content="一种基于SNI代理的多路径分流中继方案"/>
+<meta name="twitter:description" content="前言 Trojan 是一种通过 TLS 封装后进行加密数据传输的工具，利用其 TLS 的特性，我们可以通过 SNI 代理实现在同一主机端口上实现不同路径的分流中继。 所需工具及其他"/>
+<meta itemprop="name" content="一种基于SNI代理的多路径分流中继方案">
+<meta itemprop="description" content="前言 Trojan 是一种通过 TLS 封装后进行加密数据传输的工具，利用其 TLS 的特性，我们可以通过 SNI 代理实现在同一主机端口上实现不同路径的分流中继。 所需工具及其他">
+
+<meta itemprop="wordCount" content="1003">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Trojan-Go</h1>
+
+ <span class="version">Version v0.4.1</span>
+<a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
+<p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/trojan-go/">Home</a></li>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li>
+<li><a href="https://twitter.com/p4gefau1t">Twitter</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>一种基于SNI代理的多路径分流中继方案</h1>
+<h2 id="前言">前言</h2>
+<p>Trojan 是一种通过 TLS 封装后进行加密数据传输的工具，利用其 TLS 的特性，我们可以通过 SNI 代理实现在同一主机端口上实现不同路径的分流中继。</p>
+<h2 id="所需工具及其他准备">所需工具及其他准备</h2>
+<ul>
+<li>中继机：nginx 1.11.5 及以上版本</li>
+<li>落地机：trojan 服务端（无版本要求）</li>
+</ul>
+<h2 id="配置方法">配置方法</h2>
+<p>为了便于说明，这里使用了两台中继主机和两台落地主机。<br>
+四台主机所绑定的域名分别为 (a/b/c/d).example.com。如图所示。<br>
+相互连接一共4条路径。分别为 a-c、a-d、b-c、b-d 。</p>
+<pre><code>                        +-----------------+           +--------------------+
+                        |                 +----------&gt;+                    |
+                        |   VPS RELAY A   |           |   VPS ENDPOINT C   |
+                  +----&gt;+                 |   +------&gt;+                    |
+                  |     |  a.example.com  |   |       |   c.example.com    |
+                  |     |                 +------+    |                    |
+  +----------+    |     +-----------------+   |  |    +--------------------+
+  |          |    |                           |  |
+  |  client  +----+                           |  |
+  |          |    |                           |  |
+  +----------+    |     +-----------------+   |  |    +--------------------+
+                  |     |                 |   |  |    |                    |
+                  |     |   VPS RELAY B   |   |  +---&gt;+   VPS ENDPOINT D   |
+                  +----&gt;+                 +---+       |                    |
+                        |  b.example.com  |           |   d.example.com    |
+                        |                 +----------&gt;+                    |
+                        +-----------------+           +--------------------+
+</code></pre><h3 id="配置路径域名和相应的证书">配置路径域名和相应的证书</h3>
+<p>首先我们需要将每条路径分别分配一个域名，并使其解析到分别的入口主机上。</p>
+<pre><code>a-c.example.com CNAME a.example.com  
+a-d.example.com CNAME a.example.com  
+b-c.example.com CNAME b.example.com  
+b-d.example.com CNAME b.example.com
+</code></pre><p>然后我们需要在落地主机上部署所有目标路径的证书<br>
+由于解析记录和主机 IP 不符，HTTP 验证无法通过。这里建议使用 DNS 验证方式签发证书。<br>
+具体 DNS 验证插件需要根据您的域名 DNS 解析托管商选择，这里使用了 AWS Route 53。</p>
+<pre><code>certbot certonly --dns-route53 -d a-c.example.com -d b-c.example.com // 主机 C 上
+certbot certonly --dns-route53 -d a-d.example.com -d b-d.example.com // 主机 D 上
+</code></pre><h3 id="配置-sni-代理">配置 SNI 代理</h3>
+<p>这里我们使用 nginx 的 ssl_preread 模块实现 SNI 代理。<br>
+请安装 nginx 后按如下方法修过 nginx.conf 文件。<br>
+注意这里不是 HTTP 服务，请不要写在虚拟主机的配置中。</p>
+<p>这里给出主机 A 上的对应配置，主机 B 同理。</p>
+<pre><code>stream {
+  map $ssl_preread_server_name $name {
+    a-c.example.com   c.example.com;  # 将 a-c 路径流量转发至主机 C
+    a-d.example.com   d.example.com;  # 将 a-d 路径流量转发至主机 D
+
+    # 如果此主机上需要配置其他占用 443 端口的服务 （例如 web 服务和 Trojan 服务）
+    # 请使那些服务监听在其他本地端口（这里使用了 4000）
+    # 所有不匹配上方 SNI 的 TLS 请求都会转发至此端口，如不需要可以删除此行
+    default           localhost:4000;
+  }
+
+  server {
+    listen      443; # 监听 443 端口
+    proxy_pass  $name;
+    ssl_preread on;
+  }
+}
+</code></pre><h3 id="配置落地-trojan-服务">配置落地 Trojan 服务</h3>
+<p>在之前的配置中我们使用了一个证书签发了所有目标路径的域名，所以这里我们可以使用一个 Trojan 服务端处理所有目标路径的请求。<br>
+Trojan 的配置和通常配置方法无异，这里还是提供一份例子。无关的配置已省略。</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;server&quot;,
+    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
+    &quot;local_port&quot;: 443,
+    &quot;ssl&quot;: {
+        &quot;cert&quot;: &quot;/path/to/certificate.crt&quot;,
+        &quot;key&quot;: &quot;/path/to/private.key&quot;,
+    }
+    ...
+}
+</code></pre><p>小提示：如果需要在落地主机上对不同路径分别使用独立的 Trojan 服务端（比如需要分别接入各自的计费服务），可以在落地机上再配置一个 SNI 代理，并分别转发至本地不同的 Trojan 服务端监听端口。由于配置与前面所提到的过程基本相同，这里便不再赘述。</p>
+<h2 id="总结">总结</h2>
+<p>通过以上介绍的配置方法，我们可以在单一端口上实现多入口多出口多级中继的 Trojan 流量转发。<br>
+对于多级中继，只需在中间节点上按相同思路配置 SNI 代理即可。</p>
+<div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/nginx-relay.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/forward/" title="DNS隧道和反向代理"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - DNS隧道和反向代理</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南">Next - 实现细节和开发指南 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main><div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

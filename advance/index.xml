@@ -55,5 +55,14 @@
       <description>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &amp;quot;run_type&amp;quot;: &amp;quot;forward&amp;quot;,</description>
     </item>
     
+    <item>
+      <title>一种基于SNI代理的多路径分流中继方案</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/</guid>
+      <description>前言 Trojan 是一种通过 TLS 封装后进行加密数据传输的工具，利用其 TLS 的特性，我们可以通过 SNI 代理实现在同一主机端口上实现不同路径的分流中继。 所需工具及其他</description>
+    </item>
+    
   </channel>
 </rss>

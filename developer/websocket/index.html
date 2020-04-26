@@ -30,7 +30,7 @@
 <meta itemprop="name" content="Websocket">
 <meta itemprop="description" content="由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握">
 
-<meta itemprop="wordCount" content="849">
+<meta itemprop="wordCount" content="848">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go</h1>
 
- <span class="version">Version 0.4.0</span>
+ <span class="version">Version v0.4.1</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -57,7 +57,7 @@
 <p>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握手特征也很明显。为了保证Websocket传输的隐蔽和安全，默认情况下还会进行一次AES加密(混淆层)和TLS连接(双重TLS)。其中TLS用于保证传输的安全性，AES加密仅仅只是用于混淆流量。</p>
 <p><strong>如果你使用的是国内的CDN，务必保证两者均开启。最坏情况下也应当保持混淆和双重TLS之一是打开的。</strong></p>
 <p>开启Websocket模块的客户端可以使用<code>obfuscation</code>字段开启混淆，以及使用<code>double_tls</code>启用双重TLS以确保连接安全性和隐蔽性。</p>
-<p>混淆层使用AES-CTR-128加密方式。加密主密钥派生自<code>obfuscation_password</code>，使用16字节的salt和sha1散列算法，使用pbkdf2进行对<code>obfuscation_password</code>密码进行32次迭代，派生得到16字节的密钥。salt为硬编码的随机字节，定义为</p>
+<p>混淆层使用AES-CTR-128加密方式。加密主密钥派生自<code>obfuscation_password</code>，使用16字节的salt和sha1散列算法，使用pbkdf2对<code>obfuscation_password</code>密码进行32次迭代，派生得到16字节的主密钥。salt为硬编码的随机字节，定义为</p>
 <pre><code>salt := []byte{48, 149, 6, 18, 13, 193, 247, 116, 197, 135, 236, 175, 190, 209, 146, 48}
 </code></pre><p>在每次连接开始时，生成16字节的随机IV。根据主密钥和IV，使用AES-CTR-128加密方式对后续流量进行加密。Websocket承载的流量结构如下（IV随着Payload一起发送，避免了长度特征）：</p>
 <pre><code>+----+-------------------+
@@ -145,6 +145,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 </ul>
   
 </li>
