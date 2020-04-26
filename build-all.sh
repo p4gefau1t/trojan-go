@@ -17,20 +17,29 @@ PLATFORMS="$PLATFORMS linux/s390x"
 type setopt >/dev/null 2>&1
 
 rm -rd release
+rm -rd temp
+rm ./*.dat
+
+mkdir release
+mkdir temp
+
+wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosite.dat
+wget https://raw.githubusercontent.com/v2ray/geoip/release/geoip.dat -O geoip.dat
+
 
 SCRIPT_NAME=`basename "$0"`
 FAILURES=""
-CURRENT_DIRECTORY=${PWD##*/}
-OUTPUT=release/$CURRENT_DIRECTORY
 
 for PLATFORM in $PLATFORMS; do
   GOOS=${PLATFORM%/*}
   GOARCH=${PLATFORM#*/}
-  BIN_FILENAME="${OUTPUT}-${GOOS}-${GOARCH}"
-  if [[ "${GOOS}" == "windows" ]]; then BIN_FILENAME="${BIN_FILENAME}.exe"; fi
-  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BIN_FILENAME} $@ -ldflags=\"-s -w\""
+  ZIP_FILENAME="trojan-go-${GOOS}-${GOARCH}.zip"
+  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o temp $@ -ldflags=\"-s -w\""
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
+  zip -j release/$ZIP_FILENAME temp/* data/* ./*.dat
+  sha1sum release/$ZIP_FILENAME > release/$ZIP_FILENAME.sha1
+  rm temp/*
 done
 
 # eval errors
@@ -38,16 +47,3 @@ if [[ "${FAILURES}" != "" ]]; then
   echo ""
   echo "${SCRIPT_NAME} failed on: ${FAILURES}"
 fi
-
-cd release
-wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosite.dat
-wget https://raw.githubusercontent.com/v2ray/geoip/release/geoip.dat -O geoip.dat
-cp ../data/* ./
-
-for name in trojan-go-*;do
-  zip $name.zip client.json server.json trojan-go.service geoip.dat geosite.dat $name
-  sha1sum $name.zip > $name.zip.sha1
-  rm $name
-done
-
-rm *.json *.service *.dat

@@ -1,7 +1,7 @@
 on: 
   push:
-    branches:
-      - master
+    tags:
+      - 'v*'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,9 +12,25 @@ jobs:
         go-version: 1.14.x
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Checkout tag
+      run: |
+        git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+        tag_name="${GITHUB_REF##*/}"
+        echo Tag $tag_name
+        git checkout $tag_name
     - name: Build
-      run: ./build-all.sh
-    - name: Upload Binary
+      run: |
+        ./build-all.sh
+        set -x
+        assets=()
+        for asset in ./release/*; do
+          assets+=("-a" "$asset")
+        done
+        tag_name="${GITHUB_REF##*/}"
+        hub release create -p -d "${assets[@]}" -m "$tag_name" "$tag_name"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload binary
       uses: actions/upload-artifact@v1
       with:
         name: dist-release
