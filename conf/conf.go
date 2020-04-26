@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	utls "github.com/refraction-networking/utls"
 )
 
 type RunType string
@@ -31,7 +32,9 @@ type TLSConfig struct {
 	FallbackHost       string `json:"fallback_addr"`
 	FallbackPort       int    `json:"fallback_port"`
 	ReuseSession       bool   `json:"reuse_session"`
+	Fingerprint        string `json:"fingerprint"`
 
+	ClientHelloID    utls.ClientHelloID
 	FallbackAddress  *common.Address
 	CertPool         *x509.CertPool
 	KeyPair          []tls.Certificate

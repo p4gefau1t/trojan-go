@@ -7,6 +7,7 @@ require (
 	github.com/go-acme/lego/v3 v3.5.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.0
+	github.com/refraction-networking/utls v0.0.0-20190909200633-43c36d3c1f57
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a
 	github.com/xtaci/smux v1.5.12

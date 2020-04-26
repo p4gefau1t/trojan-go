@@ -14,6 +14,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
+	utls "github.com/refraction-networking/utls"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -46,7 +47,11 @@ func loadCommonConfig(config *GlobalConfig) error {
 	config.TargetAddress = common.NewAddress(config.TargetHost, config.TargetPort, "tcp")
 
 	if config.TLS.FallbackPort != 0 {
-		config.TLS.FallbackAddress = common.NewAddress(config.RemoteHost, config.TLS.FallbackPort, "tcp")
+		if config.TLS.FallbackHost == "" {
+			config.TLS.FallbackAddress = common.NewAddress(config.RemoteHost, config.TLS.FallbackPort, "tcp")
+		} else {
+			config.TLS.FallbackAddress = common.NewAddress(config.TLS.FallbackHost, config.TLS.FallbackPort, "tcp")
+		}
 	}
 
 	//api settings
@@ -84,7 +89,7 @@ func loadCommonConfig(config *GlobalConfig) error {
 			for _, c := range supportedSuites {
 				list += c.Name + ":"
 			}
-			log.Warn(list[0 : len(list)-1])
+			log.Warn(list[:len(list)-1])
 			config.TLS.CipherSuites = nil
 		}
 	} else {
@@ -192,6 +197,24 @@ func loadClientConfig(config *GlobalConfig) error {
 	}
 
 	//tls settings
+	if config.TLS.Fingerprint != "" && config.TLS.Fingerprint != "auto" {
+		table := map[string]utls.ClientHelloID{
+			"chrome":             utls.HelloChrome_Auto,
+			"firefox":            utls.HelloFirefox_Auto,
+			"ios":                utls.HelloIOS_Auto,
+			"randomized":         utls.HelloRandomized,
+			"randomized_alpn":    utls.HelloRandomizedALPN,
+			"randomized_no_alpn": utls.HelloRandomizedNoALPN,
+		}
+		id, found := table[config.TLS.Fingerprint]
+		if found {
+			log.Debug("tls fingerprint loaded:", id.Str())
+			config.TLS.ClientHelloID = id
+		} else {
+			log.Warn("invalid tls fingerprint:", config.TLS.Fingerprint, ", using default fingerprint")
+		}
+	}
+
 	if config.TLS.SNI == "" {
 		log.Warn("SNI is unspecified, using remote_addr as SNI")
 		config.TLS.SNI = config.RemoteHost

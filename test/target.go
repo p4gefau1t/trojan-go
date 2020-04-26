@@ -69,7 +69,10 @@ func RunBlackHoleTCPServer(ctx context.Context) {
 	common.Must(err)
 	go func() {
 		for {
-			conn, _ := listener.Accept()
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
 			go func(conn net.Conn) {
 				io.Copy(ioutil.Discard, conn)
 				conn.Close()
@@ -77,6 +80,7 @@ func RunBlackHoleTCPServer(ctx context.Context) {
 		}
 	}()
 	<-ctx.Done()
+	listener.Close()
 }
 
 func RunHelloHTTPServer(ctx context.Context) {

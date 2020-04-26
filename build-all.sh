@@ -49,3 +49,5 @@ for name in trojan-go-*;do
   sha1sum $name.zip > $name.zip.sha1
   rm $name
 done
+
+rm *.json *.service *.dat

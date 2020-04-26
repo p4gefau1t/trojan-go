@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -98,6 +99,7 @@ func getTLSConfig() conf.TLSConfig {
 		ReuseSession:    true,
 		SessionTicket:   true,
 		FallbackAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),
+		Fingerprint:     "auto",
 	}
 	return c
 }
@@ -194,7 +196,6 @@ func RunServer(ctx context.Context, config *conf.GlobalConfig) {
 }
 
 func CheckClientServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
-	time.Sleep(time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
 	go RunEchoTCPServer(ctx)
 	go RunServer(ctx, serverConfig)
@@ -216,8 +217,8 @@ func CheckClientServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConf
 		t.Fatal("not equal")
 	}
 	conn.Close()
-
 	cancel()
+	time.Sleep(time.Second)
 }
 
 func CheckForwardServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
@@ -267,14 +268,48 @@ func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCo
 	common.Must(err)
 	conn, err := dialer.Dial("tcp", "127.0.0.1:5000")
 	common.Must(err)
-	mbytes := 512
+	mbytes := 2048
 	payload := GeneratePayload(1024 * 1024 * mbytes)
 	t1 := time.Now()
 	conn.Write(payload)
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	b.Log("Single thread link speed:", speed*8/1024, "Gbps")
+	b.Log("single-thread link speed:", speed*8/1024, "Gbps")
 	conn.Close()
+	cancel()
+}
+
+func MultiThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
+	time.Sleep(time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	go RunBlackHoleTCPServer(ctx)
+	go RunServer(ctx, serverConfig)
+	go RunClient(ctx, clientConfig)
+
+	time.Sleep(time.Second)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
+	common.Must(err)
+	mbytes := 2048
+	threads := 16
+	payload := GeneratePayload(1024 * 1024 * mbytes / threads)
+
+	wg := sync.WaitGroup{}
+	wg.Add(threads)
+	t1 := time.Now()
+	for i := 0; i < threads; i++ {
+		go func() {
+			conn, err := dialer.Dial("tcp", "127.0.0.1:5000")
+			common.Must(err)
+			common.Must2(conn.Write(payload))
+			wg.Done()
+			conn.Close()
+		}()
+	}
+	wg.Wait()
+	t2 := time.Now()
+	speed := float64(mbytes) / t2.Sub(t1).Seconds()
+
+	b.Log("multi-thread link speed:", speed*8/1024, "Gbps")
 	cancel()
 }
 
@@ -315,24 +350,28 @@ func BenchmarkNormal(b *testing.B) {
 	clientConfig := getBasicClientConfig()
 	serverConfig := getBasicServerConfig()
 	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+	MultiThreadSpeedTestClientServer(b, clientConfig, serverConfig)
 }
 
 func BenchmarkMux(b *testing.B) {
 	clientConfig := addMuxConfig(getBasicClientConfig())
 	serverConfig := getBasicServerConfig()
 	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+	MultiThreadSpeedTestClientServer(b, clientConfig, serverConfig)
 }
 
 func BenchmarkWebsocket(b *testing.B) {
 	clientConfig := addWsConfig(getBasicClientConfig())
 	serverConfig := addWsConfig(getBasicServerConfig())
 	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+	MultiThreadSpeedTestClientServer(b, clientConfig, serverConfig)
 }
 
 func BenchmarkMuxWebsocket(b *testing.B) {
 	clientConfig := addMuxConfig(addWsConfig(getBasicClientConfig()))
 	serverConfig := addWsConfig(getBasicServerConfig())
 	SingleThreadSpeedTestClientServer(b, clientConfig, serverConfig)
+	MultiThreadSpeedTestClientServer(b, clientConfig, serverConfig)
 }
 
 func TestWebsocketShadow(t *testing.T) {
@@ -409,4 +448,11 @@ func TestShadow(t *testing.T) {
 		t.Fatal("http shadow")
 	}
 	cancel()
+}
+
+func TestAutoClientID(t *testing.T) {
+	serverConfig := getBasicServerConfig()
+	clientConfig := getBasicClientConfig()
+	clientConfig.TLS.Fingerprint = "auto"
+	CheckClientServer(t, clientConfig, serverConfig)
 }
