@@ -1,15 +1,14 @@
 baseURL = "https://p4gefau1t.github.io/trojan-go"
 
-languageCode = "en-us"
-DefaultContentLanguage = "en"
-title = "Trojan-Go"
+languageCode = "zh-CN"
+title = "Trojan-Go Docs"
 theme = "hugo-theme-techdoc"
 
 hasCJKLanguage = true
 metaDataFormat = "yaml"
 
-defaultContentLanguage = "en"
-defaultContentLanguageInSubdir= false
+defaultContentLanguage = "zh-CN"
+defaultContentLanguageInSubdir= true
 enableMissingTranslationPlaceholders = false
 
 [params]
@@ -32,7 +31,7 @@ enableMissingTranslationPlaceholders = false
     # Open Graph settings for each page are set on the front matter.
     # See https://gohugo.io/templates/internal/#open-graph
     # See https://gohugo.io/templates/internal/#twitter-cards
-    title = "Hugo Techdoc Theme"
+    title = "Trojan-Go Docs"
     images = ["images/og-image.png"] # Open graph images are placed in `static/images`
 
     # Theme settings section
