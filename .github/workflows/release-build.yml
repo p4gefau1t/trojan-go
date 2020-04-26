@@ -1,5 +1,7 @@
-on: push
-name: release-build
+on: 
+  push:
+    branches:
+      - master
 jobs:
   build:
     runs-on: ubuntu-latest
