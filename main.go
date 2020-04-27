@@ -16,6 +16,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/relay"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
+	_ "github.com/p4gefau1t/trojan-go/router/mixed"
 	_ "github.com/p4gefau1t/trojan-go/version"
 	//_ "github.com/p4gefau1t/trojan-go/log/simplelog"
 )

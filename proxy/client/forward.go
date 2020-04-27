@@ -169,7 +169,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 	for {
 		inboundConn, err := listener.Accept()
 		if err != nil {
-			errChan <- common.NewError("error occured when accpeting conn").Base(err)
+			errChan <- common.NewError("error occured when accepting conn").Base(err)
 		}
 		handle := func(inboundConn net.Conn) {
 			outboundConn, err := f.openOutboundConn(req)

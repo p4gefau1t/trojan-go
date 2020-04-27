@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/stat"
 	"google.golang.org/grpc"
-	"v2ray.com/core/common/net"
 )
 
 type ClientAPIService struct {

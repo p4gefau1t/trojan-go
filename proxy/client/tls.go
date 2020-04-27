@@ -12,6 +12,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
+	"github.com/p4gefau1t/trojan-go/sockopt"
 	utls "github.com/refraction-networking/utls"
 )
 
@@ -156,12 +157,21 @@ func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
 		tlsConn = utls.UClient(conn, m.utlsConfig, *m.config.TLS.ClientHelloID)
 	} else {
 		//normal golang tls
-		tlsConn, err = tls.Dial(network, m.config.RemoteAddress.String(), m.tlsConfig)
+		conn, err := net.Dial(network, m.config.RemoteAddress.String())
+		if err != nil {
+			return nil, err
+		}
+		err = sockopt.ApplyTCPConnOption(conn.(*net.TCPConn), &m.config.TCP)
+		if err != nil {
+			return nil, common.NewError("failed to apply tcp option").Base(err)
+		}
+		tlsConn = tls.Client(conn, m.tlsConfig)
+		err = tlsConn.(*tls.Conn).Handshake()
 	}
-	m.printConnInfo(tlsConn)
 	if err != nil {
 		return nil, common.NewError("cannot dial to the remote server").Base(err)
 	}
+	m.printConnInfo(tlsConn)
 	var transport io.ReadWriteCloser = tlsConn
 	if m.config.Websocket.Enabled {
 		ws, err := trojan.NewOutboundWebosocket(tlsConn, m.config)

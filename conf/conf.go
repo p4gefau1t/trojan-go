@@ -19,20 +19,21 @@ const (
 )
 
 type TLSConfig struct {
-	Verify             bool   `json:"verify"`
-	VerifyHostname     bool   `json:"verify_hostname"`
-	CertPath           string `json:"cert"`
-	KeyPath            string `json:"key"`
-	KeyPassword        string `json:"key_password"`
-	Cipher             string `json:"cipher"`
-	CipherTLS13        string `json:"cipher_tls13"`
-	PreferServerCipher bool   `json:"prefer_server_cipher"`
-	SNI                string `json:"sni"`
-	HTTPFile           string `json:"plain_http_response"`
-	FallbackHost       string `json:"fallback_addr"`
-	FallbackPort       int    `json:"fallback_port"`
-	ReuseSession       bool   `json:"reuse_session"`
-	Fingerprint        string `json:"fingerprint"`
+	Verify             bool     `json:"verify"`
+	VerifyHostname     bool     `json:"verify_hostname"`
+	CertPath           string   `json:"cert"`
+	KeyPath            string   `json:"key"`
+	KeyPassword        string   `json:"key_password"`
+	Cipher             string   `json:"cipher"`
+	CipherTLS13        string   `json:"cipher_tls13"`
+	PreferServerCipher bool     `json:"prefer_server_cipher"`
+	SNI                string   `json:"sni"`
+	HTTPFile           string   `json:"plain_http_response"`
+	FallbackHost       string   `json:"fallback_addr"`
+	FallbackPort       int      `json:"fallback_port"`
+	ReuseSession       bool     `json:"reuse_session"`
+	ALPN               []string `json:"alpn"`
+	Fingerprint        string   `json:"fingerprint"`
 
 	ClientHelloID    *utls.ClientHelloID
 	FallbackAddress  *common.Address
@@ -122,25 +123,27 @@ type APIConfig struct {
 }
 
 type GlobalConfig struct {
-	RunType    RunType         `json:"run_type"`
-	LogLevel   int             `json:"log_level"`
-	LocalHost  string          `json:"local_addr"`
-	LocalPort  int             `json:"local_port"`
-	TargetHost string          `json:"target_addr"`
-	TargetPort int             `json:"target_port"`
-	RemoteHost string          `json:"remote_addr"`
-	RemotePort int             `json:"remote_port"`
-	BufferSize int             `json:"buffer_size"`
-	Passwords  []string        `json:"password"`
-	DNS        []string        `json:"dns"`
-	TLS        TLSConfig       `json:"ssl"`
-	TCP        TCPConfig       `json:"tcp"`
-	MySQL      MySQLConfig     `json:"mysql"`
-	SQLite     SQLiteConfig    `json:"sqlite"`
-	Mux        MuxConfig       `json:"mux"`
-	Router     RouterConfig    `json:"router"`
-	Websocket  WebsocketConfig `json:"websocket"`
-	API        APIConfig       `json:"api"`
+	RunType          RunType         `json:"run_type"`
+	LogLevel         int             `json:"log_level"`
+	LogFile          string          `json:"log_file"`
+	LocalHost        string          `json:"local_addr"`
+	LocalPort        int             `json:"local_port"`
+	TargetHost       string          `json:"target_addr"`
+	TargetPort       int             `json:"target_port"`
+	RemoteHost       string          `json:"remote_addr"`
+	RemotePort       int             `json:"remote_port"`
+	BufferSize       int             `json:"buffer_size"`
+	DisableHTTPCheck bool            `json:"disable_http_check"`
+	Passwords        []string        `json:"password"`
+	DNS              []string        `json:"dns"`
+	TLS              TLSConfig       `json:"ssl"`
+	TCP              TCPConfig       `json:"tcp"`
+	MySQL            MySQLConfig     `json:"mysql"`
+	SQLite           SQLiteConfig    `json:"sqlite"`
+	Mux              MuxConfig       `json:"mux"`
+	Router           RouterConfig    `json:"router"`
+	Websocket        WebsocketConfig `json:"websocket"`
+	API              APIConfig       `json:"api"`
 
 	LocalAddress  *common.Address
 	RemoteAddress *common.Address

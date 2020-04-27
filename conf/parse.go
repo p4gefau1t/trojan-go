@@ -256,16 +256,17 @@ func loadClientConfig(config *GlobalConfig) error {
 }
 
 func loadServerConfig(config *GlobalConfig) error {
-
 	//check web server
-	resp, err := http.Get("http://" + config.RemoteAddress.String())
-	if err != nil {
-		return common.NewError(config.RemoteAddress.String() + " is not a valid web server").Base(err)
+	if !config.DisableHTTPCheck {
+		resp, err := http.Get("http://" + config.RemoteAddress.String())
+		if err != nil {
+			return common.NewError(config.RemoteAddress.String() + " is not a valid web server").Base(err)
+		}
+		buf := [128]byte{}
+		_, err = resp.Body.Read(buf[:])
+		log.Debug("body:\n" + string(buf[:]))
+		resp.Body.Close()
 	}
-	buf := [128]byte{}
-	_, err = resp.Body.Read(buf[:])
-	log.Debug("body:\n" + string(buf[:]))
-	resp.Body.Close()
 
 	if config.TLS.KeyPassword != "" {
 		keyFile, err := ioutil.ReadFile(config.TLS.KeyPath)
@@ -316,10 +317,17 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	//default settings
 	config.LogLevel = 1
 	config.BufferSize = 512
+	config.TCP.FastOpenQLen = 20
+	config.TCP.KeepAlive = true
+	config.TCP.NoDelay = true
 	config.TLS.Verify = true
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true
 	config.TLS.ReuseSession = true
+	config.TLS.ALPN = []string{
+		"http/1.1",
+		"h2",
+	}
 	config.Mux.IdleTimeout = 60
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60

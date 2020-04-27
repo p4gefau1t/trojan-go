@@ -316,7 +316,7 @@ func (c *Client) listenTCP(errChan chan error) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			errChan <- common.NewError("error occured when accpeting conn").Base(err)
+			errChan <- common.NewError("error occured when accepting conn").Base(err)
 			return
 		}
 		rwc := common.NewRewindReadWriteCloser(conn)
@@ -368,9 +368,7 @@ func (c *Client) Close() error {
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.associated = common.NewNotifier()
-	c.router = &router.EmptyRouter{
-		DefaultPolicy: router.Proxy,
-	}
+	c.router = &router.EmptyRouter{}
 	c.meter = &stat.MemoryTrafficMeter{}
 	var err error
 	if config.Mux.Enabled {
@@ -381,7 +379,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	}
 	if config.Router.Enabled {
 		log.Info("router enabled")
-		c.router, err = router.NewMixedRouter(config)
+		c.router, err = router.NewRouter(&config.Router)
 		if err != nil {
 			log.Fatal(common.NewError("invalid router list").Base(err))
 		}

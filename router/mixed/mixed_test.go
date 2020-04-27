@@ -1,4 +1,4 @@
-package router
+package mixed
 
 import (
 	"io/ioutil"
@@ -9,17 +9,18 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/router"
 )
 
 func TestSimpleMixedRouter(t *testing.T) {
 	bypass := []byte("0.0.0.0/8\n10.0.0.0/8\n192.0.0.0/24\nbaidu.com\nqq.com\n")
 
-	r, err := NewMixedRouter(&conf.GlobalConfig{
-		Router: conf.RouterConfig{
+	r, err := NewMixedRouter(
+		&conf.RouterConfig{
 			BypassList:    bypass,
 			DefaultPolicy: "proxy",
 		},
-	})
+	)
 	common.Must(err)
 	p, err := r.RouteRequest(&protocol.Request{
 		Address: &common.Address{
@@ -28,7 +29,7 @@ func TestSimpleMixedRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Bypass {
+	if p != router.Bypass {
 		t.Fatal("wrong result")
 	}
 
@@ -39,7 +40,7 @@ func TestSimpleMixedRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Proxy {
+	if p != router.Proxy {
 		t.Fatal("wrong result")
 	}
 
@@ -50,7 +51,7 @@ func TestSimpleMixedRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Bypass {
+	if p != router.Bypass {
 		t.Fatal("wrong result")
 	}
 
@@ -61,7 +62,7 @@ func TestSimpleMixedRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Bypass {
+	if p != router.Bypass {
 		t.Fatal("wrong result")
 	}
 
@@ -72,7 +73,7 @@ func TestSimpleMixedRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Proxy {
+	if p != router.Proxy {
 		t.Fatal("wrong result")
 	}
 }
@@ -86,12 +87,12 @@ func TestMixedRouter(t *testing.T) {
 	common.Must(err)
 	bypass += string(buf)
 
-	r, err := NewMixedRouter(&conf.GlobalConfig{
-		Router: conf.RouterConfig{
+	r, err := NewMixedRouter(
+		&conf.RouterConfig{
 			BypassList:    []byte(bypass),
 			DefaultPolicy: "proxy",
 		},
-	})
+	)
 
 	policy, err := r.RouteRequest(&protocol.Request{
 		Address: &common.Address{
@@ -99,7 +100,7 @@ func TestMixedRouter(t *testing.T) {
 			DomainName:  "baidu.com",
 		},
 	})
-	if policy != Bypass {
+	if policy != router.Bypass {
 		log.Fatal("wrong result")
 	}
 
@@ -109,7 +110,7 @@ func TestMixedRouter(t *testing.T) {
 			DomainName:  "api.github.com",
 		},
 	})
-	if policy != Proxy {
+	if policy != router.Proxy {
 		log.Fatal("wrong result")
 	}
 }

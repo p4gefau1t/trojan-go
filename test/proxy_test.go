@@ -171,6 +171,16 @@ func addRouterConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 	return config
 }
 
+func addTCPOption(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.TCP = conf.TCPConfig{
+		KeepAlive:    true,
+		FastOpen:     true,
+		NoDelay:      true,
+		FastOpenQLen: 5,
+	}
+	return config
+}
+
 func RunClient(ctx context.Context, config *conf.GlobalConfig) {
 	c := client.Client{}
 	common.Must2(c.Build(config))
@@ -314,10 +324,13 @@ func MultiThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCon
 }
 
 func TestIt(t *testing.T) {
-	clientConfig := getBasicClientConfig()
-	serverConfig := getBasicServerConfig()
-	go RunClient(context.Background(), clientConfig)
-	RunServer(context.Background(), serverConfig)
+	/*
+		clientConfig := getBasicClientConfig()
+		serverConfig := getBasicServerConfig()
+		go RunClient(context.Background(), clientConfig)
+		go RunHelloHTTPServer(context.Background())
+		RunServer(context.Background(), serverConfig)
+	*/
 }
 
 func TestNormal(t *testing.T) {
@@ -454,5 +467,11 @@ func TestAutoClientID(t *testing.T) {
 	serverConfig := getBasicServerConfig()
 	clientConfig := getBasicClientConfig()
 	clientConfig.TLS.Fingerprint = "auto"
+	CheckClientServer(t, clientConfig, serverConfig)
+}
+
+func TestTCPOptions(t *testing.T) {
+	serverConfig := addTCPOption(getBasicServerConfig())
+	clientConfig := addTCPOption(getBasicClientConfig())
 	CheckClientServer(t, clientConfig, serverConfig)
 }

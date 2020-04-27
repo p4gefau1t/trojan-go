@@ -1,4 +1,4 @@
-package router
+package mixed
 
 import (
 	"bytes"
@@ -7,14 +7,15 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/router"
 )
 
 type ListRouter struct {
-	Router
+	router.Router
 	domainList          []string
 	ipList              []*net.IPNet
-	matchPolicy         Policy
-	nonMatchPolicy      Policy
+	matchPolicy         router.Policy
+	nonMatchPolicy      router.Policy
 	routeByIP           bool
 	routeByIPOnNonmatch bool
 }
@@ -29,7 +30,7 @@ func (r *ListRouter) isSubdomain(fulldomain, domain string) bool {
 	return false
 }
 
-func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
+func (r *ListRouter) RouteRequest(req *protocol.Request) (router.Policy, error) {
 	switch req.AddressType {
 	case common.DomainName:
 		domain := string(req.DomainName)
@@ -44,7 +45,7 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 		if r.routeByIP {
 			addr, err := net.ResolveIPAddr("ip", domain)
 			if err != nil {
-				return Unknown, err
+				return router.Unknown, err
 			}
 			atype := common.IPv6
 			if addr.IP.To4() != nil {
@@ -65,7 +66,7 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 		if r.routeByIPOnNonmatch {
 			addr, err := net.ResolveIPAddr("ip", domain)
 			if err != nil {
-				return Unknown, err
+				return router.Unknown, err
 			}
 			atype := common.IPv6
 			if addr.IP.To4() != nil {
@@ -88,7 +89,7 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 		}
 		return r.nonMatchPolicy, nil
 	default:
-		return Unknown, common.NewError("invalid address type")
+		return router.Unknown, common.NewError("invalid address type")
 	}
 }
 
@@ -115,7 +116,7 @@ func (r *ListRouter) LoadList(data []byte) error {
 	return nil
 }
 
-func NewListRouter(matchPolicy Policy, nonMatchPolicy Policy, routeByIP bool, routeByIPOnNonmatch bool, list []byte) (*ListRouter, error) {
+func NewListRouter(matchPolicy router.Policy, nonMatchPolicy router.Policy, routeByIP bool, routeByIPOnNonmatch bool, list []byte) (*ListRouter, error) {
 	r := ListRouter{
 		matchPolicy:         matchPolicy,
 		nonMatchPolicy:      nonMatchPolicy,

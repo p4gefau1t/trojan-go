@@ -16,6 +16,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/shadow"
+	"github.com/p4gefau1t/trojan-go/sockopt"
 	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
 )
@@ -62,7 +63,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 	}
 }
 
-func (s *Server) handleConn(conn net.Conn) {
+func (s *Server) handleConn(conn *tls.Conn) {
 	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth, s.shadow)
 	if err != nil {
 		//once the auth is failed, the conn will be took over by shadow manager. don't close it
@@ -151,32 +152,24 @@ func (s *Server) Run() error {
 	log.Info("server is running at", s.config.LocalAddress)
 
 	var listener net.Listener
-	if s.config.TCP.ReusePort || s.config.TCP.FastOpen || s.config.TCP.NoDelay {
-		localIP, err := s.config.LocalAddress.ResolveIP(false)
-		listener, err = ListenWithTCPOption(
-			s.config.TCP.FastOpen,
-			s.config.TCP.ReusePort,
-			s.config.TCP.NoDelay,
-			localIP,
-			s.config.LocalAddress.String(),
-		)
-		if err != nil {
-			return err
-		}
-	} else {
-		listener, err = net.Listen("tcp", s.config.LocalAddress.String())
-		if err != nil {
-			return err
-		}
+	listener, err = net.Listen("tcp", s.config.LocalAddress.String())
+	if err != nil {
+		return err
 	}
 	s.listener = listener
 	defer listener.Close()
+
+	err = sockopt.ApplyTCPListenerOption(listener.(*net.TCPListener), &s.config.TCP)
+	if err != nil {
+		return common.NewError(fmt.Sprintf("failed to apply tcp option: %v", &s.config.TCP)).Base(err)
+	}
 
 	tlsConfig := &tls.Config{
 		Certificates:             s.config.TLS.KeyPair,
 		CipherSuites:             s.config.TLS.CipherSuites,
 		PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
 		SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
+		NextProtos:               s.config.TLS.ALPN,
 	}
 	for {
 		conn, err := listener.Accept()
@@ -195,7 +188,6 @@ func (s *Server) Run() error {
 
 			tlsConn := tls.Server(rewindConn, tlsConfig)
 			err = tlsConn.Handshake()
-
 			rewindConn.R.StopBuffering()
 
 			if err != nil {

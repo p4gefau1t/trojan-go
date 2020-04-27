@@ -42,7 +42,7 @@ func (rwc *obfReadWriteCloser) Close() error {
 	return rwc.Conn.Close()
 }
 
-func NewOutboundObfReadWriteCloser(key []byte, conn *websocket.Conn) *obfReadWriteCloser {
+func NewOutboundObfReadWriteCloser(key []byte, conn net.Conn) *obfReadWriteCloser {
 	//use bufio to avoid fixed ws packet length
 	bufrw := common.NewBufioReadWriter(conn)
 	iv := [aes.BlockSize]byte{}

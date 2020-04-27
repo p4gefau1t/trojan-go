@@ -1,4 +1,4 @@
-package router
+package mixed
 
 import (
 	"net"
@@ -9,15 +9,15 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"v2ray.com/core/app/router"
+	"github.com/p4gefau1t/trojan-go/router"
+	v2router "v2ray.com/core/app/router"
 )
 
 type GeoRouter struct {
-	Router
-	domains             []*router.Domain
-	cidrs               []*router.CIDR
-	matchPolicy         Policy
-	nonMatchPolicy      Policy
+	domains             []*v2router.Domain
+	cidrs               []*v2router.CIDR
+	matchPolicy         router.Policy
+	nonMatchPolicy      router.Policy
 	routeByIP           bool
 	routeByIPOnNonmatch bool
 }
@@ -35,7 +35,7 @@ func (r *GeoRouter) isSubdomain(fulldomain, domain string) bool {
 func (r *GeoRouter) matchDomain(fulldomain string) bool {
 	for _, d := range r.domains {
 		switch d.GetType() {
-		case router.Domain_Domain, router.Domain_Full:
+		case v2router.Domain_Domain, v2router.Domain_Full:
 			domain := d.GetValue()
 			if strings.HasSuffix(fulldomain, domain) {
 				idx := strings.Index(fulldomain, domain)
@@ -43,12 +43,12 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 					return true
 				}
 			}
-		case router.Domain_Plain:
+		case v2router.Domain_Plain:
 			//keyword
 			if strings.Contains(fulldomain, d.GetValue()) {
 				return true
 			}
-		case router.Domain_Regex:
+		case v2router.Domain_Regex:
 			//expregexp.Compile(site.GetValue())
 			matched, err := regexp.Match(d.GetValue(), []byte(fulldomain))
 			if err != nil {
@@ -91,10 +91,10 @@ func (r *GeoRouter) matchIP(ip net.IP) bool {
 	return false
 }
 
-func (r *GeoRouter) routeRequestByIP(domain string) (Policy, error) {
+func (r *GeoRouter) routeRequestByIP(domain string) (router.Policy, error) {
 	addr, err := net.ResolveIPAddr("ip", domain)
 	if err != nil {
-		return Unknown, err
+		return router.Unknown, err
 	}
 	atype := common.IPv6
 	if addr.IP.To4() != nil {
@@ -108,7 +108,7 @@ func (r *GeoRouter) routeRequestByIP(domain string) (Policy, error) {
 	})
 }
 
-func (r *GeoRouter) RouteRequest(req *protocol.Request) (Policy, error) {
+func (r *GeoRouter) RouteRequest(req *protocol.Request) (router.Policy, error) {
 	if r.domains == nil || r.cidrs == nil {
 		return r.nonMatchPolicy, nil
 	}
@@ -131,12 +131,12 @@ func (r *GeoRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 		}
 		return r.nonMatchPolicy, nil
 	default:
-		return Unknown, common.NewError("invalid address type")
+		return router.Unknown, common.NewError("invalid address type")
 	}
 }
 
 func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData []byte, siteCode []string) error {
-	geoip := new(router.GeoIPList)
+	geoip := new(v2router.GeoIPList)
 	if err := proto.Unmarshal(geoipData, geoip); err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 		}
 	}
 
-	geosite := new(router.GeoSiteList)
+	geosite := new(v2router.GeoSiteList)
 	if err := proto.Unmarshal(geositeData, geosite); err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 	return nil
 }
 
-func NewGeoRouter(matchPolicy Policy, nonMatchPolicy Policy, routeByIP bool, routeByIPOnNonmatch bool) (*GeoRouter, error) {
+func NewGeoRouter(matchPolicy router.Policy, nonMatchPolicy router.Policy, routeByIP bool, routeByIPOnNonmatch bool) (*GeoRouter, error) {
 	r := GeoRouter{
 		matchPolicy:         matchPolicy,
 		nonMatchPolicy:      nonMatchPolicy,

@@ -26,6 +26,7 @@ func (c *versionOption) Handle() error {
 		fmt.Println("Developed by PageFault(p4gefau1t)")
 		fmt.Println("Lisensed under GNU General Public License v3")
 		fmt.Println("GitHub Repository: https://github.com/p4gefau1t/trojan-go")
+		fmt.Println("Documents: https://p4gefau1t.github.io/trojan-go/")
 		return nil
 	}
 	return common.NewError("not set")

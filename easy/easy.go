@@ -3,12 +3,12 @@ package easy
 import (
 	"flag"
 	"fmt"
+	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/proxy"
-	"v2ray.com/core/common/net"
 )
 
 type EasyOption struct {

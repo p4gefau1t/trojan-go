@@ -1,4 +1,4 @@
-package router
+package mixed
 
 import (
 	"io/ioutil"
@@ -7,10 +7,11 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/p4gefau1t/trojan-go/router"
 )
 
 func TestGeoRouter(t *testing.T) {
-	r, err := NewGeoRouter(Bypass, Proxy, false, false)
+	r, err := NewGeoRouter(router.Bypass, router.Proxy, false, false)
 	common.Must(err)
 	geoipData, err := ioutil.ReadFile("geoip.dat")
 	common.Must(err)
@@ -25,7 +26,7 @@ func TestGeoRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Proxy {
+	if p != router.Proxy {
 		t.Fatal("wrong result")
 	}
 
@@ -36,7 +37,7 @@ func TestGeoRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Bypass {
+	if p != router.Bypass {
 		t.Fatal("wrong result")
 	}
 
@@ -47,7 +48,7 @@ func TestGeoRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Proxy {
+	if p != router.Proxy {
 		t.Fatal("wrong result")
 	}
 
@@ -58,7 +59,7 @@ func TestGeoRouter(t *testing.T) {
 		},
 	})
 	common.Must(err)
-	if p != Bypass {
+	if p != router.Bypass {
 		t.Fatal("wrong result")
 	}
 }
