@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"database/sql"
 	"fmt"
 	"net"
 
@@ -116,33 +115,19 @@ func (s *Server) handleConn(conn *tls.Conn) {
 }
 
 func (s *Server) Run() error {
-	var db *sql.DB
 	var err error
 	if s.config.MySQL.Enabled {
-		db, err = common.ConnectDatabase(
-			"mysql",
-			s.config.MySQL.Username,
-			s.config.MySQL.Password,
-			s.config.MySQL.ServerHost,
-			s.config.MySQL.ServerPort,
-			s.config.MySQL.Database,
-		)
-		if err != nil {
-			return common.NewError("failed to connect to database server").Base(err)
-		}
-	}
-	if db == nil {
-		s.auth = &stat.ConfigUserAuthenticator{
-			Config: s.config,
-		}
-	} else {
-		s.auth, err = stat.NewMixedAuthenticator(s.config, db)
+		s.auth, err = stat.NewMixedAuthenticator(s.config)
 		if err != nil {
 			return common.NewError("failed to init auth").Base(err)
 		}
-		s.meter, err = stat.NewDBTrafficMeter(s.config, db)
+		s.meter, err = stat.NewDBTrafficMeter(s.config)
 		if err != nil {
 			return common.NewError("failed to init traffic meter").Base(err)
+		}
+	} else {
+		s.auth = &stat.ConfigUserAuthenticator{
+			Config: s.config,
 		}
 	}
 	defer s.auth.Close()

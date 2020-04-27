@@ -3,6 +3,8 @@ package stat
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -101,7 +103,18 @@ func (c *DBTrafficMeter) dbDaemon() {
 	}
 }
 
-func NewDBTrafficMeter(config *conf.GlobalConfig, db *sql.DB) (TrafficMeter, error) {
+func NewDBTrafficMeter(config *conf.GlobalConfig) (TrafficMeter, error) {
+	db, err := connectDatabase(
+		"mysql",
+		config.MySQL.Username,
+		config.MySQL.Password,
+		config.MySQL.ServerHost,
+		config.MySQL.ServerPort,
+		config.MySQL.Database,
+	)
+	if err != nil {
+		return nil, common.NewError("failed to connect to database server").Base(err)
+	}
 	c := &DBTrafficMeter{
 		db:             db,
 		trafficChan:    make(chan *trafficInfo, 1024*8),
@@ -182,7 +195,18 @@ func (a *DBAuthenticator) Close() error {
 	return a.db.Close()
 }
 
-func NewDBAuthenticator(config *conf.GlobalConfig, db *sql.DB) (Authenticator, error) {
+func NewDBAuthenticator(config *conf.GlobalConfig) (Authenticator, error) {
+	db, err := connectDatabase(
+		"mysql",
+		config.MySQL.Username,
+		config.MySQL.Password,
+		config.MySQL.ServerHost,
+		config.MySQL.ServerPort,
+		config.MySQL.Database,
+	)
+	if err != nil {
+		return nil, common.NewError("failed to connect to database server").Base(err)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &DBAuthenticator{
 		db:             db,
@@ -192,4 +216,9 @@ func NewDBAuthenticator(config *conf.GlobalConfig, db *sql.DB) (Authenticator, e
 	}
 	go a.updateDaemon()
 	return a, nil
+}
+
+func connectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {
+	path := strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
+	return sql.Open(driverName, path)
 }

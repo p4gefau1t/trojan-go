@@ -60,7 +60,7 @@ func TestDBAuthenticator(t *testing.T) {
 			CheckRate: 2,
 		},
 	}
-	a, err := NewDBAuthenticator(&config, db)
+	a, err := NewDBAuthenticator(&config)
 	common.Must(err)
 	time.Sleep(time.Second * 5)
 	hash := common.SHA224String("hashhash")
