@@ -189,6 +189,7 @@ func NewTLSManager(config *conf.GlobalConfig) *TLSManager {
 		ServerName:             config.TLS.SNI,
 		InsecureSkipVerify:     !config.TLS.Verify,
 		SessionTicketsDisabled: !config.TLS.SessionTicket,
+		ClientSessionCache:     utls.NewLRUClientSessionCache(-1),
 	}
 	tlsConfig := &tls.Config{
 		CipherSuites:           config.TLS.CipherSuites,
@@ -197,10 +198,8 @@ func NewTLSManager(config *conf.GlobalConfig) *TLSManager {
 		InsecureSkipVerify:     !config.TLS.Verify,
 		SessionTicketsDisabled: !config.TLS.SessionTicket,
 		CurvePreferences:       config.TLS.CurvePreferences,
-	}
-	if config.TLS.ReuseSession {
-		utlsConfig.ClientSessionCache = utls.NewLRUClientSessionCache(-1)
-		tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(-1)
+		NextProtos:             config.TLS.ALPN,
+		ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
 	}
 	m := &TLSManager{
 		config:     config,
