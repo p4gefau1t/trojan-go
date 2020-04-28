@@ -33,15 +33,5 @@ func ApplySocketOption(fd uintptr, config *conf.TCPConfig, isInbound bool) error
 		}
 		log.Debug("tcp fast open enabled")
 	}
-	/*
-		if config.Transparent && isInbound {
-			if err := syscall.SetsockoptInt(fd, syscall.SOL_IP, syscall.IP_TRANSPARENT, 1); err != nil {
-				return err
-			}
-			if err := syscall.SetsockoptInt(fd, syscall.SOL_IP, syscall.IP_RECVORIGDSTADDR, 1); err != nil {
-				return err
-			}
-		}
-	*/
 	return nil
 }

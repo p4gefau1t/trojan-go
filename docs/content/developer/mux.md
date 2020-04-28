@@ -1,7 +1,7 @@
 ---
 title: "多路复用"
 draft: false
-weight: 3
+weight: 30
 ---
 
 Trojan-Go使用[smux](https://github.com/xtaci/smux)实现多路复用。同时实现了mux协议用于进行代理传输。

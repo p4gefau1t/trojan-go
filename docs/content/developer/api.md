@@ -1,7 +1,7 @@
 ---
 title: "API"
 draft: false
-weight: 10
+weight: 100
 ---
 
 Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加```api```选项激活API模块。下面是一个例子

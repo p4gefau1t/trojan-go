@@ -1,7 +1,7 @@
 ---
 title: "Websocket"
 draft: false
-weight: 4
+weight: 40
 ---
 
 由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握手特征也很明显。为了保证Websocket传输的隐蔽和安全，默认情况下还会进行一次AES加密(混淆层)和TLS连接(双重TLS)。其中TLS用于保证传输的安全性，AES加密仅仅只是用于混淆流量。

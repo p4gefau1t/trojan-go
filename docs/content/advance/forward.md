@@ -1,5 +1,5 @@
 ---
-title: "DNS隧道和反向代理"
+title: "隧道和反向代理"
 draft: false
 weight: 5
 ---
@@ -31,7 +31,7 @@ forward本质上是一个客户端，不过你需要填入```target_addr```和``
 {
     "run_type": "forward",
     "local_addr": "127.0.0.1",
-    "local_port": 53,
+    "local_port": 443,
     "remote_addr": "your_awesome_server",
     "remote_port": 443,
     "target_addr": "www.google.com",
@@ -43,3 +43,22 @@ forward本质上是一个客户端，不过你需要填入```target_addr```和``
 ```
 
 访问https://127.0.0.1即可访问谷歌主页，但是注意这里由于谷歌服务器提供的https证书是google.com的证书，而当前域名为127.0.0.1，因此浏览器会引发一个证书错误的警告。
+
+类似的，可以使用forward传输其他代理协议。例如，使用Trojan-Go传输shadowsocks的流量，远端主机开启ss服务器，监听127.0.0.1:12345，并且远端服务器在443端口开启了正常的Trojan-Go服务器。你可以如此指定配置
+
+```
+{
+    "run_type": "forward",
+    "local_addr": "0.0.0.0",
+    "local_port": 54321,
+    "remote_addr": "your_awesome_server",
+    "remote_port": 443,
+    "target_addr": "www.google.com",
+    "target_port": 12345,
+    "password": [
+	    "your_awesome_password"
+    ]
+}
+```
+
+此后，任何连接本机54321端口的TCP/UDP连接，等同于连接远端12345端口。你可以使用shadowsocks客户端连接本地的54321端口，ss流量将使用trojan的隧道连接传输至远端12345端口的ss服务器。
