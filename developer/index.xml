@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>实现细节和开发指南 on Trojan-Go</title>
+    <title>实现细节和开发指南 on Trojan-Go Docs</title>
     <link>https://p4gefau1t.github.io/trojan-go/developer/</link>
-    <description>Recent content in 实现细节和开发指南 on Trojan-Go</description>
+    <description>Recent content in 实现细节和开发指南 on Trojan-Go Docs</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-CN</language>
     
 	<atom:link href="https://p4gefau1t.github.io/trojan-go/developer/index.xml" rel="self" type="application/rss+xml" />
     
@@ -17,6 +17,15 @@
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/overview/</guid>
       <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹</description>
+    </item>
+    
+    <item>
+      <title>编译和自定义Trojan-Go</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/build/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/build/</guid>
+      <description>编译需要Golang版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载</description>
     </item>
     
     <item>

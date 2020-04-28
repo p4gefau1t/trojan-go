@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>简介 on Trojan-Go</title>
+    <title>简介 on Trojan-Go Docs</title>
     <link>https://p4gefau1t.github.io/trojan-go/</link>
-    <description>Recent content in 简介 on Trojan-Go</description>
+    <description>Recent content in 简介 on Trojan-Go Docs</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-CN</language>
     
 	<atom:link href="https://p4gefau1t.github.io/trojan-go/index.xml" rel="self" type="application/rss+xml" />
     
@@ -29,15 +29,6 @@
     </item>
     
     <item>
-      <title>Trojan协议</title>
-      <link>https://p4gefau1t.github.io/trojan-go/developer/trojan/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://p4gefau1t.github.io/trojan-go/developer/trojan/</guid>
-      <description>Trojan-Go遵循原始的trojan协议，具体格式可以参考Trojan文档，这里不再赘述。 默认情况下，trojan协议使用TLS来承载，</description>
-    </item>
-    
-    <item>
       <title>使用Websocket进行CDN转发和抵抗中间人攻击</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/websocket/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -56,24 +47,6 @@
     </item>
     
     <item>
-      <title>多路复用</title>
-      <link>https://p4gefau1t.github.io/trojan-go/developer/mux/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://p4gefau1t.github.io/trojan-go/developer/mux/</guid>
-      <description>Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro</description>
-    </item>
-    
-    <item>
-      <title>Websocket</title>
-      <link>https://p4gefau1t.github.io/trojan-go/developer/websocket/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://p4gefau1t.github.io/trojan-go/developer/websocket/</guid>
-      <description>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握</description>
-    </item>
-    
-    <item>
       <title>流量中继</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/relay/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -83,21 +56,12 @@
     </item>
     
     <item>
-      <title>DNS隧道和反向代理</title>
+      <title>隧道和反向代理</title>
       <link>https://p4gefau1t.github.io/trojan-go/advance/forward/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/forward/</guid>
       <description>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &amp;quot;run_type&amp;quot;: &amp;quot;forward&amp;quot;,</description>
-    </item>
-    
-    <item>
-      <title>SimpleSocks协议</title>
-      <link>https://p4gefau1t.github.io/trojan-go/developer/simplesocks/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://p4gefau1t.github.io/trojan-go/developer/simplesocks/</guid>
-      <description>SimpleSocks协议是无认证机制的简单代理协议，本质上就是去除了sha224的Trojan协议，设计的目的是减少多路复用时的overh</description>
     </item>
     
     <item>
@@ -110,12 +74,21 @@
     </item>
     
     <item>
-      <title>API</title>
-      <link>https://p4gefau1t.github.io/trojan-go/developer/api/</link>
+      <title>编译和自定义Trojan-Go</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/build/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://p4gefau1t.github.io/trojan-go/developer/api/</guid>
-      <description>Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &amp;quot;api&amp;quot;:</description>
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/build/</guid>
+      <description>编译需要Golang版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载</description>
+    </item>
+    
+    <item>
+      <title>Trojan协议</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/trojan/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/trojan/</guid>
+      <description>Trojan-Go遵循原始的trojan协议，具体格式可以参考Trojan文档，这里不再赘述。 默认情况下，trojan协议使用TLS来承载，</description>
     </item>
     
     <item>
@@ -137,12 +110,48 @@
     </item>
     
     <item>
+      <title>多路复用</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/mux/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/mux/</guid>
+      <description>Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro</description>
+    </item>
+    
+    <item>
       <title>完整的配置文件</title>
       <link>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</guid>
       <description>下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo</description>
+    </item>
+    
+    <item>
+      <title>Websocket</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/websocket/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/websocket/</guid>
+      <description>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握</description>
+    </item>
+    
+    <item>
+      <title>SimpleSocks协议</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/simplesocks/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/simplesocks/</guid>
+      <description>SimpleSocks协议是无认证机制的简单代理协议，本质上就是去除了sha224的Trojan协议，设计的目的是减少多路复用时的overh</description>
+    </item>
+    
+    <item>
+      <title>API</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/api/</guid>
+      <description>Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &amp;quot;api&amp;quot;:</description>
     </item>
     
   </channel>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="zh-CN">
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>DNS隧道和反向代理 - Trojan-Go</title>
+<title>隧道和反向代理 - Trojan-Go Docs</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
 <meta name="generator" content="Hugo 0.69.2" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
@@ -16,30 +16,30 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="DNS隧道和反向代理" />
+<meta property="og:title" content="隧道和反向代理" />
 <meta property="og:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &quot;run_type&quot;: &quot;forward&quot;," />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/forward/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
-<meta property="og:site_name" content="Hugo Techdoc Theme" />
+<meta property="og:site_name" content="Trojan-Go Docs" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="DNS隧道和反向代理"/>
+<meta name="twitter:title" content="隧道和反向代理"/>
 <meta name="twitter:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &quot;run_type&quot;: &quot;forward&quot;,"/>
-<meta itemprop="name" content="DNS隧道和反向代理">
+<meta itemprop="name" content="隧道和反向代理">
 <meta itemprop="description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &quot;run_type&quot;: &quot;forward&quot;,">
 
-<meta itemprop="wordCount" content="479">
+<meta itemprop="wordCount" content="736">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
 
 <meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
-<h1>Trojan-Go</h1>
+<h1>Trojan-Go Docs</h1>
 
- <span class="version">Version v0.4.1</span>
+ <span class="version">Version v0.4.2</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -48,12 +48,11 @@
 <nav>
 <ul>
 <li><a href="/trojan-go/">Home</a></li>
-<li><a href="https://github.com/p4gefau1t">GitHub</a></li>
-<li><a href="https://twitter.com/p4gefau1t">Twitter</a></li></ul>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li></ul>
 </nav>
 </div>
 <div class="content-container">
-<main><h1>DNS隧道和反向代理</h1>
+<main><h1>隧道和反向代理</h1>
 <p>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子</p>
 <pre><code>{
     &quot;run_type&quot;: &quot;forward&quot;,
@@ -73,7 +72,7 @@
 <pre><code>{
     &quot;run_type&quot;: &quot;forward&quot;,
     &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;local_port&quot;: 53,
+    &quot;local_port&quot;: 443,
     &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
     &quot;remote_port&quot;: 443,
     &quot;target_addr&quot;: &quot;www.google.com&quot;,
@@ -83,6 +82,20 @@
     ]
 }
 </code></pre><p>访问https://127.0.0.1即可访问谷歌主页，但是注意这里由于谷歌服务器提供的https证书是google.com的证书，而当前域名为127.0.0.1，因此浏览器会引发一个证书错误的警告。</p>
+<p>类似的，可以使用forward传输其他代理协议。例如，使用Trojan-Go传输shadowsocks的流量，远端主机开启ss服务器，监听127.0.0.1:12345，并且远端服务器在443端口开启了正常的Trojan-Go服务器。你可以如此指定配置</p>
+<pre><code>{
+    &quot;run_type&quot;: &quot;forward&quot;,
+    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
+    &quot;local_port&quot;: 54321,
+    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
+    &quot;remote_port&quot;: 443,
+    &quot;target_addr&quot;: &quot;www.google.com&quot;,
+    &quot;target_port&quot;: 12345,
+    &quot;password&quot;: [
+	    &quot;your_awesome_password&quot;
+    ]
+}
+</code></pre><p>此后，任何连接本机54321端口的TCP/UDP连接，等同于连接远端12345端口。你可以使用shadowsocks客户端连接本地的54321端口，ss流量将使用trojan的隧道连接传输至远端12345端口的ss服务器。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/forward.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/relay/" title="流量中继"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 流量中继</a>
@@ -112,7 +125,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
-<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">DNS隧道和反向代理</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 </ul>
   
@@ -122,6 +135,7 @@
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/build/">编译和自定义Trojan-Go</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
