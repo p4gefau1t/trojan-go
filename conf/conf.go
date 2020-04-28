@@ -33,6 +33,7 @@ type TLSConfig struct {
 	FallbackPort       int      `json:"fallback_port"`
 	ReuseSession       bool     `json:"reuse_session"`
 	ALPN               []string `json:"alpn"`
+	Curves             string   `json:"curves"`
 	Fingerprint        string   `json:"fingerprint"`
 
 	ClientHelloID    *utls.ClientHelloID
@@ -43,7 +44,7 @@ type TLSConfig struct {
 	CipherSuites     []uint16
 	CipherSuiteTLS13 []uint16
 	SessionTicket    bool
-	Curves           string
+	CurvePreferences []tls.CurveID
 }
 
 type TCPConfig struct {

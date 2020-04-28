@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -19,12 +20,20 @@ import (
 )
 
 func loadCommonConfig(config *GlobalConfig) error {
-	//log level
+	//log settigns
 	log.SetLogLevel(log.LogLevel(config.LogLevel))
+	if config.LogFile != "" {
+		log.Info("log will be written into", config.LogFile)
+		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			return common.NewError("failed to access log file").Base(err)
+		}
+		log.SetOutput(file)
+	}
 
-	//buffer size, 4KiB to 4MB
-	if config.BufferSize < 4 || config.BufferSize > 4096 {
-		return common.NewError("invalid buffer size, 4 < buffer_size < 4096")
+	//buffer size, 4KiB to 16MiB
+	if config.BufferSize < 4 || config.BufferSize > 16384 {
+		return common.NewError("invalid buffer size, 4 KiB < buffer_size < 16384 Kib")
 	}
 
 	config.BufferSize *= 1024

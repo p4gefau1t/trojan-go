@@ -32,7 +32,7 @@ type FdWriter interface {
 type Logger struct {
 	mu        sync.RWMutex
 	color     bool
-	out       FdWriter
+	out       io.Writer
 	debug     bool
 	timestamp bool
 	quiet     bool
@@ -107,7 +107,19 @@ func New(out FdWriter) *Logger {
 }
 
 func (l *Logger) SetLogLevel(level log.LogLevel) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.logLevel = int(level)
+}
+
+func (l *Logger) SetOutput(w io.Writer) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.color = false
+	if fdw, ok := w.(FdWriter); ok {
+		l.color = terminal.IsTerminal(int(fdw.Fd()))
+	}
+	l.out = w
 }
 
 // WithColor explicitly turn on colorful features on the log

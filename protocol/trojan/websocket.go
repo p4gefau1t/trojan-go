@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -198,7 +199,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	//this is a http request
 	if (config.Websocket.HostName != "" && httpRequest.Host != config.Websocket.HostName) || //check hostname
 		httpRequest.URL.Path != config.Websocket.Path || //check url path
-		httpRequest.Header.Get("Upgrade") != "websocket" { //check upgrade field
+		strings.ToLower(httpRequest.Header.Get("Upgrade")) != "websocket" { //check upgrade field
 		//not a valid websocket conn
 		rewindConn.R.Rewind()
 		shadowMan.CommitScapegoat(&shadow.Scapegoat{

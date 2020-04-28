@@ -1,6 +1,7 @@
 package log
 
 import (
+	"io"
 	"os"
 )
 
@@ -31,6 +32,7 @@ type Logger interface {
 	Trace(v ...interface{})
 	Tracef(format string, v ...interface{})
 	SetLogLevel(level LogLevel)
+	SetOutput(io.Writer)
 }
 
 var logger Logger = &EmptyLogger{}
@@ -63,6 +65,8 @@ func (l *EmptyLogger) Debugf(format string, v ...interface{}) {}
 func (l *EmptyLogger) Trace(v ...interface{}) {}
 
 func (l *EmptyLogger) Tracef(format string, v ...interface{}) {}
+
+func (l *EmptyLogger) SetOutput(w io.Writer) {}
 
 func Error(v ...interface{}) {
 	logger.Error(v...)
@@ -114,6 +118,10 @@ func Fatalf(format string, v ...interface{}) {
 
 func SetLogLevel(level LogLevel) {
 	logger.SetLogLevel(level)
+}
+
+func SetOutput(w io.Writer) {
+	logger.SetOutput(w)
 }
 
 func RegisterLogger(l Logger) {

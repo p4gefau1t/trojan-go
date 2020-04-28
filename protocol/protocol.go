@@ -1,9 +1,11 @@
 package protocol
 
 import (
+	cryptorand "crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/big"
 	"net"
 	"time"
 
@@ -171,4 +173,15 @@ func ParsePort(addr net.Addr) (uint16, error) {
 	var port uint16
 	_, err = fmt.Sscanf(portStr, "%d", &port)
 	return port, err
+}
+
+func RandomizedTimeout(conn net.Conn) {
+	sec, err := cryptorand.Int(cryptorand.Reader, big.NewInt(5))
+	common.Must(err)
+	timeout := time.Duration(sec.Uint64()) + TCPTimeout
+	conn.SetDeadline(time.Now().Add(time.Second * timeout))
+}
+
+func CancelTimeout(conn net.Conn) {
+	conn.SetDeadline(time.Time{})
 }

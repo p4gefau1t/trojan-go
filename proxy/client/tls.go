@@ -196,6 +196,7 @@ func NewTLSManager(config *conf.GlobalConfig) *TLSManager {
 		ServerName:             config.TLS.SNI,
 		InsecureSkipVerify:     !config.TLS.Verify,
 		SessionTicketsDisabled: !config.TLS.SessionTicket,
+		CurvePreferences:       config.TLS.CurvePreferences,
 	}
 	if config.TLS.ReuseSession {
 		utlsConfig.ClientSessionCache = utls.NewLRUClientSessionCache(-1)

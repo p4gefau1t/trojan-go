@@ -30,6 +30,7 @@ weight: 30
     "remote_addr": "example.com",
     "remote_port": your_port2,
     "log_level": 1,
+    "log_file": "",
     "password": [
         "password1",
         "password2"
@@ -43,8 +44,13 @@ weight: 30
         "key_password": "",
         "cipher": "",
         "cipher_tls13": "",
+        "curves": "",
         "prefer_server_cipher": false,
         "sni": "",
+        "alpn": [
+            "http/1.1",
+            "h2"
+        ]
         "session_ticket": true,
         "reuse_session": true,
         "plain_http_response": "",
@@ -52,10 +58,12 @@ weight: 30
         "fingerprint": ""
     },
     "tcp": {
-        "no_delay": false,
+        "no_delay": true,
+        "keep_alive": true,
         "reuse_port": false,
         "prefer_ipv4": false,
-        "fast_open": false
+        "fast_open": false,
+        "fast_open_qlen": 20
     },
     "mux": {
         "enabled": false,
@@ -75,7 +83,7 @@ weight: 30
         "enabled": false,
         "path": "",
         "hostname": "",
-        "obfuscation": true,
+        "obfuscation_password": "",
         "double_tls": true
     },
     "mysql": {
@@ -98,9 +106,11 @@ weight: 30
 
 对于server，```local_xxxx```对应trojan服务器监听地址（强烈建议使用443端口），```remote_xxxx```填写识别到非trojan流量时代理到的HTTP服务地址，通常填写本地80端口。
 
-```log_level```是日志等级，等级越高，输出的信息越少，0输出Debug以上日志（所有日志），1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。
+```log_level```指定日志等级。等级越高，输出的信息越少，0输出Debug以上日志（所有日志），1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。
 
-```password```可以填入多个密码。除了使用配置文件配置密码之外，Trojan-Go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
+```log_file```指定日志输出文件路径。如果未指定则使用标准输出。
+
+```password```可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
 
 ```buffer_size```为单个连接缓冲区大小，单位KiB，默认512KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。
 
@@ -114,13 +124,15 @@ weight: 30
 
 ```sni```指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
-```cipher```和```cipher13```指client/server使用的密码学套件。只有在你明确知道自己在做什么的情况下，你才应该去填写cipher/cipher_tls13以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，Trojan-Go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Golang的TLS库中中弃用了TLS1.2不安全的密码学套件，完全支持TLS1.3。例如，如果你需要较高的安全性，而不担心跨硬件和软件平台的兼容性和性能，你可以强制要求trojan-go只使用TLS1.3密码学套件，设置cipher或者cipher13如下（填写cipher13和cipher是一样的）：
+```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造  。
 
-```
-cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384"
-```
+```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
 
-```fingerprint```用于指定TLS Client Hello指纹伪造类型。Trojan-Go使用utls[https://github.com/refraction-networking/utls]进行指纹伪造，避免遭到针对golang的TLS库的识别。合法的值有
+```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Golang的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3
+
+```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔。
+
+```fingerprint```用于指定TLS Client Hello指纹伪造类型。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，避免遭到针对golang的TLS库的识别。合法的值有
 
 - ""(空)，默认，不使用指纹伪造
 
@@ -134,15 +146,15 @@ cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SH
 
 - "randomized"，随机指纹
 
-一旦指纹的值被设置，```cipher```字段将被忽略。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。
+一旦指纹的值被设置，```cipher```，```curves```，```alpn```等可能影响指纹的字段将使用该指纹的特定设置覆写。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。
 
 ```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
-```fallback_port```指TLS握手失败时，Trojan-Go将该连接代理到该端口上。这是Trojan-Go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问http://your_domain_name.com:443进行验证。
+```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问 http://your_domain_name.com:443 进行验证。
 
 ### ```mux```多路复用选项
 
-多路复用是Trojan-Go的特性。如果服务器和客户端都是Trojan-Go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。
+多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。
 
 ```enabled```是否开启多路复用
 
@@ -152,7 +164,7 @@ cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SH
 
 ### ```router```路由选项
 
-路由功能是Trojan-Go的特性。Trojan-Go的路由策略有三种。
+路由功能是trojan-go的特性。trojan-go的路由策略有三种。
 
 - Proxy 代理。将请求通过TLS隧道进行代理，由trojan服务器和目的地址进行连接。
 
@@ -160,7 +172,7 @@ cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SH
 
 - Block 封锁。不代理请求，直接关闭连接。
 
-在```proxy```, ```bypass```, ```block```字段中填入对应列表文件名或者geoip/geosite标签名，Trojan-Go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，Trojan-Go会自动识别。
+在```proxy```, ```bypass```, ```block```字段中填入对应列表文件名或者geoip/geosite标签名，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，trojan-go会自动识别。
 
 ```enabled```是否开启路由模块。
 
@@ -172,7 +184,7 @@ cipher13:"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SH
 
 ### ```websocket```选项
 
-Websocket传输是Trojan-Go的特性。在**正常的直接连接服务器节点**的情况下，开启这个选项不会提升线路质量（甚至有可能下降），也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
+Websocket传输是trojan-go的特性。在**正常的直接连接服务器节点**的情况下，开启这个选项不会提升线路质量（甚至有可能下降），也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
 
 - 你需要利用CDN进行流量中转
 
@@ -184,31 +196,36 @@ Websocket传输是Trojan-Go的特性。在**正常的直接连接服务器节点
 
 ```path```指的是Websocket使用的URL路径，必须以斜杠("/")开头，如"/longlongwebsocketpath"，并且服务器和客户端必须一致。
 
-```hostname```Websocket握手时使用的主机名，如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
+```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
 
-```double_tls```是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，如果需要关闭，请自行斟酌安全性和性能的平衡。
+```double_tls```是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
 
-```obfuscation```是否启用混淆。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果需要使用混淆，服务端和客户端必须同时开启这个选项。这个选项对性能有一定影响，如果需要关闭，请自行斟酌安全性和性能的平衡。
+```obfuscation_password```指定混淆密码。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果需要使用混淆，服务端和客户端必须同时设置相同密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
 
 ### ```tcp```选项
 
 ```no_delay```是否禁用纳格算法(Nagle’s algorithm)，即TCP封包是否直接发出而不等待缓冲区填满。
 
-```reuse_port```是否启用端口复用。由于Trojan-GFW版本对多线程支持不佳，因而服务器使用此选项开启多个进程监听同一端口以提升并发性能。Trojan-Go本身的并发性能足够优秀，并无必要开启此选项。该选项仅为兼容而保留。
+``` keep_alive```是否启用TCP心跳存活检测。
+
+```reuse_port```是否启用端口复用。由于trojan-gfw版本对多线程支持不佳，因而服务器使用此选项开启多个进程监听同一端口以提升并发性能。trojan-go本身的并发性能足够优秀，并无必要开启此选项。该选项仅为兼容而保留。
 
 ```prefer_ipv4```是否优先使用IPv4地址。
 
-```fast_open```是否启用TCP Fast Open。开启此选项需要操作系统支持。
+```fast_open```是否启用TCP Fast Open。开启此选项需要操作系统支持。考虑到TFO开启后的TCP封包特征明显，容易被GFW阻断，且可能存在安全性问题，trojan-go仅仅出于兼容目的在服务端实现TFO支持。
+
+```fast_open_qlen```TCP Fast Open的qlen值，即允许的同时发起的未经三次握手的TFO连接数量。
+
 
 ### ```mysql```数据库选项
 
 ```enabled```表示是否启用mysql数据库进行用户验证。
 
-```check_rate```是Trojan-Go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。
+```check_rate```是trojan-go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。
 
 其他选项可以顾名思义，不再赘述。
 
-users表结构和trojan原版一致，下面是一个创建users表的命令。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。Trojan-Go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
+users表结构和trojan-gfw定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
 
 ```
 CREATE TABLE users (
