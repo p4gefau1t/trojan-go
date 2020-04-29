@@ -23,15 +23,13 @@ func (*certOption) Priority() int {
 }
 
 func (c *certOption) Handle() error {
+	tlsPort = *c.tlsPort
+	httpPort = *c.httpPort
 	switch *c.mode {
 	case "request":
-		tlsPort = *c.tlsPort
-		httpPort = *c.httpPort
 		RequestCertGuide()
 		return nil
 	case "renew":
-		tlsPort = *c.tlsPort
-		httpPort = *c.httpPort
 		RenewCertGuide()
 		return nil
 	case "INVALID":

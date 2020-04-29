@@ -100,9 +100,13 @@ func RunHelloHTTPServer(ctx context.Context) {
 			return nil
 		},
 	}
-	http.HandleFunc("/", httpHello)
-	http.HandleFunc("/websocket", wsServer.ServeHTTP)
-	server := http.Server{Addr: "127.0.0.1:10080"}
+	mux := &http.ServeMux{}
+	mux.HandleFunc("/", httpHello)
+	mux.HandleFunc("/websocket", wsServer.ServeHTTP)
+	server := http.Server{
+		Addr:    "127.0.0.1:10080",
+		Handler: mux,
+	}
 	go server.ListenAndServe()
 	<-ctx.Done()
 	server.Close()

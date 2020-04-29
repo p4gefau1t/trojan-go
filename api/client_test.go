@@ -31,13 +31,3 @@ func TestClientAPI(t *testing.T) {
 		t.Fatal("wrong result")
 	}
 }
-
-func TestRealClientAPI(t *testing.T) {
-	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
-	common.Must(err)
-	client := NewTrojanServiceClient(conn)
-	reply, err := client.QueryStats(context.Background(), &StatsRequest{})
-	common.Must(err)
-	fmt.Println(reply.DownloadTraffic, reply.UploadTraffic)
-	fmt.Println(reply.DownloadSpeed, reply.UploadSpeed)
-}

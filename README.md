@@ -1,14 +1,20 @@
 # Trojan-Go
 
+[![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![Downloads](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)
+[![HitCounts](http://hits.dwyl.io/p4gefau1t/trojan-go.svg)]((http://hits.dwyl.io/p4gefau1t/trojan-go.svg))
+
 使用Go实现的完整Trojan代理，和Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
+
+预编译的版本可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。
+
+[Telegram交流反馈群](https://t.me/trojan_go_chat)
 
 支持使用[多路复用](#多路复用)提升并发性能，使用[路由模块](#路由模块)实现国内直连。
 
-支持[CDN流量中转](#Websocket)(基于WebSocket over TLS/SSL)
+支持[CDN流量中转](#Websocket)(基于WebSocket over TLS/SSL)。
 
-支持使用ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
-
-[Telegram交流反馈群](https://t.me/trojan_go_chat)
+支持基于ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
 
 Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不限于：
 
