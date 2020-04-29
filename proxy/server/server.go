@@ -63,7 +63,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 }
 
 func (s *Server) handleConn(conn *tls.Conn) {
-	protocol.RandomizedTimeout(conn)
+	protocol.SetRandomizedTimeout(conn)
 	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth, s.shadow)
 	if err != nil {
 		//once the auth is failed, the conn will be took over by shadow manager. don't close it
@@ -171,7 +171,7 @@ func (s *Server) Run() error {
 		log.Info("conn accepted from", conn.RemoteAddr())
 		go func(conn net.Conn) {
 			//using randomized timeout
-			protocol.RandomizedTimeout(conn)
+			protocol.SetRandomizedTimeout(conn)
 
 			rewindConn := common.NewRewindConn(conn)
 			rewindConn.R.SetBufferSize(512)

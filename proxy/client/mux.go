@@ -55,6 +55,7 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 	}
 	conn, err := trojan.NewOutboundConnSession(req, rwc, m.config)
 	if err != nil {
+		rwc.Close()
 		log.Error(common.NewError("failed to dial tls tunnel").Base(err))
 		return nil, err
 	}

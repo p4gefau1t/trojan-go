@@ -190,9 +190,9 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	defer rewindConn.R.StopBuffering()
 
 	bufrw := bufio.NewReadWriter(bufio.NewReader(rewindConn), bufio.NewWriter(rewindConn))
-	httpRequest, obfErr := http.ReadRequest(bufrw.Reader)
-	if obfErr != nil {
-		log.Debug(common.NewError("not a http request:").Base(obfErr))
+	httpRequest, err := http.ReadRequest(bufrw.Reader)
+	if err != nil {
+		log.Debug(common.NewError("not a http request:").Base(err))
 		return nil, nil
 	}
 
@@ -205,7 +205,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		shadowMan.CommitScapegoat(&shadow.Scapegoat{
 			Conn:          rewindConn,
 			ShadowAddress: config.RemoteAddress,
-			Info:          "not a valid http upgrade request from " + conn.RemoteAddr().String(),
+			Info:          "invalid http upgrade request from " + conn.RemoteAddr().String(),
 		})
 		return nil, common.NewError("invalid ws url or hostname")
 	}
@@ -215,7 +215,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	rewindConn.R.SetBufferSize(0)
 	url := "wss://" + config.Websocket.HostName + config.Websocket.Path
 	origin := "https://" + config.Websocket.HostName
-	wsConfig, obfErr := websocket.NewConfig(url, origin)
+	wsConfig, err := websocket.NewConfig(url, origin)
 
 	handshaked := make(chan struct{})
 
@@ -253,7 +253,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		return nil, common.NewError("failed to perform websocket handshake")
 	}
 
-	//use ws to transport
+	//use ws to transfer
 	var transport net.Conn
 	rewindConn = common.NewRewindConn(wsConn)
 	transport = rewindConn
@@ -266,19 +266,19 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		log.Debug("ws obfs")
 
 		//deadline for sending the iv and hash
-		rewindConn.SetDeadline(time.Now().Add(protocol.TCPTimeout))
-		transport, obfErr = NewInboundObfReadWriteCloser(config.Websocket.ObfuscationKey, transport)
-		rewindConn.SetDeadline(time.Time{})
+		protocol.SetRandomizedTimeout(rewindConn)
+		transport, err = NewInboundObfReadWriteCloser(config.Websocket.ObfuscationKey, transport)
+		protocol.CancelTimeout(rewindConn)
 
-		if obfErr != nil {
+		if err != nil {
 			rewindConn.R.Rewind()
 			//proxy this to our own ws server
-			obfErr = common.NewError("remote websocket conn:" + conn.RemoteAddr().String() + "didn't send any valid iv/hash").Base(obfErr)
+			err = common.NewError("remote websocket " + conn.RemoteAddr().String() + "didn't send any valid iv").Base(err)
 			goat, err := getWebsocketScapegoat(
 				config,
 				url,
 				origin,
-				obfErr.Error(),
+				err.Error(),
 				rewindConn,
 			)
 			if err != nil {
@@ -287,7 +287,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 			} else {
 				shadowMan.CommitScapegoat(goat)
 			}
-			return nil, obfErr
+			return nil, err
 		}
 	}
 	if !config.Websocket.DoubleTLS {
@@ -301,6 +301,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		SessionTicketsDisabled:   !config.TLS.SessionTicket,
 	}
 	tlsConn := tls.Server(transport, tlsConfig)
+	protocol.SetRandomizedTimeout(tlsConn)
 	if tlsErr := tlsConn.Handshake(); tlsErr != nil {
 		rewindConn.R.Rewind()
 		//proxy this to our own ws server
@@ -320,6 +321,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		}
 		return nil, tlsErr
 	}
+	protocol.CancelTimeout(tlsConn)
 	rewindConn.R.SetBufferSize(0)
 	return tlsConn, nil
 }

@@ -47,10 +47,7 @@ weight: 30
         "curves": "",
         "prefer_server_cipher": false,
         "sni": "",
-        "alpn": [
-            "http/1.1",
-            "h2"
-        ]
+        "alpn": [],
         "session_ticket": true,
         "reuse_session": true,
         "plain_http_response": "",
@@ -128,11 +125,11 @@ weight: 30
 
 ```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
 
-```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Golang的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3
+```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3
 
 ```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔。
 
-```fingerprint```用于指定TLS Client Hello指纹伪造类型。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，避免遭到针对golang的TLS库的识别。合法的值有
+```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造。合法的值有
 
 - ""(空)，默认，不使用指纹伪造
 
@@ -146,9 +143,9 @@ weight: 30
 
 - "randomized"，随机指纹
 
-一旦指纹的值被设置，```cipher```，```curves```，```alpn```等可能影响指纹的字段将使用该指纹的特定设置覆写。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。
+一旦指纹的值被设置，```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。
 
-```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
+```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
 ```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问 http://your_domain_name.com:443 进行验证。
 

@@ -15,7 +15,6 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
-	utls "github.com/refraction-networking/utls"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -205,25 +204,6 @@ func loadClientConfig(config *GlobalConfig) error {
 		log.Warn(err)
 	}
 
-	//tls settings
-	if config.TLS.Fingerprint != "" && config.TLS.Fingerprint != "auto" {
-		table := map[string]*utls.ClientHelloID{
-			"chrome":             &utls.HelloChrome_Auto,
-			"firefox":            &utls.HelloFirefox_Auto,
-			"ios":                &utls.HelloIOS_Auto,
-			"randomized":         &utls.HelloRandomized,
-			"randomized_alpn":    &utls.HelloRandomizedALPN,
-			"randomized_no_alpn": &utls.HelloRandomizedNoALPN,
-		}
-		id, found := table[config.TLS.Fingerprint]
-		if found {
-			log.Debug("tls fingerprint loaded:", id.Str())
-			config.TLS.ClientHelloID = id
-		} else {
-			log.Warn("invalid tls fingerprint:", config.TLS.Fingerprint, ", using default fingerprint")
-		}
-	}
-
 	if config.TLS.SNI == "" {
 		log.Warn("SNI is unspecified, using remote_addr as SNI")
 		config.TLS.SNI = config.RemoteHost
@@ -333,10 +313,6 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.TLS.VerifyHostname = true
 	config.TLS.SessionTicket = true
 	config.TLS.ReuseSession = true
-	config.TLS.ALPN = []string{
-		"http/1.1",
-		"h2",
-	}
 	config.Mux.IdleTimeout = 60
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60

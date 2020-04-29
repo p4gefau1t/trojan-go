@@ -6,107 +6,25 @@ import (
 	"math/rand"
 	"net"
 	"sync"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/sockopt"
 	utls "github.com/refraction-networking/utls"
 )
 
-type Roller struct {
-	HelloIDs            []utls.ClientHelloID
-	HelloIDMu           sync.Mutex
-	WorkingHelloID      *utls.ClientHelloID
-	TCPDialTimeout      time.Duration
-	TLSHandshakeTimeout time.Duration
-	TLSConfig           *utls.Config
-}
-
-// NewRoller creates Roller object with default range of HelloIDs to cycle through until a
-// working/unblocked one is found.
-func NewRoller(config *utls.Config) *Roller {
-	tcpDialTimeoutInc := rand.Intn(14)
-	tcpDialTimeoutInc = 7 + tcpDialTimeoutInc
-
-	tlsHandshakeTimeoutInc := rand.Intn(20)
-	tlsHandshakeTimeoutInc = 11 + tlsHandshakeTimeoutInc
-
-	return &Roller{
-		HelloIDs: []utls.ClientHelloID{
-			utls.HelloChrome_Auto,
-			utls.HelloFirefox_Auto,
-			utls.HelloIOS_Auto,
-			utls.HelloRandomized,
-		},
-		TCPDialTimeout:      time.Second * time.Duration(tcpDialTimeoutInc),
-		TLSHandshakeTimeout: time.Second * time.Duration(tlsHandshakeTimeoutInc),
-		TLSConfig:           config,
-	}
-}
-
-func (c *Roller) Dial(network, addr, serverName string) (*utls.UConn, error) {
-	helloIDs := make([]utls.ClientHelloID, len(c.HelloIDs))
-	copy(helloIDs, c.HelloIDs)
-	rand.Shuffle(len(c.HelloIDs), func(i, j int) {
-		helloIDs[i], helloIDs[j] = helloIDs[j], helloIDs[i]
-	})
-
-	c.HelloIDMu.Lock()
-	workingHelloID := c.WorkingHelloID // keep using same helloID, if it works
-	c.HelloIDMu.Unlock()
-	if workingHelloID != nil {
-		helloIDFound := false
-		for i, ID := range helloIDs {
-			if ID == *workingHelloID {
-				helloIDs[i] = helloIDs[0]
-				helloIDs[0] = *workingHelloID // push working hello ID first
-				helloIDFound = true
-				break
-			}
-		}
-		if !helloIDFound {
-			helloIDs = append([]utls.ClientHelloID{*workingHelloID}, helloIDs...)
-		}
-	}
-
-	var tcpConn net.Conn
-	var err error
-	for _, helloID := range helloIDs {
-		tcpConn, err = net.DialTimeout(network, addr, c.TCPDialTimeout)
-		if err != nil {
-			return nil, err // on tcp Dial failure return with error right away
-		}
-
-		client := utls.UClient(tcpConn, c.TLSConfig, helloID)
-		client.SetSNI(serverName)
-		client.SetDeadline(time.Now().Add(c.TLSHandshakeTimeout))
-		err = client.Handshake()
-		client.SetDeadline(time.Time{}) // unset timeout
-		if err != nil {
-			log.Debug("hello id", helloID.Str(), "failed, err:", err)
-			continue // on tls Dial error keep trying HelloIDs
-		}
-
-		log.Debug("found avaliable hello id:", helloID.Str())
-		c.HelloIDMu.Lock()
-		c.WorkingHelloID = &client.ClientHelloID
-		c.HelloIDMu.Unlock()
-		return client, err
-	}
-	return nil, err
-}
-
 type TLSManager struct {
 	TransportManager
 
-	utlsConfig        *utls.Config
-	tlsConfig         *tls.Config
-	autoClientHelloID *utls.ClientHelloID
-	config            *conf.GlobalConfig
-	roller            *Roller
+	helloIDs       []utls.ClientHelloID
+	helloIDLock    sync.Mutex
+	workingHelloID *utls.ClientHelloID
+	utlsConfig     *utls.Config
+	tlsConfig      *tls.Config
+	config         *conf.GlobalConfig
 }
 
 func (m *TLSManager) printConnInfo(conn net.Conn) {
@@ -139,57 +57,114 @@ func (m *TLSManager) printConnInfo(conn net.Conn) {
 	}
 }
 
-func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
+func (m *TLSManager) dialTCP() (net.Conn, error) {
 	network := "tcp"
 	if m.config.TCP.PreferIPV4 {
 		network = "tcp4"
 	}
-	var tlsConn net.Conn
-	var err error
-	if m.config.TLS.Fingerprint == "auto" {
-		//use utls roller
-		tlsConn, err = m.roller.Dial(network, m.config.RemoteAddress.String(), m.config.TLS.SNI)
-	} else if m.config.TLS.ClientHelloID != nil {
-		//use utls fixed fingerprint
-		log.Debug("using fingerprint", m.config.TLS.ClientHelloID.Str())
-		var conn net.Conn
-		conn, err = net.Dial(network, m.config.RemoteAddress.String())
-		tlsConn = utls.UClient(conn, m.utlsConfig, *m.config.TLS.ClientHelloID)
-	} else {
-		//normal golang tls
-		conn, err := net.Dial(network, m.config.RemoteAddress.String())
+	conn, err := net.DialTimeout(network, m.config.RemoteAddress.String(), protocol.GetRandomTimeoutDuration())
+	if err != nil {
+		return nil, common.NewError("failed to dial to remote server").Base(err)
+	}
+	if err := sockopt.ApplyTCPConnOption(conn.(*net.TCPConn), &m.config.TCP); err != nil {
+		log.Warn(common.NewError("failed to apply tcp options").Base(err))
+	}
+	return conn, nil
+}
+
+func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
+	helloIDs := make([]utls.ClientHelloID, len(m.helloIDs))
+	copy(helloIDs, m.helloIDs)
+	rand.Shuffle(len(m.helloIDs), func(i, j int) {
+		helloIDs[i], helloIDs[j] = helloIDs[j], helloIDs[i]
+	})
+
+	m.helloIDLock.Lock()
+	workingHelloID := m.workingHelloID // keep using same helloID, if it works
+	m.helloIDLock.Unlock()
+	if workingHelloID != nil {
+		helloIDFound := false
+		for i, ID := range helloIDs {
+			if ID == *workingHelloID {
+				helloIDs[i] = helloIDs[0]
+				helloIDs[0] = *workingHelloID // push working hello ID first
+				helloIDFound = true
+				break
+			}
+		}
+		if !helloIDFound {
+			helloIDs = append([]utls.ClientHelloID{*workingHelloID}, helloIDs...)
+			helloIDs[0], helloIDs[len(helloIDs)-1] = helloIDs[len(helloIDs)-1], helloIDs[0]
+		}
+	}
+	for _, helloID := range helloIDs {
+		tcpConn, err := m.dialTCP()
+		if err != nil {
+			return nil, err // on tcp Dial failure return with error right away
+		}
+
+		client := utls.UClient(tcpConn, m.utlsConfig, helloID)
+		if m.config.Websocket.Enabled {
+			// HACK disable alpn (http/1.1, h2) to support websocket
+			client.HandshakeState.Hello.AlpnProtocols = []string{}
+		}
+		protocol.SetRandomizedTimeout(client)
+		err = client.Handshake()
+		protocol.CancelTimeout(client)
+		if err != nil {
+			log.Debug("hello id", helloID.Str(), "failed, err:", err)
+			continue // on tls Dial error keep trying HelloIDs
+		}
+
+		log.Debug("found avaliable hello id:", helloID.Str())
+		m.helloIDLock.Lock()
+		m.workingHelloID = &client.ClientHelloID
+		m.helloIDLock.Unlock()
+		return client, err
+	}
+	return nil, common.NewError("all client hello id tried but failed")
+}
+
+func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
+	var transport net.Conn
+	if m.config.TLS.Fingerprint != "" {
+		//use utls fingerprints
+		tlsConn, err := m.dialTLSWithFakeFingerprint()
 		if err != nil {
 			return nil, err
 		}
-		err = sockopt.ApplyTCPConnOption(conn.(*net.TCPConn), &m.config.TCP)
+		m.printConnInfo(tlsConn)
+		transport = tlsConn
+	} else {
+		//normal golang tls
+		tcpConn, err := m.dialTCP()
 		if err != nil {
-			return nil, common.NewError("failed to apply tcp option").Base(err)
+			return nil, err
 		}
-		tlsConn = tls.Client(conn, m.tlsConfig)
-		err = tlsConn.(*tls.Conn).Handshake()
-	}
-	if err != nil {
-		return nil, common.NewError("cannot dial to the remote server").Base(err)
-	}
-	m.printConnInfo(tlsConn)
-	var transport io.ReadWriteCloser = tlsConn
-	if m.config.Websocket.Enabled {
-		ws, err := trojan.NewOutboundWebosocket(tlsConn, m.config)
+		tlsConn := tls.Client(tcpConn, m.tlsConfig)
+		err = tlsConn.Handshake()
 		if err != nil {
+			return nil, err
+		}
+		transport = tlsConn
+		m.printConnInfo(tlsConn)
+	}
+	if m.config.Websocket.Enabled {
+		ws, err := trojan.NewOutboundWebosocket(transport, m.config)
+		if err != nil {
+			transport.Close()
 			return nil, common.NewError("failed to start websocket connection").Base(err)
 		}
-		transport = ws
+		return ws, nil
 	}
 	return transport, nil
 }
 
 func NewTLSManager(config *conf.GlobalConfig) *TLSManager {
 	utlsConfig := &utls.Config{
-		RootCAs:                config.TLS.CertPool,
-		ServerName:             config.TLS.SNI,
-		InsecureSkipVerify:     !config.TLS.Verify,
-		SessionTicketsDisabled: !config.TLS.SessionTicket,
-		ClientSessionCache:     utls.NewLRUClientSessionCache(-1),
+		RootCAs:            config.TLS.CertPool,
+		ServerName:         config.TLS.SNI,
+		InsecureSkipVerify: !config.TLS.Verify,
 	}
 	tlsConfig := &tls.Config{
 		CipherSuites:           config.TLS.CipherSuites,
@@ -199,13 +174,38 @@ func NewTLSManager(config *conf.GlobalConfig) *TLSManager {
 		SessionTicketsDisabled: !config.TLS.SessionTicket,
 		CurvePreferences:       config.TLS.CurvePreferences,
 		NextProtos:             config.TLS.ALPN,
-		ClientSessionCache:     tls.NewLRUClientSessionCache(-1),
+		ClientSessionCache:     tls.NewLRUClientSessionCache(192),
 	}
+
 	m := &TLSManager{
 		config:     config,
 		utlsConfig: utlsConfig,
 		tlsConfig:  tlsConfig,
-		roller:     NewRoller(utlsConfig),
 	}
+
+	if config.TLS.Fingerprint == "auto" {
+		m.helloIDs = []utls.ClientHelloID{
+			utls.HelloChrome_Auto,
+			utls.HelloFirefox_Auto,
+			utls.HelloIOS_Auto,
+			utls.HelloRandomizedNoALPN,
+		}
+	} else if config.TLS.Fingerprint != "" {
+		table := map[string]*utls.ClientHelloID{
+			"chrome":     &utls.HelloChrome_Auto,
+			"firefox":    &utls.HelloFirefox_Auto,
+			"ios":        &utls.HelloIOS_Auto,
+			"randomized": &utls.HelloRandomizedNoALPN,
+		}
+		id, found := table[config.TLS.Fingerprint]
+		if found {
+			log.Debug("tls fingerprint loaded:", id.Str())
+			m.helloIDs = []utls.ClientHelloID{*id}
+		} else {
+			log.Warn("invalid tls fingerprint:", config.TLS.Fingerprint, ", using default fingerprint")
+			config.TLS.Fingerprint = ""
+		}
+	}
+
 	return m
 }

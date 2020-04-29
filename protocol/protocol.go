@@ -176,8 +176,13 @@ func ParsePort(addr net.Addr) (uint16, error) {
 
 var timeout time.Duration
 
-func RandomizedTimeout(conn net.Conn) {
-	conn.SetDeadline(time.Now().Add(timeout))
+func GetRandomTimeoutDuration() time.Duration {
+	offset := time.Duration(rand.Intn(3000)) * time.Millisecond
+	return timeout + offset
+}
+
+func SetRandomizedTimeout(conn net.Conn) {
+	conn.SetDeadline(time.Now().Add(GetRandomTimeoutDuration()))
 }
 
 func CancelTimeout(conn net.Conn) {

@@ -8,7 +8,7 @@ weight: 10
 
 这里是Trojan-Go的文档，你可以在左侧的导航栏中找到一些使用技巧，以及完整的配置文件说明。
 
-Trojan-Go是使用Golang实现的完整的Trojan代理，和Trojan协议以及原版的配置文件格式兼容。
+Trojan-Go是使用Go语言实现的完整的Trojan代理，和Trojan协议以及原版的配置文件格式兼容。
 
 Trojan-Go的的首要目标是保障传输安全性和隐蔽性。在此前提下，尽可能提升传输性能和易用性。
 
