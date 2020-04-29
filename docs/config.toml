@@ -16,7 +16,7 @@ enableMissingTranslationPlaceholders = false
     # Source Code repository section
     description = "An unidentifiable mechanism that helps you bypass GFW. "
     github_repository = "https://github.com/p4gefau1t/trojan-go"
-    version = "v0.4.2"
+    version = "0.4.3"
 
     # Documentation repository section
     # documentation repository (set edit link to documentation repository)

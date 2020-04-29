@@ -4,7 +4,7 @@ draft: false
 weight: 3
 ---
 
-### 注意，原版Trojan-GFW客户端不支持这个特性。
+### 注意，Trojan-GFW版本不支持这个特性
 
 Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。
 

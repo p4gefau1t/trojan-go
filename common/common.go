@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Version = "v0.4.2"
+	Version = "v0.4.3"
 )
 
 type Runnable interface {

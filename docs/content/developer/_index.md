@@ -4,4 +4,4 @@ draft: false
 weight: 40
 ---
 
-这一部分介绍Trojan-Go底层实现的细节，主要面向开发者
+这一部分介绍Trojan-Go底层实现的细节，主要面向开发者。

@@ -2,6 +2,7 @@
 
 PLATFORMS="darwin/amd64 darwin/386"
 PLATFORMS="$PLATFORMS windows/amd64 windows/386"
+PLATFORMS="$PLATFORMS windows/arm"
 PLATFORMS="$PLATFORMS linux/amd64 linux/386"
 PLATFORMS="$PLATFORMS linux/ppc64 linux/ppc64le"
 PLATFORMS="$PLATFORMS linux/mips64 linux/mips64le"
@@ -37,7 +38,8 @@ for PLATFORM in $PLATFORMS; do
   CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o temp $@ -ldflags=\"-s -w\""
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
-  zip -j release/$ZIP_FILENAME temp/* data/* ./*.dat
+  zip -j release/$ZIP_FILENAME temp/* ./*.dat
+  zip release/$ZIP_FILENAME example/*
   sha1sum release/$ZIP_FILENAME > release/$ZIP_FILENAME.sha1
   rm temp/*
 done
