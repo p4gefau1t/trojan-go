@@ -23,7 +23,7 @@ func (*versionOption) Priority() int {
 func (c *versionOption) Handle() error {
 	if *c.arg {
 		fmt.Println("Trojan-Go", common.Version)
-		fmt.Println("Developed by PageFault(p4gefau1t)")
+		fmt.Println("Developed by PageFault (p4gefau1t)")
 		fmt.Println("Lisensed under GNU General Public License v3")
 		fmt.Println("GitHub Repository: https://github.com/p4gefau1t/trojan-go")
 		fmt.Println("Documents: https://p4gefau1t.github.io/trojan-go/")

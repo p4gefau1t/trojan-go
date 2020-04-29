@@ -14,6 +14,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/sockopt"
 	utls "github.com/refraction-networking/utls"
+	"golang.org/x/net/proxy"
 )
 
 type TLSManager struct {
@@ -61,6 +62,20 @@ func (m *TLSManager) dialTCP() (net.Conn, error) {
 	network := "tcp"
 	if m.config.TCP.PreferIPV4 {
 		network = "tcp4"
+	}
+	if m.config.ForwardProxy.Enabled {
+		var auth *proxy.Auth
+		if m.config.ForwardProxy.Username != "" {
+			auth = &proxy.Auth{
+				User:     m.config.ForwardProxy.Username,
+				Password: m.config.ForwardProxy.Password,
+			}
+		}
+		dialer, err := proxy.SOCKS5(network, m.config.ForwardProxy.ProxyHost, auth, nil)
+		if err != nil {
+			return nil, err
+		}
+		return dialer.Dial(network, m.config.RemoteAddress.String())
 	}
 	conn, err := net.DialTimeout(network, m.config.RemoteAddress.String(), protocol.GetRandomTimeoutDuration())
 	if err != nil {

@@ -83,6 +83,13 @@ weight: 30
         "obfuscation_password": "",
         "double_tls": true
     },
+    "forward_proxy": {
+        "enabled": false,
+        "proxy_addr": "",
+        "proxy_port": 0,
+        "username": "",
+        "password": ""
+    },
     "mysql": {
         "enabled": false,
         "server_addr": "",
@@ -236,3 +243,15 @@ CREATE TABLE users (
     INDEX (password)
 );
 ```
+
+### ```forward_proxy```前置代理选项
+
+前置代理选项允许使用其他代理承载trojan-go的流量
+
+```enabled```是否启用前置代理(socks5)。
+
+```proxy_addr```前置代理的主机地址。
+
+```proxy_port```前置代理的端口号。
+
+```username``` ```password```代理的用户和密码，如果留空则不使用认证。

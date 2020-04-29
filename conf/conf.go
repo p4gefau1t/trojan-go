@@ -72,11 +72,12 @@ type MySQLConfig struct {
 	CheckRate  int    `json:"check_rate"`
 }
 
-type SQLiteConfig struct {
-	Enabled  bool   `json:"enabled"`
-	Database string `json:"database"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+type ForwardProxyConfig struct {
+	Enabled   bool   `json:"enabled"`
+	ProxyHost string `json:"proxy_addr"`
+	ProxyPort int    `json:"proxy_port"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
 }
 
 type RouterConfig struct {
@@ -124,27 +125,27 @@ type APIConfig struct {
 }
 
 type GlobalConfig struct {
-	RunType          RunType         `json:"run_type"`
-	LogLevel         int             `json:"log_level"`
-	LogFile          string          `json:"log_file"`
-	LocalHost        string          `json:"local_addr"`
-	LocalPort        int             `json:"local_port"`
-	TargetHost       string          `json:"target_addr"`
-	TargetPort       int             `json:"target_port"`
-	RemoteHost       string          `json:"remote_addr"`
-	RemotePort       int             `json:"remote_port"`
-	BufferSize       int             `json:"buffer_size"`
-	DisableHTTPCheck bool            `json:"disable_http_check"`
-	Passwords        []string        `json:"password"`
-	DNS              []string        `json:"dns"`
-	TLS              TLSConfig       `json:"ssl"`
-	TCP              TCPConfig       `json:"tcp"`
-	MySQL            MySQLConfig     `json:"mysql"`
-	SQLite           SQLiteConfig    `json:"sqlite"`
-	Mux              MuxConfig       `json:"mux"`
-	Router           RouterConfig    `json:"router"`
-	Websocket        WebsocketConfig `json:"websocket"`
-	API              APIConfig       `json:"api"`
+	RunType          RunType            `json:"run_type"`
+	LogLevel         int                `json:"log_level"`
+	LogFile          string             `json:"log_file"`
+	LocalHost        string             `json:"local_addr"`
+	LocalPort        int                `json:"local_port"`
+	TargetHost       string             `json:"target_addr"`
+	TargetPort       int                `json:"target_port"`
+	RemoteHost       string             `json:"remote_addr"`
+	RemotePort       int                `json:"remote_port"`
+	BufferSize       int                `json:"buffer_size"`
+	DisableHTTPCheck bool               `json:"disable_http_check"`
+	Passwords        []string           `json:"password"`
+	DNS              []string           `json:"dns"`
+	TLS              TLSConfig          `json:"ssl"`
+	TCP              TCPConfig          `json:"tcp"`
+	MySQL            MySQLConfig        `json:"mysql"`
+	Mux              MuxConfig          `json:"mux"`
+	Router           RouterConfig       `json:"router"`
+	Websocket        WebsocketConfig    `json:"websocket"`
+	API              APIConfig          `json:"api"`
+	ForwardProxy     ForwardProxyConfig `json:"forward_proxy"`
 
 	LocalAddress  *common.Address
 	RemoteAddress *common.Address
