@@ -1,17 +1,106 @@
 syntax = "proto3";
 package api;
 
-service TrojanService {
-    rpc QueryStats(StatsRequest) returns(StatsReply){}
-}
-
-message StatsRequest{
-    string password = 1; //reserved for server api
-}
-
-message StatsReply {
+message Traffic {
     uint64 upload_traffic = 1;
     uint64 download_traffic = 2;
-    uint64 upload_speed = 3;
-    uint64 download_speed = 4;
+}
+
+message Speed {
+    uint64 upload_speed = 1;
+    uint64 download_speed = 2;
+}
+
+message User {
+    string password = 1;
+    string hash = 2;
+    bool valid = 3;
+}
+
+message GetTrafficRequest {
+    User user = 1;
+}
+
+message GetTrafficResponse {
+    Traffic traffic_total = 1;
+    Traffic traffic_quota = 2;
+}
+
+message GetSpeedRequest {
+    User user = 1;
+}
+
+message GetSpeedResponse {
+    Speed speed_current = 1;
+    Speed speed_limit = 2;
+}
+
+message ListUserRequest {
+
+}
+
+message ListUserResponse {
+    User user = 1;
+    bool online = 2;
+    Traffic traffic_total = 3;
+    Traffic traffic_quota = 4;
+    Speed speed_current = 5;
+    Speed speed_limit = 6;
+}
+
+message SetTrafficRequest {
+    User user = 1;
+    Traffic traffic_quota = 2;
+}
+
+message SetTrafficReponse {
+    bool success = 1;
+    string info = 2;
+}
+
+message SetSpeedRequest {
+    User user = 1;
+    Speed speed_limit = 2;
+}
+
+message SetSpeedResponse {
+    bool success = 1;
+    string info = 2;
+}
+
+message AddUserRequest {
+    User user = 1;
+    Traffic traffic_quota = 4;
+    Speed speed_limit = 6;
+}
+
+message AddUserResponse {
+    User user = 1;
+}
+
+message DeleteUserRequest {
+    User user = 1;
+}
+
+message DeleteUserResponse {
+    bool success = 1;
+    string info = 2;
+}
+
+service TrojanClientService {
+    rpc GetTraffic(GetTrafficRequest) returns(GetTrafficResponse){}
+    rpc GetSpeed(GetSpeedRequest) returns(GetSpeedResponse){}
+}
+
+service TrojanServerService {
+    rpc ListUsers(ListUserRequest) returns(stream ListUserResponse){}
+
+    rpc GetTraffic(stream GetTrafficRequest) returns(stream GetTrafficResponse){}
+    rpc SetTraffic(stream SetTrafficRequest) returns(stream SetTrafficReponse) {}
+
+    rpc GetSpeed(stream GetSpeedRequest) returns(stream GetSpeedResponse){}
+    rpc SetSpeed(stream SetSpeedRequest) returns(stream SetSpeedResponse) {}
+
+    rpc AddUsers(stream AddUserRequest) returns(stream AddUserResponse){}
+    rpc DeleteUsers(stream DeleteUserRequest) returns(stream DeleteUserResponse){}
 }

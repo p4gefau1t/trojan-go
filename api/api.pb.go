@@ -24,111 +24,823 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type StatsRequest struct {
-	Password             string   `protobuf:"bytes,1,opt,name=password,proto3" json:"password,omitempty"`
+type Traffic struct {
+	UploadTraffic        uint64   `protobuf:"varint,1,opt,name=upload_traffic,json=uploadTraffic,proto3" json:"upload_traffic,omitempty"`
+	DownloadTraffic      uint64   `protobuf:"varint,2,opt,name=download_traffic,json=downloadTraffic,proto3" json:"download_traffic,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *StatsRequest) Reset()         { *m = StatsRequest{} }
-func (m *StatsRequest) String() string { return proto.CompactTextString(m) }
-func (*StatsRequest) ProtoMessage()    {}
-func (*StatsRequest) Descriptor() ([]byte, []int) {
+func (m *Traffic) Reset()         { *m = Traffic{} }
+func (m *Traffic) String() string { return proto.CompactTextString(m) }
+func (*Traffic) ProtoMessage()    {}
+func (*Traffic) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
 }
 
-func (m *StatsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StatsRequest.Unmarshal(m, b)
+func (m *Traffic) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Traffic.Unmarshal(m, b)
 }
-func (m *StatsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StatsRequest.Marshal(b, m, deterministic)
+func (m *Traffic) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Traffic.Marshal(b, m, deterministic)
 }
-func (m *StatsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatsRequest.Merge(m, src)
+func (m *Traffic) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Traffic.Merge(m, src)
 }
-func (m *StatsRequest) XXX_Size() int {
-	return xxx_messageInfo_StatsRequest.Size(m)
+func (m *Traffic) XXX_Size() int {
+	return xxx_messageInfo_Traffic.Size(m)
 }
-func (m *StatsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_StatsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StatsRequest proto.InternalMessageInfo
-
-func (m *StatsRequest) GetPassword() string {
-	if m != nil {
-		return m.Password
-	}
-	return ""
+func (m *Traffic) XXX_DiscardUnknown() {
+	xxx_messageInfo_Traffic.DiscardUnknown(m)
 }
 
-type StatsReply struct {
-	UploadTraffic        uint64   `protobuf:"varint,1,opt,name=upload_traffic,json=uploadTraffic,proto3" json:"upload_traffic,omitempty"`
-	DownloadTraffic      uint64   `protobuf:"varint,2,opt,name=download_traffic,json=downloadTraffic,proto3" json:"download_traffic,omitempty"`
-	UploadSpeed          uint64   `protobuf:"varint,3,opt,name=upload_speed,json=uploadSpeed,proto3" json:"upload_speed,omitempty"`
-	DownloadSpeed        uint64   `protobuf:"varint,4,opt,name=download_speed,json=downloadSpeed,proto3" json:"download_speed,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
+var xxx_messageInfo_Traffic proto.InternalMessageInfo
 
-func (m *StatsReply) Reset()         { *m = StatsReply{} }
-func (m *StatsReply) String() string { return proto.CompactTextString(m) }
-func (*StatsReply) ProtoMessage()    {}
-func (*StatsReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
-}
-
-func (m *StatsReply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StatsReply.Unmarshal(m, b)
-}
-func (m *StatsReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StatsReply.Marshal(b, m, deterministic)
-}
-func (m *StatsReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatsReply.Merge(m, src)
-}
-func (m *StatsReply) XXX_Size() int {
-	return xxx_messageInfo_StatsReply.Size(m)
-}
-func (m *StatsReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_StatsReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StatsReply proto.InternalMessageInfo
-
-func (m *StatsReply) GetUploadTraffic() uint64 {
+func (m *Traffic) GetUploadTraffic() uint64 {
 	if m != nil {
 		return m.UploadTraffic
 	}
 	return 0
 }
 
-func (m *StatsReply) GetDownloadTraffic() uint64 {
+func (m *Traffic) GetDownloadTraffic() uint64 {
 	if m != nil {
 		return m.DownloadTraffic
 	}
 	return 0
 }
 
-func (m *StatsReply) GetUploadSpeed() uint64 {
+type Speed struct {
+	UploadSpeed          uint64   `protobuf:"varint,1,opt,name=upload_speed,json=uploadSpeed,proto3" json:"upload_speed,omitempty"`
+	DownloadSpeed        uint64   `protobuf:"varint,2,opt,name=download_speed,json=downloadSpeed,proto3" json:"download_speed,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Speed) Reset()         { *m = Speed{} }
+func (m *Speed) String() string { return proto.CompactTextString(m) }
+func (*Speed) ProtoMessage()    {}
+func (*Speed) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
+}
+
+func (m *Speed) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Speed.Unmarshal(m, b)
+}
+func (m *Speed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Speed.Marshal(b, m, deterministic)
+}
+func (m *Speed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Speed.Merge(m, src)
+}
+func (m *Speed) XXX_Size() int {
+	return xxx_messageInfo_Speed.Size(m)
+}
+func (m *Speed) XXX_DiscardUnknown() {
+	xxx_messageInfo_Speed.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Speed proto.InternalMessageInfo
+
+func (m *Speed) GetUploadSpeed() uint64 {
 	if m != nil {
 		return m.UploadSpeed
 	}
 	return 0
 }
 
-func (m *StatsReply) GetDownloadSpeed() uint64 {
+func (m *Speed) GetDownloadSpeed() uint64 {
 	if m != nil {
 		return m.DownloadSpeed
 	}
 	return 0
 }
 
+type User struct {
+	Password             string   `protobuf:"bytes,1,opt,name=password,proto3" json:"password,omitempty"`
+	Hash                 string   `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
+	Valid                bool     `protobuf:"varint,3,opt,name=valid,proto3" json:"valid,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *User) Reset()         { *m = User{} }
+func (m *User) String() string { return proto.CompactTextString(m) }
+func (*User) ProtoMessage()    {}
+func (*User) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{2}
+}
+
+func (m *User) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_User.Unmarshal(m, b)
+}
+func (m *User) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_User.Marshal(b, m, deterministic)
+}
+func (m *User) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_User.Merge(m, src)
+}
+func (m *User) XXX_Size() int {
+	return xxx_messageInfo_User.Size(m)
+}
+func (m *User) XXX_DiscardUnknown() {
+	xxx_messageInfo_User.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_User proto.InternalMessageInfo
+
+func (m *User) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+func (m *User) GetHash() string {
+	if m != nil {
+		return m.Hash
+	}
+	return ""
+}
+
+func (m *User) GetValid() bool {
+	if m != nil {
+		return m.Valid
+	}
+	return false
+}
+
+type GetTrafficRequest struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetTrafficRequest) Reset()         { *m = GetTrafficRequest{} }
+func (m *GetTrafficRequest) String() string { return proto.CompactTextString(m) }
+func (*GetTrafficRequest) ProtoMessage()    {}
+func (*GetTrafficRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{3}
+}
+
+func (m *GetTrafficRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetTrafficRequest.Unmarshal(m, b)
+}
+func (m *GetTrafficRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetTrafficRequest.Marshal(b, m, deterministic)
+}
+func (m *GetTrafficRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetTrafficRequest.Merge(m, src)
+}
+func (m *GetTrafficRequest) XXX_Size() int {
+	return xxx_messageInfo_GetTrafficRequest.Size(m)
+}
+func (m *GetTrafficRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetTrafficRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetTrafficRequest proto.InternalMessageInfo
+
+func (m *GetTrafficRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+type GetTrafficResponse struct {
+	TrafficTotal         *Traffic `protobuf:"bytes,1,opt,name=traffic_total,json=trafficTotal,proto3" json:"traffic_total,omitempty"`
+	TrafficQuota         *Traffic `protobuf:"bytes,2,opt,name=traffic_quota,json=trafficQuota,proto3" json:"traffic_quota,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetTrafficResponse) Reset()         { *m = GetTrafficResponse{} }
+func (m *GetTrafficResponse) String() string { return proto.CompactTextString(m) }
+func (*GetTrafficResponse) ProtoMessage()    {}
+func (*GetTrafficResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{4}
+}
+
+func (m *GetTrafficResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetTrafficResponse.Unmarshal(m, b)
+}
+func (m *GetTrafficResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetTrafficResponse.Marshal(b, m, deterministic)
+}
+func (m *GetTrafficResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetTrafficResponse.Merge(m, src)
+}
+func (m *GetTrafficResponse) XXX_Size() int {
+	return xxx_messageInfo_GetTrafficResponse.Size(m)
+}
+func (m *GetTrafficResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetTrafficResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetTrafficResponse proto.InternalMessageInfo
+
+func (m *GetTrafficResponse) GetTrafficTotal() *Traffic {
+	if m != nil {
+		return m.TrafficTotal
+	}
+	return nil
+}
+
+func (m *GetTrafficResponse) GetTrafficQuota() *Traffic {
+	if m != nil {
+		return m.TrafficQuota
+	}
+	return nil
+}
+
+type GetSpeedRequest struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetSpeedRequest) Reset()         { *m = GetSpeedRequest{} }
+func (m *GetSpeedRequest) String() string { return proto.CompactTextString(m) }
+func (*GetSpeedRequest) ProtoMessage()    {}
+func (*GetSpeedRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{5}
+}
+
+func (m *GetSpeedRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetSpeedRequest.Unmarshal(m, b)
+}
+func (m *GetSpeedRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetSpeedRequest.Marshal(b, m, deterministic)
+}
+func (m *GetSpeedRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetSpeedRequest.Merge(m, src)
+}
+func (m *GetSpeedRequest) XXX_Size() int {
+	return xxx_messageInfo_GetSpeedRequest.Size(m)
+}
+func (m *GetSpeedRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetSpeedRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetSpeedRequest proto.InternalMessageInfo
+
+func (m *GetSpeedRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+type GetSpeedResponse struct {
+	SpeedCurrent         *Speed   `protobuf:"bytes,1,opt,name=speed_current,json=speedCurrent,proto3" json:"speed_current,omitempty"`
+	SpeedLimit           *Speed   `protobuf:"bytes,2,opt,name=speed_limit,json=speedLimit,proto3" json:"speed_limit,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetSpeedResponse) Reset()         { *m = GetSpeedResponse{} }
+func (m *GetSpeedResponse) String() string { return proto.CompactTextString(m) }
+func (*GetSpeedResponse) ProtoMessage()    {}
+func (*GetSpeedResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{6}
+}
+
+func (m *GetSpeedResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetSpeedResponse.Unmarshal(m, b)
+}
+func (m *GetSpeedResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetSpeedResponse.Marshal(b, m, deterministic)
+}
+func (m *GetSpeedResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetSpeedResponse.Merge(m, src)
+}
+func (m *GetSpeedResponse) XXX_Size() int {
+	return xxx_messageInfo_GetSpeedResponse.Size(m)
+}
+func (m *GetSpeedResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetSpeedResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetSpeedResponse proto.InternalMessageInfo
+
+func (m *GetSpeedResponse) GetSpeedCurrent() *Speed {
+	if m != nil {
+		return m.SpeedCurrent
+	}
+	return nil
+}
+
+func (m *GetSpeedResponse) GetSpeedLimit() *Speed {
+	if m != nil {
+		return m.SpeedLimit
+	}
+	return nil
+}
+
+type ListUserRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListUserRequest) Reset()         { *m = ListUserRequest{} }
+func (m *ListUserRequest) String() string { return proto.CompactTextString(m) }
+func (*ListUserRequest) ProtoMessage()    {}
+func (*ListUserRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{7}
+}
+
+func (m *ListUserRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListUserRequest.Unmarshal(m, b)
+}
+func (m *ListUserRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListUserRequest.Marshal(b, m, deterministic)
+}
+func (m *ListUserRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListUserRequest.Merge(m, src)
+}
+func (m *ListUserRequest) XXX_Size() int {
+	return xxx_messageInfo_ListUserRequest.Size(m)
+}
+func (m *ListUserRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListUserRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListUserRequest proto.InternalMessageInfo
+
+type ListUserResponse struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	Online               bool     `protobuf:"varint,2,opt,name=online,proto3" json:"online,omitempty"`
+	TrafficTotal         *Traffic `protobuf:"bytes,3,opt,name=traffic_total,json=trafficTotal,proto3" json:"traffic_total,omitempty"`
+	TrafficQuota         *Traffic `protobuf:"bytes,4,opt,name=traffic_quota,json=trafficQuota,proto3" json:"traffic_quota,omitempty"`
+	SpeedCurrent         *Speed   `protobuf:"bytes,5,opt,name=speed_current,json=speedCurrent,proto3" json:"speed_current,omitempty"`
+	SpeedLimit           *Speed   `protobuf:"bytes,6,opt,name=speed_limit,json=speedLimit,proto3" json:"speed_limit,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ListUserResponse) Reset()         { *m = ListUserResponse{} }
+func (m *ListUserResponse) String() string { return proto.CompactTextString(m) }
+func (*ListUserResponse) ProtoMessage()    {}
+func (*ListUserResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{8}
+}
+
+func (m *ListUserResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListUserResponse.Unmarshal(m, b)
+}
+func (m *ListUserResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListUserResponse.Marshal(b, m, deterministic)
+}
+func (m *ListUserResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListUserResponse.Merge(m, src)
+}
+func (m *ListUserResponse) XXX_Size() int {
+	return xxx_messageInfo_ListUserResponse.Size(m)
+}
+func (m *ListUserResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListUserResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListUserResponse proto.InternalMessageInfo
+
+func (m *ListUserResponse) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *ListUserResponse) GetOnline() bool {
+	if m != nil {
+		return m.Online
+	}
+	return false
+}
+
+func (m *ListUserResponse) GetTrafficTotal() *Traffic {
+	if m != nil {
+		return m.TrafficTotal
+	}
+	return nil
+}
+
+func (m *ListUserResponse) GetTrafficQuota() *Traffic {
+	if m != nil {
+		return m.TrafficQuota
+	}
+	return nil
+}
+
+func (m *ListUserResponse) GetSpeedCurrent() *Speed {
+	if m != nil {
+		return m.SpeedCurrent
+	}
+	return nil
+}
+
+func (m *ListUserResponse) GetSpeedLimit() *Speed {
+	if m != nil {
+		return m.SpeedLimit
+	}
+	return nil
+}
+
+type SetTrafficRequest struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	TrafficQuota         *Traffic `protobuf:"bytes,2,opt,name=traffic_quota,json=trafficQuota,proto3" json:"traffic_quota,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetTrafficRequest) Reset()         { *m = SetTrafficRequest{} }
+func (m *SetTrafficRequest) String() string { return proto.CompactTextString(m) }
+func (*SetTrafficRequest) ProtoMessage()    {}
+func (*SetTrafficRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{9}
+}
+
+func (m *SetTrafficRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetTrafficRequest.Unmarshal(m, b)
+}
+func (m *SetTrafficRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetTrafficRequest.Marshal(b, m, deterministic)
+}
+func (m *SetTrafficRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetTrafficRequest.Merge(m, src)
+}
+func (m *SetTrafficRequest) XXX_Size() int {
+	return xxx_messageInfo_SetTrafficRequest.Size(m)
+}
+func (m *SetTrafficRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetTrafficRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetTrafficRequest proto.InternalMessageInfo
+
+func (m *SetTrafficRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *SetTrafficRequest) GetTrafficQuota() *Traffic {
+	if m != nil {
+		return m.TrafficQuota
+	}
+	return nil
+}
+
+type SetTrafficReponse struct {
+	Success              bool     `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Info                 string   `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetTrafficReponse) Reset()         { *m = SetTrafficReponse{} }
+func (m *SetTrafficReponse) String() string { return proto.CompactTextString(m) }
+func (*SetTrafficReponse) ProtoMessage()    {}
+func (*SetTrafficReponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{10}
+}
+
+func (m *SetTrafficReponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetTrafficReponse.Unmarshal(m, b)
+}
+func (m *SetTrafficReponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetTrafficReponse.Marshal(b, m, deterministic)
+}
+func (m *SetTrafficReponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetTrafficReponse.Merge(m, src)
+}
+func (m *SetTrafficReponse) XXX_Size() int {
+	return xxx_messageInfo_SetTrafficReponse.Size(m)
+}
+func (m *SetTrafficReponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetTrafficReponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetTrafficReponse proto.InternalMessageInfo
+
+func (m *SetTrafficReponse) GetSuccess() bool {
+	if m != nil {
+		return m.Success
+	}
+	return false
+}
+
+func (m *SetTrafficReponse) GetInfo() string {
+	if m != nil {
+		return m.Info
+	}
+	return ""
+}
+
+type SetSpeedRequest struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	SpeedLimit           *Speed   `protobuf:"bytes,2,opt,name=speed_limit,json=speedLimit,proto3" json:"speed_limit,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetSpeedRequest) Reset()         { *m = SetSpeedRequest{} }
+func (m *SetSpeedRequest) String() string { return proto.CompactTextString(m) }
+func (*SetSpeedRequest) ProtoMessage()    {}
+func (*SetSpeedRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{11}
+}
+
+func (m *SetSpeedRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetSpeedRequest.Unmarshal(m, b)
+}
+func (m *SetSpeedRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetSpeedRequest.Marshal(b, m, deterministic)
+}
+func (m *SetSpeedRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetSpeedRequest.Merge(m, src)
+}
+func (m *SetSpeedRequest) XXX_Size() int {
+	return xxx_messageInfo_SetSpeedRequest.Size(m)
+}
+func (m *SetSpeedRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetSpeedRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetSpeedRequest proto.InternalMessageInfo
+
+func (m *SetSpeedRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *SetSpeedRequest) GetSpeedLimit() *Speed {
+	if m != nil {
+		return m.SpeedLimit
+	}
+	return nil
+}
+
+type SetSpeedResponse struct {
+	Success              bool     `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Info                 string   `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetSpeedResponse) Reset()         { *m = SetSpeedResponse{} }
+func (m *SetSpeedResponse) String() string { return proto.CompactTextString(m) }
+func (*SetSpeedResponse) ProtoMessage()    {}
+func (*SetSpeedResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{12}
+}
+
+func (m *SetSpeedResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetSpeedResponse.Unmarshal(m, b)
+}
+func (m *SetSpeedResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetSpeedResponse.Marshal(b, m, deterministic)
+}
+func (m *SetSpeedResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetSpeedResponse.Merge(m, src)
+}
+func (m *SetSpeedResponse) XXX_Size() int {
+	return xxx_messageInfo_SetSpeedResponse.Size(m)
+}
+func (m *SetSpeedResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetSpeedResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetSpeedResponse proto.InternalMessageInfo
+
+func (m *SetSpeedResponse) GetSuccess() bool {
+	if m != nil {
+		return m.Success
+	}
+	return false
+}
+
+func (m *SetSpeedResponse) GetInfo() string {
+	if m != nil {
+		return m.Info
+	}
+	return ""
+}
+
+type AddUserRequest struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	TrafficQuota         *Traffic `protobuf:"bytes,4,opt,name=traffic_quota,json=trafficQuota,proto3" json:"traffic_quota,omitempty"`
+	SpeedLimit           *Speed   `protobuf:"bytes,6,opt,name=speed_limit,json=speedLimit,proto3" json:"speed_limit,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AddUserRequest) Reset()         { *m = AddUserRequest{} }
+func (m *AddUserRequest) String() string { return proto.CompactTextString(m) }
+func (*AddUserRequest) ProtoMessage()    {}
+func (*AddUserRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{13}
+}
+
+func (m *AddUserRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AddUserRequest.Unmarshal(m, b)
+}
+func (m *AddUserRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AddUserRequest.Marshal(b, m, deterministic)
+}
+func (m *AddUserRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddUserRequest.Merge(m, src)
+}
+func (m *AddUserRequest) XXX_Size() int {
+	return xxx_messageInfo_AddUserRequest.Size(m)
+}
+func (m *AddUserRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddUserRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AddUserRequest proto.InternalMessageInfo
+
+func (m *AddUserRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *AddUserRequest) GetTrafficQuota() *Traffic {
+	if m != nil {
+		return m.TrafficQuota
+	}
+	return nil
+}
+
+func (m *AddUserRequest) GetSpeedLimit() *Speed {
+	if m != nil {
+		return m.SpeedLimit
+	}
+	return nil
+}
+
+type AddUserResponse struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AddUserResponse) Reset()         { *m = AddUserResponse{} }
+func (m *AddUserResponse) String() string { return proto.CompactTextString(m) }
+func (*AddUserResponse) ProtoMessage()    {}
+func (*AddUserResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{14}
+}
+
+func (m *AddUserResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AddUserResponse.Unmarshal(m, b)
+}
+func (m *AddUserResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AddUserResponse.Marshal(b, m, deterministic)
+}
+func (m *AddUserResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddUserResponse.Merge(m, src)
+}
+func (m *AddUserResponse) XXX_Size() int {
+	return xxx_messageInfo_AddUserResponse.Size(m)
+}
+func (m *AddUserResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddUserResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AddUserResponse proto.InternalMessageInfo
+
+func (m *AddUserResponse) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+type DeleteUserRequest struct {
+	User                 *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteUserRequest) Reset()         { *m = DeleteUserRequest{} }
+func (m *DeleteUserRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteUserRequest) ProtoMessage()    {}
+func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{15}
+}
+
+func (m *DeleteUserRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteUserRequest.Unmarshal(m, b)
+}
+func (m *DeleteUserRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteUserRequest.Marshal(b, m, deterministic)
+}
+func (m *DeleteUserRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteUserRequest.Merge(m, src)
+}
+func (m *DeleteUserRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteUserRequest.Size(m)
+}
+func (m *DeleteUserRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteUserRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteUserRequest proto.InternalMessageInfo
+
+func (m *DeleteUserRequest) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+type DeleteUserResponse struct {
+	Success              bool     `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Info                 string   `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteUserResponse) Reset()         { *m = DeleteUserResponse{} }
+func (m *DeleteUserResponse) String() string { return proto.CompactTextString(m) }
+func (*DeleteUserResponse) ProtoMessage()    {}
+func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{16}
+}
+
+func (m *DeleteUserResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteUserResponse.Unmarshal(m, b)
+}
+func (m *DeleteUserResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteUserResponse.Marshal(b, m, deterministic)
+}
+func (m *DeleteUserResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteUserResponse.Merge(m, src)
+}
+func (m *DeleteUserResponse) XXX_Size() int {
+	return xxx_messageInfo_DeleteUserResponse.Size(m)
+}
+func (m *DeleteUserResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteUserResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteUserResponse proto.InternalMessageInfo
+
+func (m *DeleteUserResponse) GetSuccess() bool {
+	if m != nil {
+		return m.Success
+	}
+	return false
+}
+
+func (m *DeleteUserResponse) GetInfo() string {
+	if m != nil {
+		return m.Info
+	}
+	return ""
+}
+
 func init() {
-	proto.RegisterType((*StatsRequest)(nil), "api.StatsRequest")
-	proto.RegisterType((*StatsReply)(nil), "api.StatsReply")
+	proto.RegisterType((*Traffic)(nil), "api.Traffic")
+	proto.RegisterType((*Speed)(nil), "api.Speed")
+	proto.RegisterType((*User)(nil), "api.User")
+	proto.RegisterType((*GetTrafficRequest)(nil), "api.GetTrafficRequest")
+	proto.RegisterType((*GetTrafficResponse)(nil), "api.GetTrafficResponse")
+	proto.RegisterType((*GetSpeedRequest)(nil), "api.GetSpeedRequest")
+	proto.RegisterType((*GetSpeedResponse)(nil), "api.GetSpeedResponse")
+	proto.RegisterType((*ListUserRequest)(nil), "api.ListUserRequest")
+	proto.RegisterType((*ListUserResponse)(nil), "api.ListUserResponse")
+	proto.RegisterType((*SetTrafficRequest)(nil), "api.SetTrafficRequest")
+	proto.RegisterType((*SetTrafficReponse)(nil), "api.SetTrafficReponse")
+	proto.RegisterType((*SetSpeedRequest)(nil), "api.SetSpeedRequest")
+	proto.RegisterType((*SetSpeedResponse)(nil), "api.SetSpeedResponse")
+	proto.RegisterType((*AddUserRequest)(nil), "api.AddUserRequest")
+	proto.RegisterType((*AddUserResponse)(nil), "api.AddUserResponse")
+	proto.RegisterType((*DeleteUserRequest)(nil), "api.DeleteUserRequest")
+	proto.RegisterType((*DeleteUserResponse)(nil), "api.DeleteUserResponse")
 }
 
 func init() {
@@ -136,21 +848,47 @@ func init() {
 }
 
 var fileDescriptor_00212fb1f9d3bf1c = []byte{
-	// 214 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x4c, 0x2c, 0xc8, 0xd4,
-	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x06, 0x32, 0x95, 0xb4, 0xb8, 0x78, 0x82, 0x4b, 0x12,
-	0x4b, 0x8a, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0xa4, 0xb8, 0x38, 0x0a, 0x12, 0x8b,
-	0x8b, 0xcb, 0xf3, 0x8b, 0x52, 0x24, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0xe0, 0x7c, 0xa5, 0x15,
-	0x8c, 0x5c, 0x5c, 0x50, 0xc5, 0x05, 0x39, 0x95, 0x42, 0xaa, 0x5c, 0x7c, 0xa5, 0x05, 0x39, 0xf9,
-	0x89, 0x29, 0xf1, 0x25, 0x45, 0x89, 0x69, 0x69, 0x99, 0xc9, 0x60, 0x0d, 0x2c, 0x41, 0xbc, 0x10,
-	0xd1, 0x10, 0x88, 0xa0, 0x90, 0x26, 0x97, 0x40, 0x4a, 0x7e, 0x79, 0x1e, 0x8a, 0x42, 0x26, 0xb0,
-	0x42, 0x7e, 0x98, 0x38, 0x4c, 0xa9, 0x22, 0x17, 0x0f, 0xd4, 0xc4, 0xe2, 0x82, 0xd4, 0xd4, 0x14,
-	0x09, 0x66, 0xb0, 0x32, 0x6e, 0x88, 0x58, 0x30, 0x48, 0x08, 0x64, 0x29, 0xdc, 0x34, 0x88, 0x22,
-	0x16, 0x88, 0xa5, 0x30, 0x51, 0xb0, 0x32, 0x23, 0x67, 0x2e, 0xde, 0x90, 0xa2, 0xfc, 0xac, 0xc4,
-	0xbc, 0xe0, 0xd4, 0xa2, 0xb2, 0xcc, 0xe4, 0x54, 0x21, 0x23, 0x2e, 0xae, 0xc0, 0xd2, 0xd4, 0xa2,
-	0x4a, 0xb0, 0xfb, 0x85, 0x04, 0xf5, 0x40, 0xc1, 0x80, 0xec, 0x71, 0x29, 0x7e, 0x64, 0x21, 0xa0,
-	0xf7, 0x94, 0x18, 0x92, 0xd8, 0xc0, 0xe1, 0x64, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x89, 0xd5,
-	0x8f, 0xd9, 0x34, 0x01, 0x00, 0x00,
+	// 634 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xa4, 0x56, 0x4d, 0x6f, 0xd3, 0x40,
+	0x10, 0xad, 0x9b, 0x8f, 0x3a, 0x93, 0xa4, 0x49, 0xb6, 0xa1, 0x44, 0x91, 0x90, 0x60, 0x25, 0xa4,
+	0x22, 0xa4, 0x52, 0xc2, 0x09, 0x01, 0x82, 0x36, 0x95, 0xb8, 0xe4, 0x52, 0x3b, 0x9c, 0x10, 0x8a,
+	0x4c, 0xbc, 0x51, 0x8d, 0x8c, 0xed, 0x7a, 0xd7, 0xad, 0xc4, 0x7f, 0x40, 0x88, 0x1f, 0xc8, 0x7f,
+	0xc1, 0xfb, 0x95, 0xd8, 0x71, 0x69, 0xe3, 0x70, 0xf3, 0x8e, 0xdf, 0x9b, 0x79, 0x7e, 0x79, 0x3b,
+	0x0a, 0x34, 0x9c, 0xc8, 0x3b, 0x8e, 0xe2, 0x90, 0x85, 0xa8, 0x92, 0x3e, 0xe2, 0xcf, 0xb0, 0x37,
+	0x8d, 0x9d, 0xc5, 0xc2, 0x9b, 0xa3, 0xa7, 0xb0, 0x9f, 0x44, 0x7e, 0xe8, 0xb8, 0x33, 0x26, 0x2b,
+	0x03, 0xe3, 0xb1, 0x71, 0x54, 0xb5, 0xda, 0xb2, 0xaa, 0x61, 0xcf, 0xa0, 0xeb, 0x86, 0x37, 0x41,
+	0x0e, 0xb8, 0x2b, 0x80, 0x1d, 0x5d, 0x57, 0x50, 0x7c, 0x01, 0x35, 0x3b, 0x22, 0xc4, 0x45, 0x4f,
+	0xa0, 0xa5, 0x5a, 0x53, 0x7e, 0x56, 0x8d, 0x9b, 0xb2, 0x26, 0x21, 0xe9, 0xf4, 0x65, 0x5b, 0x09,
+	0x92, 0x4d, 0xdb, 0xba, 0x2a, 0x60, 0x78, 0x02, 0xd5, 0x4f, 0x94, 0xc4, 0x68, 0x08, 0x66, 0xe4,
+	0x50, 0x7a, 0x13, 0xc6, 0xb2, 0x5b, 0xc3, 0x5a, 0x9e, 0x11, 0x82, 0xea, 0xa5, 0x43, 0x2f, 0x45,
+	0x83, 0x86, 0x25, 0x9e, 0x51, 0x1f, 0x6a, 0xd7, 0x8e, 0xef, 0xb9, 0x83, 0x4a, 0x5a, 0x34, 0x2d,
+	0x79, 0xc0, 0x23, 0xe8, 0x7d, 0x24, 0x4c, 0xc9, 0xb5, 0xc8, 0x55, 0x42, 0x28, 0x43, 0x8f, 0xa0,
+	0x9a, 0xa4, 0x23, 0x44, 0xdb, 0xe6, 0xa8, 0x71, 0xcc, 0x1d, 0xe3, 0x33, 0x2d, 0x51, 0xc6, 0x3f,
+	0x00, 0x65, 0x39, 0x34, 0x0a, 0x03, 0x4a, 0xd0, 0x4b, 0x68, 0x2b, 0x33, 0x66, 0x2c, 0x64, 0x8e,
+	0xaf, 0xd8, 0x2d, 0xc1, 0xd6, 0xe0, 0x96, 0x82, 0x4c, 0x39, 0x22, 0x4b, 0xb9, 0x4a, 0xd2, 0x8a,
+	0xd0, 0xfb, 0x2f, 0xca, 0x05, 0x47, 0xe0, 0x13, 0xe8, 0xa4, 0xb3, 0x85, 0x13, 0x1b, 0xaa, 0x8d,
+	0xa0, 0xbb, 0x62, 0x28, 0xad, 0x2f, 0xa0, 0x2d, 0x1c, 0x9e, 0xcd, 0x93, 0x38, 0x26, 0x01, 0x53,
+	0x5c, 0x10, 0x5c, 0x09, 0x6d, 0x09, 0xc0, 0x58, 0xbe, 0x47, 0xcf, 0xa1, 0x29, 0x09, 0xbe, 0xf7,
+	0xdd, 0x63, 0x4a, 0x67, 0x16, 0x0e, 0xe2, 0xf5, 0x84, 0xbf, 0xc5, 0x3d, 0xe8, 0x4c, 0x3c, 0xca,
+	0x84, 0x06, 0xa9, 0x11, 0xff, 0xdc, 0x85, 0xee, 0xaa, 0xa6, 0x54, 0xdc, 0x2d, 0x1c, 0x1d, 0x42,
+	0x3d, 0x0c, 0x7c, 0x2f, 0x20, 0x62, 0x9c, 0x69, 0xa9, 0x53, 0xd1, 0xe8, 0x4a, 0x79, 0xa3, 0xab,
+	0xf7, 0x19, 0x5d, 0xb4, 0xa8, 0x56, 0xce, 0xa2, 0xfa, 0x9d, 0x16, 0x11, 0xe8, 0xd9, 0x25, 0x63,
+	0xb7, 0x4d, 0x5a, 0x4e, 0xf3, 0x63, 0xa4, 0xed, 0x03, 0xd8, 0xa3, 0xc9, 0x7c, 0x4e, 0x28, 0x15,
+	0x93, 0x4c, 0x4b, 0x1f, 0xf9, 0xb5, 0xf1, 0x82, 0x45, 0xa8, 0xaf, 0x0d, 0x7f, 0xc6, 0x5f, 0xa0,
+	0x63, 0x97, 0x0a, 0x5c, 0xb9, 0xac, 0x7c, 0x80, 0xae, 0xbd, 0x9e, 0xce, 0x72, 0x02, 0x7f, 0x19,
+	0xb0, 0x7f, 0xea, 0xba, 0x99, 0xb4, 0x95, 0x36, 0xf2, 0xfe, 0x34, 0x94, 0xfa, 0x71, 0xd3, 0x3b,
+	0xba, 0x14, 0xb4, 0x51, 0xd4, 0xf9, 0x16, 0x3a, 0x27, 0x3e, 0x61, 0x64, 0xf3, 0xaf, 0xc0, 0x67,
+	0x80, 0xb2, 0x9c, 0x6d, 0xbc, 0x1b, 0xfd, 0x36, 0xe0, 0x60, 0x1a, 0x87, 0xdf, 0x9c, 0x60, 0xec,
+	0x7b, 0x69, 0x88, 0x6d, 0x12, 0x5f, 0x7b, 0x73, 0x82, 0xde, 0x03, 0xac, 0x36, 0x1c, 0x3a, 0x14,
+	0xa3, 0x0b, 0x6b, 0x72, 0xf8, 0xb0, 0x50, 0x97, 0x22, 0xf0, 0x0e, 0x7a, 0x0d, 0xa6, 0x5e, 0x3a,
+	0xa8, 0xaf, 0x61, 0xd9, 0x10, 0x0d, 0x1f, 0xac, 0x55, 0x35, 0x75, 0xf4, 0xa7, 0xa2, 0x35, 0x71,
+	0x35, 0x24, 0xd6, 0x9a, 0xde, 0x42, 0x43, 0x6f, 0x10, 0xaa, 0x7a, 0xae, 0x6d, 0x19, 0xd5, 0x73,
+	0x7d, 0xcf, 0xe0, 0x9d, 0x13, 0x03, 0x8d, 0xff, 0xf3, 0x8b, 0x8e, 0x8c, 0xb4, 0xc9, 0x19, 0x80,
+	0xbd, 0xde, 0xa4, 0x70, 0x8d, 0x87, 0xc5, 0x7a, 0xb6, 0xc7, 0xbb, 0xad, 0x9d, 0xd1, 0x74, 0x3b,
+	0x4f, 0xb7, 0x6f, 0xa5, 0xdb, 0xb7, 0xd3, 0xdf, 0x80, 0xa9, 0xa2, 0x49, 0xd1, 0x81, 0x00, 0xe6,
+	0xaf, 0xce, 0xb0, 0x9f, 0x2f, 0xe6, 0xc8, 0xe7, 0xd0, 0x5c, 0x25, 0x8e, 0xaa, 0xef, 0x2f, 0xe4,
+	0x56, 0x99, 0x58, 0xcc, 0xa6, 0xec, 0xf2, 0xb5, 0x2e, 0xfe, 0x7b, 0xbc, 0xfa, 0x1b, 0x00, 0x00,
+	0xff, 0xff, 0xad, 0xc6, 0xad, 0x2b, 0x88, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -161,74 +899,617 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// TrojanServiceClient is the client API for TrojanService service.
+// TrojanClientServiceClient is the client API for TrojanClientService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type TrojanServiceClient interface {
-	QueryStats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsReply, error)
+type TrojanClientServiceClient interface {
+	GetTraffic(ctx context.Context, in *GetTrafficRequest, opts ...grpc.CallOption) (*GetTrafficResponse, error)
+	GetSpeed(ctx context.Context, in *GetSpeedRequest, opts ...grpc.CallOption) (*GetSpeedResponse, error)
 }
 
-type trojanServiceClient struct {
+type trojanClientServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTrojanServiceClient(cc grpc.ClientConnInterface) TrojanServiceClient {
-	return &trojanServiceClient{cc}
+func NewTrojanClientServiceClient(cc grpc.ClientConnInterface) TrojanClientServiceClient {
+	return &trojanClientServiceClient{cc}
 }
 
-func (c *trojanServiceClient) QueryStats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsReply, error) {
-	out := new(StatsReply)
-	err := c.cc.Invoke(ctx, "/api.TrojanService/QueryStats", in, out, opts...)
+func (c *trojanClientServiceClient) GetTraffic(ctx context.Context, in *GetTrafficRequest, opts ...grpc.CallOption) (*GetTrafficResponse, error) {
+	out := new(GetTrafficResponse)
+	err := c.cc.Invoke(ctx, "/api.TrojanClientService/GetTraffic", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TrojanServiceServer is the server API for TrojanService service.
-type TrojanServiceServer interface {
-	QueryStats(context.Context, *StatsRequest) (*StatsReply, error)
+func (c *trojanClientServiceClient) GetSpeed(ctx context.Context, in *GetSpeedRequest, opts ...grpc.CallOption) (*GetSpeedResponse, error) {
+	out := new(GetSpeedResponse)
+	err := c.cc.Invoke(ctx, "/api.TrojanClientService/GetSpeed", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedTrojanServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedTrojanServiceServer struct {
+// TrojanClientServiceServer is the server API for TrojanClientService service.
+type TrojanClientServiceServer interface {
+	GetTraffic(context.Context, *GetTrafficRequest) (*GetTrafficResponse, error)
+	GetSpeed(context.Context, *GetSpeedRequest) (*GetSpeedResponse, error)
 }
 
-func (*UnimplementedTrojanServiceServer) QueryStats(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method QueryStats not implemented")
+// UnimplementedTrojanClientServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedTrojanClientServiceServer struct {
 }
 
-func RegisterTrojanServiceServer(s *grpc.Server, srv TrojanServiceServer) {
-	s.RegisterService(&_TrojanService_serviceDesc, srv)
+func (*UnimplementedTrojanClientServiceServer) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*GetTrafficResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTraffic not implemented")
+}
+func (*UnimplementedTrojanClientServiceServer) GetSpeed(ctx context.Context, req *GetSpeedRequest) (*GetSpeedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSpeed not implemented")
 }
 
-func _TrojanService_QueryStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StatsRequest)
+func RegisterTrojanClientServiceServer(s *grpc.Server, srv TrojanClientServiceServer) {
+	s.RegisterService(&_TrojanClientService_serviceDesc, srv)
+}
+
+func _TrojanClientService_GetTraffic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTrafficRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TrojanServiceServer).QueryStats(ctx, in)
+		return srv.(TrojanClientServiceServer).GetTraffic(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.TrojanService/QueryStats",
+		FullMethod: "/api.TrojanClientService/GetTraffic",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrojanServiceServer).QueryStats(ctx, req.(*StatsRequest))
+		return srv.(TrojanClientServiceServer).GetTraffic(ctx, req.(*GetTrafficRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _TrojanService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "api.TrojanService",
-	HandlerType: (*TrojanServiceServer)(nil),
+func _TrojanClientService_GetSpeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSpeedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrojanClientServiceServer).GetSpeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.TrojanClientService/GetSpeed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrojanClientServiceServer).GetSpeed(ctx, req.(*GetSpeedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _TrojanClientService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "api.TrojanClientService",
+	HandlerType: (*TrojanClientServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "QueryStats",
-			Handler:    _TrojanService_QueryStats_Handler,
+			MethodName: "GetTraffic",
+			Handler:    _TrojanClientService_GetTraffic_Handler,
+		},
+		{
+			MethodName: "GetSpeed",
+			Handler:    _TrojanClientService_GetSpeed_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "api.proto",
+}
+
+// TrojanServerServiceClient is the client API for TrojanServerService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type TrojanServerServiceClient interface {
+	ListUsers(ctx context.Context, in *ListUserRequest, opts ...grpc.CallOption) (TrojanServerService_ListUsersClient, error)
+	GetTraffic(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_GetTrafficClient, error)
+	SetTraffic(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_SetTrafficClient, error)
+	GetSpeed(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_GetSpeedClient, error)
+	SetSpeed(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_SetSpeedClient, error)
+	AddUsers(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_AddUsersClient, error)
+	DeleteUsers(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_DeleteUsersClient, error)
+}
+
+type trojanServerServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewTrojanServerServiceClient(cc grpc.ClientConnInterface) TrojanServerServiceClient {
+	return &trojanServerServiceClient{cc}
+}
+
+func (c *trojanServerServiceClient) ListUsers(ctx context.Context, in *ListUserRequest, opts ...grpc.CallOption) (TrojanServerService_ListUsersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[0], "/api.TrojanServerService/ListUsers", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceListUsersClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type TrojanServerService_ListUsersClient interface {
+	Recv() (*ListUserResponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceListUsersClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceListUsersClient) Recv() (*ListUserResponse, error) {
+	m := new(ListUserResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *trojanServerServiceClient) GetTraffic(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_GetTrafficClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[1], "/api.TrojanServerService/GetTraffic", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceGetTrafficClient{stream}
+	return x, nil
+}
+
+type TrojanServerService_GetTrafficClient interface {
+	Send(*GetTrafficRequest) error
+	Recv() (*GetTrafficResponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceGetTrafficClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceGetTrafficClient) Send(m *GetTrafficRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceGetTrafficClient) Recv() (*GetTrafficResponse, error) {
+	m := new(GetTrafficResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *trojanServerServiceClient) SetTraffic(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_SetTrafficClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[2], "/api.TrojanServerService/SetTraffic", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceSetTrafficClient{stream}
+	return x, nil
+}
+
+type TrojanServerService_SetTrafficClient interface {
+	Send(*SetTrafficRequest) error
+	Recv() (*SetTrafficReponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceSetTrafficClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceSetTrafficClient) Send(m *SetTrafficRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceSetTrafficClient) Recv() (*SetTrafficReponse, error) {
+	m := new(SetTrafficReponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *trojanServerServiceClient) GetSpeed(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_GetSpeedClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[3], "/api.TrojanServerService/GetSpeed", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceGetSpeedClient{stream}
+	return x, nil
+}
+
+type TrojanServerService_GetSpeedClient interface {
+	Send(*GetSpeedRequest) error
+	Recv() (*GetSpeedResponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceGetSpeedClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceGetSpeedClient) Send(m *GetSpeedRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceGetSpeedClient) Recv() (*GetSpeedResponse, error) {
+	m := new(GetSpeedResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *trojanServerServiceClient) SetSpeed(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_SetSpeedClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[4], "/api.TrojanServerService/SetSpeed", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceSetSpeedClient{stream}
+	return x, nil
+}
+
+type TrojanServerService_SetSpeedClient interface {
+	Send(*SetSpeedRequest) error
+	Recv() (*SetSpeedResponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceSetSpeedClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceSetSpeedClient) Send(m *SetSpeedRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceSetSpeedClient) Recv() (*SetSpeedResponse, error) {
+	m := new(SetSpeedResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *trojanServerServiceClient) AddUsers(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_AddUsersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[5], "/api.TrojanServerService/AddUsers", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceAddUsersClient{stream}
+	return x, nil
+}
+
+type TrojanServerService_AddUsersClient interface {
+	Send(*AddUserRequest) error
+	Recv() (*AddUserResponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceAddUsersClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceAddUsersClient) Send(m *AddUserRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceAddUsersClient) Recv() (*AddUserResponse, error) {
+	m := new(AddUserResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *trojanServerServiceClient) DeleteUsers(ctx context.Context, opts ...grpc.CallOption) (TrojanServerService_DeleteUsersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TrojanServerService_serviceDesc.Streams[6], "/api.TrojanServerService/DeleteUsers", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &trojanServerServiceDeleteUsersClient{stream}
+	return x, nil
+}
+
+type TrojanServerService_DeleteUsersClient interface {
+	Send(*DeleteUserRequest) error
+	Recv() (*DeleteUserResponse, error)
+	grpc.ClientStream
+}
+
+type trojanServerServiceDeleteUsersClient struct {
+	grpc.ClientStream
+}
+
+func (x *trojanServerServiceDeleteUsersClient) Send(m *DeleteUserRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceDeleteUsersClient) Recv() (*DeleteUserResponse, error) {
+	m := new(DeleteUserResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// TrojanServerServiceServer is the server API for TrojanServerService service.
+type TrojanServerServiceServer interface {
+	ListUsers(*ListUserRequest, TrojanServerService_ListUsersServer) error
+	GetTraffic(TrojanServerService_GetTrafficServer) error
+	SetTraffic(TrojanServerService_SetTrafficServer) error
+	GetSpeed(TrojanServerService_GetSpeedServer) error
+	SetSpeed(TrojanServerService_SetSpeedServer) error
+	AddUsers(TrojanServerService_AddUsersServer) error
+	DeleteUsers(TrojanServerService_DeleteUsersServer) error
+}
+
+// UnimplementedTrojanServerServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedTrojanServerServiceServer struct {
+}
+
+func (*UnimplementedTrojanServerServiceServer) ListUsers(req *ListUserRequest, srv TrojanServerService_ListUsersServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
+}
+func (*UnimplementedTrojanServerServiceServer) GetTraffic(srv TrojanServerService_GetTrafficServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetTraffic not implemented")
+}
+func (*UnimplementedTrojanServerServiceServer) SetTraffic(srv TrojanServerService_SetTrafficServer) error {
+	return status.Errorf(codes.Unimplemented, "method SetTraffic not implemented")
+}
+func (*UnimplementedTrojanServerServiceServer) GetSpeed(srv TrojanServerService_GetSpeedServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetSpeed not implemented")
+}
+func (*UnimplementedTrojanServerServiceServer) SetSpeed(srv TrojanServerService_SetSpeedServer) error {
+	return status.Errorf(codes.Unimplemented, "method SetSpeed not implemented")
+}
+func (*UnimplementedTrojanServerServiceServer) AddUsers(srv TrojanServerService_AddUsersServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddUsers not implemented")
+}
+func (*UnimplementedTrojanServerServiceServer) DeleteUsers(srv TrojanServerService_DeleteUsersServer) error {
+	return status.Errorf(codes.Unimplemented, "method DeleteUsers not implemented")
+}
+
+func RegisterTrojanServerServiceServer(s *grpc.Server, srv TrojanServerServiceServer) {
+	s.RegisterService(&_TrojanServerService_serviceDesc, srv)
+}
+
+func _TrojanServerService_ListUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListUserRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TrojanServerServiceServer).ListUsers(m, &trojanServerServiceListUsersServer{stream})
+}
+
+type TrojanServerService_ListUsersServer interface {
+	Send(*ListUserResponse) error
+	grpc.ServerStream
+}
+
+type trojanServerServiceListUsersServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceListUsersServer) Send(m *ListUserResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _TrojanServerService_GetTraffic_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TrojanServerServiceServer).GetTraffic(&trojanServerServiceGetTrafficServer{stream})
+}
+
+type TrojanServerService_GetTrafficServer interface {
+	Send(*GetTrafficResponse) error
+	Recv() (*GetTrafficRequest, error)
+	grpc.ServerStream
+}
+
+type trojanServerServiceGetTrafficServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceGetTrafficServer) Send(m *GetTrafficResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceGetTrafficServer) Recv() (*GetTrafficRequest, error) {
+	m := new(GetTrafficRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _TrojanServerService_SetTraffic_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TrojanServerServiceServer).SetTraffic(&trojanServerServiceSetTrafficServer{stream})
+}
+
+type TrojanServerService_SetTrafficServer interface {
+	Send(*SetTrafficReponse) error
+	Recv() (*SetTrafficRequest, error)
+	grpc.ServerStream
+}
+
+type trojanServerServiceSetTrafficServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceSetTrafficServer) Send(m *SetTrafficReponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceSetTrafficServer) Recv() (*SetTrafficRequest, error) {
+	m := new(SetTrafficRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _TrojanServerService_GetSpeed_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TrojanServerServiceServer).GetSpeed(&trojanServerServiceGetSpeedServer{stream})
+}
+
+type TrojanServerService_GetSpeedServer interface {
+	Send(*GetSpeedResponse) error
+	Recv() (*GetSpeedRequest, error)
+	grpc.ServerStream
+}
+
+type trojanServerServiceGetSpeedServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceGetSpeedServer) Send(m *GetSpeedResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceGetSpeedServer) Recv() (*GetSpeedRequest, error) {
+	m := new(GetSpeedRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _TrojanServerService_SetSpeed_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TrojanServerServiceServer).SetSpeed(&trojanServerServiceSetSpeedServer{stream})
+}
+
+type TrojanServerService_SetSpeedServer interface {
+	Send(*SetSpeedResponse) error
+	Recv() (*SetSpeedRequest, error)
+	grpc.ServerStream
+}
+
+type trojanServerServiceSetSpeedServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceSetSpeedServer) Send(m *SetSpeedResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceSetSpeedServer) Recv() (*SetSpeedRequest, error) {
+	m := new(SetSpeedRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _TrojanServerService_AddUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TrojanServerServiceServer).AddUsers(&trojanServerServiceAddUsersServer{stream})
+}
+
+type TrojanServerService_AddUsersServer interface {
+	Send(*AddUserResponse) error
+	Recv() (*AddUserRequest, error)
+	grpc.ServerStream
+}
+
+type trojanServerServiceAddUsersServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceAddUsersServer) Send(m *AddUserResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceAddUsersServer) Recv() (*AddUserRequest, error) {
+	m := new(AddUserRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _TrojanServerService_DeleteUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TrojanServerServiceServer).DeleteUsers(&trojanServerServiceDeleteUsersServer{stream})
+}
+
+type TrojanServerService_DeleteUsersServer interface {
+	Send(*DeleteUserResponse) error
+	Recv() (*DeleteUserRequest, error)
+	grpc.ServerStream
+}
+
+type trojanServerServiceDeleteUsersServer struct {
+	grpc.ServerStream
+}
+
+func (x *trojanServerServiceDeleteUsersServer) Send(m *DeleteUserResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *trojanServerServiceDeleteUsersServer) Recv() (*DeleteUserRequest, error) {
+	m := new(DeleteUserRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _TrojanServerService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "api.TrojanServerService",
+	HandlerType: (*TrojanServerServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ListUsers",
+			Handler:       _TrojanServerService_ListUsers_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetTraffic",
+			Handler:       _TrojanServerService_GetTraffic_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "SetTraffic",
+			Handler:       _TrojanServerService_SetTraffic_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetSpeed",
+			Handler:       _TrojanServerService_GetSpeed_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "SetSpeed",
+			Handler:       _TrojanServerService_SetSpeed_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "AddUsers",
+			Handler:       _TrojanServerService_AddUsers_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "DeleteUsers",
+			Handler:       _TrojanServerService_DeleteUsers_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "api.proto",
 }

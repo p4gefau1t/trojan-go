@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -23,11 +22,10 @@ func TestClientAPI(t *testing.T) {
 	time.Sleep(time.Second)
 	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
 	common.Must(err)
-	client := NewTrojanServiceClient(conn)
-	reply, err := client.QueryStats(context.Background(), &StatsRequest{})
+	client := NewTrojanClientServiceClient(conn)
+	resp, err := client.GetTraffic(context.Background(), &GetTrafficRequest{})
 	common.Must(err)
-	fmt.Println(reply.DownloadTraffic, reply.UploadTraffic)
-	if reply.DownloadTraffic != 456 || reply.UploadTraffic != 123 {
-		t.Fatal("wrong result")
+	if resp.TrafficTotal.DownloadTraffic != 456 || resp.TrafficTotal.UploadTraffic != 123 {
+		t.Fail()
 	}
 }

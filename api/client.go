@@ -11,8 +11,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-type ClientAPIService struct {
-	TrojanServiceServer
+type ClientAPI struct {
+	TrojanClientServiceServer
+
 	meter         stat.TrafficMeter
 	uploadSpeed   uint64
 	downloadSpeed uint64
@@ -21,24 +22,32 @@ type ClientAPIService struct {
 	ctx           context.Context
 }
 
-func (s *ClientAPIService) QueryStats(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
-	log.Debug("query stats, password", req.Password)
-	//password := req.Password
-	//passwordHash := common.SHA224String(password)
+func (s *ClientAPI) GetTraffic(context.Context, *GetTrafficRequest) (*GetTrafficResponse, error) {
 	sent, recv := s.meter.Query("")
-	reply := &StatsReply{
-		UploadTraffic:   sent,
-		DownloadTraffic: recv,
-		UploadSpeed:     s.uploadSpeed,
-		DownloadSpeed:   s.downloadSpeed,
+	resp := &GetTrafficResponse{
+		TrafficTotal: &Traffic{
+			UploadTraffic:   sent,
+			DownloadTraffic: recv,
+		},
 	}
-	return reply, nil
+	return resp, nil
 }
 
-func (s *ClientAPIService) calcSpeed() {
+func (s *ClientAPI) GetSpeed(context.Context, *GetSpeedRequest) (*GetSpeedResponse, error) {
+	resp := &GetSpeedResponse{
+		SpeedCurrent: &Speed{
+			UploadSpeed:   s.uploadSpeed,
+			DownloadSpeed: s.downloadSpeed,
+		},
+	}
+	return resp, nil
+}
+
+func (s *ClientAPI) calcSpeed() {
 	for {
 		select {
 		case <-time.After(time.Second):
+			// TODO avoid racing
 			sent, recv := s.meter.Query("")
 			s.uploadSpeed = sent - s.lastSent
 			s.downloadSpeed = recv - s.lastRecv
@@ -52,12 +61,12 @@ func (s *ClientAPIService) calcSpeed() {
 
 func RunClientAPIService(ctx context.Context, config *conf.GlobalConfig, meter stat.TrafficMeter) error {
 	server := grpc.NewServer()
-	service := &ClientAPIService{
+	service := &ClientAPI{
 		meter: meter,
 		ctx:   ctx,
 	}
 	go service.calcSpeed()
-	RegisterTrojanServiceServer(server, service)
+	RegisterTrojanClientServiceServer(server, service)
 	listener, err := net.Listen("tcp", config.API.APIAddress.String())
 	if err != nil {
 		return err
