@@ -73,7 +73,7 @@ weight: 30
         "proxy": [],
         "block": [],
         "route_by_ip": false,
-        "route_by_ip_on_nonmatch": false，
+        "route_by_ip_on_nonmatch": false,
         "default_policy": "proxy"
     },
     "websocket": {
