@@ -36,12 +36,13 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 		if !valid {
 			stream.Send(&GetTrafficResponse{
 				Success: false,
-				Info:    "invalid user",
+				Info:    "invalid user " + req.User.Hash,
 			})
 			continue
 		}
 		downloadTraffic, uploadTraffic := meter.Get()
 		downloadSpeed, uploadSpeed := meter.GetSpeed()
+		downloadSpeedLimit, uploadSpeedLimit := meter.GetSpeedLimit()
 		err = stream.Send(&GetTrafficResponse{
 			Success: true,
 			TrafficTotal: &Traffic{
@@ -51,6 +52,10 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 			SpeedCurrent: &Speed{
 				DownloadSpeed: downloadSpeed,
 				UploadSpeed:   uploadSpeed,
+			},
+			SpeedLimit: &Speed{
+				DownloadSpeed: uint64(downloadSpeedLimit),
+				UploadSpeed:   uint64(uploadSpeedLimit),
 			},
 		})
 		if err != nil {
@@ -80,7 +85,12 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 		case SetUserRequest_Delete:
 			err = s.auth.DelUser(req.User.Hash)
 		case SetUserRequest_Modify:
-			err = common.NewError("not support yet")
+			valid, meter := s.auth.AuthUser(req.User.Hash)
+			if !valid {
+				err = common.NewError("invalid user " + req.User.Hash)
+			} else {
+				meter.LimitSpeed(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+			}
 		}
 		if err != nil {
 			stream.Send(&SetUserResponse{
@@ -100,6 +110,7 @@ func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_L
 	for _, meter := range users {
 		downloadTraffic, uploadTraffic := meter.Get()
 		downloadSpeed, uploadSpeed := meter.GetSpeed()
+		downloadSpeedLimit, uploadSpeedLimit := meter.GetSpeedLimit()
 		err := stream.Send(&ListUserResponse{
 			User: &User{
 				Hash: meter.Hash(),
@@ -111,6 +122,10 @@ func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_L
 			SpeedCurrent: &Speed{
 				DownloadSpeed: downloadSpeed,
 				UploadSpeed:   uploadSpeed,
+			},
+			SpeedLimit: &Speed{
+				DownloadSpeed: uint64(downloadSpeedLimit),
+				UploadSpeed:   uint64(uploadSpeedLimit),
 			},
 		})
 		if err != nil {

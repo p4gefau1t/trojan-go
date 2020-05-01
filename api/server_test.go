@@ -36,11 +36,12 @@ func TestServerAPI(t *testing.T) {
 		if resp.User.Hash != "hash1234" {
 			t.Fail()
 		}
+		fmt.Println(resp.SpeedCurrent)
+		fmt.Println(resp.SpeedLimit)
 	}
 	stream1.CloseSend()
-
 	meter.Count(1234, 5678)
-	time.Sleep(time.Millisecond * 400)
+	time.Sleep(time.Millisecond * 1000)
 	stream2, err := server.GetTraffic(ctx)
 	common.Must(err)
 	stream2.Send(&GetTrafficRequest{
@@ -56,7 +57,6 @@ func TestServerAPI(t *testing.T) {
 	if resp2.SpeedCurrent.DownloadSpeed != 1234 || resp2.TrafficTotal.UploadTraffic != 5678 {
 		t.Fail()
 	}
-	stream2.CloseSend()
 
 	stream3, err := server.SetUsers(ctx)
 	stream3.Send(&SetUserRequest{
@@ -83,9 +83,42 @@ func TestServerAPI(t *testing.T) {
 	if err != nil || !resp3.Success {
 		t.Fail()
 	}
-	valid, _ = auth.AuthUser("newhash")
+	valid, meter = auth.AuthUser("newhash")
 	if !valid {
 		t.Fail()
 	}
+	stream3.Send(&SetUserRequest{
+		User: &User{
+			Hash: "newhash",
+		},
+		Operation: SetUserRequest_Modify,
+		SpeedLimit: &Speed{
+			DownloadSpeed: 5000,
+			UploadSpeed:   3000,
+		},
+	})
+	go func() {
+		for {
+			meter.Count(200, 0)
+		}
+	}()
+	go func() {
+		for {
+			meter.Count(0, 300)
+		}
+	}()
+	time.Sleep(time.Second * 3)
+	for i := 0; i < 3; i++ {
+		stream2.Send(&GetTrafficRequest{
+			User: &User{
+				Hash: "newhash",
+			},
+		})
+		resp2, err = stream2.Recv()
+		fmt.Println(resp2.SpeedCurrent)
+		fmt.Println(resp2.SpeedLimit)
+		time.Sleep(time.Second)
+	}
+	stream2.CloseSend()
 	cancel()
 }

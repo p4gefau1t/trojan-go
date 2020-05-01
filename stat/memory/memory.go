@@ -45,17 +45,29 @@ func (m *MemoryTrafficMeter) Count(sent, recv int) {
 	atomic.AddUint64(&m.recv, uint64(recv))
 }
 
-func (m *MemoryTrafficMeter) LimitSpeed(sent, recv int) {
-	if sent == 0 {
+func (m *MemoryTrafficMeter) LimitSpeed(send, recv int) {
+	if send == 0 {
 		m.sendLimiter = nil
 	} else {
-		m.sendLimiter = rate.NewLimiter(rate.Limit(sent), sent*2)
+		m.sendLimiter = rate.NewLimiter(rate.Limit(send), send*2)
 	}
 	if recv == 0 {
 		m.recvLimiter = nil
 	} else {
 		m.recvLimiter = rate.NewLimiter(rate.Limit(recv), recv*2)
 	}
+}
+
+func (m *MemoryTrafficMeter) GetSpeedLimit() (send, recv int) {
+	sendLimit := 0
+	recvLimit := 0
+	if m.sendLimiter != nil {
+		sendLimit = int(m.sendLimiter.Limit())
+	}
+	if m.recvLimiter != nil {
+		recvLimit = int(m.recvLimiter.Limit())
+	}
+	return sendLimit, recvLimit
 }
 
 func (m *MemoryTrafficMeter) Hash() string {
