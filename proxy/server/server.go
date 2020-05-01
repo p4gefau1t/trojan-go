@@ -114,20 +114,22 @@ func (s *Server) handleConn(conn *tls.Conn) {
 	proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 }
 
-func (s *Server) Run() error {
+func (s *Server) ListenTCP(errChan chan error) {
 	log.Info("server is running at", s.config.LocalAddress)
 
 	var listener net.Listener
 	listener, err := net.Listen("tcp", s.config.LocalAddress.String())
 	if err != nil {
-		return err
+		errChan <- err
+		return
 	}
 	s.listener = listener
 	defer listener.Close()
 
 	err = sockopt.ApplyTCPListenerOption(listener.(*net.TCPListener), &s.config.TCP)
 	if err != nil {
-		return common.NewError(fmt.Sprintf("failed to apply tcp option: %v", &s.config.TCP)).Base(err)
+		errChan <- common.NewError(fmt.Sprintf("failed to apply tcp option: %v", &s.config.TCP)).Base(err)
+		return
 	}
 
 	tlsConfig := &tls.Config{
@@ -142,10 +144,11 @@ func (s *Server) Run() error {
 		if err != nil {
 			select {
 			case <-s.ctx.Done():
-				return nil
+				return
 			default:
+				errChan <- err
+				return
 			}
-			return err
 		}
 		log.Info("conn accepted from", conn.RemoteAddr())
 		go func(conn net.Conn) {
@@ -183,6 +186,23 @@ func (s *Server) Run() error {
 	}
 }
 
+func (s *Server) Run() error {
+	errChan := make(chan error, 2)
+	if s.config.API.Enabled {
+		log.Info("api enabled")
+		go func() {
+			errChan <- api.RunServerAPI(s.ctx, s.config, s.auth)
+		}()
+	}
+	go s.ListenTCP(errChan)
+	select {
+	case <-s.ctx.Done():
+		return nil
+	case err := <-errChan:
+		return err
+	}
+}
+
 func (s *Server) Close() error {
 	log.Info("shutting down server..")
 	s.cancel()
@@ -208,9 +228,6 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		cancel: cancel,
 		shadow: shadow.NewShadowManager(ctx, config),
 		auth:   auth,
-	}
-	if config.API.Enabled {
-		go api.RunServerAPI(ctx, config, auth)
 	}
 	return s, nil
 }

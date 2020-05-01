@@ -18,6 +18,7 @@ type ServerAPI struct {
 }
 
 func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) error {
+	log.Debug("API: GetTraffic")
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
@@ -65,6 +66,7 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 }
 
 func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
+	log.Debug("API: SetUsers")
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
@@ -82,6 +84,13 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 		switch req.Operation {
 		case SetUserRequest_Add:
 			err = s.auth.AddUser(req.User.Hash)
+			if req.SpeedLimit != nil {
+				valid, meter := s.auth.AuthUser(req.User.Hash)
+				if !valid {
+					return common.NewError("failed to add new user")
+				}
+				meter.LimitSpeed(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+			}
 		case SetUserRequest_Delete:
 			err = s.auth.DelUser(req.User.Hash)
 		case SetUserRequest_Modify:
@@ -106,15 +115,21 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 }
 
 func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_ListUsersServer) error {
+	log.Debug("API: ListUsers")
 	users := s.auth.ListUsers()
 	for _, meter := range users {
 		downloadTraffic, uploadTraffic := meter.Get()
 		downloadSpeed, uploadSpeed := meter.GetSpeed()
 		downloadSpeedLimit, uploadSpeedLimit := meter.GetSpeedLimit()
+		online := false
+		if downloadSpeed > 0 || uploadSpeed > 0 {
+			online = true
+		}
 		err := stream.Send(&ListUserResponse{
 			User: &User{
 				Hash: meter.Hash(),
 			},
+			Online: online,
 			TrafficTotal: &Traffic{
 				DownloadTraffic: downloadTraffic,
 				UploadTraffic:   uploadTraffic,

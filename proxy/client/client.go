@@ -317,9 +317,14 @@ func (c *Client) listenTCP(errChan chan error) {
 
 func (c *Client) Run() error {
 	log.Info("client is running at", c.config.LocalAddress.String())
-	errChan := make(chan error, 2)
+	errChan := make(chan error, 3)
 	go c.listenUDP(errChan)
 	go c.listenTCP(errChan)
+	if c.config.API.Enabled {
+		go func() {
+			errChan <- api.RunClientAPI(c.ctx, c.config, c.auth)
+		}()
+	}
 	select {
 	case err := <-errChan:
 		return err
@@ -366,10 +371,6 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		associated: common.NewNotifier(),
 		auth:       auth,
 		appMan:     appMan,
-	}
-
-	if config.API.Enabled {
-		go api.RunClientAPI(ctx, config, auth)
 	}
 	return newClient, nil
 }

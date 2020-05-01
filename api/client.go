@@ -23,6 +23,7 @@ type ClientAPI struct {
 }
 
 func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*GetTrafficResponse, error) {
+	log.Debug("API: GetTraffic")
 	if req.User == nil {
 		return nil, common.NewError("user is unspecified")
 	}

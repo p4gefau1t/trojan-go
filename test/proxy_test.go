@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
@@ -24,6 +26,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/stat/memory"
 	"golang.org/x/net/proxy"
 	"golang.org/x/net/websocket"
+	"google.golang.org/grpc"
 )
 
 var cert string = `
@@ -183,7 +186,7 @@ func addTCPOption(config *conf.GlobalConfig) *conf.GlobalConfig {
 	return config
 }
 
-func addMySQLOption(config *conf.GlobalConfig) *conf.GlobalConfig {
+func addMySQLConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 	config.MySQL = conf.MySQLConfig{
 		Enabled:    true,
 		ServerHost: "127.0.0.1",
@@ -192,6 +195,14 @@ func addMySQLOption(config *conf.GlobalConfig) *conf.GlobalConfig {
 		Username:   "root",
 		Password:   "password",
 		CheckRate:  1,
+	}
+	return config
+}
+
+func addAPIConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.API = conf.APIConfig{
+		Enabled:    true,
+		APIAddress: common.NewAddress("127.0.0.1", 10000, "tcp"),
 	}
 	return config
 }
@@ -302,7 +313,7 @@ func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCo
 	conn.Write(payload)
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
-	b.Log("single-thread link speed:", speed*8/1024, "Gbps")
+	b.Log("single-thread link speed:", speed, "MiB/s")
 	conn.Close()
 	cancel()
 }
@@ -337,7 +348,7 @@ func MultiThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCon
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
 
-	b.Log("multi-thread link speed:", speed*8/1024, "Gbps")
+	b.Log("multi-thread link speed:", speed, "MiB/s")
 	cancel()
 }
 
@@ -495,9 +506,86 @@ func TestTCPOptions(t *testing.T) {
 }
 
 func TestMySQL(t *testing.T) {
-	serverConfig := addMySQLOption(getBasicServerConfig())
+	serverConfig := addMySQLConfig(getBasicServerConfig())
 	clientConfig := getBasicClientConfig()
 	clientConfig.Passwords = getPasswords("mysqlpassword")
 	clientConfig.Hash = getHash("mysqlpassword")
 	CheckClientServer(t, clientConfig, serverConfig)
+}
+
+func TestServerAPI(t *testing.T) {
+	serverConfig := addAPIConfig(getBasicServerConfig())
+	clientConfig := getBasicClientConfig()
+	clientConfig.Hash = getHash("apitest")
+	clientConfig.Passwords = getPasswords("apitest")
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go RunBlackHoleTCPServer(ctx)
+	go RunServer(ctx, serverConfig)
+	go RunClient(ctx, clientConfig)
+
+	time.Sleep(time.Second * 2)
+	grpcConn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
+	server := api.NewTrojanServerServiceClient(grpcConn)
+
+	listUserStream, err := server.ListUsers(ctx, &api.ListUserRequest{})
+	common.Must(err)
+	defer listUserStream.CloseSend()
+	for {
+		resp, err := listUserStream.Recv()
+		if err != nil {
+			break
+		}
+		fmt.Println(resp.User.Hash)
+		fmt.Println(*resp.SpeedCurrent)
+		fmt.Println(*resp.SpeedLimit)
+	}
+	listUserStream.CloseSend()
+	setUserStream, err := server.SetUsers(ctx)
+	setUserStream.Send(&api.SetUserRequest{
+		User: &api.User{
+			Hash: common.SHA224String("apitest"),
+		},
+		SpeedLimit: &api.Speed{
+			UploadSpeed: 1024 * 1024 * 2,
+		},
+		Operation: api.SetUserRequest_Add,
+	})
+	resp3, err := setUserStream.Recv()
+	if err != nil || !resp3.Success {
+		t.Fail()
+	}
+	setUserStream.CloseSend()
+
+	go func() {
+		dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
+		common.Must(err)
+		conn, err := dialer.Dial("tcp", "127.0.0.1:5000")
+		common.Must(err)
+		mbytes := 16
+		payload := GeneratePayload(1024 * 1024 * mbytes)
+		t1 := time.Now()
+		conn.Write(payload)
+		t2 := time.Now()
+		speed := float64(mbytes) / t2.Sub(t1).Seconds()
+		t.Log("single-thread link speed:", speed, "MiB/s")
+		conn.Close()
+	}()
+
+	time.Sleep(time.Second * 5)
+	listUserStream, err = server.ListUsers(ctx, &api.ListUserRequest{})
+	common.Must(err)
+	defer listUserStream.CloseSend()
+	for {
+		resp, err := listUserStream.Recv()
+		if err != nil {
+			break
+		}
+		fmt.Println(resp.User.Hash)
+		fmt.Println(resp.SpeedCurrent.UploadSpeed)
+		fmt.Println(resp.SpeedLimit.UploadSpeed)
+	}
+	listUserStream.CloseSend()
+	cancel()
 }
