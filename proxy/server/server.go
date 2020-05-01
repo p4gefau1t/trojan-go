@@ -26,7 +26,6 @@ type Server struct {
 
 	listener net.Listener
 	auth     stat.Authenticator
-	meter    stat.TrafficMeter
 	config   *conf.GlobalConfig
 	shadow   *shadow.ShadowManager
 	ctx      context.Context
@@ -40,7 +39,6 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		log.Error(common.NewError("cannot start inbound session").Base(err))
 		return
 	}
-	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 	switch req.Command {
 	case protocol.Connect:
 		outboundConn, err := direct.NewOutboundConnSession(req)
@@ -85,7 +83,6 @@ func (s *Server) handleConn(conn *tls.Conn) {
 			go s.handleMuxConn(stream)
 		}
 	}
-	inboundConn.(protocol.NeedMeter).SetMeter(s.meter)
 
 	if req.Command == protocol.Associate {
 		inboundPacket, err := trojan.NewPacketSession(inboundConn)
@@ -117,29 +114,10 @@ func (s *Server) handleConn(conn *tls.Conn) {
 }
 
 func (s *Server) Run() error {
-	var err error
-	if s.config.MySQL.Enabled {
-		s.auth, err = stat.NewMixedAuthenticator(s.config)
-		if err != nil {
-			return common.NewError("failed to init auth").Base(err)
-		}
-		s.meter, err = stat.NewDBTrafficMeter(s.config)
-		if err != nil {
-			return common.NewError("failed to init traffic meter").Base(err)
-		}
-	} else {
-		s.auth = &stat.ConfigUserAuthenticator{
-			Config: s.config,
-		}
-	}
-	defer s.auth.Close()
-	if s.meter != nil {
-		defer s.meter.Close()
-	}
 	log.Info("server is running at", s.config.LocalAddress)
 
 	var listener net.Listener
-	listener, err = net.Listen("tcp", s.config.LocalAddress.String())
+	listener, err := net.Listen("tcp", s.config.LocalAddress.String())
 	if err != nil {
 		return err
 	}
@@ -211,10 +189,25 @@ func (s *Server) Close() error {
 	return nil
 }
 
-func (s *Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
-	s.config = config
-	s.ctx, s.cancel = context.WithCancel(context.Background())
-	s.shadow = shadow.NewShadowManager(s.ctx, s.config)
+func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	var err error
+	authDriver := "memory"
+	if config.MySQL.Enabled {
+		authDriver = "mysql"
+	}
+	auth, err := stat.NewAuth(ctx, authDriver, config)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+	s := &Server{
+		config: config,
+		ctx:    ctx,
+		cancel: cancel,
+		shadow: shadow.NewShadowManager(ctx, config),
+		auth:   auth,
+	}
 	return s, nil
 }
 

@@ -11,10 +11,10 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/tproxy"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
+	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 type NAT struct {
@@ -26,26 +26,8 @@ type NAT struct {
 	cancel        context.CancelFunc
 	inboundPacket protocol.PacketSession
 	listener      net.Listener
-	transport     TransportManager
-}
-
-func (n *NAT) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
-	var outboundConn protocol.ConnSession
-	//transport layer
-	transport, err := n.transport.DialToServer()
-	if err != nil {
-		return nil, common.NewError("failed to init transport layer").Base(err)
-	}
-	//application layer
-	if n.config.Mux.Enabled {
-		outboundConn, err = simplesocks.NewOutboundConnSession(req, transport)
-	} else {
-		outboundConn, err = trojan.NewOutboundConnSession(req, transport, n.config)
-	}
-	if err != nil {
-		return nil, common.NewError("fail to start conn session").Base(err)
-	}
-	return outboundConn, nil
+	auth          stat.Authenticator
+	appMan        *AppManager
 }
 
 func (n *NAT) handleConn(conn net.Conn) {
@@ -55,7 +37,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 		return
 	}
 	defer inboundConn.Close()
-	outboundConn, err := n.openOutboundConn(req)
+	outboundConn, err := n.appMan.OpenAppConn(req)
 	if err != nil {
 		log.Error(err)
 		return
@@ -81,7 +63,7 @@ func (n *NAT) listenUDP(errChan chan error) {
 		Command: protocol.Associate,
 	}
 	for {
-		outboundConn, err := n.openOutboundConn(req)
+		outboundConn, err := n.appMan.OpenAppConn(req)
 		if err != nil {
 			log.Error(err)
 			time.Sleep(time.Second)
@@ -150,15 +132,22 @@ func (n *NAT) Close() error {
 }
 
 func (n *NAT) Build(config *conf.GlobalConfig) (common.Runnable, error) {
-	n.ctx, n.cancel = context.WithCancel(context.Background())
-	n.config = config
-	if config.Mux.Enabled {
-		log.Info("mux enabled")
-		n.transport = NewMuxPoolManager(n.ctx, config)
-	} else {
-		n.transport = NewTLSManager(config)
+	ctx, cancel := context.WithCancel(context.Background())
+	auth, err := stat.NewAuth(ctx, "memory", config)
+	if err != nil {
+		cancel()
+		return nil, err
 	}
-	return n, nil
+	appMan := NewAppManager(ctx, config, auth)
+
+	newForward := &Forward{
+		ctx:    ctx,
+		cancel: cancel,
+		config: config,
+		auth:   auth,
+		appMan: appMan,
+	}
+	return newForward, nil
 }
 
 func init() {

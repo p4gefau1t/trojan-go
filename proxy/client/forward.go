@@ -10,9 +10,9 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
+	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 type dispatchInfo struct {
@@ -32,26 +32,8 @@ type Forward struct {
 	outboundPacketTable     map[string]protocol.PacketSession
 	udpListener             *net.UDPConn
 	tcpListener             net.Listener
-	transport               TransportManager
-}
-
-func (f *Forward) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
-	var outboundConn protocol.ConnSession
-	//transport layer
-	transport, err := f.transport.DialToServer()
-	if err != nil {
-		return nil, common.NewError("failed to init transport layer").Base(err)
-	}
-	//application layer
-	if f.config.Mux.Enabled {
-		outboundConn, err = simplesocks.NewOutboundConnSession(req, transport)
-	} else {
-		outboundConn, err = trojan.NewOutboundConnSession(req, transport, f.config)
-	}
-	if err != nil {
-		return nil, common.NewError("fail to start conn session").Base(err)
-	}
-	return outboundConn, nil
+	auth                    stat.Authenticator
+	appMan                  *AppManager
 }
 
 func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
@@ -109,7 +91,7 @@ func (f *Forward) dispatchClientPacket() {
 			f.outboundPacketTableLock.Lock()
 			outboundPacket, found := f.outboundPacketTable[packet.addr.String()]
 			if !found {
-				outboundConn, err := f.openOutboundConn(associateReq)
+				outboundConn, err := f.appMan.OpenAppConn(associateReq)
 				if err != nil {
 					log.Error(err)
 					continue
@@ -172,7 +154,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 			errChan <- common.NewError("error occured when accepting conn").Base(err)
 		}
 		handle := func(inboundConn net.Conn) {
-			outboundConn, err := f.openOutboundConn(req)
+			outboundConn, err := f.appMan.OpenAppConn(req)
 			if err != nil {
 				log.Error(common.NewError("failed to start outbound session").Base(err))
 				return
@@ -210,17 +192,26 @@ func (f *Forward) Close() error {
 }
 
 func (f *Forward) Build(config *conf.GlobalConfig) (common.Runnable, error) {
-	f.ctx, f.cancel = context.WithCancel(context.Background())
-	if config.Mux.Enabled {
-		log.Info("mux enabled")
-		f.transport = NewMuxPoolManager(f.ctx, config)
-	} else {
-		f.transport = NewTLSManager(config)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	authDriver := "memory"
+	auth, err := stat.NewAuth(ctx, authDriver, config)
+	if err != nil {
+		cancel()
+		return nil, err
 	}
-	f.clientPackets = make(chan *dispatchInfo, 512)
-	f.outboundPacketTable = make(map[string]protocol.PacketSession)
-	f.config = config
-	return f, nil
+	appMan := NewAppManager(ctx, config, auth)
+
+	newForward := &Forward{
+		ctx:                 ctx,
+		cancel:              cancel,
+		config:              config,
+		auth:                auth,
+		appMan:              appMan,
+		clientPackets:       make(chan *dispatchInfo, 1024),
+		outboundPacketTable: make(map[string]protocol.PacketSession),
+	}
+	return newForward, nil
 }
 
 func init() {

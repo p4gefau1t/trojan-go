@@ -12,6 +12,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
+	"github.com/p4gefau1t/trojan-go/stat"
 	"github.com/xtaci/smux"
 )
 
@@ -33,6 +34,7 @@ type MuxManager struct {
 	sync.Mutex
 	muxPool   map[MuxID]*muxClientInfo
 	config    *conf.GlobalConfig
+	auth      stat.Authenticator
 	ctx       context.Context
 	transport *TLSManager
 }
@@ -53,7 +55,7 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 	if err != nil {
 		return nil, common.NewError("failed to dail to remote server").Base(err)
 	}
-	conn, err := trojan.NewOutboundConnSession(req, rwc, m.config)
+	conn, err := trojan.NewOutboundConnSession(req, rwc, m.config, m.auth)
 	if err != nil {
 		rwc.Close()
 		log.Error(common.NewError("failed to dial tls tunnel").Base(err))
@@ -155,12 +157,13 @@ func (m *MuxManager) checkAndCloseIdleMuxClient() {
 	}
 }
 
-func NewMuxPoolManager(ctx context.Context, config *conf.GlobalConfig) *MuxManager {
+func NewMuxPoolManager(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) *MuxManager {
 	m := &MuxManager{
 		ctx:       ctx,
 		config:    config,
 		muxPool:   make(map[MuxID]*muxClientInfo),
 		transport: NewTLSManager(config),
+		auth:      auth,
 	}
 	go m.checkAndCloseIdleMuxClient()
 	return m

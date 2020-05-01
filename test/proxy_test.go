@@ -20,6 +20,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
+	_ "github.com/p4gefau1t/trojan-go/stat/memory"
 	"golang.org/x/net/proxy"
 	"golang.org/x/net/websocket"
 )
@@ -183,26 +184,29 @@ func addTCPOption(config *conf.GlobalConfig) *conf.GlobalConfig {
 
 func RunClient(ctx context.Context, config *conf.GlobalConfig) {
 	c := client.Client{}
-	common.Must2(c.Build(config))
-	go c.Run()
+	r, err := c.Build(config)
+	common.Must(err)
+	go r.Run()
 	<-ctx.Done()
-	c.Close()
+	r.Close()
 }
 
 func RunForward(ctx context.Context, config *conf.GlobalConfig) {
-	f := client.Forward{}
-	common.Must2(f.Build(config))
-	go f.Run()
+	c := client.Forward{}
+	r, err := c.Build(config)
+	common.Must(err)
+	go r.Run()
 	<-ctx.Done()
-	f.Close()
+	r.Close()
 }
 
 func RunServer(ctx context.Context, config *conf.GlobalConfig) {
 	s := server.Server{}
-	common.Must2(s.Build(config))
-	go s.Run()
+	r, err := s.Build(config)
+	common.Must(err)
+	go r.Run()
 	<-ctx.Done()
-	s.Close()
+	r.Close()
 }
 
 func CheckClientServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {

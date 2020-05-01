@@ -5,14 +5,12 @@ import (
 	"io"
 	"net"
 
-	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/protocol/direct"
 	"github.com/p4gefau1t/trojan-go/protocol/http"
-	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/socks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
@@ -38,29 +36,10 @@ type Client struct {
 	cancel      context.CancelFunc
 	associated  *common.Notifier
 	router      router.Router
-	meter       stat.TrafficMeter
-	transport   TransportManager
 	tcpListener net.Listener
 	udpListener *net.UDPConn
-}
-
-func (c *Client) openOutboundConn(req *protocol.Request) (protocol.ConnSession, error) {
-	var outboundConn protocol.ConnSession
-	//transport layer
-	transport, err := c.transport.DialToServer()
-	if err != nil {
-		return nil, common.NewError("failed to init transport layer").Base(err)
-	}
-	//application layer
-	if c.config.Mux.Enabled {
-		outboundConn, err = simplesocks.NewOutboundConnSession(req, transport)
-	} else {
-		outboundConn, err = trojan.NewOutboundConnSession(req, transport, c.config)
-	}
-	if err != nil {
-		return nil, common.NewError("fail to start conn session").Base(err)
-	}
-	return outboundConn, nil
+	auth        stat.Authenticator
+	appMan      *AppManager
 }
 
 func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
@@ -128,13 +107,12 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		log.Info("[block] conn to", req)
 		return
 	}
-	outboundConn, err := c.openOutboundConn(req)
+	outboundConn, err := c.appMan.OpenAppConn(req)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	defer outboundConn.Close()
-	outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 	proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 }
 
@@ -174,14 +152,13 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 			return
 		}
 
-		outboundConn, err := c.openOutboundConn(req)
+		outboundConn, err := c.appMan.OpenAppConn(req)
 		if err != nil {
 			log.Error(common.NewError("fail to start conn session").Base(err))
 			return
 		}
 		defer outboundConn.Close()
 		log.Info("conn tunneling to", req)
-		outboundConn.(protocol.NeedMeter).SetMeter(c.meter)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 	} else { //GET/POST requests
 		defer inboundPacket.Close()
@@ -219,7 +196,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 				case <-errChan:
 					return
 				case packet := <-packetChan:
-					outboundConn, err := c.openOutboundConn(packet.request)
+					outboundConn, err := c.appMan.OpenAppConn(req)
 					if err != nil {
 						log.Error(err)
 						continue
@@ -283,7 +260,7 @@ func (c *Client) listenUDP(errChan chan error) {
 				},
 				Command: protocol.Associate,
 			}
-			outboundConn, err := c.openOutboundConn(req)
+			outboundConn, err := c.appMan.OpenAppConn(req)
 			if err != nil {
 				log.Error(common.NewError("failed to init udp tunnel").Base(err))
 				return
@@ -342,9 +319,6 @@ func (c *Client) Run() error {
 	errChan := make(chan error, 2)
 	go c.listenUDP(errChan)
 	go c.listenTCP(errChan)
-	if c.config.API.Enabled {
-		go api.RunClientAPIService(c.ctx, c.config, c.meter)
-	}
 	select {
 	case err := <-errChan:
 		return err
@@ -366,26 +340,33 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
-	c.ctx, c.cancel = context.WithCancel(context.Background())
-	c.associated = common.NewNotifier()
-	c.router = &router.EmptyRouter{}
-	c.meter = &stat.MemoryTrafficMeter{}
-	var err error
-	if config.Mux.Enabled {
-		log.Info("mux enabled")
-		c.transport = NewMuxPoolManager(c.ctx, config)
-	} else {
-		c.transport = NewTLSManager(config)
+	ctx, cancel := context.WithCancel(context.Background())
+	auth, err := stat.NewAuth(ctx, "memory", config)
+	if err != nil {
+		cancel()
+		return nil, err
 	}
+
+	var rtr router.Router = &router.EmptyRouter{}
 	if config.Router.Enabled {
 		log.Info("router enabled")
-		c.router, err = router.NewRouter(&config.Router)
+		rtr, err = router.NewRouter(&config.Router)
 		if err != nil {
 			log.Fatal(common.NewError("invalid router list").Base(err))
 		}
 	}
-	c.config = config
-	return c, nil
+	appMan := NewAppManager(ctx, config, auth)
+
+	newClient := &Client{
+		ctx:        ctx,
+		cancel:     cancel,
+		config:     config,
+		router:     rtr,
+		associated: common.NewNotifier(),
+		auth:       auth,
+		appMan:     appMan,
+	}
+	return newClient, nil
 }
 
 func init() {

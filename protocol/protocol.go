@@ -72,10 +72,6 @@ type NeedAuth interface {
 	SetAuth(auth stat.Authenticator)
 }
 
-type NeedMeter interface {
-	SetMeter(meter stat.TrafficMeter)
-}
-
 type ConnSession interface {
 	io.ReadWriteCloser
 }

@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"net"
-	"time"
 
+	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/stat"
@@ -14,16 +14,23 @@ import (
 type ClientAPI struct {
 	TrojanClientServiceServer
 
-	meter         stat.TrafficMeter
+	auth          stat.Authenticator
+	ctx           context.Context
 	uploadSpeed   uint64
 	downloadSpeed uint64
 	lastSent      uint64
 	lastRecv      uint64
-	ctx           context.Context
 }
 
-func (s *ClientAPI) GetTraffic(context.Context, *GetTrafficRequest) (*GetTrafficResponse, error) {
-	sent, recv := s.meter.Query("")
+func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*GetTrafficResponse, error) {
+	if req.User == nil {
+		return nil, common.NewError("user is unspecified")
+	}
+	valid, meter := s.auth.AuthUser(req.User.Hash)
+	if !valid {
+		return nil, common.NewError("user " + req.User.Hash + " not found")
+	}
+	sent, recv := meter.Get()
 	resp := &GetTrafficResponse{
 		TrafficTotal: &Traffic{
 			UploadTraffic:   sent,
@@ -33,39 +40,27 @@ func (s *ClientAPI) GetTraffic(context.Context, *GetTrafficRequest) (*GetTraffic
 	return resp, nil
 }
 
-func (s *ClientAPI) GetSpeed(context.Context, *GetSpeedRequest) (*GetSpeedResponse, error) {
+func (s *ClientAPI) GetSpeed(ctx context.Context, req *GetSpeedRequest) (*GetSpeedResponse, error) {
+	valid, meter := s.auth.AuthUser(req.User.Hash)
+	if !valid {
+		return &GetSpeedResponse{}, nil
+	}
+	sent, recv := meter.GetSpeed()
 	resp := &GetSpeedResponse{
 		SpeedCurrent: &Speed{
-			UploadSpeed:   s.uploadSpeed,
-			DownloadSpeed: s.downloadSpeed,
+			UploadSpeed:   sent,
+			DownloadSpeed: recv,
 		},
 	}
 	return resp, nil
 }
 
-func (s *ClientAPI) calcSpeed() {
-	for {
-		select {
-		case <-time.After(time.Second):
-			// TODO avoid racing
-			sent, recv := s.meter.Query("")
-			s.uploadSpeed = sent - s.lastSent
-			s.downloadSpeed = recv - s.lastRecv
-			s.lastSent = sent
-			s.lastRecv = recv
-		case <-s.ctx.Done():
-			return
-		}
-	}
-}
-
-func RunClientAPIService(ctx context.Context, config *conf.GlobalConfig, meter stat.TrafficMeter) error {
+func RunClientAPIService(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
 	server := grpc.NewServer()
 	service := &ClientAPI{
-		meter: meter,
-		ctx:   ctx,
+		ctx:  ctx,
+		auth: auth,
 	}
-	go service.calcSpeed()
 	RegisterTrojanClientServiceServer(server, service)
 	listener, err := net.Listen("tcp", config.API.APIAddress.String())
 	if err != nil {

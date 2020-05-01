@@ -8,18 +8,15 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 type SimpleSocksConnSession struct {
 	protocol.ConnSession
-	protocol.NeedMeter
 
 	config       *conf.GlobalConfig
 	request      *protocol.Request
 	rwc          io.ReadWriteCloser
 	passwordHash string
-	meter        stat.TrafficMeter
 	recv         uint64
 	sent         uint64
 }
@@ -27,28 +24,18 @@ type SimpleSocksConnSession struct {
 func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
 	n, err := m.rwc.Read(p)
 	m.recv += uint64(n)
-	if m.meter != nil {
-		m.meter.Count(m.passwordHash, 0, uint64(n))
-	}
 	return n, err
 }
 
 func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
 	n, err := m.rwc.Write(p)
 	m.sent += uint64(n)
-	if m.meter != nil {
-		m.meter.Count(m.passwordHash, uint64(n), 0)
-	}
 	return n, err
 }
 
 func (m *SimpleSocksConnSession) Close() error {
 	log.Info("simplesocks conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
 	return m.rwc.Close()
-}
-
-func (m *SimpleSocksConnSession) SetMeter(meter stat.TrafficMeter) {
-	m.meter = meter
 }
 
 func (m *SimpleSocksConnSession) GetRequest() *protocol.Request {

@@ -15,8 +15,6 @@ import (
 
 type TrojanInboundConnSession struct {
 	protocol.ConnSession
-	protocol.NeedAuth
-	protocol.NeedMeter
 
 	rwc          io.ReadWriteCloser
 	ctx          context.Context
@@ -32,19 +30,15 @@ type TrojanInboundConnSession struct {
 
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 	n, err := i.rwc.Write(p)
-	if i.meter != nil {
-		i.meter.Count(i.passwordHash, uint64(n), 0)
-	}
 	i.sent += uint64(n)
+	i.meter.Count(uint64(n), 0)
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 	n, err := i.rwc.Read(p)
-	if i.meter != nil {
-		i.meter.Count(i.passwordHash, 0, uint64(n))
-	}
 	i.recv += uint64(n)
+	i.meter.Count(0, uint64(n))
 	return n, err
 }
 
@@ -60,10 +54,12 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 	if err != nil || n != 56 {
 		return common.NewError("failed to read hash").Base(err)
 	}
-	if !i.auth.CheckHash(string(userHash[:])) {
+	valid, meter := i.auth.AuthUser(string(userHash[:]))
+	if !valid {
 		return common.NewError("invalid hash:" + string(userHash[:]))
 	}
 	i.passwordHash = string(userHash[:])
+	i.meter = meter
 
 	crlf := [2]byte{}
 	r.Read(crlf[:])

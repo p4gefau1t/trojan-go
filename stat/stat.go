@@ -1,17 +1,44 @@
 package stat
 
 import (
+	"context"
 	"io"
+
+	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/conf"
 )
 
 type TrafficMeter interface {
 	io.Closer
-	Count(passwordHash string, sent uint64, recv uint64)
-	Query(passwordHash string) (sent uint64, recv uint64)
+	Hash() string
+	Count(sent uint64, recv uint64)
+	Get() (sent uint64, recv uint64)
+	Reset()
+	GetAndReset() (sent uint64, recv uint64)
+	GetSpeed() (sent uint64, recv uint64)
+	LimitSpeed(sent uint64, recv uint64)
 }
 
 type Authenticator interface {
 	io.Closer
+	AuthUser(hash string) (bool, TrafficMeter)
+	AddUser(hash string) error
+	DelUser(hash string) error
+	ListUsers() []TrafficMeter
+}
 
-	CheckHash(hash string) bool
+type AuthCreator func(ctx context.Context, config *conf.GlobalConfig) (Authenticator, error)
+
+var authCreators = map[string]AuthCreator{}
+
+func RegisterAuthCreator(name string, creator AuthCreator) {
+	authCreators[name] = creator
+}
+
+func NewAuth(ctx context.Context, name string, config *conf.GlobalConfig) (Authenticator, error) {
+	creator, found := authCreators[name]
+	if !found {
+		return nil, common.NewError("driver name " + name + " not found")
+	}
+	return creator(ctx, config)
 }
