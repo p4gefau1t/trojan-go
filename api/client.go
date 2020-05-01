@@ -26,36 +26,30 @@ func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*Ge
 	if req.User == nil {
 		return nil, common.NewError("user is unspecified")
 	}
+	if req.User.Hash == "" {
+		req.User.Hash = common.SHA224String(req.User.Password)
+	}
 	valid, meter := s.auth.AuthUser(req.User.Hash)
 	if !valid {
 		return nil, common.NewError("user " + req.User.Hash + " not found")
 	}
 	sent, recv := meter.Get()
+	sentSpeed, recvSpeed := meter.GetSpeed()
 	resp := &GetTrafficResponse{
+		Success: true,
 		TrafficTotal: &Traffic{
 			UploadTraffic:   sent,
 			DownloadTraffic: recv,
 		},
-	}
-	return resp, nil
-}
-
-func (s *ClientAPI) GetSpeed(ctx context.Context, req *GetSpeedRequest) (*GetSpeedResponse, error) {
-	valid, meter := s.auth.AuthUser(req.User.Hash)
-	if !valid {
-		return &GetSpeedResponse{}, nil
-	}
-	sent, recv := meter.GetSpeed()
-	resp := &GetSpeedResponse{
 		SpeedCurrent: &Speed{
-			UploadSpeed:   sent,
-			DownloadSpeed: recv,
+			UploadSpeed:   sentSpeed,
+			DownloadSpeed: recvSpeed,
 		},
 	}
 	return resp, nil
 }
 
-func RunClientAPIService(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
+func RunClientAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
 	server := grpc.NewServer()
 	service := &ClientAPI{
 		ctx:  ctx,

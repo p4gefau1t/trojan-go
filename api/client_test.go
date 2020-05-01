@@ -15,7 +15,7 @@ func TestClientAPI(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	auth, err := memory.NewMemoryAuth(ctx, &conf.GlobalConfig{})
 	common.Must(err)
-	go RunClientAPIService(ctx, &conf.GlobalConfig{
+	go RunClientAPI(ctx, &conf.GlobalConfig{
 		API: conf.APIConfig{
 			APIAddress: common.NewAddress("127.0.0.1", 10000, "tcp"),
 		},

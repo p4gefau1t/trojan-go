@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -207,6 +208,9 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		cancel: cancel,
 		shadow: shadow.NewShadowManager(ctx, config),
 		auth:   auth,
+	}
+	if config.API.Enabled {
+		go api.RunServerAPI(ctx, config, auth)
 	}
 	return s, nil
 }

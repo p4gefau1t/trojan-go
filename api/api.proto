@@ -14,7 +14,6 @@ message Speed {
 message User {
     string password = 1;
     string hash = 2;
-    bool valid = 3;
 }
 
 message GetTrafficRequest {
@@ -22,17 +21,11 @@ message GetTrafficRequest {
 }
 
 message GetTrafficResponse {
-    Traffic traffic_total = 1;
-    Traffic traffic_quota = 2;
-}
-
-message GetSpeedRequest {
-    User user = 1;
-}
-
-message GetSpeedResponse {
-    Speed speed_current = 1;
-    Speed speed_limit = 2;
+    bool success = 1;
+    Traffic traffic_total = 2;
+    Speed speed_current = 3;
+    Speed speed_limit = 4;
+    string info = 5;
 }
 
 message ListUserRequest {
@@ -43,64 +36,32 @@ message ListUserResponse {
     User user = 1;
     bool online = 2;
     Traffic traffic_total = 3;
-    Traffic traffic_quota = 4;
-    Speed speed_current = 5;
-    Speed speed_limit = 6;
+    Speed speed_current = 4;
+    Speed speed_limit = 5;
 }
 
-message SetTrafficRequest {
-    User user = 1;
-    Traffic traffic_quota = 2;
-}
-
-message SetTrafficReponse {
-    bool success = 1;
-    string info = 2;
-}
-
-message SetSpeedRequest {
+message SetUserRequest {
     User user = 1;
     Speed speed_limit = 2;
+    enum Operation {
+        Add = 0;
+        Delete = 1;
+        Modify = 2;
+    }
+    Operation operation = 3;
 }
 
-message SetSpeedResponse {
-    bool success = 1;
-    string info = 2;
-}
-
-message AddUserRequest {
-    User user = 1;
-    Traffic traffic_quota = 4;
-    Speed speed_limit = 6;
-}
-
-message AddUserResponse {
-    User user = 1;
-}
-
-message DeleteUserRequest {
-    User user = 1;
-}
-
-message DeleteUserResponse {
+message SetUserResponse {
     bool success = 1;
     string info = 2;
 }
 
 service TrojanClientService {
     rpc GetTraffic(GetTrafficRequest) returns(GetTrafficResponse){}
-    rpc GetSpeed(GetSpeedRequest) returns(GetSpeedResponse){}
 }
 
 service TrojanServerService {
     rpc ListUsers(ListUserRequest) returns(stream ListUserResponse){}
-
     rpc GetTraffic(stream GetTrafficRequest) returns(stream GetTrafficResponse){}
-    rpc SetTraffic(stream SetTrafficRequest) returns(stream SetTrafficReponse) {}
-
-    rpc GetSpeed(stream GetSpeedRequest) returns(stream GetSpeedResponse){}
-    rpc SetSpeed(stream SetSpeedRequest) returns(stream SetSpeedResponse) {}
-
-    rpc AddUsers(stream AddUserRequest) returns(stream AddUserResponse){}
-    rpc DeleteUsers(stream DeleteUserRequest) returns(stream DeleteUserResponse){}
+    rpc SetUsers(stream SetUserRequest) returns(stream SetUserResponse){}
 }

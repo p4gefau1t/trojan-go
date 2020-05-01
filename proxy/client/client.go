@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 
+	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -365,6 +366,10 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		associated: common.NewNotifier(),
 		auth:       auth,
 		appMan:     appMan,
+	}
+
+	if config.API.Enabled {
+		go api.RunClientAPI(ctx, config, auth)
 	}
 	return newClient, nil
 }
