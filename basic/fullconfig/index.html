@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="4742">
+<meta itemprop="wordCount" content="4905">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version v0.4.2</span>
+ <span class="version">Version 0.4.3</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -98,10 +98,7 @@
         &quot;curves&quot;: &quot;&quot;,
         &quot;prefer_server_cipher&quot;: false,
         &quot;sni&quot;: &quot;&quot;,
-        &quot;alpn&quot;: [
-            &quot;http/1.1&quot;,
-            &quot;h2&quot;
-        ]
+        &quot;alpn&quot;: [],
         &quot;session_ticket&quot;: true,
         &quot;reuse_session&quot;: true,
         &quot;plain_http_response&quot;: &quot;&quot;,
@@ -127,7 +124,7 @@
         &quot;proxy&quot;: [],
         &quot;block&quot;: [],
         &quot;route_by_ip&quot;: false,
-        &quot;route_by_ip_on_nonmatch&quot;: false，
+        &quot;route_by_ip_on_nonmatch&quot;: false,
         &quot;default_policy&quot;: &quot;proxy&quot;
     },
     &quot;websocket&quot;: {
@@ -136,6 +133,13 @@
         &quot;hostname&quot;: &quot;&quot;,
         &quot;obfuscation_password&quot;: &quot;&quot;,
         &quot;double_tls&quot;: true
+    },
+    &quot;forward_proxy&quot;: {
+        &quot;enabled&quot;: false,
+        &quot;proxy_addr&quot;: &quot;&quot;,
+        &quot;proxy_port&quot;: 0,
+        &quot;username&quot;: &quot;&quot;,
+        &quot;password&quot;: &quot;&quot;
     },
     &quot;mysql&quot;: {
         &quot;enabled&quot;: false,
@@ -162,9 +166,9 @@
 <p><code>sni</code>指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
 <p><code>alpn</code>为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造  。</p>
 <p><code>prefer_server_cipher</code>客户端是否偏好选择服务端在协商中提供的密码学套件。</p>
-<p><code>cipher</code>和<code>cipher13</code>指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔。Golang的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3</p>
+<p><code>cipher</code>和<code>cipher13</code>指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3</p>
 <p><code>curves</code>指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(&quot;:&quot;)分隔。</p>
-<p><code>fingerprint</code>用于指定TLS Client Hello指纹伪造类型。trojan-go使用<a href="https://github.com/refraction-networking/utls">utls</a>进行指纹伪造，避免遭到针对golang的TLS库的识别。合法的值有</p>
+<p><code>fingerprint</code>用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用<a href="https://github.com/refraction-networking/utls">utls</a>进行指纹伪造。合法的值有</p>
 <ul>
 <li>
 <p>&ldquo;&quot;(空)，默认，不使用指纹伪造</p>
@@ -185,8 +189,8 @@
 <p>&ldquo;randomized&rdquo;，随机指纹</p>
 </li>
 </ul>
-<p>一旦指纹的值被设置，<code>cipher</code>，<code>curves</code>，<code>alpn</code>等可能影响指纹的字段将使用该指纹的特定设置覆写。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。</p>
-<p><code>plain_http_response</code>指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）,这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
+<p>一旦指纹的值被设置，<code>cipher</code>，<code>curves</code>，<code>alpn</code>，<code>session_ticket</code>等有可能影响指纹的字段将使用该指纹的特定设置覆写。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。</p>
+<p><code>plain_http_response</code>指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
 <p><code>fallback_port</code>指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问 <a href="http://your_domain_name.com">http://your_domain_name.com</a>:443 进行验证。</p>
 <h3 id="mux多路复用选项"><code>mux</code>多路复用选项</h3>
 <p>多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。</p>
@@ -249,7 +253,13 @@
     PRIMARY KEY (id),
     INDEX (password)
 );
-</code></pre><div class="edit-meta">
+</code></pre><h3 id="forward_proxy前置代理选项"><code>forward_proxy</code>前置代理选项</h3>
+<p>前置代理选项允许使用其他代理承载trojan-go的流量</p>
+<p><code>enabled</code>是否启用前置代理(socks5)。</p>
+<p><code>proxy_addr</code>前置代理的主机地址。</p>
+<p><code>proxy_port</code>前置代理的端口号。</p>
+<p><code>username</code> <code>password</code>代理的用户和密码，如果留空则不使用认证。</p>
+<div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/basic/fullconfig.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/basic/config/" title="正确配置Trojan-Go"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 正确配置Trojan-Go</a>
 <a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/" title="高级配置">Next - 高级配置 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>

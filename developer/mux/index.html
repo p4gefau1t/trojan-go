@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="多路复用" />
-<meta property="og:description" content="Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro" />
+<meta property="og:description" content="Trojan-Go使用smux实现多路复用。同时实现了simplesocks协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/mux/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="多路复用"/>
-<meta name="twitter:description" content="Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro"/>
+<meta name="twitter:description" content="Trojan-Go使用smux实现多路复用。同时实现了simplesocks协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接"/>
 <meta itemprop="name" content="多路复用">
-<meta itemprop="description" content="Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro">
+<meta itemprop="description" content="Trojan-Go使用smux实现多路复用。同时实现了simplesocks协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接">
 
-<meta itemprop="wordCount" content="280">
+<meta itemprop="wordCount" content="288">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version v0.4.2</span>
+ <span class="version">Version 0.4.3</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -53,7 +53,7 @@
 </div>
 <div class="content-container">
 <main><h1>多路复用</h1>
-<p>Trojan-Go使用<a href="https://github.com/xtaci/smux">smux</a>实现多路复用。同时实现了mux协议用于进行代理传输。</p>
+<p>Trojan-Go使用<a href="https://github.com/xtaci/smux">smux</a>实现多路复用。同时实现了simplesocks协议用于进行代理传输。</p>
 <p>当启用多路复用时，客户端首先发起TLS连接，使用正常trojan协议格式，但协议Command部分填入0x7f(protocol.Mux)，标识此连接为复用连接（类似于http的upgrade），之后连接交由smux客户端管理。服务器收到请求头部后，交由smux服务器解析该连接的所有流量。在每条分离出的smux连接上，使用simplesocks协议（去除认证部分的trojan协议)标明代理目的地。自顶向下的协议栈如下：</p>
 <table>
 <thead>

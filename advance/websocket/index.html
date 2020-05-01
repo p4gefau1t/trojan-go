@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="使用Websocket进行CDN转发和抵抗中间人攻击" />
-<meta property="og:description" content="注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流" />
+<meta property="og:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/websocket/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="使用Websocket进行CDN转发和抵抗中间人攻击"/>
-<meta name="twitter:description" content="注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流"/>
+<meta name="twitter:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量"/>
 <meta itemprop="name" content="使用Websocket进行CDN转发和抵抗中间人攻击">
-<meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流">
+<meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量">
 
-<meta itemprop="wordCount" content="1555">
+<meta itemprop="wordCount" content="1554">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version v0.4.2</span>
+ <span class="version">Version 0.4.3</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -53,7 +53,7 @@
 </div>
 <div class="content-container">
 <main><h1>使用Websocket进行CDN转发和抵抗中间人攻击</h1>
-<h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性。</h3>
+<h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
 <p>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的设计考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go支持使用多重TLS，即使遭受GFW的HTTPS中间人攻击，<strong>在正确的配置下</strong>，连接的安全性依然能得到保证。</p>
 <p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>hostname</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项</p>
 <pre><code>&quot;websocket&quot;: {

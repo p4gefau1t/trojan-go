@@ -16,7 +16,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/mux/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连</description>
+      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接</description>
     </item>
     
     <item>
@@ -34,7 +34,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/websocket/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流</description>
+      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/router/</guid>
-      <description>注意，原版Trojan-GFW客户端不支持这个特性。 Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。</description>
+      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 路由模块</description>
     </item>
     
     <item>
@@ -52,7 +52,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/relay/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性。 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境</description>
+      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的</description>
     </item>
     
     <item>
@@ -79,7 +79,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/build/</guid>
-      <description>编译需要Golang版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载</description>
+      <description>编译需要Go版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需库 go</description>
     </item>
     
     <item>
@@ -115,7 +115,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/mux/</guid>
-      <description>Trojan-Go使用smux实现多路复用。同时实现了mux协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接，使用正常tro</description>
+      <description>Trojan-Go使用smux实现多路复用。同时实现了simplesocks协议用于进行代理传输。 当启用多路复用时，客户端首先发起TLS连接</description>
     </item>
     
     <item>
