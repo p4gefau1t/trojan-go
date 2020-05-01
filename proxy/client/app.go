@@ -36,7 +36,6 @@ func (m *AppManager) OpenAppConn(req *protocol.Request) (protocol.ConnSession, e
 		return nil, common.NewError("fail to start conn session").Base(err)
 	}
 	return outboundConn, nil
-
 }
 
 func NewAppManager(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) *AppManager {

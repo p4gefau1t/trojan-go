@@ -2,7 +2,9 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -25,6 +27,17 @@ func TestMemoryAuth(t *testing.T) {
 	sent, recv := traffic.Get()
 	if sent != 1234 || recv != 5678 {
 		t.Fail()
+	}
+	go func() {
+		for i := 0; i < 100; i++ {
+			traffic.Count(500, 200)
+			time.Sleep(time.Millisecond * 100)
+		}
+	}()
+
+	for i := 0; i < 100; i++ {
+		fmt.Println(traffic.GetSpeed())
+		time.Sleep(time.Millisecond * 1000)
 	}
 	cancel()
 }
