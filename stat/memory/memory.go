@@ -9,18 +9,24 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/stat"
+	"golang.org/x/time/rate"
 )
 
 type MemoryTrafficMeter struct {
 	stat.TrafficMeter
 
-	sent     uint64
-	recv     uint64
-	lastSent uint64
-	lastRecv uint64
-	hash     string
-	ctx      context.Context
-	cancel   context.CancelFunc
+	sent        uint64
+	recv        uint64
+	lastSent    uint64
+	lastRecv    uint64
+	speedLock   sync.Mutex
+	sendSpeed   uint64
+	recvSpeed   uint64
+	hash        string
+	sendLimiter *rate.Limiter
+	recvLimiter *rate.Limiter
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 func (m *MemoryTrafficMeter) Close() error {
@@ -29,9 +35,27 @@ func (m *MemoryTrafficMeter) Close() error {
 	return nil
 }
 
-func (m *MemoryTrafficMeter) Count(sent, recv uint64) {
+func (m *MemoryTrafficMeter) Count(sent, recv int) {
+	if m.sendLimiter != nil && sent != 0 {
+		m.sendLimiter.WaitN(m.ctx, sent)
+	} else if m.recvLimiter != nil && recv != 0 {
+		m.recvLimiter.WaitN(m.ctx, recv)
+	}
 	atomic.AddUint64(&m.sent, uint64(sent))
 	atomic.AddUint64(&m.recv, uint64(recv))
+}
+
+func (m *MemoryTrafficMeter) LimitSpeed(sent, recv int) {
+	if sent == 0 {
+		m.sendLimiter = nil
+	} else {
+		m.sendLimiter = rate.NewLimiter(rate.Limit(sent), sent*2)
+	}
+	if recv == 0 {
+		m.recvLimiter = nil
+	} else {
+		m.recvLimiter = rate.NewLimiter(rate.Limit(recv), recv*2)
+	}
 }
 
 func (m *MemoryTrafficMeter) Hash() string {
@@ -63,19 +87,22 @@ func (m *MemoryTrafficMeter) speedUpdater() {
 		case <-m.ctx.Done():
 			return
 		case <-time.After(time.Second):
-			lastSent, lastRecv := m.Get()
-			atomic.StoreUint64(&m.lastSent, lastSent)
-			atomic.StoreUint64(&m.lastRecv, lastRecv)
+			m.speedLock.Lock()
+			sent, recv := m.Get()
+			m.sendSpeed = sent - m.lastSent
+			m.recvSpeed = recv - m.lastRecv
+			m.lastSent = sent
+			m.lastRecv = recv
+			m.speedLock.Unlock()
 		}
 	}
 
 }
 
 func (m *MemoryTrafficMeter) GetSpeed() (uint64, uint64) {
-	sent, recv := m.Get()
-	lastSent := atomic.LoadUint64(&m.lastSent)
-	lastRecv := atomic.LoadUint64(&m.lastRecv)
-	return sent - lastSent, recv - lastRecv
+	m.speedLock.Lock()
+	defer m.speedLock.Unlock()
+	return m.sendSpeed, m.recvSpeed
 }
 
 type MemoryAuthenticator struct {

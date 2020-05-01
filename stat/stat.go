@@ -11,17 +11,17 @@ import (
 type TrafficMeter interface {
 	io.Closer
 	Hash() string
-	Count(sent uint64, recv uint64)
+	Count(sent int, recv int)
 	Get() (sent uint64, recv uint64)
 	Reset()
 	GetAndReset() (sent uint64, recv uint64)
 	GetSpeed() (sent uint64, recv uint64)
-	LimitSpeed(sent uint64, recv uint64)
+	LimitSpeed(sent int, recv int)
 }
 
 type Authenticator interface {
 	io.Closer
-	AuthUser(hash string) (bool, TrafficMeter)
+	AuthUser(hash string) (valid bool, meter TrafficMeter)
 	AddUser(hash string) error
 	DelUser(hash string) error
 	ListUsers() []TrafficMeter

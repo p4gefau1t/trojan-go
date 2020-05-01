@@ -31,14 +31,14 @@ type TrojanInboundConnSession struct {
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 	n, err := i.rwc.Write(p)
 	i.sent += uint64(n)
-	i.meter.Count(uint64(n), 0)
+	i.meter.Count(n, 0)
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 	n, err := i.rwc.Read(p)
 	i.recv += uint64(n)
-	i.meter.Count(0, uint64(n))
+	i.meter.Count(0, n)
 	return n, err
 }
 

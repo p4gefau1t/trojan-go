@@ -35,7 +35,38 @@ func TestMemoryAuth(t *testing.T) {
 		}
 	}()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 15; i++ {
+		fmt.Println(traffic.GetSpeed())
+		time.Sleep(time.Millisecond * 1000)
+	}
+	cancel()
+}
+
+func TestLimitSpeed(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	config := &conf.GlobalConfig{
+		Hash: map[string]string{
+			"hash": "password",
+		},
+	}
+	auth, err := NewMemoryAuth(ctx, config)
+	common.Must(err)
+	valid, traffic := auth.AuthUser("hash")
+	if !valid {
+		t.Fail()
+	}
+	traffic.LimitSpeed(5000, 6000)
+	go func() {
+		for {
+			traffic.Count(50, 0)
+		}
+	}()
+	go func() {
+		for {
+			traffic.Count(0, 100)
+		}
+	}()
+	for i := 0; i < 15; i++ {
 		fmt.Println(traffic.GetSpeed())
 		time.Sleep(time.Millisecond * 1000)
 	}

@@ -32,10 +32,11 @@ func (a *DBAuth) updater() {
 		}
 		for _, user := range users {
 			//swap upload and download for users
-			s, err := tx.Prepare("UPDATE users SET upload=upload+? WHERE password=?;")
-			common.Must(err)
 			hash := user.Hash()
 			sent, recv := user.GetAndReset()
+
+			s, err := tx.Prepare("UPDATE users SET upload=upload+? WHERE password=?;")
+			common.Must(err)
 			_, err = s.Exec(recv, hash)
 
 			s, err = tx.Prepare("UPDATE users SET download=download+? WHERE password=?;")
@@ -100,10 +101,15 @@ func NewDBAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticat
 	if err != nil {
 		return nil, common.NewError("failed to connect to database server").Base(err)
 	}
+	memoryAuth, err := memory.NewMemoryAuth(ctx, config)
+	if err != nil {
+		return nil, err
+	}
 	a := &DBAuth{
-		db:             db,
-		ctx:            ctx,
-		updateDuration: time.Duration(config.MySQL.CheckRate) * time.Second,
+		db:                  db,
+		ctx:                 ctx,
+		updateDuration:      time.Duration(config.MySQL.CheckRate) * time.Second,
+		MemoryAuthenticator: memoryAuth.(*memory.MemoryAuthenticator),
 	}
 	go a.updater()
 	return a, nil

@@ -20,6 +20,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
+	_ "github.com/p4gefau1t/trojan-go/stat/db"
 	_ "github.com/p4gefau1t/trojan-go/stat/memory"
 	"golang.org/x/net/proxy"
 	"golang.org/x/net/websocket"
@@ -178,6 +179,19 @@ func addTCPOption(config *conf.GlobalConfig) *conf.GlobalConfig {
 		FastOpen:     true,
 		NoDelay:      true,
 		FastOpenQLen: 5,
+	}
+	return config
+}
+
+func addMySQLOption(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.MySQL = conf.MySQLConfig{
+		Enabled:    true,
+		ServerHost: "127.0.0.1",
+		ServerPort: 3306,
+		Database:   "trojan",
+		Username:   "root",
+		Password:   "password",
+		CheckRate:  1,
 	}
 	return config
 }
@@ -477,5 +491,13 @@ func TestAutoClientID(t *testing.T) {
 func TestTCPOptions(t *testing.T) {
 	serverConfig := addTCPOption(getBasicServerConfig())
 	clientConfig := addTCPOption(getBasicClientConfig())
+	CheckClientServer(t, clientConfig, serverConfig)
+}
+
+func TestMySQL(t *testing.T) {
+	serverConfig := addMySQLOption(getBasicServerConfig())
+	clientConfig := getBasicClientConfig()
+	clientConfig.Passwords = getPasswords("mysqlpassword")
+	clientConfig.Hash = getHash("mysqlpassword")
 	CheckClientServer(t, clientConfig, serverConfig)
 }
