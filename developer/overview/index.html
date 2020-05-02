@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="基本介绍" />
-<meta property="og:description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹" />
+<meta property="og:description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/overview/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="基本介绍"/>
-<meta name="twitter:description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹"/>
+<meta name="twitter:description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模"/>
 <meta itemprop="name" content="基本介绍">
-<meta itemprop="description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹">
+<meta itemprop="description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模">
 
-<meta itemprop="wordCount" content="79">
+<meta itemprop="wordCount" content="98">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -59,10 +59,16 @@
 <p>protocol 各个协议具体实现</p>
 </li>
 <li>
-<p>proxy 代理核心，使用protocol各协议实现，处理入站和出站流量</p>
+<p>proxy 代理核心，使用protocol的协议实现，处理入站和出站流量</p>
 </li>
 <li>
 <p>conf 配置解析模块</p>
+</li>
+<li>
+<p>shadow 主动检测欺骗模块</p>
+</li>
+<li>
+<p>stat 用户认证和统计模块</p>
 </li>
 </ul>
 <p>可以在对应文件夹中找到相关源代码。</p>

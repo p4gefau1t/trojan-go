@@ -16,7 +16,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/overview/</guid>
-      <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol各协议实现，处理入站和出站流量 conf 配置解析模块 可以在对应文件夹</description>
+      <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模</description>
     </item>
     
     <item>
@@ -25,7 +25,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/build/</guid>
-      <description>编译需要Go版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需库 go</description>
+      <description>编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需依赖</description>
     </item>
     
     <item>
@@ -70,7 +70,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/api/</guid>
-      <description>Trojan-Go基于grpc实现了API，使用protobuf交换数据，可以通过在配置文件中添加api选项激活API模块。下面是一个例子 &amp;quot;api&amp;quot;:</description>
+      <description>Trojan-Go基于grpc实现了API，使用protobuf交换数据。客户端可获取流量和速度信息；服务端可获取各用户流量，速度，在线情况</description>
     </item>
     
   </channel>

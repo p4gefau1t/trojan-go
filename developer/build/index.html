@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="编译和自定义Trojan-Go" />
-<meta property="og:description" content="编译需要Go版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需库 go" />
+<meta property="og:description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需依赖" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/build/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="编译和自定义Trojan-Go"/>
-<meta name="twitter:description" content="编译需要Go版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需库 go"/>
+<meta name="twitter:description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需依赖"/>
 <meta itemprop="name" content="编译和自定义Trojan-Go">
-<meta itemprop="description" content="编译需要Go版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需库 go">
+<meta itemprop="description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go mod tidy #更新和下载所需依赖">
 
-<meta itemprop="wordCount" content="341">
+<meta itemprop="wordCount" content="354">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -53,22 +53,23 @@
 </div>
 <div class="content-container">
 <main><h1>编译和自定义Trojan-Go</h1>
-<p>编译需要Go版本号高于0.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。</p>
+<p>编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。</p>
 <p>编译过程非常简单</p>
-<pre><code>go mod tidy #更新和下载所需库
+<pre><code>go mod tidy #更新和下载所需依赖库
 go build #编译
 </code></pre><p>build.sh中的命令禁用了cgo并去除可执行文件的调试符号以减小体积。</p>
 <p>可以通过指定GOOS和GOARCH环境变量，指定交叉编译的目标操作系统和架构，例如</p>
 <pre><code>GOOS=windows GOARCH=386 go build  #windows x86
 GOOS=linux GOARCH=arm64 go build  #linux arm64
-</code></pre><p>你可以使用build-all.sh进行批量的大量平台的交叉编译，release版本使用了这个脚本进行构建。</p>
+</code></pre><p>你可以使用build-all.sh进行批量的多个平台的交叉编译，release版本使用了这个脚本进行构建。</p>
 <p>Trojan-Go的大多数模块是可插拔的。你可以在main.go中找到这些模块的导入声明，类似于</p>
-<pre><code>...
+<pre><code>import (
 	_ &quot;github.com/p4gefau1t/trojan-go/proxy/client&quot;
 	_ &quot;github.com/p4gefau1t/trojan-go/proxy/relay&quot;
 	_ &quot;github.com/p4gefau1t/trojan-go/proxy/server&quot;
-...
-</code></pre><p>如果你不需要其中某些功能，或者需要缩小可执行文件的体积，可以直接将其注释或删除。程序编译后依然可以正常运行，但不再支持这些被移除的功能。</p>
+	...
+)
+</code></pre><p>如果你不需要其中某些功能，或者需要缩小可执行文件的体积，可以直接将该模块的导入声明直接注释或删除。程序编译后依然可以正常运行，但不再支持这些被移除的功能。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/build.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/overview/" title="基本介绍"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 基本介绍</a>
