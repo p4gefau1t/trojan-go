@@ -98,6 +98,11 @@ weight: 30
         "username": "",
         "password": "",
         "check_rate": 60
+    },
+    "api": {
+        "enabled": true,
+        "api_addr": "",
+        "api_port": 0
     }
 }
 ```
@@ -128,7 +133,7 @@ weight: 30
 
 ```sni```指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
-```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造  。
+```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN握手失败**
 
 ```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
 
@@ -180,11 +185,19 @@ weight: 30
 
 ```enabled```是否开启路由模块。
 
-```route_by_ip``` 开启后，所有域名会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS泄露。
+```route_by_ip```开启后，所有域名会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS请求泄露和遭到污染。
 
-```route_by_ip_on_nonmatch```开启后，如果一个域名不在三个列表中，则会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS泄露。
+```route_by_ip_on_nonmatch```开启后，如果一个域名不在三个列表中，则会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS请求泄露和遭到污染。
 
-```default_policy```指的是三个列表匹配均失败后，使用的默认策略，默认为Proxy，即进行代理。
+```default_policy```指的是三个列表匹配均失败后，使用的默认策略，默认为Proxy，即进行代理。合法的值有
+
+- "proxy"
+
+- "bypass"
+
+- "block"
+
+含义同上。
 
 ### ```websocket```选项
 
@@ -210,7 +223,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接服务器节点
 
 ```no_delay```是否禁用纳格算法(Nagle’s algorithm)，即TCP封包是否直接发出而不等待缓冲区填满。
 
-``` keep_alive```是否启用TCP心跳存活检测。
+```keep_alive```是否启用TCP心跳存活检测。
 
 ```reuse_port```是否启用端口复用。由于trojan-gfw版本对多线程支持不佳，因而服务器使用此选项开启多个进程监听同一端口以提升并发性能。trojan-go本身的并发性能足够优秀，并无必要开启此选项。该选项仅为兼容而保留。
 
@@ -219,7 +232,6 @@ Websocket传输是trojan-go的特性。在**正常的直接连接服务器节点
 ```fast_open```是否启用TCP Fast Open。开启此选项需要操作系统支持。考虑到TFO开启后的TCP封包特征明显，容易被GFW阻断，且可能存在安全性问题，trojan-go仅仅出于兼容目的在服务端实现TFO支持。
 
 ```fast_open_qlen```TCP Fast Open的qlen值，即允许的同时发起的未经三次握手的TFO连接数量。
-
 
 ### ```mysql```数据库选项
 
@@ -255,3 +267,15 @@ CREATE TABLE users (
 ```proxy_port```前置代理的端口号。
 
 ```username``` ```password```代理的用户和密码，如果留空则不使用认证。
+
+### ```api```选项
+
+trojan-go基于grpc提供了API，以支持服务端和客户端的管理和统计。可以实现客户端的流量和速度统计，服务端各用户的流量和速度统计，用户的动态增删和限速等。
+
+```enabled```是否启用API功能。
+
+```api_addr```grpc监听的地址。
+
+```api_port```grpc监听的端口。
+
+*警告：不要将API直接暴露在互联网上，否则可能导致各类安全问题*

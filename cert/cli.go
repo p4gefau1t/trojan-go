@@ -61,9 +61,10 @@ func RequestCertGuide() {
 	info := &domainInfo{}
 
 	if err != nil {
-		fmt.Println("Your domain name:")
+		fmt.Println("domain_info.json not found, creating one")
+		fmt.Println("Enter your domain name:")
 		fmt.Scanf("%s", &info.Domain)
-		fmt.Println("Your email:")
+		fmt.Println("Enter your email address:")
 		fmt.Scanf("%s", &info.Email)
 	} else {
 		log.Info("domain_info.json found")
@@ -89,7 +90,7 @@ func RequestCertGuide() {
 		return
 	}
 
-	log.Info("All done. Certificates has been saved to server.crt and server.key")
+	log.Info("All done. Certificates have been saved to server.crt and server.key")
 	log.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	log.Warn("BACKUP DOMAIN_INFO.JSON, SERVER.KEY, SERVER.CRT AND USER.KEY TO A SAFE PLACE")
 	log.Warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")

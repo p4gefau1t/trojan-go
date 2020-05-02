@@ -117,25 +117,20 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 	// because we aren't running as root and can't bind a listener to port 80 and 443
 	// (used later when we attempt to pass challenges). Keep in mind that you still
 	// need to proxy challenge traffic to port 5002 and 5001.
-	//err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", "5002"))
 	err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", httpPort))
 	if err != nil {
 		return nil, err
 	}
-	//err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", "5001"))
 	err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", tlsPort))
 	if err != nil {
 		return nil, err
 	}
 
-	//if isNewUser {
-	// New users will need to register
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {
 		return nil, err
 	}
 	user.Registration = reg
-	//}
 
 	request := certificate.ObtainRequest{
 		Domains:    []string{domain},
@@ -149,8 +144,7 @@ func obtainCertificate(domain, email string, userKey *ecdsa.PrivateKey, serverKe
 
 	// Each certificate comes back with the cert bytes, the bytes of the client's
 	// private key, and a certificate URL. SAVE THESE TO DISK.
-	//fmt.Printf("%#v\n", certificates)
-	fmt.Println("certificates obtained:", certificates.Domain)
+	fmt.Println("certificates obtained for:", certificates.Domain)
 
 	return certificates, nil
 }
