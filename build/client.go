@@ -1,6 +1,6 @@
 // +build client full
 
-package main
+package build
 
 import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"

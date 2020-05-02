@@ -5,11 +5,13 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
-	
+		
 	_ "github.com/p4gefau1t/trojan-go/stat/memory"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	_ "github.com/p4gefau1t/trojan-go/version"
 	//_ "github.com/p4gefau1t/trojan-go/log/simplelog"
+
+	_ "github.com/p4gefau1t/trojan-go/build"
 )
 
 func main() {
