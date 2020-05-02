@@ -3,6 +3,13 @@
 [![License](https://img.shields.io/github/license/p4gefau1t/trojan-go)](https://img.shields.io/github/license/p4gefau1t/trojan-go)
 [![Downloads](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)
 [![HitCounts](http://hits.dwyl.io/p4gefau1t/trojan-go.svg)]((http://hits.dwyl.io/p4gefau1t/trojan-go.svg))
+[![Release](https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases)]((https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases))
+[![Release Date](https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go)]((https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go))
+
+
+[![Commit](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)]((https://img.shields.io/github/last-commit/p4gefau1t/trojan-go))
+[![Commit Activity](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)]((https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go))
+
 
 使用Go实现的完整Trojan代理，和Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
 
@@ -49,6 +56,8 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 - Websocket，用于支持CDN流量中转(基于WebSocket over TLS/SSL)和对抗GFW中间人攻击
 
 - 自动化HTTPS证书申请，使用ACME协议从Let's Encrypt自动申请和更新HTTPS证书
+
+- 基于grpc的API支持，支持动态用户管理和流量速度限制
 
 ### 下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。
 

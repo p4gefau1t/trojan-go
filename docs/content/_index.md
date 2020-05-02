@@ -46,6 +46,8 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 
 - 自动化HTTPS证书申请，使用ACME协议从Let's Encrypt自动申请和更新HTTPS证书
 
+- 基于grpc的API支持，支持动态用户管理和流量速度限制
+
 如果你遇到配置方面的问题，或是遇到了软件Bug，或是有更好的想法，欢迎加入[Telegram交流反馈群](https://t.me/trojan_go_chat)
 
 

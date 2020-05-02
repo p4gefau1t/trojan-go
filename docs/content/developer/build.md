@@ -27,11 +27,12 @@ GOOS=linux GOARCH=arm64 go build  #linux arm64
 Trojan-Go的大多数模块是可插拔的。你可以在main.go中找到这些模块的导入声明，类似于
 
 ```
-...
+import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
 	_ "github.com/p4gefau1t/trojan-go/proxy/relay"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
-...
+	...
+)
 ```
 
-如果你不需要其中某些功能，或者需要缩小可执行文件的体积，可以直接将其注释或删除。程序编译后依然可以正常运行，但不再支持这些被移除的功能。
+如果你不需要其中某些功能，或者需要缩小可执行文件的体积，可以直接将该模块的导入声明直接注释或删除。程序编译后依然可以正常运行，但不再支持这些被移除的功能。
