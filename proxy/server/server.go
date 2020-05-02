@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -191,7 +190,7 @@ func (s *Server) Run() error {
 	if s.config.API.Enabled {
 		log.Info("api enabled")
 		go func() {
-			errChan <- api.RunServerAPI(s.ctx, s.config, s.auth)
+			errChan <- proxy.RunAPIService(conf.Server, s.ctx, s.config, s.auth)
 		}()
 	}
 	go s.ListenTCP(errChan)

@@ -8,6 +8,7 @@ import (
 
 	//the following modules are optional
 	//you can comment some of them if you don't need them
+	_ "github.com/p4gefau1t/trojan-go/api"
 	_ "github.com/p4gefau1t/trojan-go/cert"
 	_ "github.com/p4gefau1t/trojan-go/daemon"
 	_ "github.com/p4gefau1t/trojan-go/easy"

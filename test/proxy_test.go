@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -186,14 +187,20 @@ func addTCPOption(config *conf.GlobalConfig) *conf.GlobalConfig {
 	return config
 }
 
-func addMySQLConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+func addMySQLConfig(t *testing.T, config *conf.GlobalConfig) *conf.GlobalConfig {
+	database := os.Getenv("mysql_database")
+	username := os.Getenv("mysql_username")
+	password := os.Getenv("mysql_password")
+	if database == "" || username == "" || password == "" {
+		t.Skip("skipping mysql test")
+	}
 	config.MySQL = conf.MySQLConfig{
 		Enabled:    true,
 		ServerHost: "127.0.0.1",
 		ServerPort: 3306,
-		Database:   "trojan",
-		Username:   "root",
-		Password:   "password",
+		Database:   database,
+		Username:   username,
+		Password:   password,
 		CheckRate:  1,
 	}
 	return config
@@ -352,14 +359,15 @@ func MultiThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCon
 	cancel()
 }
 
-func TestIt(t *testing.T) {
-	/*
-		clientConfig := getBasicClientConfig()
-		serverConfig := getBasicServerConfig()
-		go RunClient(context.Background(), clientConfig)
-		go RunHelloHTTPServer(context.Background())
-		RunServer(context.Background(), serverConfig)
-	*/
+func TestRealProxy(t *testing.T) {
+	if os.Getenv("real_test") == "" {
+		t.Skip("skipping real proxy test")
+	}
+	clientConfig := getBasicClientConfig()
+	serverConfig := getBasicServerConfig()
+	go RunClient(context.Background(), clientConfig)
+	go RunHelloHTTPServer(context.Background())
+	RunServer(context.Background(), serverConfig)
 }
 
 func TestNormal(t *testing.T) {
@@ -506,7 +514,7 @@ func TestTCPOptions(t *testing.T) {
 }
 
 func TestMySQL(t *testing.T) {
-	serverConfig := addMySQLConfig(getBasicServerConfig())
+	serverConfig := addMySQLConfig(t, getBasicServerConfig())
 	clientConfig := getBasicClientConfig()
 	clientConfig.Passwords = getPasswords("mysqlpassword")
 	clientConfig.Hash = getHash("mysqlpassword")
@@ -527,6 +535,7 @@ func TestServerAPI(t *testing.T) {
 
 	time.Sleep(time.Second * 2)
 	grpcConn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
+	common.Must(err)
 	server := api.NewTrojanServerServiceClient(grpcConn)
 
 	listUserStream, err := server.ListUsers(ctx, &api.ListUserRequest{})

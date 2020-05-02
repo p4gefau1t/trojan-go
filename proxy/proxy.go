@@ -9,6 +9,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 	"github.com/p4gefau1t/trojan-go/router"
+	"github.com/p4gefau1t/trojan-go/stat"
 )
 
 type Buildable interface {
@@ -113,16 +114,32 @@ func ProxyPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, 
 	}
 }
 
-var buildableMap = make(map[conf.RunType]Buildable)
+var proxys = make(map[conf.RunType]Buildable)
 
 func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
 	runType := config.RunType
-	if buildable, found := buildableMap[runType]; found {
+	if buildable, found := proxys[runType]; found {
 		return buildable.Build(config)
 	}
 	return nil, common.NewError("invalid run_type " + string(runType))
 }
 
 func RegisterProxy(t conf.RunType, b Buildable) {
-	buildableMap[t] = b
+	proxys[t] = b
+}
+
+type APIRunner func(context.Context, *conf.GlobalConfig, stat.Authenticator) error
+
+var apis = make(map[conf.RunType]APIRunner)
+
+func RegisterAPI(t conf.RunType, r APIRunner) {
+	apis[t] = r
+}
+
+func RunAPIService(t conf.RunType, ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
+	r, ok := apis[t]
+	if !ok {
+		return common.NewError("api module for" + string(t) + "not found")
+	}
+	return r(ctx, config, auth)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/stat"
 	grpc "google.golang.org/grpc"
 )
@@ -172,4 +173,8 @@ func RunServerAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Auth
 		server.Stop()
 		return nil
 	}
+}
+
+func init() {
+	proxy.RegisterAPI(conf.Server, RunServerAPI)
 }
