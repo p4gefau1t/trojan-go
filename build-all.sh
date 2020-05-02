@@ -35,7 +35,7 @@ for PLATFORM in $PLATFORMS; do
   GOOS=${PLATFORM%/*}
   GOARCH=${PLATFORM#*/}
   ZIP_FILENAME="trojan-go-${GOOS}-${GOARCH}.zip"
-  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o temp $@ -ldflags=\"-s -w\""
+  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp $@ -ldflags=\"-s -w\""
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
   zip -j release/$ZIP_FILENAME temp/* ./*.dat
