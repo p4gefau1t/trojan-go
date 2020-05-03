@@ -41,7 +41,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 	}
 	switch req.Command {
 	case protocol.Connect:
-		outboundConn, err := direct.NewOutboundConnSession(req)
+		outboundConn, err := direct.NewOutboundConnSession(s.ctx, req, s.config)
 		if err != nil {
 			log.Error(err)
 			return
@@ -102,7 +102,7 @@ func (s *Server) handleConn(conn *tls.Conn) {
 	}
 
 	defer inboundConn.Close()
-	outboundConn, err := direct.NewOutboundConnSession(req)
+	outboundConn, err := direct.NewOutboundConnSession(s.ctx, req, s.config)
 	if err != nil {
 		log.Error(err)
 		return

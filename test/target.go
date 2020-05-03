@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -32,6 +33,33 @@ func RunEchoUDPServer(ctx context.Context) {
 			conn.WriteToUDP(buf[0:n], addr)
 		}
 	}()
+	<-ctx.Done()
+}
+
+func RunMultipleUDPEchoServer(ctx context.Context) {
+	for i := 0; i < 10; i++ {
+		go func(port int) {
+			conn, err := net.ListenUDP("udp", &net.UDPAddr{
+				IP:   net.ParseIP("127.0.0.1"),
+				Port: port,
+			})
+			common.Must(err)
+			fmt.Println("udp echo:", conn.LocalAddr())
+			defer conn.Close()
+			go func() {
+				for {
+					buf := make([]byte, 2048)
+					n, addr, err := conn.ReadFromUDP(buf[:])
+					if err != nil {
+						return
+					}
+					log.Info("echo from", addr)
+					conn.WriteToUDP(buf[0:n], addr)
+				}
+			}()
+			<-ctx.Done()
+		}(6000 + i)
+	}
 	<-ctx.Done()
 }
 

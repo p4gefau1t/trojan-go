@@ -95,7 +95,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		return
 	}
 	if policy == router.Bypass {
-		outboundConn, err := direct.NewOutboundConnSession(req)
+		outboundConn, err := direct.NewOutboundConnSession(c.ctx, req, c.config)
 		if err != nil {
 			log.Error(err)
 			return
@@ -139,7 +139,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 			return
 		}
 		if policy == router.Bypass {
-			outboundConn, err := direct.NewOutboundConnSession(req)
+			outboundConn, err := direct.NewOutboundConnSession(c.ctx, req, c.config)
 			if err != nil {
 				log.Error(err)
 				return

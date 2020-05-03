@@ -18,6 +18,15 @@ const (
 	Relay   RunType = "relay"
 )
 
+type DNSType string
+
+const (
+	UDP DNSType = "udp"
+	DOH DNSType = "https"
+	DOT DNSType = "dot"
+	TCP DNSType = "tcp"
+)
+
 type TLSConfig struct {
 	Verify             bool     `json:"verify"`
 	VerifyHostname     bool     `json:"verify_hostname"`

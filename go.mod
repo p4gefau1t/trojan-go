@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed
+	github.com/babolivier/go-doh-client v0.0.0-20190212214242-43780baf3561
 	github.com/go-acme/lego/v3 v3.5.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.0
