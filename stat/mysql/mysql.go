@@ -24,13 +24,13 @@ type DBAuth struct {
 
 func (a *DBAuth) updater() {
 	for {
-		users := a.ListUsers()
+		memoryUsers := a.ListUsers()
 		tx, err := a.db.Begin()
 		if err != nil {
 			log.Error(common.NewError("cannot begin transaction").Base(err))
 			continue
 		}
-		for _, user := range users {
+		for _, user := range memoryUsers {
 			//swap upload and download for users
 			hash := user.Hash()
 			sent, recv := user.GetAndReset()
@@ -61,6 +61,7 @@ func (a *DBAuth) updater() {
 			time.Sleep(a.updateDuration)
 			continue
 		}
+		dbHash := []string{}
 		for rows.Next() {
 			var hash string
 			var quota, download, upload int64
@@ -73,6 +74,25 @@ func (a *DBAuth) updater() {
 				a.AddUser(hash)
 			} else {
 				a.DelUser(hash)
+			}
+			dbHash = append(dbHash, hash)
+		}
+
+		//find deleted users
+		memoryHash := []string{}
+		for _, traffic := range a.ListUsers() {
+			memoryHash = append(memoryHash, traffic.Hash())
+		}
+		for _, hash1 := range memoryHash {
+			found := false
+			for _, hash2 := range dbHash {
+				if hash1 == hash2 {
+					found = true
+					break
+				}
+			}
+			if !found { //this user has been deleted in db
+				a.DelUser(hash1)
 			}
 		}
 		select {
