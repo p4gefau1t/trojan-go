@@ -216,6 +216,9 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	if config.MySQL.Enabled {
 		authDriver = "mysql"
 	}
+	if config.Redis.Enabled {
+		authDriver = "redis"
+	}
 	auth, err := stat.NewAuth(ctx, authDriver, config)
 	if err != nil {
 		cancel()

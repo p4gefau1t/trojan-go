@@ -59,7 +59,7 @@ func (a *DBAuth) updater() {
 
 		//update memory
 		var keys []string
-		if err := a.db.Do(radix.Cmd(&keys, "KEYS")); err != nil {
+		if err := a.db.Do(radix.Cmd(&keys, "KEYS", "*")); err != nil {
 			log.Error(common.NewError("failed to pull data from the database").Base(err))
 			time.Sleep(a.updateDuration)
 			continue
@@ -83,7 +83,7 @@ func NewDBAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticat
 	addr := config.Redis.ServerHost + ":" + strconv.Itoa(config.Redis.ServerPort)
 	conn := func(network, addr string) (radix.Conn, error) {
 		return radix.Dial(network, addr,
-			radix.DialAuthPass("mySuperSecretPassword"),
+			radix.DialAuthPass(config.Redis.Password),
 		)
 	}
 	db, err := radix.NewPool("tcp", addr, 10, radix.PoolConnFunc(conn))
