@@ -290,7 +290,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 ```
 git clone https://github.com/p4gefau1t/trojan-go.git
 cd trojan-go
-go build
+go build -tags "full"
 ```
 
 Go支持通过设置环境变量进行交叉编译，例如
