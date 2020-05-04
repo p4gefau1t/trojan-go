@@ -13,7 +13,10 @@ import (
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
+	"github.com/patrickmn/go-cache"
 )
+
+var dnsCache = cache.New(5*time.Minute, 1*time.Minute)
 
 type DirectOutboundConnSession struct {
 	protocol.ConnSession
@@ -35,8 +38,19 @@ func (o *DirectOutboundConnSession) Close() error {
 
 func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *conf.GlobalConfig) (protocol.ConnSession, error) {
 	var newConn net.Conn
-	//custom dns server
-	if req.AddressType == common.DomainName && len(config.DNS) != 0 {
+	var err error
+	//look up the domain name in cache first
+	if req.AddressType == common.DomainName && len(config.DNS) != 0 { //customized dns server
+		ip, found := dnsCache.Get(req.DomainName)
+		if found {
+			newConn, err = net.DialTCP("tcp", nil, &net.TCPAddr{
+				IP: ip.(net.IP),
+			})
+			if err != nil {
+				return nil, err
+			}
+			goto done
+		}
 		//find a avaliable dns server
 		for _, s := range config.DNS {
 			var dnsType conf.DNSType
@@ -86,6 +100,7 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 					if err != nil {
 						return nil, err
 					}
+					dnsCache.Set(req.DomainName, net.ParseIP(ip), cache.DefaultExpiration)
 					break
 				}
 			} else {
@@ -129,6 +144,7 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 					if err != nil {
 						return nil, err
 					}
+					dnsCache.Set(req.DomainName, ip.IP, cache.DefaultExpiration)
 					break
 				}
 			}
@@ -140,11 +156,12 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 	} else {
 		//default resolver
 		var err error
-		newConn, err = net.Dial(req.Network(), req.String())
+		newConn, err = net.Dial("tcp", req.String())
 		if err != nil {
 			return nil, err
 		}
 	}
+done:
 	o := &DirectOutboundConnSession{
 		request: req,
 		conn:    newConn,

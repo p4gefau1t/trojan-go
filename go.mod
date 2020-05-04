@@ -12,6 +12,7 @@ require (
 	github.com/mediocregopher/radix/v3 v3.5.0
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/proullon/ramsql v0.0.0-20181213202341-817cee58a244
 	github.com/refraction-networking/utls v0.0.0-20190909200633-43c36d3c1f57
 	github.com/smartystreets/goconvey v1.6.4

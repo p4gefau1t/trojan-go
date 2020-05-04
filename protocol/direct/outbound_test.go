@@ -42,7 +42,6 @@ func TestUDPDirectOutbound(t *testing.T) {
 
 func TestDNS(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	go test.RunEchoTCPServer(ctx)
 	config := &conf.GlobalConfig{
 		DNS: []string{"114.114.114.114:53"},
 	}
@@ -67,7 +66,6 @@ func TestDNS(t *testing.T) {
 
 func TestDOT(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	go test.RunEchoTCPServer(ctx)
 	config := &conf.GlobalConfig{
 		DNS: []string{"dot://223.5.5.5:853"},
 	}
@@ -92,7 +90,6 @@ func TestDOT(t *testing.T) {
 
 func TestDOH(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	go test.RunEchoTCPServer(ctx)
 	config := &conf.GlobalConfig{
 		DNS: []string{"https://223.5.5.5:443"},
 	}
@@ -112,5 +109,27 @@ func TestDOH(t *testing.T) {
 	buf := [128]byte{}
 	conn.Read(buf[:])
 	fmt.Println(string(buf[:]))
+	cancel()
+}
+
+func TestCache(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	config := &conf.GlobalConfig{
+		DNS: []string{"223.5.5.5:53"},
+	}
+	req := &protocol.Request{
+		Address: &common.Address{
+			DomainName:  "www.baidu.com",
+			Port:        80,
+			AddressType: common.DomainName,
+			NetworkType: "tcp",
+		},
+	}
+	conn, err := NewOutboundConnSession(ctx, req, config)
+	common.Must(err)
+	conn.Close()
+	conn, err = NewOutboundConnSession(ctx, req, config)
+	common.Must(err)
+	conn.Close()
 	cancel()
 }

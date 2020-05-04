@@ -14,13 +14,14 @@ import (
 type TrojanOutboundConnSession struct {
 	protocol.ConnSession
 
-	config  *conf.GlobalConfig
-	rwc     io.ReadWriteCloser
-	request *protocol.Request
-	sent    uint64
-	recv    uint64
-	auth    stat.Authenticator
-	meter   stat.TrafficMeter
+	config       *conf.GlobalConfig
+	rwc          io.ReadWriteCloser
+	request      *protocol.Request
+	sent         uint64
+	recv         uint64
+	auth         stat.Authenticator
+	meter        stat.TrafficMeter
+	trojanHeader []byte
 }
 
 func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
@@ -28,6 +29,19 @@ func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
 }
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
+	if o.trojanHeader != nil {
+		//glue the payload with the trojan request header
+		fullRequest := o.trojanHeader
+		fullRequest = append(fullRequest, p...)
+		n, err := o.rwc.Write(fullRequest)
+		if n >= len(o.trojanHeader) {
+			n -= len(o.trojanHeader)
+		}
+		o.meter.Count(n, 0)
+		o.sent += uint64(n)
+		o.trojanHeader = nil
+		return n, err
+	}
 	n, err := o.rwc.Write(p)
 	o.meter.Count(n, 0)
 	o.sent += uint64(n)
@@ -57,8 +71,8 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 	buf.WriteByte(byte(o.request.Command))
 	protocol.WriteAddress(buf, o.request)
 	buf.Write(crlf)
-	_, err := o.rwc.Write(buf.Bytes())
-	return err
+	o.trojanHeader = buf.Bytes()
+	return nil
 }
 
 func NewOutboundConnSession(req *protocol.Request, rwc io.ReadWriteCloser, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
