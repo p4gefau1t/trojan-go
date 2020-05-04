@@ -305,7 +305,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 
 	//default settings
 	config.LogLevel = 1
-	config.BufferSize = 512
+	config.BufferSize = 32
 	config.TCP.FastOpenQLen = 20
 	config.TCP.KeepAlive = true
 	config.TCP.NoDelay = true

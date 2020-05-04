@@ -11,17 +11,19 @@
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)]((https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go))
 
 
-使用Go实现的完整Trojan代理，和Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
-
-预编译的版本可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。
-
-[Telegram交流反馈群](https://t.me/trojan_go_chat)
+使用Go实现的完整Trojan代理，与Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
 
 支持使用[多路复用](#多路复用)提升并发性能，使用[路由模块](#路由模块)实现国内直连。
 
 支持[CDN流量中转](#Websocket)(基于WebSocket over TLS/SSL)。
 
 支持基于ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
+
+预编译的版本可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。直接运行解压得到的执行文件即可，无其他组件依赖。
+
+跨平台客户端[Trojan-Qt5](https://github.com/Trojan-Qt5/Trojan-Qt5/)已使用Trojan-Go核心，支持目前所有的Trojan-Go扩展特性，界面友好，推荐作为客户端使用。
+
+[Telegram交流反馈群](https://t.me/trojan_go_chat)
 
 Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不限于：
 
@@ -39,7 +41,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
 - 从数据库中的用户列表进行认证
 
-- TCP性能方面的选项，如TCP Fast Open，端口复用等
+- TCP Keep Alive，TCP Fast Open，端口复用等TCP选项
 
 同时，Trojan-Go还扩展了更多高效易用的功能特性：
 
@@ -57,7 +59,9 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
 - 自动化HTTPS证书申请，使用ACME协议从Let's Encrypt自动申请和更新HTTPS证书
 
-- 基于grpc的API支持，支持动态用户管理和流量速度限制
+- TLS指纹伪造，绕过针对TLS Client Hello的特征识别
+
+- 基于gRPC的API支持，支持动态用户管理和流量速度限制
 
 ### 下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。
 
@@ -319,4 +323,3 @@ https://github.com/LiamHaworth/go-tproxy
 https://github.com/valyala/tcplisten
 
 https://github.com/refraction-networking/utls
-
