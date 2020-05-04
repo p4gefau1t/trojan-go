@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
+	// MySQL Driver
 	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"

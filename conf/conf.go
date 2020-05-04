@@ -81,6 +81,14 @@ type MySQLConfig struct {
 	CheckRate  int    `json:"check_rate"`
 }
 
+type RedisConfig struct {
+	Enabled    bool   `json:"enabled"`
+	ServerHost string `json:"server_addr"`
+	ServerPort int    `json:"server_port"`
+	Password   string `json:"password"`
+	CheckRate  int    `json:"check_rate"`
+}
+
 type ForwardProxyConfig struct {
 	Enabled   bool   `json:"enabled"`
 	ProxyHost string `json:"proxy_addr"`
@@ -150,6 +158,7 @@ type GlobalConfig struct {
 	TLS              TLSConfig          `json:"ssl"`
 	TCP              TCPConfig          `json:"tcp"`
 	MySQL            MySQLConfig        `json:"mysql"`
+	Redis            RedisConfig        `json:"redis"`
 	Mux              MuxConfig          `json:"mux"`
 	Router           RouterConfig       `json:"router"`
 	Websocket        WebsocketConfig    `json:"websocket"`

@@ -322,6 +322,10 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Websocket.DoubleTLS = true
 	config.Websocket.DoubleTLSVerify = true
 	config.Websocket.ObfuscationPassword = ""
+	config.Redis.ServerHost = "localhost"
+	config.Redis.ServerPort = 6379
+	config.Redis.Password = ""
+	config.Redis.CheckRate = 60
 
 	err := json.Unmarshal(data, config)
 	if err != nil {
