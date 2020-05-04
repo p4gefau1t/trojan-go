@@ -41,10 +41,13 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 	var err error
 	//look up the domain name in cache first
 	if req.AddressType == common.DomainName && len(config.DNS) != 0 { //customized dns server
-		addr, found := dnsCache.Get(req.DomainName)
+		ip, found := dnsCache.Get(req.DomainName)
 		if found {
-			log.Trace("dns cache hit:", req.DomainName, "->", addr.(string))
-			newConn, err = net.Dial("tcp", addr.(string)+":"+strconv.FormatInt(int64(req.Port), 10))
+			log.Trace("dns cache hit:", req.DomainName, "->", ip.(net.IP).String())
+			newConn, err = net.DialTCP("tcp", nil, &net.TCPAddr{
+				IP:   ip.(net.IP),
+				Port: req.Port,
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -99,7 +102,12 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 			if err != nil {
 				log.Warn(err)
 			} else {
-				dnsCache.Set(req.DomainName, addr, cache.DefaultExpiration)
+				if ip := net.ParseIP(addr); ip != nil {
+					log.Trace("dns cache set", req.DomainName, "->", addr)
+					dnsCache.Set(req.DomainName, ip, cache.DefaultExpiration)
+				} else {
+					log.Warn("invalid resolved addr", addr)
+				}
 			}
 			break
 		}

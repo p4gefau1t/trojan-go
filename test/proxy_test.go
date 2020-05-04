@@ -626,7 +626,7 @@ func TestDNS(t *testing.T) {
 	httpReq.Write(conn)
 	buf := [1024]byte{}
 	common.Must2(conn.Read(buf[:]))
-	t.Log(string(buf[:]))
+	fmt.Println(string(buf[:]))
 	conn.Close()
 	cancel()
 }
