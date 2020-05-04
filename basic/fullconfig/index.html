@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="5236">
+<meta itemprop="wordCount" content="5624">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.3</span>
+ <span class="version">Version 0.4.4</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -86,7 +86,8 @@
         &quot;password1&quot;,
         &quot;password2&quot;
     ],
-    &quot;buffer_size&quot;: 512,
+    &quot;buffer_size&quot;: 32,
+    &quot;dns&quot;: [],
     &quot;ssl&quot;: {
         &quot;verify&quot;: true,
         &quot;verify_hostname&quot;: true,
@@ -163,7 +164,26 @@
 <p><code>log_level</code>指定日志等级。等级越高，输出的信息越少，0输出Debug以上日志（所有日志），1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。</p>
 <p><code>log_file</code>指定日志输出文件路径。如果未指定则使用标准输出。</p>
 <p><code>password</code>可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。</p>
-<p><code>buffer_size</code>为单个连接缓冲区大小，单位KiB，默认512KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。路由器等嵌入式系统建议根据实际情况，适当减小该数值。</p>
+<p><code>dns</code>指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOH/DOT，查询结果会被缓存五分钟。使用URL格式描述服务器，例如</p>
+<ul>
+<li>
+<p>&ldquo;udp://1.1.1.1&rdquo;，基于UDP的DNS服务器，默认53端口</p>
+</li>
+<li>
+<p>&ldquo;udp://1.1.1.1:53&rdquo;，与上一项等价</p>
+</li>
+<li>
+<p>&ldquo;1.1.1.1&rdquo;，与上一项等价</p>
+</li>
+<li>
+<p>&ldquo;tcp://1.1.1.1&rdquo;，基于TCP的DNS服务器，默认53端口</p>
+</li>
+<li>
+<p>&ldquo;dot://1.1.1.1&rdquo;，基于DOT(DNS Over TLS)的DNS服务器，默认853端口</p>
+</li>
+</ul>
+<p>使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。</p>
+<p><code>buffer_size</code>为单个连接缓冲区大小，单位KiB，默认32KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。</p>
 <h3 id="ssl选项"><code>ssl</code>选项</h3>
 <p><code>verify</code>表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
 <p><code>verify_hostname</code>表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI字段的一致性。</p>
