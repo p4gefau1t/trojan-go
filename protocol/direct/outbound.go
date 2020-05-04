@@ -58,6 +58,8 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 		for _, s := range config.DNS {
 			var dnsType conf.DNSType
 			var dnsAddr string
+			var dnsHost, dnsPort string
+			var err error
 			dnsURL, err := url.Parse(s)
 			if err != nil || dnsURL.Scheme == "" {
 				dnsType = conf.UDP
@@ -67,6 +69,18 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 				dnsAddr = dnsURL.Host
 			}
 
+			dnsHost, dnsPort, err = net.SplitHostPort(dnsAddr)
+			if err != nil { //port not specifiet
+				dnsHost = dnsAddr
+				switch dnsType {
+				case conf.DOT:
+					dnsPort = "853"
+				case conf.TCP, conf.UDP:
+					dnsPort = "53"
+				}
+			}
+			dnsURL.Port()
+
 			resolver := &net.Resolver{
 				PreferGo: true,
 				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
@@ -75,13 +89,13 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 						d := net.Dialer{
 							Timeout: time.Second * time.Duration(protocol.UDPTimeout),
 						}
-						conn, err := d.DialContext(ctx, string(dnsType), dnsAddr)
+						conn, err := d.DialContext(ctx, string(dnsType), dnsHost+":"+dnsPort)
 						if err != nil {
 							return nil, err
 						}
 						return conn, nil
 					case conf.DOT:
-						tlsConn, err := tls.Dial("tcp", dnsAddr, nil)
+						tlsConn, err := tls.Dial("tcp", dnsHost+":"+dnsPort, nil)
 						if err != nil {
 							return nil, err
 						}

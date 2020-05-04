@@ -219,8 +219,8 @@ func addAPIConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 
 func addDNSConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 	config.DNS = []string{
-		"dot://223.5.5.5:853",
-		"8.8.8.8:53",
+		"dot://223.5.5.5",
+		"8.8.8.8",
 	}
 	return config
 }
