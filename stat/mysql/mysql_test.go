@@ -40,7 +40,6 @@ func TestDBAuth(t *testing.T) {
 	}
 	time.Sleep(time.Second * 5)
 	valid, _ = auth.AuthUser("hashhash")
-	valid, _ = auth.AuthUser("hashhash")
 	common.Must2(db.Exec(`DELETE FROM users WHERE password="hashhash"`))
 	time.Sleep(time.Second * 5)
 	valid, _ = auth.AuthUser("hashhash")
