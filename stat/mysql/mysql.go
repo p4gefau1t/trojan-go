@@ -26,8 +26,7 @@ type DBAuth struct {
 
 func (a *DBAuth) updater() {
 	for {
-		memoryUsers := a.ListUsers()
-		for _, user := range memoryUsers {
+		for _, user := range a.ListUsers() {
 			//swap upload and download for users
 			hash := user.Hash()
 			sent, recv := user.GetAndReset()
@@ -52,7 +51,6 @@ func (a *DBAuth) updater() {
 			time.Sleep(a.updateDuration)
 			continue
 		}
-		dbHash := []string{}
 		for rows.Next() {
 			var hash string
 			var quota, download, upload int64
@@ -66,7 +64,6 @@ func (a *DBAuth) updater() {
 			} else {
 				a.DelUser(hash)
 			}
-			dbHash = append(dbHash, hash)
 		}
 
 		select {
