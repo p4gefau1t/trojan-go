@@ -6,9 +6,9 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"strconv"
 	"time"
 
-	"github.com/babolivier/go-doh-client"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -41,22 +41,22 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 	var err error
 	//look up the domain name in cache first
 	if req.AddressType == common.DomainName && len(config.DNS) != 0 { //customized dns server
-		ip, found := dnsCache.Get(req.DomainName)
+		addr, found := dnsCache.Get(req.DomainName)
 		if found {
-			newConn, err = net.DialTCP("tcp", nil, &net.TCPAddr{
-				IP: ip.(net.IP),
-			})
+			log.Trace("dns cache hit:", req.DomainName, "->", addr.(string))
+			newConn, err = net.Dial("tcp", addr.(string)+":"+strconv.FormatInt(int64(req.Port), 10))
 			if err != nil {
 				return nil, err
 			}
 			goto done
 		}
+		log.Trace("dns cache missed:", req.DomainName)
 		//find a avaliable dns server
 		for _, s := range config.DNS {
 			var dnsType conf.DNSType
 			var dnsAddr string
 			dnsURL, err := url.Parse(s)
-			if err != nil {
+			if err != nil || dnsURL.Scheme == "" {
 				dnsType = conf.UDP
 				dnsAddr = s
 			} else {
@@ -64,89 +64,42 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 				dnsAddr = dnsURL.Host
 			}
 
-			if dnsType == conf.DOH {
-				resolver := doh.Resolver{
-					Host:  dnsURL.Host,
-					Class: doh.IN,
-				}
-				result := []string{}
-				a, _, err := resolver.LookupA(req.DomainName)
-				if err != nil {
-					log.Error(err)
-					continue
-				}
-				if !config.TCP.PreferIPV4 {
-					aaaa, _, err := resolver.LookupAAAA(req.DomainName)
-					if err != nil {
-						log.Error(err)
-						continue
-					}
-					for _, record := range aaaa {
-						result = append(result, record.IP6)
-					}
-				}
-				for _, record := range a {
-					result = append(result, record.IP4)
-				}
-				if len(result) == 0 {
-					log.Error("a record not found for" + req.DomainName)
-					continue
-				}
-				for _, ip := range result {
-					newConn, err = net.DialTCP("tcp", nil, &net.TCPAddr{
-						IP:   net.ParseIP(ip),
-						Port: req.Port,
-					})
-					if err != nil {
-						return nil, err
-					}
-					dnsCache.Set(req.DomainName, net.ParseIP(ip), cache.DefaultExpiration)
-					break
-				}
-			} else {
-				resolver := &net.Resolver{
-					PreferGo: true,
-					Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-						switch dnsType {
-						case conf.UDP, conf.TCP:
-							d := net.Dialer{
-								Timeout: time.Second * time.Duration(protocol.UDPTimeout),
-							}
-							conn, err := d.DialContext(ctx, string(dnsType), dnsAddr)
-							if err != nil {
-								return nil, err
-							}
-							return conn, nil
-						case conf.DOT:
-							tlsConn, err := tls.Dial("tcp", dnsAddr, nil)
-							if err != nil {
-								return nil, err
-							}
-							return tlsConn, nil
+			resolver := &net.Resolver{
+				PreferGo: true,
+				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+					switch dnsType {
+					case conf.UDP, conf.TCP:
+						d := net.Dialer{
+							Timeout: time.Second * time.Duration(protocol.UDPTimeout),
 						}
-						return nil, common.NewError("invalid dns type" + string(dnsType))
-					},
-				}
-				ips, err := resolver.LookupIPAddr(ctx, req.DomainName)
-				if err != nil {
-					log.Debug("dns server " + s + " sucks")
-					continue
-				}
-				log.Debug("dns connected:" + s)
-				if len(ips) == 0 {
-					return nil, common.NewError("record of " + req.DomainName + " not found in dns server " + s)
-				}
-				for _, ip := range ips {
-					newConn, err = net.DialTCP("tcp", nil, &net.TCPAddr{
-						IP:   ip.IP,
-						Port: req.Port,
-					})
-					if err != nil {
-						return nil, err
+						conn, err := d.DialContext(ctx, string(dnsType), dnsAddr)
+						if err != nil {
+							return nil, err
+						}
+						return conn, nil
+					case conf.DOT:
+						tlsConn, err := tls.Dial("tcp", dnsAddr, nil)
+						if err != nil {
+							return nil, err
+						}
+						return tlsConn, nil
 					}
-					dnsCache.Set(req.DomainName, ip.IP, cache.DefaultExpiration)
-					break
-				}
+					return nil, common.NewError("invalid dns type :" + string(dnsType))
+				},
+			}
+			d := net.Dialer{
+				Resolver: resolver,
+			}
+			newConn, err = d.Dial("tcp", req.DomainName+":"+strconv.FormatInt(int64(req.Port), 10))
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			addr, _, err := net.SplitHostPort(newConn.RemoteAddr().String())
+			if err != nil {
+				log.Warn(err)
+			} else {
+				dnsCache.Set(req.DomainName, addr, cache.DefaultExpiration)
 			}
 			break
 		}

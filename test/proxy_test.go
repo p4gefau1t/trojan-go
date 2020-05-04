@@ -217,6 +217,14 @@ func addAPIConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 	return config
 }
 
+func addDNSConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.DNS = []string{
+		"dot://223.5.5.5:853",
+		"8.8.8.8:53",
+	}
+	return config
+}
+
 func RunClient(ctx context.Context, config *conf.GlobalConfig) {
 	c := client.Client{}
 	r, err := c.Build(config)
@@ -599,5 +607,26 @@ func TestServerAPI(t *testing.T) {
 		fmt.Println(resp.SpeedLimit.UploadSpeed)
 	}
 	listUserStream.CloseSend()
+	cancel()
+}
+
+func TestDNS(t *testing.T) {
+	serverConfig := addDNSConfig(getBasicServerConfig())
+	clientConfig := getBasicClientConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	go RunServer(ctx, serverConfig)
+	go RunClient(ctx, clientConfig)
+	time.Sleep(time.Second)
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:4444", nil, nil)
+	common.Must(err)
+	conn, err := dialer.Dial("tcp", "www.baidu.com:80")
+	common.Must(err)
+	httpReq, err := http.NewRequest("GET", "http://www.baidu.com", nil)
+	common.Must(err)
+	httpReq.Write(conn)
+	buf := [1024]byte{}
+	common.Must2(conn.Read(buf[:]))
+	t.Log(string(buf[:]))
+	conn.Close()
 	cancel()
 }
