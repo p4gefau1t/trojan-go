@@ -27,32 +27,21 @@ type DBAuth struct {
 func (a *DBAuth) updater() {
 	for {
 		memoryUsers := a.ListUsers()
-		tx, err := a.db.Begin()
-		if err != nil {
-			log.Error(common.NewError("cannot begin transaction").Base(err))
-			continue
-		}
 		for _, user := range memoryUsers {
 			//swap upload and download for users
 			hash := user.Hash()
 			sent, recv := user.GetAndReset()
 
-			s, err := tx.Prepare("UPDATE users SET upload=upload+? WHERE password=?;")
-			common.Must(err)
-			_, err = s.Exec(recv, hash)
-
-			s, err = tx.Prepare("UPDATE users SET download=download+? WHERE password=?;")
-			common.Must(err)
-			_, err = s.Exec(sent, hash)
-
+			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `password`=?;", recv, sent, hash)
 			if err != nil {
-				log.Error(common.NewError("failed to update data to tx").Base(err))
-				break
+				log.Error(common.NewError("failed to update data to user").Base(err))
+				continue
 			}
-		}
-		err = tx.Commit()
-		if err != nil {
-			log.Error(common.NewError("failed to commit tx").Base(err))
+			if r, err := s.RowsAffected(); err != nil {
+				if r == 0 {
+					a.DelUser(hash)
+				}
+			}
 		}
 		log.Info("buffered data has been written into the database")
 
@@ -80,23 +69,6 @@ func (a *DBAuth) updater() {
 			dbHash = append(dbHash, hash)
 		}
 
-		//find deleted users
-		memoryHash := []string{}
-		for _, traffic := range a.ListUsers() {
-			memoryHash = append(memoryHash, traffic.Hash())
-		}
-		for _, hash1 := range memoryHash {
-			found := false
-			for _, hash2 := range dbHash {
-				if hash1 == hash2 {
-					found = true
-					break
-				}
-			}
-			if !found { //this user has been deleted in db
-				a.DelUser(hash1)
-			}
-		}
 		select {
 		case <-time.After(a.updateDuration):
 		case <-a.ctx.Done():
