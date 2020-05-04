@@ -32,7 +32,7 @@ func (r *RewindReader) Read(p []byte) (int, error) {
 	if r.buffered {
 		r.buf = append(r.buf, p[:n]...)
 		if len(r.buf) > r.bufferSize*2 {
-			log.Debug("read buffer too long")
+			log.Debug("read too many bytes!")
 		}
 	}
 	return n, err

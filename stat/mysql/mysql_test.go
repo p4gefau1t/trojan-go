@@ -21,7 +21,7 @@ func TestDBAuth(t *testing.T) {
 		password CHAR(56) NOT NULL,
 		quota BIGINT NOT NULL DEFAULT 0,
 		download BIGINT NOT NULL DEFAULT 0,
-		upload BIGINT NOT NULL DEFAULT 0,
+		upload BIGINT NOT NULL DEFAULT 0
 		);
 	`))
 	common.Must2(db.Exec(`INSERT INTO users (password, quota, download, upload) VALUES ("hashhash", 20000, 0, 0);`))

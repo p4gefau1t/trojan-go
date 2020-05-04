@@ -18,10 +18,10 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/xtaci/smux v1.5.12
 	github.com/ziutek/mymysql v1.5.4 // indirect
-	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5
-	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
+	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
+	golang.org/x/net v0.0.0-20200501053045-e0ff5e5a1de5
+	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3
+	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 	google.golang.org/grpc v1.29.1
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect

@@ -25,6 +25,8 @@
 
 [Telegram交流反馈群](https://t.me/trojan_go_chat)
 
+### 下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。
+
 Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不限于：
 
 - TLS/SSL隧道传输
@@ -62,8 +64,6 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 - TLS指纹伪造，绕过针对TLS Client Hello的特征识别
 
 - 基于gRPC的API支持，支持动态用户管理和流量速度限制
-
-### 下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。
 
 ## 使用方法
 

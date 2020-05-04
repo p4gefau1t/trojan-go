@@ -120,7 +120,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 			if err := i.parseRequest(newTrapsport.RewindReader); err != nil {
 				//invalid ws, just simply close it
 				ws.Close()
-				return nil, nil, common.NewError("invalid trojan over ws conn").Base(err)
+				return nil, nil, common.NewError("invalid trojan header over websocket conn").Base(err)
 			}
 			return i, i.request, nil
 		}
@@ -132,7 +132,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 	if err := i.parseRequest(rewindConn.R); err != nil {
 		//not a valid trojan request, proxy it to the remote_addr
 		rewindConn.R.Rewind()
-		err := common.NewError("invalid trojan protocol over websocket from " + conn.RemoteAddr().String()).Base(err)
+		err := common.NewError("invalid trojan header from " + conn.RemoteAddr().String()).Base(err)
 		shadowMan.CommitScapegoat(&shadow.Scapegoat{
 			Conn:          rewindConn,
 			ShadowAddress: i.config.RemoteAddress,

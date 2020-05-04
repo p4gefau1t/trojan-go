@@ -155,7 +155,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 			protocol.SetRandomizedTimeout(conn)
 
 			rewindConn := common.NewRewindConn(conn)
-			rewindConn.R.SetBufferSize(512)
+			rewindConn.R.SetBufferSize(2048)
 
 			tlsConn := tls.Server(rewindConn, tlsConfig)
 			err = tlsConn.Handshake()

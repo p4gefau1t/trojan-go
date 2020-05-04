@@ -30,12 +30,13 @@ func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
 	if o.trojanHeader != nil {
-		//glue the payload with the trojan request header
-		fullRequest := o.trojanHeader
-		fullRequest = append(fullRequest, p...)
-		n, err := o.rwc.Write(fullRequest)
-		if n >= len(o.trojanHeader) {
-			n -= len(o.trojanHeader)
+		//send the payload after the trojan request header
+		headerLen := len(o.trojanHeader)
+		n, err := o.rwc.Write(append(o.trojanHeader, p...))
+		if n >= headerLen {
+			n -= headerLen
+		} else {
+			n = 0
 		}
 		o.meter.Count(n, 0)
 		o.sent += uint64(n)
@@ -60,7 +61,7 @@ func (o *TrojanOutboundConnSession) Close() error {
 	return o.rwc.Close()
 }
 
-func (o *TrojanOutboundConnSession) writeRequest() error {
+func (o *TrojanOutboundConnSession) writeRequest() {
 	user := o.auth.ListUsers()[0]
 	hash := user.Hash()
 	o.meter = user
@@ -72,7 +73,6 @@ func (o *TrojanOutboundConnSession) writeRequest() error {
 	protocol.WriteAddress(buf, o.request)
 	buf.Write(crlf)
 	o.trojanHeader = buf.Bytes()
-	return nil
 }
 
 func NewOutboundConnSession(req *protocol.Request, rwc io.ReadWriteCloser, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {
@@ -82,8 +82,6 @@ func NewOutboundConnSession(req *protocol.Request, rwc io.ReadWriteCloser, confi
 		rwc:     rwc,
 		auth:    auth,
 	}
-	if err := o.writeRequest(); err != nil {
-		return nil, common.NewError("failed to write request").Base(err)
-	}
+	o.writeRequest()
 	return o, nil
 }

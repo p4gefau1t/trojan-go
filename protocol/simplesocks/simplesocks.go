@@ -13,12 +13,11 @@ import (
 type SimpleSocksConnSession struct {
 	protocol.ConnSession
 
-	config       *conf.GlobalConfig
-	request      *protocol.Request
-	rwc          io.ReadWriteCloser
-	passwordHash string
-	recv         uint64
-	sent         uint64
+	config  *conf.GlobalConfig
+	request *protocol.Request
+	rwc     io.ReadWriteCloser
+	recv    uint64
+	sent    uint64
 }
 
 func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
@@ -80,8 +79,7 @@ func NewInboundConnSession(conn io.ReadWriteCloser) (protocol.ConnSession, *prot
 
 func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser) (protocol.ConnSession, error) {
 	m := &SimpleSocksConnSession{
-		rwc:          conn,
-		passwordHash: "LOCAL_USER",
+		rwc: conn,
 	}
 	if err := m.writeRequest(req); err != nil {
 		return nil, common.NewError("failed to write mux request").Base(err)

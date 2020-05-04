@@ -193,6 +193,9 @@ func addMySQLConfig(t *testing.T, config *conf.GlobalConfig) *conf.GlobalConfig 
 	password := os.Getenv("mysql_password")
 	if database == "" || username == "" || password == "" {
 		t.Skip("skipping mysql test")
+		database = "trojan"
+		username = "root"
+		password = "password"
 	}
 	config.MySQL = conf.MySQLConfig{
 		Enabled:    true,
@@ -317,7 +320,7 @@ func SingleThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCo
 	mbytes := 2048
 	payload := GeneratePayload(1024 * 1024 * mbytes)
 	t1 := time.Now()
-	conn.Write(payload)
+	common.Must2(conn.Write(payload))
 	t2 := time.Now()
 	speed := float64(mbytes) / t2.Sub(t1).Seconds()
 	b.Log("single-thread link speed:", speed, "MiB/s")
