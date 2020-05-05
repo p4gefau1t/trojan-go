@@ -1,4 +1,4 @@
-// +build mysql full
+// +build auth_mysql full
 
 package build
 

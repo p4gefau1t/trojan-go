@@ -1,4 +1,4 @@
-// +build redis
+// +build auth_redis
 
 package build
 
