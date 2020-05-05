@@ -1,0 +1,29 @@
+{
+    "run_type": "client",
+    "local_addr": "127.0.0.1",
+    "local_port": 1080,
+    "remote_addr": "your_server",
+    "remote_port": 443,
+    "password": [
+        "your_password"
+    ],
+    "ssl": {
+        "sni": "your_domain_name"
+    },
+    "mux" :{
+        "enabled": true
+    },
+    "router":{
+        "enabled": true,
+        "bypass": [
+            "geoip:cn",
+            "geosite:cn",
+            "geosite:private"
+        ],
+        "block": [
+            "geosite:category-ads"
+        ],
+        "proxy": [],
+        "route_by_ip_on_nonmatch": true
+    }
+}
