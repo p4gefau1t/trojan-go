@@ -27,21 +27,33 @@ func (m *RedisTrafficMeter) Count(sent, recv int) {
 		if err := c.Do(radix.Cmd(nil, "WATCH", key)); err != nil {
 			return err
 		}
+
+		var err error
+		defer func() {
+			if err != nil {
+				c.Do(radix.Cmd(nil, "DISCARD"))
+			}
+		}()
+
 		var exist bool
-		if err := c.Do(radix.Cmd(&exist, "EXISTS", key)); err != nil {
+		if err = c.Do(radix.Cmd(&exist, "EXISTS", key)); err != nil {
 			return err
 		}
 		if exist {
-			if err := c.Do(radix.Cmd(nil, "MULTI")); err != nil {
+			if err = c.Do(radix.Cmd(nil, "MULTI")); err != nil {
 				return err
 			}
-			if err := c.Do(radix.Cmd(nil, "HINCRBY", key, "upload", strconv.Itoa(recv))); err != nil {
+			if err = c.Do(radix.Cmd(nil, "HINCRBY", key, "upload", strconv.Itoa(recv))); err != nil {
 				return err
 			}
-			if err := c.Do(radix.Cmd(nil, "HINCRBY", key, "download", strconv.Itoa(sent))); err != nil {
+			if err = c.Do(radix.Cmd(nil, "HINCRBY", key, "download", strconv.Itoa(sent))); err != nil {
 				return err
 			}
-			if err := c.Do(radix.Cmd(nil, "EXEC")); err != nil {
+			if err = c.Do(radix.Cmd(nil, "EXEC")); err != nil {
+				return err
+			}
+		} else {
+			if err = c.Do(radix.Cmd(nil, "UNWATCH")); err != nil {
 				return err
 			}
 		}
