@@ -5,7 +5,7 @@ on:
   pull_request:
     branches:
       - master
-name: github pages
+name: github-pages
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -28,4 +28,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./docs/public
