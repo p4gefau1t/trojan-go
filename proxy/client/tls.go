@@ -71,7 +71,7 @@ func (m *TLSManager) dialTCP() (net.Conn, error) {
 				Password: m.config.ForwardProxy.Password,
 			}
 		}
-		dialer, err := proxy.SOCKS5(network, m.config.ForwardProxy.ProxyHost, auth, nil)
+		dialer, err := proxy.SOCKS5(network, m.config.ForwardProxy.ProxyAddress.String(), auth, nil)
 		if err != nil {
 			return nil, err
 		}

@@ -95,6 +95,8 @@ type ForwardProxyConfig struct {
 	ProxyPort int    `json:"proxy_port"`
 	Username  string `json:"username"`
 	Password  string `json:"password"`
+
+	ProxyAddress *common.Address
 }
 
 type RouterConfig struct {

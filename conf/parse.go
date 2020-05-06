@@ -241,6 +241,11 @@ func loadClientConfig(config *GlobalConfig) error {
 		log.Debug("issuer:", cert.Issuer, ", subject:", cert.Subject)
 	}
 
+	//forward proxy settings
+	if config.ForwardProxy.Enabled {
+		config.ForwardProxy.ProxyAddress = common.NewAddress(config.ForwardProxy.ProxyHost, config.ForwardProxy.ProxyPort, "tcp")
+	}
+
 	return nil
 }
 
