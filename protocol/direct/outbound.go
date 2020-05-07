@@ -79,7 +79,6 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 					dnsPort = "53"
 				}
 			}
-			dnsURL.Port()
 
 			resolver := &net.Resolver{
 				PreferGo: true,

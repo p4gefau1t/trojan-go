@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -35,6 +36,10 @@ func (m *ShadowManager) handleScapegoat() {
 		case goat := <-m.scapegoatChan:
 			if goat.Info != "" {
 				log.Info("scapegoat: ", goat.Info)
+			}
+			//cancel the deadline
+			if conn, ok := goat.Conn.(net.Conn); ok {
+				conn.SetDeadline(time.Time{})
 			}
 			if goat.ShadowConn == nil {
 				if goat.ShadowAddress == nil {

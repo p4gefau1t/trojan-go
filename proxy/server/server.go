@@ -72,8 +72,8 @@ func (s *Server) handleConn(conn *tls.Conn) {
 
 	if req.Command == protocol.Mux {
 		muxServer, err := smux.Server(inboundConn, nil)
-		defer muxServer.Close()
 		common.Must(err)
+		defer muxServer.Close()
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {

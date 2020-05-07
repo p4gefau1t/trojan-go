@@ -114,14 +114,10 @@ func loadCommonConfig(config *GlobalConfig) error {
 			return common.NewError("websocket path must start with \"/\"")
 		}
 		if config.Websocket.HostName == "" {
-			if config.RunType == Client {
-				log.Warn("client websocket hostname is unspecified, using remote_addr \"", config.RemoteHost, "\" as host_name")
-				config.Websocket.HostName = config.RemoteHost
-				if ip := net.ParseIP(config.RemoteHost); ip != nil && ip.To4() == nil { //ipv6 address
-					config.Websocket.HostName = "[" + config.RemoteHost + "]"
-				}
-			} else if config.RunType == Server {
-				return common.NewError("server websocket hostname is required")
+			log.Warn("websocket hostname is unspecified, using remote_addr \"", config.RemoteHost, "\" as hostname")
+			config.Websocket.HostName = config.RemoteHost
+			if ip := net.ParseIP(config.RemoteHost); ip != nil && ip.To4() == nil { //ipv6 address
+				config.Websocket.HostName = "[" + config.RemoteHost + "]"
 			}
 		}
 		if config.Websocket.ObfuscationPassword != "" {
@@ -243,6 +239,7 @@ func loadClientConfig(config *GlobalConfig) error {
 
 	//forward proxy settings
 	if config.ForwardProxy.Enabled {
+		log.Info("forward proxy enabled")
 		config.ForwardProxy.ProxyAddress = common.NewAddress(config.ForwardProxy.ProxyHost, config.ForwardProxy.ProxyPort, "tcp")
 	}
 
@@ -306,32 +303,44 @@ func loadServerConfig(config *GlobalConfig) error {
 }
 
 func ParseJSON(data []byte) (*GlobalConfig, error) {
-	config := &GlobalConfig{}
-
 	//default settings
-	config.LogLevel = 1
-	config.BufferSize = 32
-	config.TCP.FastOpenQLen = 20
-	config.TCP.KeepAlive = true
-	config.TCP.NoDelay = true
-	config.TLS.Verify = true
-	config.TLS.VerifyHostname = true
-	config.TLS.SessionTicket = true
-	config.TLS.ReuseSession = true
-	config.Mux.IdleTimeout = 60
-	config.Mux.Concurrency = 8
-	config.MySQL.CheckRate = 60
-	config.MySQL.ServerPort = 3306
-	config.MySQL.ServerHost = "localhost"
-	config.Router.DefaultPolicy = "proxy"
-	config.Router.GeoIPFilename = common.GetProgramDir() + "/geoip.dat"
-	config.Router.GeoSiteFilename = common.GetProgramDir() + "/geosite.dat"
-	config.Websocket.DoubleTLS = true
-	config.Websocket.DoubleTLSVerify = true
-	config.Websocket.ObfuscationPassword = ""
-	config.Redis.ServerHost = "localhost"
-	config.Redis.ServerPort = 6379
-	config.Redis.Password = ""
+	config := &GlobalConfig{
+		LogLevel:   1,
+		BufferSize: 32,
+		TCP: TCPConfig{
+			FastOpenQLen: 20,
+			NoDelay:      true,
+			KeepAlive:    true,
+		},
+		TLS: TLSConfig{
+			Verify:         true,
+			VerifyHostname: true,
+			SessionTicket:  true,
+			ReuseSession:   true,
+		},
+		Mux: MuxConfig{
+			IdleTimeout: 60,
+			Concurrency: 8,
+		},
+		Websocket: WebsocketConfig{
+			DoubleTLS:       true,
+			DoubleTLSVerify: true,
+		},
+		MySQL: MySQLConfig{
+			CheckRate:  60,
+			ServerHost: "localhost",
+			ServerPort: 3306,
+		},
+		Router: RouterConfig{
+			DefaultPolicy:   "proxy",
+			GeoIPFilename:   common.GetProgramDir() + "/geoip.dat",
+			GeoSiteFilename: common.GetProgramDir() + "/geosite.dat",
+		},
+		Redis: RedisConfig{
+			ServerHost: "localhost",
+			ServerPort: 6379,
+		},
+	}
 
 	err := json.Unmarshal(data, config)
 	if err != nil {

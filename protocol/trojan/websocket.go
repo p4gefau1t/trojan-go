@@ -197,8 +197,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	}
 
 	//this is a http request
-	if (config.Websocket.HostName != "" && httpRequest.Host != config.Websocket.HostName) || //check hostname
-		httpRequest.URL.Path != config.Websocket.Path || //check url path
+	if httpRequest.URL.Path != config.Websocket.Path || //check url path
 		strings.ToLower(httpRequest.Header.Get("Upgrade")) != "websocket" { //check upgrade field
 		//not a valid websocket conn
 		rewindConn.R.Rewind()

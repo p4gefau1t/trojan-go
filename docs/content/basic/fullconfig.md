@@ -104,7 +104,7 @@ weight: 30
     "password": ""
   },
   "api": {
-    "enabled": true,
+    "enabled": false,
     "api_addr": "",
     "api_port": 0
   }
