@@ -1,4 +1,4 @@
-// +build auth_redis
+// +build auth_redis full
 
 package build
 

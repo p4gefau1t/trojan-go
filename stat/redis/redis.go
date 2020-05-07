@@ -23,43 +23,15 @@ func (m *RedisTrafficMeter) Close() error { return nil }
 
 func (m *RedisTrafficMeter) Count(sent, recv int) {
 	key := m.hash
-	err := m.db.Do(radix.WithConn(key, func(c radix.Conn) error {
-		if err := c.Do(radix.Cmd(nil, "WATCH", key)); err != nil {
-			return err
-		}
+	evalScript := radix.NewEvalScript(1, `
+		if redis.call('exists', KEYS[1]) == 1
+		then
+			redis.call('hincrby', KEYS[1], 'upload', ARGV[1])
+			redis.call('hincrby', KEYS[1], 'download', ARGV[2])
+		end
+	`)
 
-		var err error
-		defer func() {
-			if err != nil {
-				c.Do(radix.Cmd(nil, "DISCARD"))
-			}
-		}()
-
-		var exist bool
-		if err = c.Do(radix.Cmd(&exist, "EXISTS", key)); err != nil {
-			return err
-		}
-		if exist {
-			if err = c.Do(radix.Cmd(nil, "MULTI")); err != nil {
-				return err
-			}
-			if err = c.Do(radix.Cmd(nil, "HINCRBY", key, "upload", strconv.Itoa(recv))); err != nil {
-				return err
-			}
-			if err = c.Do(radix.Cmd(nil, "HINCRBY", key, "download", strconv.Itoa(sent))); err != nil {
-				return err
-			}
-			if err = c.Do(radix.Cmd(nil, "EXEC")); err != nil {
-				return err
-			}
-		} else {
-			if err = c.Do(radix.Cmd(nil, "UNWATCH")); err != nil {
-				return err
-			}
-		}
-		return nil
-	}))
-	if err != nil {
+	if err := m.db.Do(evalScript.Cmd(nil, key, strconv.Itoa(recv), strconv.Itoa(sent))); err != nil {
 		log.Error(common.NewError("failed to update data to user").Base(err))
 	}
 }
