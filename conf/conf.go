@@ -86,7 +86,6 @@ type RedisConfig struct {
 	ServerHost string `json:"server_addr"`
 	ServerPort int    `json:"server_port"`
 	Password   string `json:"password"`
-	CheckRate  int    `json:"check_rate"`
 }
 
 type ForwardProxyConfig struct {
