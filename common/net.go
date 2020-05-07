@@ -17,9 +17,9 @@ type Address struct {
 	net.Addr
 
 	DomainName  string
-	IP          net.IP
 	Port        int
 	NetworkType string
+	net.IP
 	AddressType
 }
 

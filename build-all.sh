@@ -25,7 +25,7 @@ mkdir release
 mkdir temp
 
 wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosite.dat
-wget https://raw.githubusercontent.com/v2ray/geoip/release/geoip.dat -O geoip.dat
+wget https://github.com/v2ray/geoip/raw/release/geoip.dat -O geoip.dat
 
 
 SCRIPT_NAME=`basename "$0"`
