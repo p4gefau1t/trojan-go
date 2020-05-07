@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="隧道和反向代理" />
-<meta property="og:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &quot;run_type&quot;: &quot;forward&quot;," />
+<meta property="og:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &#34;run_type&#34;: &#34;forward&#34;," />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/forward/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,9 +26,9 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="隧道和反向代理"/>
-<meta name="twitter:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &quot;run_type&quot;: &quot;forward&quot;,"/>
+<meta name="twitter:description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &#34;run_type&#34;: &#34;forward&#34;,"/>
 <meta itemprop="name" content="隧道和反向代理">
-<meta itemprop="description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &quot;run_type&quot;: &quot;forward&quot;,">
+<meta itemprop="description" content="你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子 { &#34;run_type&#34;: &#34;forward&#34;,">
 
 <meta itemprop="wordCount" content="736">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -54,48 +54,48 @@
 <div class="content-container">
 <main><h1>隧道和反向代理</h1>
 <p>你可以使用Trojan-Go建立隧道。一个典型的应用是，使用Trojan-Go在本地建立一个无污染的DNS服务器，下面是一个配置的例子</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;forward&quot;,
-    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;local_port&quot;: 53,
-    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
-    &quot;remote_port&quot;: 443,
-    &quot;target_addr&quot;: &quot;8.8.8.8&quot;,
-    &quot;target_port&quot;: 53,
-    &quot;password&quot;: [
-	    &quot;your_awesome_password&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;forward&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">53</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_awesome_server&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;target_addr&#34;</span>: <span style="color:#e6db74">&#34;8.8.8.8&#34;</span>,
+    <span style="color:#f92672">&#34;target_port&#34;</span>: <span style="color:#ae81ff">53</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: [
+        <span style="color:#e6db74">&#34;your_awesome_password&#34;</span>
     ]
 }
-</code></pre><p>forward本质上是一个客户端，不过你需要填入<code>target_addr</code>和<code>target_port</code>字段，指明反向代理的目标。</p>
+</code></pre></div><p>forward本质上是一个客户端，不过你需要填入<code>target_addr</code>和<code>target_port</code>字段，指明反向代理的目标。</p>
 <p>使用这份配置文件后，本地53的TCP和UDP端口将被监听，所有的向本地53端口发送的TCP或者UDP数据，都会通过TLS隧道转发给远端服务器your_awesome_server，远端服务器得到回应后，数据会通过隧道返回到本地53端口。 也就是说，你可以将127.0.0.1当作一个DNS服务器，本地查询的结果和远端服务器查询的结果是一致的。你可以使用这个配置避开DNS污染。</p>
 <p>同样的原理，你可以在本地搭建一个Google的镜像</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;forward&quot;,
-    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;local_port&quot;: 443,
-    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
-    &quot;remote_port&quot;: 443,
-    &quot;target_addr&quot;: &quot;www.google.com&quot;,
-    &quot;target_port&quot;: 443,
-    &quot;password&quot;: [
-	    &quot;your_awesome_password&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;forward&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_awesome_server&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;target_addr&#34;</span>: <span style="color:#e6db74">&#34;www.google.com&#34;</span>,
+    <span style="color:#f92672">&#34;target_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: [
+        <span style="color:#e6db74">&#34;your_awesome_password&#34;</span>
     ]
 }
-</code></pre><p>访问https://127.0.0.1即可访问谷歌主页，但是注意这里由于谷歌服务器提供的https证书是google.com的证书，而当前域名为127.0.0.1，因此浏览器会引发一个证书错误的警告。</p>
+</code></pre></div><p>访问<code>https://127.0.0.1</code>即可访问谷歌主页，但是注意这里由于谷歌服务器提供的https证书是google.com的证书，而当前域名为127.0.0.1，因此浏览器会引发一个证书错误的警告。</p>
 <p>类似的，可以使用forward传输其他代理协议。例如，使用Trojan-Go传输shadowsocks的流量，远端主机开启ss服务器，监听127.0.0.1:12345，并且远端服务器在443端口开启了正常的Trojan-Go服务器。你可以如此指定配置</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;forward&quot;,
-    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
-    &quot;local_port&quot;: 54321,
-    &quot;remote_addr&quot;: &quot;your_awesome_server&quot;,
-    &quot;remote_port&quot;: 443,
-    &quot;target_addr&quot;: &quot;www.google.com&quot;,
-    &quot;target_port&quot;: 12345,
-    &quot;password&quot;: [
-	    &quot;your_awesome_password&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;forward&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">54321</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_awesome_server&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;target_addr&#34;</span>: <span style="color:#e6db74">&#34;www.google.com&#34;</span>,
+    <span style="color:#f92672">&#34;target_port&#34;</span>: <span style="color:#ae81ff">12345</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: [
+        <span style="color:#e6db74">&#34;your_awesome_password&#34;</span>
     ]
 }
-</code></pre><p>此后，任何连接本机54321端口的TCP/UDP连接，等同于连接远端12345端口。你可以使用shadowsocks客户端连接本地的54321端口，ss流量将使用trojan的隧道连接传输至远端12345端口的ss服务器。</p>
+</code></pre></div><p>此后，任何连接本机54321端口的TCP/UDP连接，等同于连接远端12345端口。你可以使用shadowsocks客户端连接本地的54321端口，ss流量将使用trojan的隧道连接传输至远端12345端口的ss服务器。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/forward.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/relay/" title="流量中继"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 流量中继</a>

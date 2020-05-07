@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -60,27 +60,27 @@
 <p>Trojan-Go使用多路复用的方式解决这一问题。每个建立的TLS连接将承载多个TCP连接。当新的代理请求到来时，不需要和服务器握手发起一个新的TLS连接，而是尽可能重复使用已有的TLS连接。以此减少频繁TLS握手的带来的延迟。</p>
 <p>启用多路复用功能不会增加你的链路速度（甚至会有所减少），而且可能会增加服务器和客户端的计算负担。但在高并发的情况下，如浏览含有大量图片的网页时，或者发送大量UDP请求时，可以提升使用体验。</p>
 <p>激活<code>mux</code>模块，只需要将<code>mux</code>选项中<code>enabled</code>字段设为true即可，下面是一个客户端的例子</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;client&quot;,
-    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;local_port&quot;: 1080,
-    &quot;remote_addr&quot;: &quot;your_server&quot;,
-    &quot;remote_port&quot;: 443,
-    &quot;password&quot;: [
-        &quot;your_password&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;client&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">1080</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_server&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: [
+        <span style="color:#e6db74">&#34;your_password&#34;</span>
     ],
-    &quot;mux&quot; :{
-        &quot;enabled&quot;: true
+    <span style="color:#f92672">&#34;mux&#34;</span> :{
+        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>
     }
 }
-</code></pre><p>只需要配置客户端即可，服务端可以自动适配，无需配置<code>mux</code>选项。</p>
+</code></pre></div><p>只需要配置客户端即可，服务端可以自动适配，无需配置<code>mux</code>选项。</p>
 <p>完整的mux配置如下</p>
-<pre><code>&quot;mux&quot;: {
-    &quot;enabled&quot;: false,
-    &quot;concurrency&quot;: 8,
-    &quot;idle_timeout&quot;: 60
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;mux&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
+    <span style="color:#f92672">&#34;concurrency&#34;</span>: <span style="color:#ae81ff">8</span>,
+    <span style="color:#f92672">&#34;idle_timeout&#34;</span>: <span style="color:#ae81ff">60</span>
 }
-</code></pre><p><code>concurrency</code>是每个TLS连接最多可以承载的TCP连接数。这个数值越大，TLS连接被复用的比例就更高，握手导致的延迟越低，但服务器和客户端的计算负担也会越大，这有可能使你的网络吞吐量降低。如果你的线路的TLS握手极端缓慢，你可以将这个数值设置为-1，Trojan-Go将只进行一次TLS握手，只使用唯一的一条TLS连接进行传输。</p>
+</code></pre></div><p><code>concurrency</code>是每个TLS连接最多可以承载的TCP连接数。这个数值越大，TLS连接被复用的比例就更高，握手导致的延迟越低，但服务器和客户端的计算负担也会越大，这有可能使你的网络吞吐量降低。如果你的线路的TLS握手极端缓慢，你可以将这个数值设置为-1，Trojan-Go将只进行一次TLS握手，只使用唯一的一条TLS连接进行传输。</p>
 <p><code>idle_timeout</code>指的是每个TLS连接空闲多长时间后关闭。设置超时时间，<strong>可能</strong>有助于减少不必要的长连接存活确认(Keep Alive)流量传输引发GFW的探测。你可以将这个数值设置为-1，TLS连接将不会因为长时间空闲而被关闭。</p>
 <div class="edit-meta">
 

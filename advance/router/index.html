@@ -30,7 +30,7 @@
 <meta itemprop="name" content="国内直连和广告屏蔽">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。 路由模块">
 
-<meta itemprop="wordCount" content="788">
+<meta itemprop="wordCount" content="803">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -57,54 +57,54 @@
 <p>Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网站不经过代理，直接连接。</p>
 <p>路由模块只在客户端client生效。</p>
 <p>下面是一个例子</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;client&quot;,
-    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;local_port&quot;: 1080,
-    &quot;remote_addr&quot;: &quot;your_server&quot;,
-    &quot;remote_port&quot;: 443,
-    &quot;password&quot;: [
-        &quot;your_password&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;client&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">1080</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_server&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: [
+        <span style="color:#e6db74">&#34;your_password&#34;</span>
     ],
-    &quot;ssl&quot;: {
-        &quot;sni&quot;: &quot;your_domain_name&quot;
+    <span style="color:#f92672">&#34;ssl&#34;</span>: {
+        <span style="color:#f92672">&#34;sni&#34;</span>: <span style="color:#e6db74">&#34;your_domain_name&#34;</span>
     },
-    &quot;mux&quot; :{
-        &quot;enabled&quot;: true
+    <span style="color:#f92672">&#34;mux&#34;</span> :{
+        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>
     },
-    &quot;router&quot;:{
-        &quot;enabled&quot;: true,
-        &quot;bypass&quot;: [
-            &quot;geosite:cn&quot;,
-            &quot;geoip:cn&quot;,
-            &quot;geoip:private&quot;
+    <span style="color:#f92672">&#34;router&#34;</span>:{
+        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+        <span style="color:#f92672">&#34;bypass&#34;</span>: [
+            <span style="color:#e6db74">&#34;geosite:cn&#34;</span>,
+            <span style="color:#e6db74">&#34;geoip:cn&#34;</span>,
+            <span style="color:#e6db74">&#34;geoip:private&#34;</span>
         ],
-        &quot;block&quot;: [
-            &quot;geosite:category-ads&quot;
+        <span style="color:#f92672">&#34;block&#34;</span>: [
+            <span style="color:#e6db74">&#34;geosite:category-ads&#34;</span>
         ]
     }
 }
-</code></pre><p>所需要的geoip.dat和geosite.dat已经包含在release的压缩包中，直接使用即可。它们来自v2ray的<a href="https://github.com/v2ray/domain-list-community">domain-list-community</a>和<a href="https://github.com/v2ray/geoip">geoip</a>。</p>
+</code></pre></div><p>所需要的geoip.dat和geosite.dat已经包含在release的压缩包中，直接使用即可。它们来自v2ray的<a href="https://github.com/v2ray/domain-list-community">domain-list-community</a>和<a href="https://github.com/v2ray/geoip">geoip</a>。</p>
 <p>这个配置文件激活了router模块，使用的是白名单的模式，当匹配到中国大陆的ip或域名时，将使用直接连接，否则使用trojan代理进行连接。</p>
 <p>你也可以配置自己的列表文件，列表文件每一行是一个域名或者IP子网（CIDR）。例如，你想要屏蔽所有example.com域名以及其子域名，以及192.168.1.0/24，只需要编写一个txt文件</p>
 <p>test_list.txt</p>
-<pre><code>example.com
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">example.com
 192.168.1.0/24
-</code></pre><p>然后在block字段中填入该文件名</p>
+</code></pre></div><p>然后在block字段中填入该文件名</p>
 <p>同时geosite中也含有广告提供商的域名，可以通过&quot;geosite:category-ads&quot;指定屏蔽它们。下面这个例子使用了一个列表文件，和geosite的category-ads标签，对相关连接进行屏蔽</p>
-<pre><code>&quot;router&quot;:{
-    &quot;enabled&quot;: true,
-    &quot;bypass&quot;: [
-        &quot;geosite:cn&quot;,
-        &quot;geoip:cn&quot;,
-        &quot;geoip:private&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;router&#34;</span><span style="color:#960050;background-color:#1e0010">:</span>{
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+    <span style="color:#f92672">&#34;bypass&#34;</span>: [
+        <span style="color:#e6db74">&#34;geosite:cn&#34;</span>,
+        <span style="color:#e6db74">&#34;geoip:cn&#34;</span>,
+        <span style="color:#e6db74">&#34;geoip:private&#34;</span>
     ],
-    &quot;block&quot;: [
-        &quot;test_list.txt&quot;，
-        &quot;geosite:category-ads&quot;
+    <span style="color:#f92672">&#34;block&#34;</span>: [
+        <span style="color:#e6db74">&#34;test_list.txt&#34;</span><span style="color:#960050;background-color:#1e0010">，</span>
+        <span style="color:#e6db74">&#34;geosite:category-ads&#34;</span>
     ]
 }
-</code></pre><p>下面介绍完整的路由功能</p>
+</code></pre></div><p>下面是完整的路由策略设置</p>
 <p>路由策略有三种</p>
 <ul>
 <li>
@@ -117,22 +117,23 @@
 <p>Block 封锁。不代理请求，直接关闭连接。</p>
 </li>
 </ul>
-<pre><code>&quot;router&quot;: {
-    &quot;enabled&quot;: true,
-    &quot;bypass&quot;: [
-        &quot;geoip:tag1&quot;,
-        &quot;geosite:tag2&quot;,
-        &quot;bypass_list1.txt&quot;,
-        &quot;bypass_list2.txt&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;router&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+    <span style="color:#f92672">&#34;bypass&#34;</span>: [
+        <span style="color:#e6db74">&#34;geoip:tag1&#34;</span>,
+        <span style="color:#e6db74">&#34;geosite:tag2&#34;</span>,
+        <span style="color:#e6db74">&#34;bypass_list1.txt&#34;</span>,
+        <span style="color:#e6db74">&#34;bypass_list2.txt&#34;</span>
     ],
-    &quot;block&quot;: [
-        &quot;block_list.txt&quot;
-    ]
-    &quot;proxy&quot;: [
-        &quot;proxy_list.txt&quot;
+    <span style="color:#f92672">&#34;block&#34;</span>: [
+        <span style="color:#e6db74">&#34;block_list.txt&#34;</span>
+    ],
+    <span style="color:#f92672">&#34;proxy&#34;</span>: [
+        <span style="color:#e6db74">&#34;proxy_list.txt&#34;</span>
     ]
 }
-</code></pre><p>其中<code>bypass</code>,<code>block</code>, <code>proxy</code>字段中填入相应的列表文件或者geo数据库tag。列表文件每行是一个域名或者IP地址段(CIDR)。geo数据库geoip和geosite为IP数据库和域名数据库。一旦匹配，则执行相应策略。</p>
+</code></pre></div><p>其中<code>bypass</code>,<code>block</code>, <code>proxy</code>字段中填入相应的列表文件或者geo数据库tag。列表文件每行是一个域名或者IP地址段(CIDR)。geo数据库geoip和geosite为IP数据库和域名数据库。一旦匹配，则执行相应策略。</p>
+<p>更详细的说明参考完整的配置文件。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/router.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/websocket/" title="使用Websocket进行CDN转发和抵抗中间人攻击"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用Websocket进行CDN转发和抵抗中间人攻击</a>

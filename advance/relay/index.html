@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -56,15 +56,15 @@
 <h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
 <p>Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的线路质量并不理想。这时你可以使用国内的一些线路更好的服务器，作为中继，将你的流量转发给trojan服务器。</p>
 <p>中继的配置很简单，下面是一个例子</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;relay&quot;,
-    &quot;local_addr&quot;: &quot;0.0.0.0&quot;,
-    &quot;local_port&quot;: 1234,
-    &quot;remote_addr&quot;: &quot;your_trojan_server&quot;,
-    &quot;remote_port&quot;: 443,
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;relay&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">1234</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_trojan_server&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
 }
 
-</code></pre><p>中继启动后，客户端连接该主机的1234端口，和直接连接Trojan服务器443端口是等效的。中继只做简单的流量转发，本地不需要任何的证书文件和密钥文件。你也可以使用socat或者iptables实现上述功能。</p>
+</code></pre></div><p>中继启动后，客户端连接该主机的1234端口，和直接连接Trojan服务器443端口是等效的。中继只做简单的流量转发，本地不需要任何的证书文件和密钥文件。你也可以使用socat或者iptables实现上述功能。</p>
 <p>你可以使用多个中继链接起来作为多重跳板，如果你忍受这种做法带来的延迟升高和吞吐量下降的话。</p>
 <div class="edit-meta">
 

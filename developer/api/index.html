@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -54,12 +54,12 @@
 <div class="content-container">
 <main><h1>API</h1>
 <p>Trojan-Go基于grpc实现了API，使用protobuf交换数据。客户端可获取流量和速度信息；服务端可获取各用户流量，速度，在线情况，并动态增删用户和限制速度。可以通过在配置文件中添加<code>api</code>选项激活API模块。下面是一个例子</p>
-<pre><code>&quot;api&quot;: {
-    &quot;enabled&quot;: true,
-    &quot;api_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;api_port&quot;: 10000
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;api&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+    <span style="color:#f92672">&#34;api_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+    <span style="color:#f92672">&#34;api_port&#34;</span>: <span style="color:#ae81ff">10000</span>
 }
-</code></pre><p>目前API处于开发阶段，使用方法可以参考api文件夹下api.proto文件。</p>
+</code></pre></div><p>目前API处于开发阶段，使用方法可以参考api文件夹下api.proto文件。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/api.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/" title="SimpleSocks协议"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - SimpleSocks协议</a>

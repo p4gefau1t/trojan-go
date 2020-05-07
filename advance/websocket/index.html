@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -56,14 +56,14 @@
 <h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
 <p>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的设计考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go支持使用多重TLS，即使遭受GFW的HTTPS中间人攻击，<strong>在正确的配置下</strong>，连接的安全性依然能得到保证。</p>
 <p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>hostname</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项</p>
-<pre><code>&quot;websocket&quot;: {
-    &quot;enabled&quot;: true,
-    &quot;path&quot;: &quot;/imaurlpath&quot;,
-    &quot;hostname&quot;: &quot;www.your_awesome_domain_name.com&quot;,
-    &quot;obfuscation_password&quot;: &quot;another_password&quot;,
-    &quot;double_tls&quot;: true
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;websocket&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+    <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/imaurlpath&#34;</span>,
+    <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>,
+    <span style="color:#f92672">&#34;obfuscation_password&#34;</span>: <span style="color:#e6db74">&#34;another_password&#34;</span>,
+    <span style="color:#f92672">&#34;double_tls&#34;</span>: <span style="color:#66d9ef">true</span>
 }
-</code></pre><p><code>hostname</code>是主机名，一般填写域名。客户端<code>hostname</code>是可选的，填写你的域名。如果留空，将会使用<code>remote_addr</code>填充，服务端必须填写<code>hostname</code>，Trojan-Go可以以此转发Websocket请求，以抵抗针对Websocket的主动检测。</p>
+</code></pre></div><p><code>hostname</code>是主机名，一般填写域名。客户端<code>hostname</code>是可选的，填写你的域名。如果留空，将会使用<code>remote_addr</code>填充，服务端必须填写<code>hostname</code>，Trojan-Go可以以此转发Websocket请求，以抵抗针对Websocket的主动检测。</p>
 <p><code>path</code>指的是websocket所在的URL路径，必须以斜杠(&quot;/&quot;)开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的<code>path</code>一致。<code>path</code>应当选择较长的字符串，以避免遭到GFW直接的主动探测。</p>
 <p>服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。</p>
 <p>由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的服务端仍然可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。</p>
@@ -73,25 +73,25 @@
 <p><strong>如果你使用的是国内的CDN，务必保证两者均开启。最坏情况下也应当保持混淆和双重TLS之一是打开的。</strong></p>
 <p>CDN转发的场景，和GFW在2020年3月29日进行的对包括github pages等站点进行的HTTPS流量劫持和中间人攻击,是类似的。它们的共同点是，第一层TLS承载的流量明文均可以被第三者窃听（CDN或GFW）。<strong>如果你使用了Websocket模式</strong>，你可以将客户端的<code>verify</code>字段填写为false，并指定<code>cert</code>字段。在这样的设置下，即使第一层TLS传输的明文遭到审查或攻击，由于第二层TLS的保护（证书校验被强制开启），传输的内容依旧安全。</p>
 <p>下面是一个客户端配置文件的例子</p>
-<pre><code>{
-    &quot;run_type&quot;: &quot;client&quot;,
-    &quot;local_addr&quot;: &quot;127.0.0.1&quot;,
-    &quot;local_port&quot;: 1080,
-    &quot;remote_addr&quot;: &quot;www.your_awesome_domain_name.com&quot;,
-    &quot;remote_port&quot;: 443,
-    &quot;password&quot;: [
-        &quot;your_password&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;client&#34;</span>,
+    <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+    <span style="color:#f92672">&#34;local_port&#34;</span>: <span style="color:#ae81ff">1080</span>,
+    <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>,
+    <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: [
+        <span style="color:#e6db74">&#34;your_password&#34;</span>
     ],
-    &quot;websocket&quot;: {
-        &quot;enabled&quot;: true,
-        &quot;path&quot;: &quot;/imaurlpath&quot;,
-        &quot;hostname&quot;: &quot;www.your_awesome_domain_name.com&quot;
-        &quot;obfuscation_password&quot;: &quot;another_password&quot;,
-        &quot;double_tls&quot;: true
+    <span style="color:#f92672">&#34;websocket&#34;</span>: {
+        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+        <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/imaurlpath&#34;</span>,
+        <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>
+        <span style="color:#e6db74">&#34;obfuscation_password&#34;</span>: <span style="color:#e6db74">&#34;another_password&#34;</span>,
+        <span style="color:#f92672">&#34;double_tls&#34;</span>: <span style="color:#66d9ef">true</span>
     }
 }
 
-</code></pre><div class="edit-meta">
+</code></pre></div><div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/websocket.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/mux/" title="启用多路复用提升并发性能"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 启用多路复用提升并发性能</a>
 <a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/router/" title="国内直连和广告屏蔽">Next - 国内直连和广告屏蔽 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>

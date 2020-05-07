@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="编译和自定义Trojan-Go" />
-<meta property="og:description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &quot;full&quot; #编译完整版本 bu" />
+<meta property="og:description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &#34;full&#34; #编译完整版本 bu" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/build/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="编译和自定义Trojan-Go"/>
-<meta name="twitter:description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &quot;full&quot; #编译完整版本 bu"/>
+<meta name="twitter:description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &#34;full&#34; #编译完整版本 bu"/>
 <meta itemprop="name" content="编译和自定义Trojan-Go">
-<meta itemprop="description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &quot;full&quot; #编译完整版本 bu">
+<meta itemprop="description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &#34;full&#34; #编译完整版本 bu">
 
-<meta itemprop="wordCount" content="393">
+<meta itemprop="wordCount" content="394">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.4</span>
+ <span class="version">Version 0.4.5</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -55,20 +55,20 @@
 <main><h1>编译和自定义Trojan-Go</h1>
 <p>编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。</p>
 <p>编译过程非常简单</p>
-<pre><code>go build -tags &quot;full&quot; #编译完整版本
-</code></pre><p>build.sh中的命令禁用了cgo并去除可执行文件的调试符号以减小体积。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">go build -tags <span style="color:#e6db74">&#34;full&#34;</span> <span style="color:#75715e">#编译完整版本</span>
+</code></pre></div><p>build.sh中的命令禁用了cgo并去除可执行文件的调试符号以减小体积。</p>
 <p>可以通过指定GOOS和GOARCH环境变量，指定交叉编译的目标操作系统和架构，例如</p>
-<pre><code>GOOS=windows GOARCH=386 go build -tags &quot;full&quot; #windows x86
-GOOS=linux GOARCH=arm64 go build -tags &quot;full&quot; #linux arm64
-</code></pre><p>你可以使用build-all.sh进行批量的多个平台的交叉编译，release版本使用了这个脚本进行构建。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">GOOS<span style="color:#f92672">=</span>windows GOARCH<span style="color:#f92672">=</span><span style="color:#ae81ff">386</span> go build -tags <span style="color:#e6db74">&#34;full&#34;</span> <span style="color:#75715e">#windows x86</span>
+GOOS<span style="color:#f92672">=</span>linux GOARCH<span style="color:#f92672">=</span>arm64 go build -tags <span style="color:#e6db74">&#34;full&#34;</span> <span style="color:#75715e">#linux arm64</span>
+</code></pre></div><p>你可以使用build-all.sh进行批量的多个平台的交叉编译，release版本使用了这个脚本进行构建。</p>
 <p>Trojan-Go的大多数模块是可插拔的。在build文件夹下可以找到各个模块的导入声明。如果你不需要其中某些功能，或者需要缩小可执行文件的体积，可以使用构建标签(tags)进行模块的自定义，例如</p>
-<pre><code>go build -tags &quot;full&quot; #编译所有模块
-go build -tags &quot;client&quot; #只有客户端功能
-go build -tags &quot;server mysql&quot; #只有服务端和mysql支持
-go build -tags &quot;client router&quot; #只有客户端和路由模块
-</code></pre><p>使用full标签等价于</p>
-<pre><code>go build -tags &quot;api client router server mysql relay cert other&quot;
-</code></pre><div class="edit-meta">
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">go build -tags <span style="color:#e6db74">&#34;full&#34;</span> <span style="color:#75715e">#编译所有模块</span>
+go build -tags <span style="color:#e6db74">&#34;client&#34;</span> <span style="color:#75715e">#只有客户端功能</span>
+go build -tags <span style="color:#e6db74">&#34;server auth_mysql&#34;</span> <span style="color:#75715e">#只有服务端和mysql支持</span>
+go build -tags <span style="color:#e6db74">&#34;client router&#34;</span> <span style="color:#75715e">#只有客户端和路由模块</span>
+</code></pre></div><p>使用full标签等价于</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">go build -tags <span style="color:#e6db74">&#34;api client router server auth_mysql auth_redis relay cert other&#34;</span>
+</code></pre></div><div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/build.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/overview/" title="基本介绍"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 基本介绍</a>
 <a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/trojan/" title="Trojan协议">Next - Trojan协议 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
