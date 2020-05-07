@@ -1,4 +1,4 @@
-// +build auth_config full
+// +build auth_config auth_mysql api client full
 
 package build
 
