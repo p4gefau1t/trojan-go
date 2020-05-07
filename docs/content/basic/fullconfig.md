@@ -219,13 +219,13 @@ weight: 30
 
 ### ```websocket```选项
 
-Websocket传输是trojan-go的特性。在**正常的直接连接服务器节点**的情况下，开启这个选项不会提升线路质量（甚至有可能下降），也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
+Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**的情况下，开启这个选项不会改善你的链路速度（甚至有可能下降），也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
 
 - 你需要利用CDN进行流量中转
 
 - 你到代理节点的直接TLS连接遭到了GFW的中间人攻击
 
-警告：**由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以查看Websocket流量传输内容。如果你使用了国内CDN，务必开启double_tls进行双重加密，并使用password进行流量混淆**
+警告：**由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以查看Websocket流量传输内容。如果你使用了国内的CDN，应当假定CDN不可信任，请务必开启double_tls进行双重加密，并使用obfuscation_password进行流量混淆**
 
 ```enabled```表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。
 
