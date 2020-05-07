@@ -18,7 +18,7 @@ weight: 22
 
 为了伪装成一个正常的HTTPS站点，也为了保证传输的安全，我们需要一份经过权威证书机构签名的证书。Trojan-Go支持从Let's Encrypt自动申请证书。首先将你的域名正确解析到你的服务器IP。然后准备好一个邮箱地址，合乎邮箱地址规则即可，不需要真实邮箱地址。保证你的服务器443和80端口没有被其他程序（nginx，apache，正在运行的Trojan等）占用。然后执行
 
-```
+```shell
 sudo ./trojan-go -autocert request
 ```
 
@@ -36,12 +36,11 @@ sudo ./trojan-go -autocert request
 
 证书的有效期通常是三个月，你可以使用
 
-
-```
+```shell
 sudo ./trojan-go -autocert renew
 ```
 
-进行证书更新。更新之前请确保同目录下有上述的四个文件。如果你没有制定ACME challenge使用的端口，Trojan-Go将默认使用443和80端口，请确保这两个端口没有被Trojan-Go或者其他程序（nginx, caddy等等）占用。
+进行证书更新。更新之前请确保同目录下有上述的四个文件。如果你没有指定ACME challenge使用的端口，Trojan-Go将默认使用443和80端口，请确保这两个端口没有被Trojan-Go或者其他程序（nginx, caddy等等）占用。
 
 ### 服务端配置
 
@@ -53,7 +52,7 @@ sudo ./trojan-go -autocert renew
 
 下面是一份比较安全的服务器配置，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如"remote_addr": "example.com"），在1234端口配置一个HTTPS服务（可选，可以删除```fallback_port```字段，跳过这个步骤）
 
-```
+```json
 {
     "run_type": "server",
     "local_addr": "0.0.0.0",
@@ -79,7 +78,7 @@ sudo ./trojan-go -autocert renew
 
 如果TLS连接建立，并且确认是Trojan协议，而且密码正确，那么服务器将解析来自客户端的请求并进行代理。
 
-你可以通过使用浏览器访问你的域名 https://your_domain_name 来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用 http://your_domain_name:443 验证```fallback_port```工作是否正常。
+你可以通过使用浏览器访问你的域名```https://your_domain_name```来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用```http://your_domain_name:443```验证```fallback_port```工作是否正常。
 
 事实上，你甚至可以将Trojan-Go当作你的HTTPS服务器，用来给你的网站提供HTTPS服务。访客可以正常地通过Trojan-Go浏览你的网站，而和代理流量互不影响。
 
@@ -87,7 +86,7 @@ sudo ./trojan-go -autocert renew
 
 对应的客户端配置
 
-```
+```json
 {
     "run_type": "client",
     "local_addr": "127.0.0.1",

@@ -177,7 +177,7 @@ weight: 30
 
 ```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
-```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问 http://your_domain_name.com:443 进行验证。
+```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your_domain_name.com:443```进行验证。
 
 ### ```mux```多路复用选项
 
@@ -225,7 +225,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接服务器节点
 
 - 你到代理节点的直接TLS连接遭到了GFW的中间人攻击
 
-*警告：由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以查看Websocket流量传输内容。如果你使用了国内CDN，务必开启double_tls进行双重加密，并使用password进行流量混淆*
+警告：**由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以查看Websocket流量传输内容。如果你使用了国内CDN，务必开启double_tls进行双重加密，并使用password进行流量混淆**
 
 ```enabled```表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。
 
@@ -263,7 +263,7 @@ trojan-go兼容trojan-gfw的基于mysql的用户管理方式，但更推荐的�
 
 users表结构和trojan-gfw定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224哈希之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
 
-```
+```mysql
 CREATE TABLE users (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     username VARCHAR(64) NOT NULL,
@@ -298,4 +298,4 @@ trojan-go基于grpc提供了API，以支持服务端和客户端的管理和统�
 
 ```api_port```grpc监听的端口。
 
-*警告：不要将API直接暴露在互联网上，否则可能导致各类安全问题*
+警告：**不要将API直接暴露在互联网上，否则可能导致各类安全问题**

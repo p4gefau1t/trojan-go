@@ -6,10 +6,8 @@
 [![Release](https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases)]((https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases))
 [![Release Date](https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go)]((https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go))
 
-
 [![Commit](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)]((https://img.shields.io/github/last-commit/p4gefau1t/trojan-go))
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)]((https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go))
-
 
 使用Go实现的完整Trojan代理，与Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
 
@@ -118,7 +116,8 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 服务器配置文件
 
 server.json
-```
+
+```json
 {
     "run_type": "server",
     "local_addr": "0.0.0.0",
@@ -139,7 +138,8 @@ server.json
 客户端配置文件
 
 client.json
-```
+
+```json
 {
     "run_type": "client",
     "local_addr": "127.0.0.1",
@@ -158,7 +158,7 @@ client.json
 
 使用
 
-```
+```shell
 sudo ./trojan-go -autocert request
 ```
 
@@ -184,7 +184,7 @@ Linux下，绑定80和443端口需要root权限，因此你需要使用sudo执�
 
 如果证书过期了，使用
 
-```
+```shell
 sudo ./trojan-go -autocert renew
 ```
 
@@ -198,7 +198,7 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 服务器和客户端配置文件中同时添加```websocket```选项即可启用Websocket支持，例如
 
-```
+```json
 "websocket": {
     "enabled": true,
     "path": "/im_a_url_path",
@@ -224,7 +224,7 @@ Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使�
 
 注意，这个特性和原版Trojan**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
 
-```
+```json
 "mux": {
     "enabled": true
 }
@@ -250,7 +250,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 要激活模块，在你的配置文件中添加router选项，并且设置enabled为true，例如
 
-```
+```json
 "router": {
     "enabled": true,
     "bypass": [
@@ -274,7 +274,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 下面是一个实现国内直连的选项，它将绕过中国大陆IP地址，中国大陆域名，以及内网IP等保留的私有IP地址，直接连接远端而不通过隧道代理。
 
-```
+```json
 "router": {
     "enabled": true,
     "bypass": [
@@ -291,7 +291,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 确保你的Go版本 >= 1.14，推荐使用snap安装Go保持与上游同步。
 
-```
+```shell
 git clone https://github.com/p4gefau1t/trojan-go.git
 cd trojan-go
 go build -tags "full"
@@ -299,27 +299,28 @@ go build -tags "full"
 
 Go支持通过设置环境变量进行交叉编译，例如
 
+```shell
+CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -tags "full" -o trojan-go.exe
 ```
-CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -o trojan-go.exe
-```
+
 以及
 
-```
-CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -o trojan-go
+```shell
+CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full" -o trojan-go
 ```
 
 ## 致谢
 
-https://github.com/trojan-gfw/trojan
+[trojan](https://github.com/trojan-gfw/trojan)
 
-https://github.com/v2ray/
+[v2ray](https://github.com/v2ray/)
 
-https://github.com/xtaci/smux
+[smux](https://github.com/xtaci/smux)
 
-https://github.com/go-acme/lego
+[lego](https://github.com/go-acme/lego)
 
-https://github.com/LiamHaworth/go-tproxy
+[go-tproxy](https://github.com/LiamHaworth/go-tproxy)
 
-https://github.com/valyala/tcplisten
+[tcplisten](https://github.com/valyala/tcplisten)
 
-https://github.com/refraction-networking/utls
+[utls](https://github.com/refraction-networking/utls)

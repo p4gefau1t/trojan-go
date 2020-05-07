@@ -12,7 +12,7 @@ Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网�
 
 下面是一个例子
 
-```
+```json
 {
     "run_type": "client",
     "local_addr": "127.0.0.1",
@@ -49,7 +49,8 @@ Trojan-Go内建的路由模块可以帮助你实现国内直连，即国内网�
 你也可以配置自己的列表文件，列表文件每一行是一个域名或者IP子网（CIDR）。例如，你想要屏蔽所有example.com域名以及其子域名，以及192.168.1.0/24，只需要编写一个txt文件
 
 test_list.txt
-```
+
+```text
 example.com
 192.168.1.0/24
 ```
@@ -58,7 +59,7 @@ example.com
 
 同时geosite中也含有广告提供商的域名，可以通过"geosite:category-ads"指定屏蔽它们。下面这个例子使用了一个列表文件，和geosite的category-ads标签，对相关连接进行屏蔽
 
-```
+```json
 "router":{
     "enabled": true,
     "bypass": [
@@ -73,7 +74,7 @@ example.com
 }
 ```
 
-下面介绍完整的路由功能
+下面是完整的路由策略设置
 
 路由策略有三种
 
@@ -83,7 +84,7 @@ example.com
 
 - Block 封锁。不代理请求，直接关闭连接。
 
-```
+```json
 "router": {
     "enabled": true,
     "bypass": [
@@ -94,7 +95,7 @@ example.com
     ],
     "block": [
         "block_list.txt"
-    ]
+    ],
     "proxy": [
         "proxy_list.txt"
     ]
@@ -102,3 +103,5 @@ example.com
 ```
 
 其中```bypass```,```block```, ```proxy```字段中填入相应的列表文件或者geo数据库tag。列表文件每行是一个域名或者IP地址段(CIDR)。geo数据库geoip和geosite为IP数据库和域名数据库。一旦匹配，则执行相应策略。
+
+更详细的说明参考完整的配置文件。
