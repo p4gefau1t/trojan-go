@@ -330,7 +330,6 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Redis.ServerHost = "localhost"
 	config.Redis.ServerPort = 6379
 	config.Redis.Password = ""
-	config.Redis.CheckRate = 60
 
 	err := json.Unmarshal(data, config)
 	if err != nil {

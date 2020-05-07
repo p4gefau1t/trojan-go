@@ -22,89 +22,92 @@ weight: 30
 
 其余未填的选项，用下面给出的值进行填充。
 
-```
+```json
 {
-    "run_type": "client/server/nat",
-    "local_addr": "127.0.0.1",
-    "local_port":  your_port1,
-    "remote_addr": "example.com",
-    "remote_port": your_port2,
-    "log_level": 1,
-    "log_file": "",
-    "password": [
-        "password1",
-        "password2"
-    ],
-    "buffer_size": 32,
-    "dns": [],
-    "ssl": {
-        "verify": true,
-        "verify_hostname": true,
-        "cert": "your_crt_file(optional for a client/forward/nat)",
-        "key": "your_key_file(optional for a client/forward/nat)",
-        "key_password": "",
-        "cipher": "",
-        "cipher_tls13": "",
-        "curves": "",
-        "prefer_server_cipher": false,
-        "sni": "",
-        "alpn": [],
-        "session_ticket": true,
-        "reuse_session": true,
-        "plain_http_response": "",
-        "fallback_port": 0,
-        "fingerprint": ""
-    },
-    "tcp": {
-        "no_delay": true,
-        "keep_alive": true,
-        "reuse_port": false,
-        "prefer_ipv4": false,
-        "fast_open": false,
-        "fast_open_qlen": 20
-    },
-    "mux": {
-        "enabled": false,
-        "concurrency": 8,
-        "idle_timeout": 60
-    },
-    "router": {
-        "enabled": false,
-        "bypass": [],
-        "proxy": [],
-        "block": [],
-        "route_by_ip": false,
-        "route_by_ip_on_nonmatch": false,
-        "default_policy": "proxy"
-    },
-    "websocket": {
-        "enabled": false,
-        "path": "",
-        "hostname": "",
-        "obfuscation_password": "",
-        "double_tls": true
-    },
-    "forward_proxy": {
-        "enabled": false,
-        "proxy_addr": "",
-        "proxy_port": 0,
-        "username": "",
-        "password": ""
-    },
-    "mysql": {
-        "enabled": false,
-        "server_addr": "",
-        "server_port": 0,
-        "database": "",
-        "username": "",
-        "password": "",
-        "check_rate": 60
-    },
-    "api": {
-        "enabled": true,
-        "api_addr": "",
-        "api_port": 0
-    }
+  "run_type": *required*,
+  "local_addr": *required*,
+  "local_port": *required*,
+  "remote_addr": *required*,
+  "remote_port": *required*,
+  "log_level": 1,
+  "log_file": "",
+  "password": [],
+  "buffer_size": 32,
+  "dns": [],
+  "ssl": {
+    "verify": true,
+    "verify_hostname": true,
+    "cert": *required*,
+    "key": *required*,
+    "key_password": "",
+    "cipher": "",
+    "cipher_tls13": "",
+    "curves": "",
+    "prefer_server_cipher": false,
+    "sni": "",
+    "alpn": [],
+    "session_ticket": true,
+    "reuse_session": true,
+    "plain_http_response": "",
+    "fallback_port": 0,
+    "fingerprint": ""
+  },
+  "tcp": {
+    "no_delay": true,
+    "keep_alive": true,
+    "reuse_port": false,
+    "prefer_ipv4": false,
+    "fast_open": false,
+    "fast_open_qlen": 20
+  },
+  "mux": {
+    "enabled": false,
+    "concurrency": 8,
+    "idle_timeout": 60
+  },
+  "router": {
+    "enabled": false,
+    "bypass": [],
+    "proxy": [],
+    "block": [],
+    "route_by_ip": false,
+    "route_by_ip_on_nonmatch": false,
+    "default_policy": "proxy"
+  },
+  "websocket": {
+    "enabled": false,
+    "path": "",
+    "hostname": "",
+    "obfuscation_password": "",
+    "double_tls": true
+  },
+  "forward_proxy": {
+    "enabled": false,
+    "proxy_addr": "",
+    "proxy_port": 0,
+    "username": "",
+    "password": ""
+  },
+  "mysql": {
+    "enabled": false,
+    "server_addr": "",
+    "server_port": 0,
+    "database": "",
+    "username": "",
+    "password": "",
+    "check_rate": 60
+  },
+  "redis": {
+    "enabled": false,
+    "server_addr": "localhost",
+    "server_port": 6379,
+    "password": ""
+  },
+  "api": {
+    "enabled": true,
+    "api_addr": "",
+    "api_port": 0
+  }
 }
 ```
 
