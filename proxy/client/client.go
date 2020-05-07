@@ -196,7 +196,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 				case <-errChan:
 					return
 				case packet := <-packetChan:
-					outboundConn, err := c.appMan.OpenAppConn(req)
+					outboundConn, err := c.appMan.OpenAppConn(packet.request)
 					if err != nil {
 						log.Error(err)
 						continue
