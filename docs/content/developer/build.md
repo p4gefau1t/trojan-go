@@ -28,11 +28,11 @@ Trojan-Go的大多数模块是可插拔的。在build文件夹下可以找到各
 ```
 go build -tags "full" #编译所有模块
 go build -tags "client" #只有客户端功能
-go build -tags "server mysql" #只有服务端和mysql支持
+go build -tags "server auth_mysql" #只有服务端和mysql支持
 go build -tags "client router" #只有客户端和路由模块
 ```
 
 使用full标签等价于
 ```
-go build -tags "api client router server mysql relay cert other"
+go build -tags "api client router server auth_mysql auth_redis relay cert other"
 ```

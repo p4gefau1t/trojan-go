@@ -140,14 +140,14 @@ func (n *NAT) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	}
 	appMan := NewAppManager(ctx, config, auth)
 
-	newForward := &Forward{
+	newNAT := &NAT{
 		ctx:    ctx,
 		cancel: cancel,
 		config: config,
 		auth:   auth,
 		appMan: appMan,
 	}
-	return newForward, nil
+	return newNAT, nil
 }
 
 func init() {
