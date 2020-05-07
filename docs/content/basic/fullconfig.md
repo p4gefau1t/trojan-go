@@ -90,8 +90,8 @@ weight: 30
   },
   "mysql": {
     "enabled": false,
-    "server_addr": "",
-    "server_port": 0,
+    "server_addr": "localhost",
+    "server_port": 3306,
     "database": "",
     "username": "",
     "password": "",

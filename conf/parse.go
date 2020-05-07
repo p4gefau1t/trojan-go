@@ -321,6 +321,8 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 	config.Mux.IdleTimeout = 60
 	config.Mux.Concurrency = 8
 	config.MySQL.CheckRate = 60
+	config.MySQL.ServerPort = 3306
+	config.MySQL.ServerHost = "localhost"
 	config.Router.DefaultPolicy = "proxy"
 	config.Router.GeoIPFilename = common.GetProgramDir() + "/geoip.dat"
 	config.Router.GeoSiteFilename = common.GetProgramDir() + "/geosite.dat"
