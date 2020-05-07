@@ -88,6 +88,7 @@ func (n *NAT) listenTCP(errChan chan error) {
 	})
 	if err != nil {
 		errChan <- err
+		return
 	}
 	n.listener = listener
 	defer listener.Close()
