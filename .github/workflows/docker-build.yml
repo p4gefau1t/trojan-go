@@ -46,4 +46,4 @@ jobs:
           --output "type=image,push=true" \
           --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
           --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
-          --file docker/Dockerfile .
+          --file Dockerfile .
