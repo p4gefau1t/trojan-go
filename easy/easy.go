@@ -136,8 +136,8 @@ func init() {
 		server:   flag.Bool("server", false, "Run a trojan-go server"),
 		client:   flag.Bool("client", false, "Run a trojan-go client"),
 		password: flag.String("password", "", "Password for authentication"),
-		remote:   flag.String("remote", "", "Remote address, for example 127.0.0.1:12345"),
-		local:    flag.String("local", "", "Local address, for example 127.0.0.1:12345"),
+		remote:   flag.String("remote", "", "Remote address, e.g. 127.0.0.1:12345"),
+		local:    flag.String("local", "", "Local address, e.g. 127.0.0.1:12345"),
 		key:      flag.String("key", "server.key", "Key of the server"),
 		cert:     flag.String("cert", "server.crt", "Certificates of the server"),
 	})
