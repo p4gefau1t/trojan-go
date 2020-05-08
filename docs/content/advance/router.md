@@ -68,9 +68,9 @@ example.com
         "geoip:private"
     ],
     "block": [
-        "test_list.txt"，
+        "test_list.txt",
         "geosite:category-ads"
-    ]
+    ],
 }
 ```
 
