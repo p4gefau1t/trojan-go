@@ -20,8 +20,6 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Run tests
-      run: cd test && go test && cd ..
     - name: Build
       run: mkdir dist && go build -tags "full" -o dist
     - name: Upload Binary
