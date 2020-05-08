@@ -60,4 +60,4 @@ jobs:
     steps:
       - name: Test docker image
         run: |
-          docker run --rm --entrypoint /bin/sh ${{ secrets.DOCKER_USERNAME }}/trojan-go trojan-go --version
+          docker run --rm --entrypoint /bin/sh ${{ secrets.DOCKER_USERNAME }}/trojan-go /usr/local/bin/trojan-go --version
