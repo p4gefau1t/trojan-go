@@ -10,6 +10,8 @@ on:
   pull_request:
     branches:
       - 'master'
+    paths-ignore:
+      - '**.md'
       - 'docs'
 name: docker-build
 jobs:
