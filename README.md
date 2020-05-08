@@ -111,7 +111,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
     docker run\
         --name trojan-go \
         -d \
-        -v $PATH_TO_CONFIG_AND_CERT:/etc/ \
+        -v $PATH_TO_CONFIG_AND_CERT:/etc/trojan-go \
         p4gefau1t/trojan-go
     ```
 
