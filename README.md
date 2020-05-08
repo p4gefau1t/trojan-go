@@ -6,7 +6,7 @@
 
 [![Release](https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases)](https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases)
 [![Release Date](https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go)](https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go)
-[![Docker Image](https://images.microbadger.com/badges/image/p4gefau1t/trojan-go.svg)](https://microbadger.com/images/p4gefau1t/trojan-go "Get your own image badge on microbadger.com")
+[![Docker Image](https://images.microbadger.com/badges/image/p4gefau1t/trojan-go.svg)](https://microbadger.com/images/p4gefau1t/trojan-go)
 
 [![Commit](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)
@@ -67,7 +67,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
 ## 使用方法
 
-- 快速证书配置
+1. 快速证书配置
 
     - 自动申请证书
 
@@ -85,7 +85,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
     关于证书申请[更详细的说明](#证书申请)
 
-- 快速启动服务器和客户端（简易模式）
+2. 快速启动服务器和客户端（简易模式）
 
     - 服务端
 
@@ -99,31 +99,33 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
         ./trojan-go -client -remote example.com:443 -local 127.0.0.1:1080 -password your_password
         ```
 
-- 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
+3. 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
 
     ```shell
     ./trojan-go -config 你的配置文件.json
     ```
 
-- 使用Docker部署
+4. 使用Docker部署
 
     ```shell
     docker run\
         --name trojan-go \
         -d \
-        -v $PATH_TO_CONFIG_AND_CERT:/etc/trojan-go \
+        -v /etc/trojan-go/:/etc/trojan-go \
+        -p 1234:1234 \
         p4gefau1t/trojan-go
     ```
 
     或者
 
     ```shell
-        docker run\
-            --name trojan-go \
-            -d \
-            -v $PATH_TO_CONFIG_AND_CERT:$PATH_IN_CONTAINER \
-            p4gefau1t/trojan-go \
-            $PATH_IN_CONTAINER/config.json
+    docker run\
+        --name trojan-go \
+        -d \
+        -v /path/to/host/config:/path/in/container \
+        -p 1234:1234 \
+        p4gefau1t/trojan-go \
+        /path/in/container/config.json
     ```
 
 ## 特性
@@ -239,11 +241,11 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 <a name="多路复用"></a>
 
-在很差的网络条件下，TLS握手可能会花费很多时间。
+在很差的网络条件下，一次TLS握手可能会花费很多时间。
 
-Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TLS握手带来的延迟，以期提升高并发情景下的性能。
+Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TCP和TLS握手带来的延迟，以期提升高并发情景下的性能。
 
-启用多路复用并不会增加你测速得到的带宽，但是会加速你有大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
+启用多路复用并不会增加你测速得到的链路速度，但会降低延迟，提升大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
 
 注意，这个特性和原版Trojan**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
 

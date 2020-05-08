@@ -88,6 +88,12 @@ func (m *MuxManager) pickMuxClient() (*muxClientInfo, error) {
 		}
 	}
 
+	select {
+	case <-m.ctx.Done():
+		return nil, common.NewError("mux manager closed")
+	default:
+	}
+
 	//not found
 	info, err := m.newMuxClient()
 	if err != nil {
