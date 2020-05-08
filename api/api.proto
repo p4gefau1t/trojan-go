@@ -1,5 +1,6 @@
 syntax = "proto3";
-package api;
+package trojan.api;
+option go_package = "api";
 
 message Traffic {
     uint64 upload_traffic = 1;
