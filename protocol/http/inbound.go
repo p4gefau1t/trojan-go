@@ -37,7 +37,7 @@ func parseHTTPRequest(httpRequest *http.Request) *protocol.Request {
 	} else {
 		request.DomainName = host
 		request.AddressType = common.DomainName
-		n, err := strconv.ParseInt(port, 10, 16)
+		n, err := strconv.ParseUint(port, 10, 16)
 		common.Must(err)
 		request.Port = int(n)
 	}

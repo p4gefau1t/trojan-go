@@ -69,7 +69,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
     - 自动申请证书
 
-        ```
+        ```shell
         sudo ./trojan-go -autocert request
         ```
 
@@ -77,7 +77,7 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
     - 为证书续期
 
-        ```
+        ```shell
         sudo ./trojan-go -autocert renew
         ```
 
@@ -87,20 +87,43 @@ Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不�
 
     - 服务端
 
-        ```
+        ```shell
         sudo ./trojan-go -server -remote 127.0.0.1:80 -local 0.0.0.0:443 -key ./your_key.key -cert ./your_cert.crt -password your_password
         ```
 
     - 客户端
 
-        ```
+        ```shell
         ./trojan-go -client -remote example.com:443 -local 127.0.0.1:1080 -password your_password
         ```
 
 - 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
 
-    ```
+    ```shell
     ./trojan-go -config 你的配置文件.json
+    ```
+
+- 使用Docker部署
+
+    ```shell
+        docker pull p4gefau1t/trojan-go:latest
+        docker run\
+            --name trojan-go \
+            -d \
+            -v $PATH_TO_CONFIG_AND_CERT:/etc/ \
+            p4gefau1t/trojan-go
+    ```
+
+    或者
+
+    ```shell
+        docker pull p4gefau1t/trojan-go:latest
+        docker run\
+            --name trojan-go \
+            -d \
+            -v $PATH_TO_CONFIG_AND_CERT:$PATH_IN_CONTAINER \
+            p4gefau1t/trojan-go \
+            $PATH_IN_CONTAINER/config.json
     ```
 
 ## 特性
@@ -261,7 +284,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
     ],
     "block": [
         "block_list.txt"
-    ]
+    ],
     "proxy": [
         "proxy_list.txt"
     ]
