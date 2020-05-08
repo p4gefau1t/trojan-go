@@ -11,10 +11,6 @@ WORKDIR /
 COPY --from=builder /trojan-go/release /usr/local/bin/
 COPY example/server.json /etc/trojan-go/
 
-RUN set -ex \
-	&& apk add --no-cache \
-			tzdata
-ENV TZ=Asia/Shanghai
 
 ENTRYPOINT ["/usr/local/bin/trojan-go", "-config"]
 CMD ["/etc/trojan-go/server.json"]
