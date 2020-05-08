@@ -9,13 +9,12 @@ RUN apk add --update git &&\
 FROM alpine
 WORKDIR /
 COPY --from=builder /trojan-go/release /usr/local/bin/
-COPY example/server.json /etc/trojan-go/
-
-RUN set -ex \
-	&& apk add --no-cache \
-			tzdata
-ENV TZ=Asia/Shanghai
+COPY example/server.json /etc/trojan-go/config.json
 
 
 ENTRYPOINT ["/usr/local/bin/trojan-go", "-config"]
+<<<<<<< HEAD
 CMD ["/etc/trojan-go/server.json"]
+=======
+CMD ["/etc/trojan-go/config.json"]
+>>>>>>> 3005f4c60a79faf2f7024a1d67fc75328cbdf433
