@@ -239,8 +239,8 @@ func loadClientConfig(config *GlobalConfig) error {
 
 	//forward proxy settings
 	if config.ForwardProxy.Enabled {
-		log.Info("forward proxy enabled")
 		config.ForwardProxy.ProxyAddress = common.NewAddress(config.ForwardProxy.ProxyHost, config.ForwardProxy.ProxyPort, "tcp")
+		log.Info("forward proxy enabled:", config.ForwardProxy.ProxyAddress.String())
 	}
 
 	return nil

@@ -162,6 +162,11 @@ func (s *Server) ListenTCP(errChan chan error) {
 			rewindConn.R.StopBuffering()
 			protocol.CancelTimeout(conn)
 
+			if s.config.LogLevel == 0 {
+				state := tlsConn.ConnectionState()
+				log.Trace("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+			}
+
 			if err != nil {
 				rewindConn.R.Rewind()
 				err = common.NewError("failed to perform tls handshake with " + conn.RemoteAddr().String()).Base(err)

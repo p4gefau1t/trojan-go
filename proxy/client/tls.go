@@ -37,20 +37,20 @@ func (m *TLSManager) printConnInfo(conn net.Conn) {
 		tlsConn := conn.(*tls.Conn)
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Debug("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		log.Trace("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
-				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
+				log.Trace("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
 			}
 		}
 	case *utls.UConn:
 		tlsConn := conn.(*utls.UConn)
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Debug("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		log.Trace("utls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
-				log.Debug("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
+				log.Trace("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
 			}
 		}
 	default:
