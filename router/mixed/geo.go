@@ -22,16 +22,6 @@ type GeoRouter struct {
 	routeByIPOnNonmatch bool
 }
 
-func (r *GeoRouter) isSubdomain(fulldomain, domain string) bool {
-	if strings.HasSuffix(fulldomain, domain) {
-		idx := strings.Index(fulldomain, domain)
-		if idx == 0 || fulldomain[idx-1] == '.' {
-			return true
-		}
-	}
-	return false
-}
-
 func (r *GeoRouter) matchDomain(fulldomain string) bool {
 	for _, d := range r.domains {
 		switch d.GetType() {
@@ -49,7 +39,6 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 				return true
 			}
 		case v2router.Domain_Regex:
-			//expregexp.Compile(site.GetValue())
 			matched, err := regexp.Match(d.GetValue(), []byte(fulldomain))
 			if err != nil {
 				log.Error("invalid regex")

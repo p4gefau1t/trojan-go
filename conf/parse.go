@@ -206,41 +206,41 @@ func loadClientConfig(config *GlobalConfig) error {
 	}
 	if config.TLS.CertPath == "" {
 		log.Info("cert of the remote server is not specified, using default CA list")
-		return nil
-	}
-
-	caCertByte, err := ioutil.ReadFile(config.TLS.CertPath)
-	if err != nil {
-		return common.NewError("failed to load cert file").Base(err)
-	}
-	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(caCertByte)
-	if !ok {
-		log.Warn("invalid CA cert list")
-	}
-	log.Info("using custom CA list")
-	pemCerts := caCertByte
-	for len(pemCerts) > 0 {
-		config.TLS.CertPool = pool
-		var block *pem.Block
-		block, pemCerts = pem.Decode(pemCerts)
-		if block == nil {
-			break
-		}
-		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
-			continue
-		}
-		cert, err := x509.ParseCertificate(block.Bytes)
+	} else {
+		caCertByte, err := ioutil.ReadFile(config.TLS.CertPath)
 		if err != nil {
-			continue
+			return common.NewError("failed to load cert file").Base(err)
 		}
-		log.Debug("issuer:", cert.Issuer, ", subject:", cert.Subject)
+		pool := x509.NewCertPool()
+		ok := pool.AppendCertsFromPEM(caCertByte)
+		if !ok {
+			log.Warn("invalid CA cert list")
+		}
+		log.Info("using custom CA list")
+		pemCerts := caCertByte
+		for len(pemCerts) > 0 {
+			config.TLS.CertPool = pool
+			var block *pem.Block
+			block, pemCerts = pem.Decode(pemCerts)
+			if block == nil {
+				break
+			}
+			if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+				continue
+			}
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				continue
+			}
+			log.Trace("issuer:", cert.Issuer, "subject:", cert.Subject)
+		}
 	}
 
 	//forward proxy settings
 	if config.ForwardProxy.Enabled {
+		log.Info("forward proxy enabled")
 		config.ForwardProxy.ProxyAddress = common.NewAddress(config.ForwardProxy.ProxyHost, config.ForwardProxy.ProxyPort, "tcp")
-		log.Info("forward proxy enabled:", config.ForwardProxy.ProxyAddress.String())
+		log.Debug("forward proxy:", config.ForwardProxy.ProxyAddress.String())
 	}
 
 	return nil

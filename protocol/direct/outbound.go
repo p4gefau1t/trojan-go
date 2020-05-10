@@ -163,7 +163,7 @@ func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *ne
 		n, addr, err := conn.ReadFromUDP(buf)
 		conn.SetReadDeadline(time.Time{})
 		if err != nil {
-			log.Info(err)
+			log.Debug(common.NewError("packet session ends").Base(err))
 			return
 		}
 		if addr.String() != req.String() {

@@ -21,6 +21,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
+	tp "github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/stat/memory"
@@ -629,4 +630,18 @@ func TestDNS(t *testing.T) {
 	fmt.Println(string(buf[:]))
 	conn.Close()
 	cancel()
+}
+
+func TestJSON(t *testing.T) {
+	if os.Getenv("CONFIG") == "" {
+		t.Skip("skip json test")
+	}
+	configFile1 := "/etc/trojan-go/config.json"
+	configBytes1, err := ioutil.ReadFile(configFile1)
+	common.Must(err)
+	config1, err := conf.ParseJSON(configBytes1)
+	common.Must(err)
+	r, err := tp.NewProxy(config1)
+	common.Must(err)
+	r.Run()
 }
