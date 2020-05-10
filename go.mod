@@ -26,3 +26,5 @@ require (
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 	v2ray.com/core v4.19.1+incompatible
 )
+
+replace v2ray.com/core => github.com/v2ray/v2ray-core v4.23.1+incompatible
