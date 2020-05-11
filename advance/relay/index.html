@@ -30,7 +30,7 @@
 <meta itemprop="name" content="流量中继">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的">
 
-<meta itemprop="wordCount" content="300">
+<meta itemprop="wordCount" content="301">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.7</span>
+ <span class="version">Version 0.4.8</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -63,9 +63,8 @@
     <span style="color:#f92672">&#34;remote_addr&#34;</span>: <span style="color:#e6db74">&#34;your_trojan_server&#34;</span>,
     <span style="color:#f92672">&#34;remote_port&#34;</span>: <span style="color:#ae81ff">443</span>,
 }
-
 </code></pre></div><p>中继启动后，客户端连接该主机的1234端口，和直接连接Trojan服务器443端口是等效的。中继只做简单的流量转发，本地不需要任何的证书文件和密钥文件。你也可以使用socat或者iptables实现上述功能。</p>
-<p>你可以使用多个中继链接起来作为多重跳板，如果你忍受这种做法带来的延迟升高和吞吐量下降的话。</p>
+<p>你可以使用多个中继链接起来作为多重跳板，如果你能忍受这种做法带来的延迟升高和吞吐量下降的话。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/relay.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/router/" title="国内直连和广告屏蔽"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 国内直连和广告屏蔽</a>

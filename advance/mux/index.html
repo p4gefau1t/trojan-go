@@ -30,7 +30,7 @@
 <meta itemprop="name" content="启用多路复用提升并发性能">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用多路复用提升并发性能。 Trojan协议基于TLS。在一个TLS安全连接">
 
-<meta itemprop="wordCount" content="807">
+<meta itemprop="wordCount" content="810">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.7</span>
+ <span class="version">Version 0.4.8</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -56,9 +56,9 @@
 <h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
 <p>Trojan-Go支持使用多路复用提升并发性能。</p>
 <p>Trojan协议基于TLS。在一个TLS安全连接建立之前，连接双方需要进行密钥协商和交换等步骤确保后续通讯的安全性。这个过程即为TLS握手。</p>
-<p>目前GFW对于TLS握手有审查和干扰，同时由于出口网络拥塞的原因，普通的线路完成TLS握手通常需要将近一秒甚至更长的时间。这可能会使得浏览网页和观看视频的延迟提高。</p>
-<p>Trojan-Go使用多路复用的方式解决这一问题。每个建立的TLS连接将承载多个TCP连接。当新的代理请求到来时，不需要和服务器握手发起一个新的TLS连接，而是尽可能重复使用已有的TLS连接。以此减少频繁TLS握手的带来的延迟。</p>
-<p>启用多路复用功能不会增加你的链路速度（甚至会有所减少），而且可能会增加服务器和客户端的计算负担。但在高并发的情况下，如浏览含有大量图片的网页时，或者发送大量UDP请求时，可以提升使用体验。</p>
+<p>目前GFW对于TLS握手有审查和干扰，同时由于出口网络拥塞的原因，普通的线路完成TLS握手通常需要将近一秒甚至更长的时间。这可能导致浏览网页和观看视频的延迟提高。</p>
+<p>Trojan-Go使用多路复用的方式解决这一问题。每个建立的TLS连接将承载多个TCP连接。当新的代理请求到来时，不需要和服务器握手发起一个新的TLS连接，而是尽可能重复使用已有的TLS连接。以此减少频繁TLS握手和TCP握手的带来的延迟。</p>
+<p>启用多路复用功能不会增加你的链路速度（甚至会有所减少），而且可能会增加服务器和客户端的计算负担。但在高并发的情景下，如浏览含有大量图片的网页时，或者发送大量UDP请求时，可以提升使用体验。</p>
 <p>激活<code>mux</code>模块，只需要将<code>mux</code>选项中<code>enabled</code>字段设为true即可，下面是一个客户端的例子</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
     <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;client&#34;</span>,
@@ -80,8 +80,8 @@
     <span style="color:#f92672">&#34;concurrency&#34;</span>: <span style="color:#ae81ff">8</span>,
     <span style="color:#f92672">&#34;idle_timeout&#34;</span>: <span style="color:#ae81ff">60</span>
 }
-</code></pre></div><p><code>concurrency</code>是每个TLS连接最多可以承载的TCP连接数。这个数值越大，TLS连接被复用的比例就更高，握手导致的延迟越低，但服务器和客户端的计算负担也会越大，这有可能使你的网络吞吐量降低。如果你的线路的TLS握手极端缓慢，你可以将这个数值设置为-1，Trojan-Go将只进行一次TLS握手，只使用唯一的一条TLS连接进行传输。</p>
-<p><code>idle_timeout</code>指的是每个TLS连接空闲多长时间后关闭。设置超时时间，<strong>可能</strong>有助于减少不必要的长连接存活确认(Keep Alive)流量传输引发GFW的探测。你可以将这个数值设置为-1，TLS连接将不会因为长时间空闲而被关闭。</p>
+</code></pre></div><p><code>concurrency</code>是每个TLS连接最多可以承载的TCP连接数。这个数值越大，每个TLS连接被复用的程度就更高，握手导致的延迟越低。但服务器和客户端的计算负担也会越大，这有可能使你的网络吞吐量降低。如果你的线路的TLS握手极端缓慢，你可以将这个数值设置为-1，Trojan-Go将只进行一次TLS握手，只使用唯一的一条TLS连接进行传输。</p>
+<p><code>idle_timeout</code>指的是每个TLS连接空闲多长时间后关闭。设置超时时间，<strong>可能</strong>有助于减少不必要的长连接存活确认(Keep Alive)流量传输引发GFW的探测。你可以将这个数值设置为-1，TLS连接在空闲时将被立即关闭。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/mux.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/" title="高级配置"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 高级配置</a>

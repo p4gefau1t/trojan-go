@@ -25,7 +25,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/basic/config/</guid>
-      <description>下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域名</description>
+      <description>下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域</description>
     </item>
     
     <item>
