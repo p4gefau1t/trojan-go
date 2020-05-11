@@ -44,6 +44,8 @@ type TLSConfig struct {
 	ALPN               []string `json:"alpn"`
 	Curves             string   `json:"curves"`
 	Fingerprint        string   `json:"fingerprint"`
+	ServePlainText     bool     `json:"serve_plain_text"`
+	RedirectWithTLS    bool     `json:"redirect_with_tls"`
 
 	ClientHelloID    *utls.ClientHelloID
 	FallbackAddress  *common.Address

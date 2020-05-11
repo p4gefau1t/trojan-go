@@ -29,7 +29,7 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 			return err
 		}
 		if req.User == nil {
-			return common.NewError("user is unspecified")
+			return common.NewError("User is unspecified")
 		}
 		if req.User.Hash == "" {
 			req.User.Hash = common.SHA224String(req.User.Password)
@@ -38,7 +38,7 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 		if !valid {
 			stream.Send(&GetTrafficResponse{
 				Success: false,
-				Info:    "invalid user " + req.User.Hash,
+				Info:    "Invalid user " + req.User.Hash,
 			})
 			continue
 		}
@@ -77,7 +77,7 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 			return err
 		}
 		if req.User == nil {
-			return common.NewError("user is unspecified")
+			return common.NewError("User is unspecified")
 		}
 		if req.User.Hash == "" {
 			req.User.Hash = common.SHA224String(req.User.Password)
@@ -88,7 +88,7 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 			if req.SpeedLimit != nil {
 				valid, meter := s.auth.AuthUser(req.User.Hash)
 				if !valid {
-					return common.NewError("failed to add new user")
+					return common.NewError("Failed to add new user")
 				}
 				meter.LimitSpeed(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
 			}
@@ -97,7 +97,7 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 		case SetUserRequest_Modify:
 			valid, meter := s.auth.AuthUser(req.User.Hash)
 			if !valid {
-				err = common.NewError("invalid user " + req.User.Hash)
+				err = common.NewError("Invalid user " + req.User.Hash)
 			} else {
 				meter.LimitSpeed(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
 			}
@@ -161,7 +161,7 @@ func RunServerAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Auth
 	if err != nil {
 		return err
 	}
-	log.Info("server api service is running at", config.API.APIAddress)
+	log.Info("Server api service is running at", config.API.APIAddress)
 	errChan := make(chan error, 1)
 	go func() {
 		errChan <- server.Serve(listener)

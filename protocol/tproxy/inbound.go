@@ -40,7 +40,7 @@ func (i *TProxyInboundConnSession) GetRequest() *protocol.Request {
 func (i *TProxyInboundConnSession) parseRequest() error {
 	addr, err := getOriginalTCPDest(i.conn.(*net.TCPConn))
 	if err != nil {
-		return common.NewError("failed to get original dst").Base(err)
+		return common.NewError("Failed to get original dst").Base(err)
 	}
 	req := &protocol.Request{
 		Address: &common.Address{
@@ -63,7 +63,7 @@ func NewInboundConnSession(conn net.Conn) (protocol.ConnSession, *protocol.Reque
 		conn: conn,
 	}
 	if err := i.parseRequest(); err != nil {
-		return nil, nil, common.NewError("failed to parse request").Base(err)
+		return nil, nil, common.NewError("Failed to parse request").Base(err)
 	}
 	return i, i.reqeust, nil
 }
@@ -108,11 +108,11 @@ func (i *NATInboundPacketSession) WritePacket(req *protocol.Request, packet []by
 	defer i.tableMutex.Unlock()
 	session, found := i.sessionTable[req.String()]
 	if !found {
-		return 0, common.NewError("session not found " + req.String())
+		return 0, common.NewError("Session not found " + req.String())
 	}
 	conn, err := tproxy.DialUDP("udp", session.dst, session.src)
 	if err != nil {
-		return 0, common.NewError("cannot dial to source").Base(err)
+		return 0, common.NewError("Cannot dial to source").Base(err)
 	}
 	defer conn.Close()
 	return conn.Write(packet)
@@ -167,7 +167,7 @@ func NewInboundPacketSession(ctx context.Context, config *conf.GlobalConfig) (pr
 	}
 	conn, err := tproxy.ListenUDP("udp", addr)
 	if err != nil {
-		return nil, common.NewError("failed to listen udp addr").Base(err)
+		return nil, common.NewError("Failed to listen udp addr").Base(err)
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	i := &NATInboundPacketSession{

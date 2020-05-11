@@ -42,7 +42,7 @@ type MuxManager struct {
 func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 	id := generateMuxID()
 	if _, found := m.muxPool[id]; found {
-		return nil, common.NewError("duplicated id")
+		return nil, common.NewError("Duplicated id")
 	}
 	req := &protocol.Request{
 		Command: protocol.Mux,
@@ -53,18 +53,18 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 	}
 	rwc, err := m.transport.DialToServer()
 	if err != nil {
-		return nil, common.NewError("failed to dail to remote server").Base(err)
+		return nil, common.NewError("Failed to dail to remote server").Base(err)
 	}
 	conn, err := trojan.NewOutboundConnSession(req, rwc, m.config, m.auth)
 	if err != nil {
 		rwc.Close()
-		log.Error(common.NewError("failed to dial tls tunnel").Base(err))
+		log.Error(common.NewError("Failed to dial tls tunnel").Base(err))
 		return nil, err
 	}
 
 	client, err := smux.Client(conn, nil)
 	common.Must(err)
-	log.Info("mux TLS tunnel established, id:", id)
+	log.Info("Mux TLS tunnel established, id:", id)
 	return &muxClientInfo{
 		client:         client,
 		id:             id,
@@ -79,7 +79,7 @@ func (m *MuxManager) pickMuxClient() (*muxClientInfo, error) {
 	for _, info := range m.muxPool {
 		if info.client.IsClosed() {
 			delete(m.muxPool, info.id)
-			log.Info("mux", info.id, "is dead")
+			log.Info("Mux client", info.id, "is dead")
 			continue
 		}
 		if info.client.NumStreams() < m.config.Mux.Concurrency || m.config.Mux.Concurrency <= 0 {
@@ -90,7 +90,7 @@ func (m *MuxManager) pickMuxClient() (*muxClientInfo, error) {
 
 	select {
 	case <-m.ctx.Done():
-		return nil, common.NewError("mux manager closed")
+		return nil, common.NewError("Mux manager closed")
 	default:
 	}
 
@@ -114,10 +114,10 @@ func (m *MuxManager) DialToServer() (io.ReadWriteCloser, error) {
 		defer m.Unlock()
 		delete(m.muxPool, info.id)
 		info.client.Close()
-		log.Info("somthing wrong with mux client", info.id, ", closing")
+		log.Info("Somthing wrong with mux client", info.id, ", closing")
 		return nil, err
 	}
-	log.Debug("new mux conn established, client", info.id)
+	log.Info("New mux conn established with client", info.id)
 	info.lastActiveTime = time.Now()
 	return stream, nil
 }
@@ -127,7 +127,7 @@ func (m *MuxManager) checkAndCloseIdleMuxClient() {
 	if m.config.Mux.IdleTimeout <= 0 {
 		muxIdleDuration = 0
 		checkDuration = time.Second * 10
-		log.Warn("invalid mux idle timeout")
+		log.Warn("Invalid mux idle timeout")
 	} else {
 		muxIdleDuration = time.Duration(m.config.Mux.IdleTimeout) * time.Second
 		checkDuration = muxIdleDuration / 4
@@ -139,23 +139,23 @@ func (m *MuxManager) checkAndCloseIdleMuxClient() {
 			for id, info := range m.muxPool {
 				if info.client.IsClosed() {
 					delete(m.muxPool, id)
-					log.Info("mux", id, "is dead")
+					log.Info("Mux", id, "is dead")
 				} else if info.client.NumStreams() == 0 && time.Now().Sub(info.lastActiveTime) > muxIdleDuration {
 					info.client.Close()
 					delete(m.muxPool, id)
-					log.Info("mux", id, "is closed due to inactive")
+					log.Info("Mux", id, "is closed due to inactive")
 				}
 			}
 			if len(m.muxPool) != 0 {
-				log.Info("current mux pool conn num", len(m.muxPool))
+				log.Info("Current mux pool clients: ", len(m.muxPool))
 			}
 			m.Unlock()
 		case <-m.ctx.Done():
-			log.Debug("shutting down mux manager..")
+			log.Debug("Shutting down mux manager..")
 			m.Lock()
 			for id, info := range m.muxPool {
 				info.client.Close()
-				log.Info("mux client", id, "closed")
+				log.Info("Mux client", id, "closed")
 			}
 			m.Unlock()
 			return

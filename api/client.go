@@ -26,14 +26,14 @@ type ClientAPI struct {
 func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*GetTrafficResponse, error) {
 	log.Debug("API: GetTraffic")
 	if req.User == nil {
-		return nil, common.NewError("user is unspecified")
+		return nil, common.NewError("User is unspecified")
 	}
 	if req.User.Hash == "" {
 		req.User.Hash = common.SHA224String(req.User.Password)
 	}
 	valid, meter := s.auth.AuthUser(req.User.Hash)
 	if !valid {
-		return nil, common.NewError("user " + req.User.Hash + " not found")
+		return nil, common.NewError("User " + req.User.Hash + " not found")
 	}
 	sent, recv := meter.Get()
 	sentSpeed, recvSpeed := meter.GetSpeed()
@@ -62,7 +62,7 @@ func RunClientAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Auth
 	if err != nil {
 		return err
 	}
-	log.Info("client api service is running at", config.API.APIAddress)
+	log.Info("Client api service is running at", config.API.APIAddress)
 	errChan := make(chan error, 1)
 	go func() {
 		errChan <- server.Serve(listener)

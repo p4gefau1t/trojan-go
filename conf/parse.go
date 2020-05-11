@@ -22,27 +22,29 @@ func loadCommonConfig(config *GlobalConfig) error {
 	//log settigns
 	log.SetLogLevel(log.LogLevel(config.LogLevel))
 	if config.LogFile != "" {
-		log.Info("log will be written into", config.LogFile)
+		log.Info("Log will be written to", config.LogFile)
 		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
-			return common.NewError("failed to access log file").Base(err)
+			return common.NewError("Failed to access the log file").Base(err)
 		}
 		log.SetOutput(file)
 	}
 
-	//buffer size, 4KiB to 16MiB
+	//buffer size, 4KiB - 16MiB
 	if config.BufferSize < 4 || config.BufferSize > 16384 {
-		return common.NewError("invalid buffer size, 4 KiB < buffer_size < 16384 Kib")
+		return common.NewError("Invalid buffer size, 4 KiB < buffer_size < 16384 KiB")
 	}
 
 	config.BufferSize *= 1024
 
 	//password settings
 	if len(config.Passwords) == 0 {
-		if config.RunType == Client {
-			return common.NewError("no password found")
+		switch config.RunType {
+		case Client, NAT, Forward:
+			return common.NewError("No password found")
+		default:
+			log.Warn("Password is unspecified in config file")
 		}
-		log.Warn("password is not specified in config file")
 	}
 	config.Hash = make(map[string]string)
 	for _, password := range config.Passwords {
@@ -86,13 +88,13 @@ func loadCommonConfig(config *GlobalConfig) error {
 			}
 			if !found {
 				invalid = true
-				log.Warn("found invalid cipher name", specified)
+				log.Warn("Found invalid cipher ", specified)
 				break
 			}
 		}
 		if invalid && len(supportedSuites) >= 1 {
-			log.Warn("cipher list contains invalid cipher name, ignored")
-			log.Warn("here's a list of supported ciphers:")
+			log.Warn("\"cipher_suite\" contains invalid cipher name, ignored")
+			log.Warn("Here is a list of supported ciphers:")
 			list := ""
 			for _, c := range supportedSuites {
 				list += c.Name + ":"
@@ -106,23 +108,24 @@ func loadCommonConfig(config *GlobalConfig) error {
 
 	//websocket settings
 	if config.Websocket.Enabled {
-		log.Info("websocket enabled")
+		log.Info("Websocket enabled")
 		if config.Websocket.Path == "" {
-			return common.NewError("websocket path is empty")
+			return common.NewError("Websocket path is empty")
 		}
 		if config.Websocket.Path[0] != '/' {
-			return common.NewError("websocket path must start with \"/\"")
+			return common.NewError("Websocket path must start with \"/\"")
 		}
 		if config.Websocket.HostName == "" {
-			log.Warn("websocket hostname is unspecified, using remote_addr \"", config.RemoteHost, "\" as hostname")
+			log.Warn("Websocket hostname is unspecified. Using remote_addr \"", config.RemoteHost, "\" as hostname")
 			config.Websocket.HostName = config.RemoteHost
 			if ip := net.ParseIP(config.RemoteHost); ip != nil && ip.To4() == nil { //ipv6 address
 				config.Websocket.HostName = "[" + config.RemoteHost + "]"
 			}
 		}
 		if config.Websocket.ObfuscationPassword != "" {
-			log.Info("websocket obfs enabled")
+			log.Info("Websocket obfuscation enabled")
 			password := []byte(config.Websocket.ObfuscationPassword)
+			//hardcoded salt
 			salt := []byte{48, 149, 6, 18, 13, 193, 247, 116, 197, 135, 236, 175, 190, 209, 146, 48}
 			config.Websocket.ObfuscationKey = pbkdf2.Key(password, salt, 32, aes.BlockSize, sha256.New)
 		}
@@ -205,7 +208,7 @@ func loadClientConfig(config *GlobalConfig) error {
 		config.TLS.SNI = config.RemoteHost
 	}
 	if config.TLS.CertPath == "" {
-		log.Info("cert of the remote server is not specified, using default CA list")
+		log.Info("Cert of the remote server is unspecified. Using default CA list")
 	} else {
 		caCertByte, err := ioutil.ReadFile(config.TLS.CertPath)
 		if err != nil {
@@ -214,9 +217,9 @@ func loadClientConfig(config *GlobalConfig) error {
 		pool := x509.NewCertPool()
 		ok := pool.AppendCertsFromPEM(caCertByte)
 		if !ok {
-			log.Warn("invalid CA cert list")
+			log.Warn("Invalid CA cert list")
 		}
-		log.Info("using custom CA list")
+		log.Info("Using custom CA list")
 		pemCerts := caCertByte
 		for len(pemCerts) > 0 {
 			config.TLS.CertPool = pool
@@ -232,15 +235,15 @@ func loadClientConfig(config *GlobalConfig) error {
 			if err != nil {
 				continue
 			}
-			log.Trace("issuer:", cert.Issuer, "subject:", cert.Subject)
+			log.Trace("Issuer:", cert.Issuer, "Subject:", cert.Subject)
 		}
 	}
 
 	//forward proxy settings
 	if config.ForwardProxy.Enabled {
-		log.Info("forward proxy enabled")
+		log.Info("Forward proxy enabled")
 		config.ForwardProxy.ProxyAddress = common.NewAddress(config.ForwardProxy.ProxyHost, config.ForwardProxy.ProxyPort, "tcp")
-		log.Debug("forward proxy:", config.ForwardProxy.ProxyAddress.String())
+		log.Debug("Forward proxy", config.ForwardProxy.ProxyAddress.String())
 	}
 
 	return nil
@@ -259,24 +262,27 @@ func loadServerConfig(config *GlobalConfig) error {
 		resp.Body.Close()
 	}
 
-	if config.TLS.KeyPassword != "" {
+	//tls settings
+	if config.TLS.ServePlainText {
+		log.Warn("Server will now use plain text. TLS config is ignored")
+	} else if config.TLS.KeyPassword != "" {
 		keyFile, err := ioutil.ReadFile(config.TLS.KeyPath)
 		if err != nil {
-			return common.NewError("failed to load key file").Base(err)
+			return common.NewError("Failed to load key file").Base(err)
 		}
 		keyBlock, _ := pem.Decode(keyFile)
 		if keyBlock == nil {
-			return common.NewError("failed to decode key file").Base(err)
+			return common.NewError("Failed to decode key file").Base(err)
 		}
 		decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(config.TLS.KeyPassword))
 		if err == nil {
-			return common.NewError("failed to decrypt key").Base(err)
+			return common.NewError("Failed to decrypt key").Base(err)
 		}
 
 		certFile, err := ioutil.ReadFile(config.TLS.CertPath)
 		certBlock, _ := pem.Decode(certFile)
 		if certBlock == nil {
-			return common.NewError("failed to decode cert file").Base(err)
+			return common.NewError("Failed to decode cert file").Base(err)
 		}
 
 		keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
@@ -288,14 +294,15 @@ func loadServerConfig(config *GlobalConfig) error {
 	} else {
 		keyPair, err := tls.LoadX509KeyPair(config.TLS.CertPath, config.TLS.KeyPath)
 		if err != nil {
-			return common.NewError("failed to load key pair").Base(err)
+			return common.NewError("Failed to load key pair").Base(err)
 		}
 		config.TLS.KeyPair = []tls.Certificate{keyPair}
 	}
+
 	if config.TLS.HTTPFile != "" {
 		payload, err := ioutil.ReadFile(config.TLS.HTTPFile)
 		if err != nil {
-			log.Warn("failed to load http response file", err)
+			log.Warn("Failed to load http response file", err)
 		}
 		config.TLS.HTTPResponse = payload
 	}
@@ -362,7 +369,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		}
 	case Relay:
 	default:
-		return nil, common.NewError("invalid run type:" + string(config.RunType))
+		return nil, common.NewError("Invalid run type:" + string(config.RunType))
 	}
 
 	return config, nil

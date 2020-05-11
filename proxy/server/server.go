@@ -36,7 +36,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 	inboundConn, req, err := simplesocks.NewInboundConnSession(stream)
 	if err != nil {
 		stream.Close()
-		log.Error(common.NewError("cannot start inbound session").Base(err))
+		log.Error(common.NewError("Failed to init inbound session").Base(err))
 		return
 	}
 	switch req.Command {
@@ -46,7 +46,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 			log.Error(err)
 			return
 		}
-		log.Info("mux tunneling to", req.String())
+		log.Info("Mux conn tunneling to", req.String())
 		defer outboundConn.Close()
 		proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 	case protocol.Associate:
@@ -55,17 +55,17 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		inboundPacket, err := trojan.NewPacketSession(inboundConn)
 		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
 	default:
-		log.Error(fmt.Sprintf("invalid command %d", req.Command))
+		log.Error(fmt.Sprintf("Invalid command %d", req.Command))
 		return
 	}
 }
 
-func (s *Server) handleConn(conn *tls.Conn) {
+func (s *Server) handleConn(conn net.Conn) {
 	protocol.SetRandomizedTimeout(conn)
 	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth, s.shadow)
 	if err != nil {
 		//once the auth is failed, the conn will be took over by shadow manager. don't close it
-		log.Error(common.NewError("failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
+		log.Error(common.NewError("Failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
 	}
 	protocol.CancelTimeout(conn)
@@ -77,7 +77,7 @@ func (s *Server) handleConn(conn *tls.Conn) {
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
-				log.Debug("mux conn from", conn.RemoteAddr(), "closed:", err)
+				log.Debug("Mux conn from", conn.RemoteAddr(), "closed:", err)
 				return
 			}
 			go s.handleMuxConn(stream)
@@ -95,9 +95,9 @@ func (s *Server) handleConn(conn *tls.Conn) {
 			return
 		}
 		defer outboundPacket.Close()
-		log.Info("udp tunnel established")
+		log.Info("UDP tunnel established")
 		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
-		log.Debug("udp tunnel closed")
+		log.Debug("UDP tunnel closed")
 		return
 	}
 
@@ -109,12 +109,12 @@ func (s *Server) handleConn(conn *tls.Conn) {
 	}
 	defer outboundConn.Close()
 
-	log.Info("conn from", conn.RemoteAddr(), "tunneling to", req.String())
+	log.Info("Conn from", conn.RemoteAddr(), "tunneling to", req.String())
 	proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 }
 
 func (s *Server) ListenTCP(errChan chan error) {
-	log.Info("server is running at", s.config.LocalAddress)
+	log.Info("Server is running at", s.config.LocalAddress)
 
 	var listener net.Listener
 	listener, err := net.Listen("tcp", s.config.LocalAddress.String())
@@ -149,8 +149,12 @@ func (s *Server) ListenTCP(errChan chan error) {
 				return
 			}
 		}
-		log.Info("conn accepted from", conn.RemoteAddr())
+		log.Info("Conn accepted from", conn.RemoteAddr())
 		go func(conn net.Conn) {
+			if s.config.TLS.ServePlainText {
+				s.handleConn(conn)
+				return
+			}
 			//using randomized timeout
 			protocol.SetRandomizedTimeout(conn)
 
@@ -164,15 +168,15 @@ func (s *Server) ListenTCP(errChan chan error) {
 
 			if s.config.LogLevel == 0 {
 				state := tlsConn.ConnectionState()
-				log.Trace("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+				log.Trace("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 			}
 
 			if err != nil {
 				rewindConn.R.Rewind()
-				err = common.NewError("failed to perform tls handshake with " + conn.RemoteAddr().String()).Base(err)
+				err = common.NewError("Failed to perform tls handshake with " + conn.RemoteAddr().String()).Base(err)
 				log.Warn(err)
 				if s.config.TLS.FallbackAddress != nil {
-					s.shadow.CommitScapegoat(&shadow.Scapegoat{
+					s.shadow.SubmitScapegoat(&shadow.Scapegoat{
 						Conn:          rewindConn,
 						ShadowAddress: s.config.TLS.FallbackAddress,
 						Info:          err.Error(),
@@ -193,7 +197,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 func (s *Server) Run() error {
 	errChan := make(chan error, 2)
 	if s.config.API.Enabled {
-		log.Info("api enabled")
+		log.Info("API enabled")
 		go func() {
 			errChan <- proxy.RunAPIService(conf.Server, s.ctx, s.config, s.auth)
 		}()
@@ -208,7 +212,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Close() error {
-	log.Info("shutting down server..")
+	log.Info("Shutting down server..")
 	s.cancel()
 	s.listener.Close()
 	return nil

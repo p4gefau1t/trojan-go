@@ -22,7 +22,7 @@ func (f *Relay) handleConn(conn net.Conn) {
 	defer conn.Close()
 	newConn, err := net.Dial("tcp", f.config.RemoteAddress.String())
 	if err != nil {
-		log.Error("failed to connect to remote endpoint:", err)
+		log.Error("Failed to connect to remote endpoint:", err)
 		return
 	}
 	defer newConn.Close()
@@ -30,11 +30,11 @@ func (f *Relay) handleConn(conn net.Conn) {
 }
 
 func (f *Relay) Run() error {
-	log.Info("relay is running at", f.config.LocalAddress)
+	log.Info("Relay is running at", f.config.LocalAddress)
 	listener, err := net.Listen("tcp", f.config.LocalAddress.String())
 	f.listener = listener
 	if err != nil {
-		return common.NewError("failed to listen local address").Base(err)
+		return common.NewError("Failed to listen local address").Base(err)
 	}
 	defer listener.Close()
 	for {
@@ -53,7 +53,7 @@ func (f *Relay) Run() error {
 }
 
 func (f *Relay) Close() error {
-	log.Info("shutting down relay..")
+	log.Info("Shutting down relay..")
 	f.cancel()
 	f.listener.Close()
 	return nil

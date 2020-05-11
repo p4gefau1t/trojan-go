@@ -57,7 +57,7 @@ func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (o *TrojanOutboundConnSession) Close() error {
-	log.Info("conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
+	log.Info("Conn to", o.request, "closed", "sent:", common.HumanFriendlyTraffic(o.sent), "recv:", common.HumanFriendlyTraffic(o.recv))
 	return o.rwc.Close()
 }
 

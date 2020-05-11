@@ -33,11 +33,11 @@ func (c *certOption) Handle() error {
 		RenewCertGuide()
 		return nil
 	case "INVALID":
-		return common.NewError("not specified")
+		return common.NewError("Not specified")
 	default:
-		err := common.NewError("invalid args " + *c.mode)
+		err := common.NewError("Invalid args " + *c.mode)
 		log.Error(err)
-		return common.NewError("invalid args")
+		return common.NewError("Invalid args")
 	}
 }
 

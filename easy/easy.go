@@ -32,9 +32,9 @@ func (o *EasyOption) Handle() error {
 		return common.NewError("empty")
 	}
 	if *o.password == "" {
-		log.Fatal("empty password is not allowed")
+		log.Fatal("Empty password is not allowed")
 	}
-	log.Info("easy mode enabled, trojan-go will NOT use the config file")
+	log.Info("Easy mode enabled, trojan-go will NOT use the config file")
 	if *o.client {
 		clientConfigFormat := `
 {
@@ -49,19 +49,19 @@ func (o *EasyOption) Handle() error {
 }
 		`
 		if *o.local == "" {
-			log.Warn("client local addr is unspecified, using 127.0.0.1:1080")
+			log.Warn("Client local addr is unspecified, using 127.0.0.1:1080")
 			*o.local = "127.0.0.1:1080"
 		}
 		localHost, localPort, err := net.SplitHostPort(*o.local)
 		if err != nil {
-			log.Fatal(common.NewError("invalid local addr format:" + *o.local).Base(err))
+			log.Fatal(common.NewError("Invalid local addr format:" + *o.local).Base(err))
 		}
 		remoteHost, remotePort, err := net.SplitHostPort(*o.remote)
 		if err != nil {
-			log.Fatal(common.NewError("invalid remote addr format:" + *o.remote).Base(err))
+			log.Fatal(common.NewError("Invalid remote addr format:" + *o.remote).Base(err))
 		}
 		clientConfigJSON := fmt.Sprintf(clientConfigFormat, localHost, localPort, remoteHost, remotePort, *o.password)
-		log.Info("generated config:")
+		log.Info("Generated config:")
 		log.Info(clientConfigJSON)
 		config, err := conf.ParseJSON([]byte(clientConfigJSON))
 		if err != nil {
@@ -93,23 +93,23 @@ func (o *EasyOption) Handle() error {
 }
 		`
 		if *o.remote == "" {
-			log.Warn("server remote addr is unspecified, using 127.0.0.1:80")
+			log.Warn("Server remote addr is unspecified, using 127.0.0.1:80")
 			*o.remote = "127.0.0.1:80"
 		}
 		if *o.local == "" {
-			log.Warn("server local addr is unspecified, using 0.0.0.0:443")
+			log.Warn("Server local addr is unspecified, using 0.0.0.0:443")
 			*o.local = "0.0.0.0:443"
 		}
 		localHost, localPort, err := net.SplitHostPort(*o.local)
 		if err != nil {
-			log.Fatal(common.NewError("invalid local addr format:" + *o.local).Base(err))
+			log.Fatal(common.NewError("Invalid local addr format:" + *o.local).Base(err))
 		}
 		remoteHost, remotePort, err := net.SplitHostPort(*o.remote)
 		if err != nil {
-			log.Fatal(common.NewError("invalid remote addr format:" + *o.remote).Base(err))
+			log.Fatal(common.NewError("Invalid remote addr format:" + *o.remote).Base(err))
 		}
 		serverConfigJSON := fmt.Sprintf(serverConfigFormat, localHost, localPort, remoteHost, remotePort, *o.password, *o.cert, *o.key)
-		log.Info("generated config:")
+		log.Info("Generated config:")
 		log.Info(serverConfigJSON)
 		config, err := conf.ParseJSON([]byte(serverConfigJSON))
 		if err != nil {

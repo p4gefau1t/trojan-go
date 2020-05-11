@@ -79,7 +79,7 @@ func (i *HTTPInboundTunnelConnSession) parseRequest() (bool, error) {
 		return false, err
 	}
 	if httpRequest.Method != "CONNECT" {
-		return true, common.NewError("not a connection")
+		return true, common.NewError("Not a connection")
 	}
 	i.bodyReader = httpRequest.Body
 	i.httpRequest = httpRequest
@@ -128,7 +128,7 @@ func NewHTTPInbound(rwc *common.RewindReadWriteCloser) (protocol.ConnSession, *p
 	if !isHTTP {
 		//invalid http format
 		rwc.SetBufferSize(0)
-		return nil, nil, nil, common.NewError("failed to parse http header").Base(err)
+		return nil, nil, nil, common.NewError("Failed to parse http header").Base(err)
 	}
 	if err == nil {
 		//http tunnel

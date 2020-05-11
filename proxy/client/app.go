@@ -45,7 +45,7 @@ func NewAppManager(ctx context.Context, config *conf.GlobalConfig, auth stat.Aut
 		auth:   auth,
 	}
 	if config.Mux.Enabled {
-		log.Info("mux enabled")
+		log.Info("Mux enabled")
 		c.transport = NewMuxPoolManager(ctx, config, auth)
 	} else {
 		c.transport = NewTLSManager(config)

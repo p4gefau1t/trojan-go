@@ -42,11 +42,11 @@ func (m *SimpleSocksConnSession) GetRequest() *protocol.Request {
 func (m *SimpleSocksConnSession) parseRequest() error {
 	cmd, err := common.ReadByte(m.rwc)
 	if err != nil {
-		return common.NewError("failed to read cmd").Base(err)
+		return common.NewError("Failed to read cmd").Base(err)
 	}
 	addr, err := protocol.ParseAddress(m.rwc, "tcp")
 	if err != nil {
-		return common.NewError("failed to parse addr").Base(err)
+		return common.NewError("Failed to parse addr").Base(err)
 	}
 	req := &protocol.Request{
 		Address: addr,
@@ -70,7 +70,7 @@ func NewInboundConnSession(conn io.ReadWriteCloser) (protocol.ConnSession, *prot
 		rwc: conn,
 	}
 	if err := m.parseRequest(); err != nil {
-		return nil, nil, common.NewError("failed to parse mux request").Base(err)
+		return nil, nil, common.NewError("Failed to parse mux request").Base(err)
 	}
 	return m, m.request, nil
 }
@@ -80,7 +80,7 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser) (pro
 		rwc: conn,
 	}
 	if err := m.writeRequest(req); err != nil {
-		return nil, common.NewError("failed to write mux request").Base(err)
+		return nil, common.NewError("Failed to write mux request").Base(err)
 	}
 	return m, nil
 }

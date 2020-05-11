@@ -46,7 +46,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
 	inboundConn, req, err := socks.NewInboundConnSession(rwc)
 	if err != nil {
-		log.Error(common.NewError("failed to handle socks requests").Base(err))
+		log.Error(common.NewError("Failed to handle socks requests").Base(err))
 		rwc.Close()
 		return
 	}
@@ -57,7 +57,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		//listenUDP() will handle the incoming udp packets
 		localIP, err := c.config.LocalAddress.ResolveIP()
 		if err != nil {
-			log.Error(common.NewError("invalid local address").Base(err))
+			log.Error(common.NewError("Invalid local address").Base(err))
 			return
 		}
 		//bind port and IP
@@ -73,19 +73,19 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		c.associated.Signal()
 		log.Debug("udp associated to", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
-			log.Error("failed to repsond")
+			log.Error("Failed to repsond")
 			return
 		}
 
 		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
 		_, err = rwc.Read(buf[:])
-		log.Debug(common.NewError("udp conn ends").Base(err))
+		log.Debug(common.NewError("UDP conn ends").Base(err))
 		return
 	}
 
 	if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
-		log.Error(common.NewError("failed to respond").Base(err))
+		log.Error(common.NewError("Failed to respond").Base(err))
 		return
 	}
 
@@ -100,11 +100,11 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 			log.Error(err)
 			return
 		}
-		log.Info("[bypass] conn to", req)
+		log.Info("[Bypass] conn to", req)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 		return
 	} else if policy == router.Block {
-		log.Info("[block] conn to", req)
+		log.Info("[Block] conn to", req)
 		return
 	}
 	outboundConn, err := c.appMan.OpenAppConn(req)
@@ -120,7 +120,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
 	inboundConn, req, inboundPacket, err := http.NewHTTPInbound(rwc)
 	if err != nil {
-		log.Error(common.NewError("failed to handle HTTP requests").Base(err))
+		log.Error(common.NewError("Failed to handle HTTP requests").Base(err))
 		rwc.Close()
 		return
 	}
@@ -129,7 +129,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 		defer inboundConn.Close()
 
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
-			log.Error(common.NewError("failed to respond").Base(err))
+			log.Error(common.NewError("Failed to respond").Base(err))
 			return
 		}
 
@@ -144,21 +144,21 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 				log.Error(err)
 				return
 			}
-			log.Info("[bypass]conn to", req)
+			log.Info("[Bypass] conn to", req)
 			proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 			return
 		} else if policy == router.Block {
-			log.Info("[block]conn to", req)
+			log.Info("[Block] conn to", req)
 			return
 		}
 
 		outboundConn, err := c.appMan.OpenAppConn(req)
 		if err != nil {
-			log.Error(common.NewError("fail to start conn session").Base(err))
+			log.Error(common.NewError("Fail to start conn session").Base(err))
 			return
 		}
 		defer outboundConn.Close()
-		log.Info("conn tunneling to", req)
+		log.Info("Conn tunneling to", req)
 		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 	} else { //GET/POST requests
 		defer inboundPacket.Close()
@@ -169,7 +169,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 			for {
 				req, packet, err := inboundPacket.ReadPacket()
 				if err != nil {
-					log.Error(common.NewError("failed to parse packet").Base(err))
+					log.Error(common.NewError("Failed to parse packet").Base(err))
 					return
 				}
 				if req.String() == c.config.LocalAddress.String() { //loop
@@ -254,7 +254,7 @@ func (c *Client) listenUDP(errChan chan error) {
 			}
 			outboundConn, err := c.appMan.OpenAppConn(req)
 			if err != nil {
-				log.Error(common.NewError("failed to init udp tunnel").Base(err))
+				log.Error(common.NewError("Failed to init udp tunnel").Base(err))
 				return
 			}
 			outboundPacket, err := trojan.NewPacketSession(outboundConn)
@@ -285,14 +285,14 @@ func (c *Client) listenTCP(errChan chan error) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			errChan <- common.NewError("error occured when accepting conn").Base(err)
+			errChan <- common.NewError("Error occured when accepting conn").Base(err)
 			return
 		}
 		rwc := common.NewRewindReadWriteCloser(conn)
 		rwc.SetBufferSize(128)
 		first, err := rwc.ReadByte()
 		if err != nil {
-			log.Error(common.NewError("failed to obtain proxy type").Base(err))
+			log.Error(common.NewError("Failed to obtain proxy type").Base(err))
 			rwc.Close()
 			continue
 		}
@@ -307,7 +307,7 @@ func (c *Client) listenTCP(errChan chan error) {
 }
 
 func (c *Client) Run() error {
-	log.Info("client is running at", c.config.LocalAddress.String())
+	log.Info("Client is running at", c.config.LocalAddress.String())
 	errChan := make(chan error, 3)
 	go c.listenUDP(errChan)
 	go c.listenTCP(errChan)
@@ -325,7 +325,7 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) Close() error {
-	log.Info("shutting down client..")
+	log.Info("Shutting down client..")
 	c.cancel()
 	if c.udpListener != nil {
 		c.udpListener.Close()
@@ -346,7 +346,7 @@ func (c *Client) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 
 	var rtr router.Router = &router.EmptyRouter{}
 	if config.Router.Enabled {
-		log.Info("router enabled")
+		log.Info("Router enabled")
 		rtr, err = router.NewRouter(&config.Router)
 		if err != nil {
 			log.Fatal(common.NewError("invalid router list").Base(err))

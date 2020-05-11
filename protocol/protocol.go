@@ -85,7 +85,7 @@ func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
 	byteBuf := [1]byte{}
 	_, err := conn.Read(byteBuf[:])
 	if err != nil {
-		return nil, common.NewError("cannot read atype").Base(err)
+		return nil, common.NewError("Cannot read atype").Base(err)
 	}
 	addr := &common.Address{
 		AddressType: common.AddressType(byteBuf[0]),
@@ -95,7 +95,7 @@ func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
 		var buf [6]byte
 		_, err := conn.Read(buf[:])
 		if err != nil {
-			return nil, common.NewError("failed to read ipv4").Base(err)
+			return nil, common.NewError("Failed to read ipv4").Base(err)
 		}
 		addr.IP = buf[0:4]
 		addr.Port = int(binary.BigEndian.Uint16(buf[4:6]))
@@ -103,7 +103,7 @@ func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
 		var buf [18]byte
 		conn.Read(buf[:])
 		if err != nil {
-			return nil, common.NewError("failed to read ipv6").Base(err)
+			return nil, common.NewError("Failed to read ipv6").Base(err)
 		}
 		addr.IP = buf[0:16]
 		addr.Port = int(binary.BigEndian.Uint16(buf[16:18]))
@@ -111,12 +111,12 @@ func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
 		_, err := conn.Read(byteBuf[:])
 		length := byteBuf[0]
 		if err != nil {
-			return nil, common.NewError("failed to read length")
+			return nil, common.NewError("Failed to read length")
 		}
 		buf := make([]byte, length+2)
 		_, err = conn.Read(buf)
 		if err != nil {
-			return nil, common.NewError("failed to read domain")
+			return nil, common.NewError("Failed to read domain")
 		}
 		//the fucking browser uses ip as a domain name sometimes
 		host := buf[0:length]
@@ -132,7 +132,7 @@ func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
 		}
 		addr.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
-		return nil, common.NewError("invalid dest type")
+		return nil, common.NewError("Invalid dest type")
 	}
 	addr.NetworkType = network
 	return addr, nil

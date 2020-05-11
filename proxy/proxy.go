@@ -54,7 +54,7 @@ func ProxyPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
 	go copyPacket(b, a)
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("packet proxy ends").Base(err))
+		log.Debug(common.NewError("Packet proxy ends").Base(err))
 	case <-ctx.Done():
 		return
 	}
@@ -108,7 +108,7 @@ func ProxyPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, 
 	go copyToDst()
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("packet proxy with routing ends").Base(err))
+		log.Debug(common.NewError("Packet proxy with routing ends").Base(err))
 	case <-ctx.Done():
 		return
 	}
@@ -121,7 +121,7 @@ func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
 	if buildable, found := proxys[runType]; found {
 		return buildable.Build(config)
 	}
-	return nil, common.NewError("invalid run_type " + string(runType))
+	return nil, common.NewError("Invalid run_type " + string(runType))
 }
 
 func RegisterProxy(t conf.RunType, b Buildable) {
@@ -139,7 +139,7 @@ func RegisterAPI(t conf.RunType, r APIRunner) {
 func RunAPIService(t conf.RunType, ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
 	r, ok := apis[t]
 	if !ok {
-		return common.NewError("api module for" + string(t) + "not found")
+		return common.NewError("API module for" + string(t) + "not found")
 	}
 	return r(ctx, config, auth)
 }

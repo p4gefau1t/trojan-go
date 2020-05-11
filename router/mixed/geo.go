@@ -41,7 +41,8 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 		case v2router.Domain_Regex:
 			matched, err := regexp.Match(d.GetValue(), []byte(fulldomain))
 			if err != nil {
-				log.Error("invalid regex")
+				log.Error("Invalid regex")
+				return false
 			}
 			if matched {
 				return true
@@ -141,9 +142,9 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 			}
 		}
 		if found {
-			log.Info("geoip tag", c, "loaded")
+			log.Info("GeoIP tag", c, "loaded")
 		} else {
-			log.Warn("geoip tag", c, "not found")
+			log.Warn("GeoIP tag", c, "not found")
 		}
 	}
 
@@ -164,9 +165,9 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 			}
 		}
 		if found {
-			log.Info("geosite tag", c, "loaded")
+			log.Info("GeoSite tag", c, "loaded")
 		} else {
-			log.Warn("geosite tag", c, "not found")
+			log.Warn("GeoSite tag", c, "not found")
 		}
 	}
 	return nil

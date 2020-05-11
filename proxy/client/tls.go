@@ -37,7 +37,7 @@ func (m *TLSManager) printConnInfo(conn net.Conn) {
 		tlsConn := conn.(*tls.Conn)
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Trace("tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		log.Trace("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
 				log.Trace("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
@@ -47,7 +47,7 @@ func (m *TLSManager) printConnInfo(conn net.Conn) {
 		tlsConn := conn.(*utls.UConn)
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Trace("utls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		log.Trace("UTLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
 				log.Trace("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
@@ -79,10 +79,10 @@ func (m *TLSManager) dialTCP() (net.Conn, error) {
 	}
 	conn, err := net.DialTimeout(network, m.config.RemoteAddress.String(), protocol.GetRandomTimeoutDuration())
 	if err != nil {
-		return nil, common.NewError("failed to dial to remote server").Base(err)
+		return nil, common.NewError("Failed to dial to remote server").Base(err)
 	}
 	if err := sockopt.ApplyTCPConnOption(conn.(*net.TCPConn), &m.config.TCP); err != nil {
-		log.Warn(common.NewError("failed to apply tcp options").Base(err))
+		log.Warn(common.NewError("Failed to apply tcp options").Base(err))
 	}
 	return conn, nil
 }
@@ -137,7 +137,7 @@ func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
 		m.helloIDLock.Unlock()
 		return client, err
 	}
-	return nil, common.NewError("all client hello id tried but failed")
+	return nil, common.NewError("All client hello IDs tried but failed")
 }
 
 func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
@@ -168,7 +168,7 @@ func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
 		ws, err := trojan.NewOutboundWebosocket(transport, m.config)
 		if err != nil {
 			transport.Close()
-			return nil, common.NewError("failed to start websocket connection").Base(err)
+			return nil, common.NewError("Failed to start websocket connection").Base(err)
 		}
 		return ws, nil
 	}
@@ -214,10 +214,10 @@ func NewTLSManager(config *conf.GlobalConfig) *TLSManager {
 		}
 		id, found := table[config.TLS.Fingerprint]
 		if found {
-			log.Debug("tls fingerprint loaded:", id.Str())
+			log.Debug("TLS fingerprint loaded:", id.Str())
 			m.helloIDs = []utls.ClientHelloID{*id}
 		} else {
-			log.Warn("invalid tls fingerprint:", config.TLS.Fingerprint, ", using default fingerprint")
+			log.Warn("Invalid TLS fingerprint:", config.TLS.Fingerprint, ", using default fingerprint")
 			config.TLS.Fingerprint = ""
 		}
 	}

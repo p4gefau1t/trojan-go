@@ -21,7 +21,7 @@ type MixedRouter struct {
 func (r *MixedRouter) match(rr router.Router, req *protocol.Request) bool {
 	policy, err := rr.RouteRequest(req)
 	if err != nil {
-		log.Warn(common.NewError("match error").Base(err))
+		log.Warn(common.NewError("Match error").Base(err))
 		return false
 	}
 	if policy == router.Match {

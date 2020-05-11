@@ -146,7 +146,7 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	if config.LogLevel == 0 {
 		state := tlsConn.ConnectionState()
 		chain := state.VerifiedChains
-		log.Trace("websocket double tls handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+		log.Trace("Websocket double TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
 				log.Trace("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
@@ -192,7 +192,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	bufrw := bufio.NewReadWriter(bufio.NewReader(rewindConn), bufio.NewWriter(rewindConn))
 	httpRequest, err := http.ReadRequest(bufrw.Reader)
 	if err != nil {
-		log.Debug(common.NewError("not a http request:").Base(err))
+		log.Debug(common.NewError("Not a http request:").Base(err))
 		return nil, nil
 	}
 
@@ -201,12 +201,12 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		strings.ToLower(httpRequest.Header.Get("Upgrade")) != "websocket" { //check upgrade field
 		//not a valid websocket conn
 		rewindConn.R.Rewind()
-		shadowMan.CommitScapegoat(&shadow.Scapegoat{
+		shadowMan.SubmitScapegoat(&shadow.Scapegoat{
 			Conn:          rewindConn,
 			ShadowAddress: config.RemoteAddress,
-			Info:          "invalid http upgrade request from " + conn.RemoteAddr().String(),
+			Info:          "Invalid http upgrade request from " + conn.RemoteAddr().String(),
 		})
-		return nil, common.NewError("invalid ws url or hostname")
+		return nil, common.NewError("Invalid websocket request" + conn.RemoteAddr().String())
 	}
 
 	//this is a websocket upgrade request
@@ -272,7 +272,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		if err != nil {
 			rewindConn.R.Rewind()
 			//proxy this to our own ws server
-			err = common.NewError("remote websocket " + conn.RemoteAddr().String() + "didn't send any valid iv").Base(err)
+			err = common.NewError("Remote websocket " + conn.RemoteAddr().String() + "didn't send any valid iv").Base(err)
 			goat, err := getWebsocketScapegoat(
 				config,
 				url,
@@ -281,10 +281,10 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 				rewindConn,
 			)
 			if err != nil {
-				log.Error(common.NewError("failed to obtain websocket scapegoat").Base(err))
+				log.Error(common.NewError("Failed to obtain websocket scapegoat").Base(err))
 				wsConn.WriteClose(500)
 			} else {
-				shadowMan.CommitScapegoat(goat)
+				shadowMan.SubmitScapegoat(goat)
 			}
 			return nil, err
 		}
@@ -304,7 +304,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	if tlsErr := tlsConn.Handshake(); tlsErr != nil {
 		rewindConn.R.Rewind()
 		//proxy this to our own ws server
-		tlsErr = common.NewError("invalid double tls handshake from" + conn.RemoteAddr().String()).Base(tlsErr)
+		tlsErr = common.NewError("Invalid double tls handshake from" + conn.RemoteAddr().String()).Base(tlsErr)
 		goat, err := getWebsocketScapegoat(
 			config,
 			url,
@@ -313,10 +313,10 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 			rewindConn,
 		)
 		if err != nil {
-			log.Error(common.NewError("failed to obtain websocket scapegoat").Base(err))
+			log.Error(common.NewError("Failed to obtain websocket scapegoat").Base(err))
 			wsConn.WriteClose(500)
 		} else {
-			shadowMan.CommitScapegoat(goat)
+			shadowMan.SubmitScapegoat(goat)
 		}
 		return nil, tlsErr
 	}

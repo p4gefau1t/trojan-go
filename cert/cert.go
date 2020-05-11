@@ -46,13 +46,13 @@ func (u *User) GetPrivateKey() crypto.PrivateKey {
 func createAndSaveUserKey() (*ecdsa.PrivateKey, error) {
 	_, err := os.Stat("user.key")
 	if os.IsExist(err) {
-		return nil, common.NewError("user.key exists, cannot create new user")
+		return nil, common.NewError("User.key exists, cannot create new user")
 	}
 	userKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	common.Must(err)
 	userKeyFile, err := os.Create("user.key")
 	if err != nil {
-		return nil, common.NewError("failed to create user key file").Base(err)
+		return nil, common.NewError("Failed to create user key file").Base(err)
 	}
 	defer userKeyFile.Close()
 
@@ -65,11 +65,11 @@ func createAndSaveUserKey() (*ecdsa.PrivateKey, error) {
 func loadUserKey() (*ecdsa.PrivateKey, error) {
 	pemEncoded, err := ioutil.ReadFile("user.key")
 	if err != nil {
-		return nil, common.NewError("failed to load user's key").Base(err)
+		return nil, common.NewError("Failed to load user's key").Base(err)
 	}
 	block, _ := pem.Decode([]byte(pemEncoded))
 	if block == nil {
-		return nil, common.NewError("failed to parse user's key").Base(err)
+		return nil, common.NewError("Failed to parse user's key").Base(err)
 	}
 	x509Encoded := block.Bytes
 	return x509.ParseECPrivateKey(x509Encoded)
@@ -165,24 +165,24 @@ func isFilesExist(nameList []string) bool {
 
 func RequestCert(domain, email string) error {
 	if isFilesExist([]string{"server.key", "server.crt"}) {
-		return common.NewError("cert files(server.key, server.crt) already exist")
+		return common.NewError("Cert files(server.key, server.crt) already exist")
 	}
 	userKey, err := loadUserKey()
 	if err != nil {
-		fmt.Println("failed to load user key, trying to create one..")
+		fmt.Println("Failed to load user key, trying to create one..")
 		userKey, err = createAndSaveUserKey()
 		if err != nil {
 			return err
 		}
 	} else {
-		fmt.Println("found user.key, using exist user key")
+		fmt.Println("Found user.key, using exist user key")
 	}
 	cert, err := obtainCertificate(domain, email, userKey, nil)
 	if err != nil {
 		return err
 	}
 	if err := saveServerKeyAndCert(cert); err != nil {
-		return common.NewError("failed to save cert").Base(err)
+		return common.NewError("Failed to save cert").Base(err)
 	}
 	return nil
 }
@@ -201,7 +201,7 @@ func RenewCert(domain, email string) error {
 		return err
 	}
 	if err := saveServerKeyAndCert(cert); err != nil {
-		return common.NewError("failed to save cert").Base(err)
+		return common.NewError("Failed to save cert").Base(err)
 	}
 	return nil
 }

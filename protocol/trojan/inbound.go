@@ -43,7 +43,7 @@ func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 }
 
 func (i *TrojanInboundConnSession) Close() error {
-	log.Info("user", i.passwordHash, "conn to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
+	log.Info("User", i.passwordHash, "to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
 	i.cancel()
 	return i.rwc.Close()
 }
@@ -52,11 +52,11 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 	userHash := [56]byte{}
 	n, err := r.Read(userHash[:])
 	if err != nil || n != 56 {
-		return common.NewError("failed to read hash").Base(err)
+		return common.NewError("Failed to read hash").Base(err)
 	}
 	valid, meter := i.auth.AuthUser(string(userHash[:]))
 	if !valid {
-		return common.NewError("invalid hash:" + string(userHash[:]))
+		return common.NewError("Invalid hash:" + string(userHash[:]))
 	}
 	i.passwordHash = string(userHash[:])
 	i.meter = meter
@@ -66,12 +66,12 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 
 	cmd, err := r.ReadByte()
 	if err != nil {
-		return common.NewError("failed to read cmd").Base(err)
+		return common.NewError("Failed to read cmd").Base(err)
 	}
 
 	addr, err := protocol.ParseAddress(r, "tcp")
 	if err != nil {
-		return common.NewError("failed to parse address").Base(err)
+		return common.NewError("Failed to parse address").Base(err)
 	}
 	req := &protocol.Request{
 		Command: protocol.Command(cmd),
@@ -107,7 +107,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 		//try to treat it as a websocket connection first
 		ws, err := NewInboundWebsocket(i.ctx, rewindConn, config, shadowMan)
 		if err != nil {
-			return nil, nil, common.NewError("invalid websocket request").Base(err)
+			return nil, nil, common.NewError("Invalid websocket request").Base(err)
 		}
 		if ws != nil {
 			//a websocket conn, try to verify it
@@ -120,7 +120,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 			if err := i.parseRequest(newTrapsport.RewindReader); err != nil {
 				//invalid ws, just simply close it
 				ws.Close()
-				return nil, nil, common.NewError("invalid trojan header over websocket conn").Base(err)
+				return nil, nil, common.NewError("Invalid trojan header over websocket conn").Base(err)
 			}
 			return i, i.request, nil
 		}
@@ -132,8 +132,8 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 	if err := i.parseRequest(rewindConn.R); err != nil {
 		//not a valid trojan request, proxy it to the remote_addr
 		rewindConn.R.Rewind()
-		err := common.NewError("invalid trojan header from " + conn.RemoteAddr().String()).Base(err)
-		shadowMan.CommitScapegoat(&shadow.Scapegoat{
+		err := common.NewError("Invalid trojan header from " + conn.RemoteAddr().String()).Base(err)
+		shadowMan.SubmitScapegoat(&shadow.Scapegoat{
 			Conn:          rewindConn,
 			ShadowAddress: i.config.RemoteAddress,
 			Info:          err.Error(),

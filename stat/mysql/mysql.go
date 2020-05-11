@@ -33,7 +33,7 @@ func (a *DBAuth) updater() {
 
 			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `password`=?;", recv, sent, hash)
 			if err != nil {
-				log.Error(common.NewError("failed to update data to user").Base(err))
+				log.Error(common.NewError("Failed to update data to user").Base(err))
 				continue
 			}
 			if r, err := s.RowsAffected(); err != nil {
@@ -42,12 +42,12 @@ func (a *DBAuth) updater() {
 				}
 			}
 		}
-		log.Info("buffered data has been written into the database")
+		log.Info("Buffered data has been written into the database")
 
 		//update memory
 		rows, err := a.db.Query("SELECT password,quota,download,upload FROM users")
 		if err != nil {
-			log.Error(common.NewError("failed to pull data from the database").Base(err))
+			log.Error(common.NewError("Failed to pull data from the database").Base(err))
 			time.Sleep(a.updateDuration)
 			continue
 		}
@@ -56,7 +56,7 @@ func (a *DBAuth) updater() {
 			var quota, download, upload int64
 			err := rows.Scan(&hash, &quota, &download, &upload)
 			if err != nil {
-				log.Error(common.NewError("failed to obtain data from the query result").Base(err))
+				log.Error(common.NewError("Failed to obtain data from the query result").Base(err))
 				break
 			}
 			if download+upload < quota || quota < 0 {
@@ -90,7 +90,7 @@ func NewDBAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticat
 		config.MySQL.Database,
 	)
 	if err != nil {
-		return nil, common.NewError("failed to connect to database server").Base(err)
+		return nil, common.NewError("Failed to connect to database server").Base(err)
 	}
 	memoryAuth, err := memory.NewMemoryAuth(ctx, config)
 	if err != nil {

@@ -32,7 +32,7 @@ func (m *RedisTrafficMeter) Count(sent, recv int) {
 	`)
 
 	if err := m.db.Do(evalScript.Cmd(nil, key, strconv.Itoa(recv), strconv.Itoa(sent))); err != nil {
-		log.Error(common.NewError("failed to update data to user").Base(err))
+		log.Error(common.NewError("Failed to update data to user").Base(err))
 	}
 }
 
@@ -59,7 +59,7 @@ type RedisAuthenticator struct {
 func (a *RedisAuthenticator) AuthUser(hash string) (bool, stat.TrafficMeter) {
 	var exist bool
 	if err := a.db.Do(radix.Cmd(&exist, "EXISTS", hash)); err != nil {
-		log.Error(common.NewError("failed to check user in DB").Base(err))
+		log.Error(common.NewError("Failed to check user in DB").Base(err))
 	}
 	if exist {
 		return true, &RedisTrafficMeter{hash: hash, db: a.db, ctx: a.ctx}
@@ -82,7 +82,7 @@ func NewRedisAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenti
 	}
 	db, err := radix.NewPool("tcp", addr, 10, radix.PoolConnFunc(conn))
 	if err != nil {
-		return nil, common.NewError("failed to connect to database server").Base(err)
+		return nil, common.NewError("Failed to connect to database server").Base(err)
 	}
 	return &RedisAuthenticator{db: db, ctx: ctx}, nil
 }

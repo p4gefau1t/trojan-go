@@ -25,7 +25,7 @@ type ShadowManager struct {
 	scapegoatChan chan *Scapegoat
 }
 
-func (m *ShadowManager) CommitScapegoat(goat *Scapegoat) {
+func (m *ShadowManager) SubmitScapegoat(goat *Scapegoat) {
 	m.scapegoatChan <- goat
 	log.Debug("scapegoat commited")
 }
@@ -35,7 +35,7 @@ func (m *ShadowManager) handleScapegoat() {
 		select {
 		case goat := <-m.scapegoatChan:
 			if goat.Info != "" {
-				log.Info("scapegoat: ", goat.Info)
+				log.Info("Scapegoat: ", goat.Info)
 			}
 			//cancel the deadline
 			if conn, ok := goat.Conn.(net.Conn); ok {
@@ -48,7 +48,7 @@ func (m *ShadowManager) handleScapegoat() {
 				var err error
 				goat.ShadowConn, err = net.Dial("tcp", goat.ShadowAddress.String())
 				if err != nil {
-					log.Error(common.NewError("failed to dial to shadow server").Base(err))
+					log.Error(common.NewError("Failed to dial to shadow server").Base(err))
 					continue
 				}
 			}

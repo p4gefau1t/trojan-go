@@ -43,7 +43,7 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 	if req.AddressType == common.DomainName && len(config.DNS) != 0 { //customized dns server
 		ip, found := dnsCache.Get(req.DomainName)
 		if found {
-			log.Trace("dns cache hit:", req.DomainName, "->", ip.(net.IP).String())
+			log.Trace("DNS cache hit:", req.DomainName, "->", ip.(net.IP).String())
 			newConn, err = net.DialTCP("tcp", nil, &net.TCPAddr{
 				IP:   ip.(net.IP),
 				Port: req.Port,
@@ -53,7 +53,7 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 			}
 			goto done
 		}
-		log.Trace("dns cache missed:", req.DomainName)
+		log.Trace("DNS cache missed:", req.DomainName)
 		//find a avaliable dns server
 		for _, s := range config.DNS {
 			var dnsType conf.DNSType
@@ -100,7 +100,7 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 						}
 						return tlsConn, nil
 					}
-					return nil, common.NewError("invalid dns type :" + string(dnsType))
+					return nil, common.NewError("Invalid dns type :" + string(dnsType))
 				},
 			}
 			d := net.Dialer{
@@ -116,16 +116,16 @@ func NewOutboundConnSession(ctx context.Context, req *protocol.Request, config *
 				log.Warn(err)
 			} else {
 				if ip := net.ParseIP(addr); ip != nil {
-					log.Trace("dns cache set", req.DomainName, "->", addr)
+					log.Trace("DNS cache set", req.DomainName, "->", addr)
 					dnsCache.Set(req.DomainName, ip, cache.DefaultExpiration)
 				} else {
-					log.Warn("invalid resolved addr", addr)
+					log.Warn("Invalid resolved addr", addr)
 				}
 			}
 			break
 		}
 		if newConn == nil {
-			return nil, common.NewError("all dns servers are down")
+			return nil, common.NewError("All dns servers down")
 		}
 	} else {
 		//default resolver
@@ -163,7 +163,7 @@ func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *ne
 		n, addr, err := conn.ReadFromUDP(buf)
 		conn.SetReadDeadline(time.Time{})
 		if err != nil {
-			log.Debug(common.NewError("packet session ends").Base(err))
+			log.Debug(common.NewError("Packet session ends").Base(err))
 			return
 		}
 		if addr.String() != req.String() {
@@ -187,7 +187,7 @@ func (o *DirectOutboundPacketSession) ReadPacket() (*protocol.Request, []byte, e
 	case info := <-o.packetChan:
 		return info.request, info.packet, nil
 	case <-o.ctx.Done():
-		return nil, nil, common.NewError("session closed")
+		return nil, nil, common.NewError("Session closed")
 	}
 }
 

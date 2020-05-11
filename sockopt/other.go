@@ -12,6 +12,6 @@ import (
 )
 
 func ApplySocketOption(fd uintptr, config *conf.TCPConfig, isInbound bool) error {
-	log.Warn("tcp options is ignored in this os:", runtime.GOOS)
+	log.Warn("TCP options is ignored in this os:", runtime.GOOS)
 	return nil
 }

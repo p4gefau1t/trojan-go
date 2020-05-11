@@ -33,7 +33,7 @@ type NAT struct {
 func (n *NAT) handleConn(conn net.Conn) {
 	inboundConn, req, err := tproxy.NewInboundConnSession(conn)
 	if err != nil {
-		log.Error(common.NewError("failed to start inbound session").Base(err))
+		log.Error(common.NewError("Failed to start inbound session").Base(err))
 		return
 	}
 	defer inboundConn.Close()
@@ -43,7 +43,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 		return
 	}
 	defer outboundConn.Close()
-	log.Info("[transparent]conn from", conn.RemoteAddr(), "tunneling to", req)
+	log.Info("[Tproxy] conn from", conn.RemoteAddr(), "tunneling to", req)
 	proxy.ProxyConn(n.ctx, inboundConn, outboundConn, n.config.BufferSize)
 }
 
@@ -100,7 +100,7 @@ func (n *NAT) listenTCP(errChan chan error) {
 }
 
 func (n *NAT) Run() error {
-	log.Info("nat is running at", n.config.LocalAddress)
+	log.Info("NAT is running at", n.config.LocalAddress)
 	errChan := make(chan error, 2)
 	go n.listenUDP(errChan)
 	go n.listenTCP(errChan)
@@ -113,7 +113,7 @@ func (n *NAT) Run() error {
 }
 
 func (n *NAT) Close() error {
-	log.Info("shutting down tproxy...")
+	log.Info("Shutting down NAT...")
 	n.cancel()
 	if n.listener != nil {
 		n.listener.Close()

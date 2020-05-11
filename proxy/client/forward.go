@@ -43,7 +43,7 @@ func (f *Forward) dispatchServerPacket(addr net.Addr) {
 		outboundPacket, found := f.outboundPacketTable[addr.String()]
 		f.outboundPacketTableLock.Unlock()
 		if !found {
-			log.Error("addr key not found")
+			log.Error("Address key not found, expired?", addr.String())
 			return
 		}
 		payloadChan := make(chan []byte, 64)
@@ -112,7 +112,7 @@ func (f *Forward) dispatchClientPacket() {
 func (f *Forward) listenUDP(errChan chan error) {
 	listener, err := net.ListenPacket("udp", f.config.LocalAddress.String())
 	if err != nil {
-		errChan <- common.NewError("failed to listen udp")
+		errChan <- common.NewError("Failed to listen udp")
 		return
 	}
 	f.udpListener = listener
@@ -120,7 +120,7 @@ func (f *Forward) listenUDP(errChan chan error) {
 	for {
 		buf := make([]byte, protocol.MaxUDPPacketSize)
 		n, addr, err := listener.ReadFrom(buf)
-		log.Info("packet from", addr, "tunneling to", f.config.TargetAddress)
+		log.Info("Packet from", addr, "tunneling to", f.config.TargetAddress)
 		if err != nil {
 			errChan <- err
 			return
@@ -135,7 +135,7 @@ func (f *Forward) listenUDP(errChan chan error) {
 func (f *Forward) listenTCP(errChan chan error) {
 	listener, err := net.Listen("tcp", f.config.LocalAddress.String())
 	if err != nil {
-		errChan <- common.NewError("failed to listen local address").Base(err)
+		errChan <- common.NewError("Failed to listen local address").Base(err)
 		return
 	}
 	f.tcpListener = listener
@@ -147,12 +147,12 @@ func (f *Forward) listenTCP(errChan chan error) {
 	for {
 		inboundConn, err := listener.Accept()
 		if err != nil {
-			errChan <- common.NewError("error occured when accepting conn").Base(err)
+			errChan <- common.NewError("Error occured when accepting conn").Base(err)
 		}
 		handle := func(inboundConn net.Conn) {
 			outboundConn, err := f.appMan.OpenAppConn(req)
 			if err != nil {
-				log.Error(common.NewError("failed to start outbound session").Base(err))
+				log.Error(common.NewError("Failed to start outbound session").Base(err))
 				return
 			}
 			defer outboundConn.Close()
@@ -163,7 +163,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 }
 
 func (f *Forward) Run() error {
-	log.Info("forward is running at", f.config.LocalAddress)
+	log.Info("Forward is running at", f.config.LocalAddress)
 	errChan := make(chan error, 2)
 	go f.listenUDP(errChan)
 	go f.listenTCP(errChan)
@@ -176,7 +176,7 @@ func (f *Forward) Run() error {
 }
 
 func (f *Forward) Close() error {
-	log.Info("shutting down forward..")
+	log.Info("Shutting down forward..")
 	f.cancel()
 	if f.udpListener != nil {
 		f.udpListener.Close()

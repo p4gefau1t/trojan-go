@@ -39,7 +39,7 @@ func RegisterAuthCreator(name string, creator AuthCreator) {
 func NewAuth(ctx context.Context, name string, config *conf.GlobalConfig) (Authenticator, error) {
 	creator, found := authCreators[name]
 	if !found {
-		return nil, common.NewError("driver name " + name + " not found")
+		return nil, common.NewError("Auth driver name " + name + " not found")
 	}
 	return creator(ctx, config)
 }

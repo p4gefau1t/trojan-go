@@ -69,7 +69,7 @@ func RequestCertGuide() {
 	} else {
 		log.Info("domain_info.json found")
 		if err := json.Unmarshal(data, info); err != nil {
-			log.Error(common.NewError("failed to parse domain_info.json").Base(err))
+			log.Error(common.NewError("Failed to parse domain_info.json").Base(err))
 			return
 		}
 	}

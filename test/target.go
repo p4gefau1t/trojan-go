@@ -29,7 +29,7 @@ func RunEchoUDPServer(ctx context.Context) {
 			if err != nil {
 				return
 			}
-			log.Info("echo from", addr)
+			log.Info("Echo from", addr)
 			conn.WriteToUDP(buf[0:n], addr)
 		}
 	}()
@@ -53,7 +53,7 @@ func RunMultipleUDPEchoServer(ctx context.Context) {
 					if err != nil {
 						return
 					}
-					log.Info("echo from", addr)
+					log.Info("Echo from", addr)
 					conn.WriteToUDP(buf[0:n], addr)
 				}
 			}()

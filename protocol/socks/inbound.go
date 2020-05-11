@@ -26,7 +26,7 @@ func (i *SocksConnInboundSession) checkVersion() error {
 		return err
 	}
 	if version != 0x5 {
-		return common.NewError("unsupported socks version")
+		return common.NewError("Unsupported socks version")
 	}
 	return nil
 }
@@ -50,19 +50,19 @@ func (i *SocksConnInboundSession) parseRequest() error {
 	}
 	cmd, err := i.rwc.ReadByte()
 	if err != nil {
-		return common.NewError("cannot read cmd").Base(err)
+		return common.NewError("Cannot read cmd").Base(err)
 	}
 	i.rwc.Discard(1)
 
 	switch protocol.Command(cmd) {
 	case protocol.Connect, protocol.Associate:
 	default:
-		return common.NewError("invalid command")
+		return common.NewError("Invalid command")
 	}
 
 	addr, err := protocol.ParseAddress(i.rwc, "tcp")
 	if err != nil {
-		return common.NewError("cannot read request").Base(err)
+		return common.NewError("Cannot read request").Base(err)
 	}
 	request := &protocol.Request{
 		Address: addr,
@@ -127,13 +127,13 @@ type SocksInboundPacketSession struct {
 
 func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Request, []byte, error) {
 	if len(rawPacket) <= 4 {
-		return nil, nil, common.NewError("packet too short")
+		return nil, nil, common.NewError("Malformed socks5 packet")
 	}
 	buf := bytes.NewBuffer(rawPacket)
 	buf.Next(2)
 	frag, _ := buf.ReadByte()
 	if frag != 0 {
-		return nil, nil, common.NewError("fragment is not supported")
+		return nil, nil, common.NewError("Fragment is not supported")
 	}
 	addr, err := protocol.ParseAddress(buf, "udp")
 	if err != nil {
@@ -208,7 +208,7 @@ func (i *SocksInboundPacketSession) WritePacket(req *protocol.Request, packet []
 	defer i.tableMutex.Unlock()
 	client, found := i.sessionTable[req.String()]
 	if !found {
-		return 0, common.NewError("session not found")
+		return 0, common.NewError("Session not found: " + req.String())
 	}
 	client.expire = time.Now().Add(protocol.UDPTimeout)
 	log.Debug("udp write to", client.src, "req", req)
