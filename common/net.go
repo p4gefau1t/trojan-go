@@ -40,18 +40,18 @@ func (a *Address) Network() string {
 	return a.NetworkType
 }
 
-func (a *Address) ResolveIP(preferV4 bool) (net.IP, error) {
+func (a *Address) ResolveIP() (net.IP, error) {
 	if a.AddressType == IPv4 || a.AddressType == IPv6 {
 		return a.IP, nil
 	}
-	network := "ip"
-	if preferV4 {
-		network = "ip4"
+	if a.IP != nil {
+		return a.IP, nil
 	}
-	addr, err := net.ResolveIPAddr(network, a.DomainName)
+	addr, err := net.ResolveIPAddr("ip", a.DomainName)
 	if err != nil {
 		return nil, err
 	}
+	a.IP = addr.IP
 	return addr.IP, nil
 }
 

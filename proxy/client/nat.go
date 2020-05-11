@@ -77,15 +77,7 @@ func (n *NAT) listenUDP(errChan chan error) {
 }
 
 func (n *NAT) listenTCP(errChan chan error) {
-	localIP, err := n.config.LocalAddress.ResolveIP(false)
-	if err != nil {
-		errChan <- err
-		return
-	}
-	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
-		IP:   localIP,
-		Port: int(n.config.LocalAddress.Port),
-	})
+	listener, err := net.Listen("tcp", n.config.LocalAddress.String())
 	if err != nil {
 		errChan <- err
 		return

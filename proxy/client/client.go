@@ -37,7 +37,7 @@ type Client struct {
 	associated  *common.Notifier
 	router      router.Router
 	tcpListener net.Listener
-	udpListener *net.UDPConn
+	udpListener net.PacketConn
 	auth        stat.Authenticator
 	appMan      *AppManager
 }
@@ -55,7 +55,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 	if req.Command == protocol.Associate {
 		//setting up the bind address to respond
 		//listenUDP() will handle the incoming udp packets
-		localIP, err := c.config.LocalAddress.ResolveIP(false)
+		localIP, err := c.config.LocalAddress.ResolveIP()
 		if err != nil {
 			log.Error(common.NewError("invalid local address").Base(err))
 			return
@@ -233,21 +233,13 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 }
 
 func (c *Client) listenUDP(errChan chan error) {
-	localIP, err := c.config.LocalAddress.ResolveIP(false)
-	if err != nil {
-		errChan <- common.NewError("invalid local address").Base(err)
-		return
-	}
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   localIP,
-		Port: c.config.LocalAddress.Port,
-	})
+	listener, err := net.ListenPacket("udp", c.config.LocalAddress.String())
 	if err != nil {
 		errChan <- common.NewError("failed to listen udp").Base(err)
 		return
 	}
 	c.udpListener = listener
-	inboundPacket, err := socks.NewInboundPacketSession(c.ctx, listener)
+	inboundPacket, err := socks.NewInboundPacketSession(c.ctx, listener.(*net.UDPConn))
 	common.Must(err)
 	for {
 		select {

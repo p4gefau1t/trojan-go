@@ -16,7 +16,7 @@ import (
 )
 
 type dispatchInfo struct {
-	addr    *net.UDPAddr
+	addr    net.Addr
 	payload []byte
 }
 
@@ -30,13 +30,13 @@ type Forward struct {
 	clientPackets           chan *dispatchInfo
 	outboundPacketTableLock sync.Mutex
 	outboundPacketTable     map[string]protocol.PacketSession
-	udpListener             *net.UDPConn
+	udpListener             net.PacketConn
 	tcpListener             net.Listener
 	auth                    stat.Authenticator
 	appMan                  *AppManager
 }
 
-func (f *Forward) dispatchServerPacket(addr *net.UDPAddr) {
+func (f *Forward) dispatchServerPacket(addr net.Addr) {
 	for {
 		f.outboundPacketTableLock.Lock()
 		//use src addr as the key
@@ -110,11 +110,7 @@ func (f *Forward) dispatchClientPacket() {
 }
 
 func (f *Forward) listenUDP(errChan chan error) {
-	localIP, err := f.config.LocalAddress.ResolveIP(false)
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   localIP,
-		Port: f.config.LocalAddress.Port,
-	})
+	listener, err := net.ListenPacket("udp", f.config.LocalAddress.String())
 	if err != nil {
 		errChan <- common.NewError("failed to listen udp")
 		return
@@ -123,7 +119,7 @@ func (f *Forward) listenUDP(errChan chan error) {
 	go f.dispatchClientPacket()
 	for {
 		buf := make([]byte, protocol.MaxUDPPacketSize)
-		n, addr, err := listener.ReadFromUDP(buf)
+		n, addr, err := listener.ReadFrom(buf)
 		log.Info("packet from", addr, "tunneling to", f.config.TargetAddress)
 		if err != nil {
 			errChan <- err

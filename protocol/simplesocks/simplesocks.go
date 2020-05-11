@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
@@ -13,7 +12,6 @@ import (
 type SimpleSocksConnSession struct {
 	protocol.ConnSession
 
-	config  *conf.GlobalConfig
 	request *protocol.Request
 	rwc     io.ReadWriteCloser
 	recv    uint64

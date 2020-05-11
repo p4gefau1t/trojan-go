@@ -3,13 +3,13 @@
 [![License](https://img.shields.io/github/license/p4gefau1t/trojan-go)](https://img.shields.io/github/license/p4gefau1t/trojan-go)
 [![Downloads](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)](https://img.shields.io/github/downloads/p4gefau1t/trojan-go/total?label=downloads&logo=github&style=flat-square)
 [![HitCounts](http://hits.dwyl.io/p4gefau1t/trojan-go.svg)](http://hits.dwyl.io/p4gefau1t/trojan-go)
-
 [![Release](https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases)](https://img.shields.io/github/v/release/p4gefau1t/trojan-go?include_prereleases)
 [![Release Date](https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go)](https://img.shields.io/github/release-date-pre/p4gefau1t/trojan-go)
 [![Docker Image](https://images.microbadger.com/badges/image/p4gefau1t/trojan-go.svg)](https://microbadger.com/images/p4gefau1t/trojan-go)
 
 [![Commit](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/p4gefau1t/trojan-go)](https://goreportcard.com/report/github.com/p4gefau1t/trojan-go)
 
 使用Go实现的完整Trojan代理，与Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
 
@@ -27,7 +27,7 @@
 
 ### 下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。
 
-Trojan-Go支持并且兼容原版Trojan-GFW的绝大多数功能，包括但不限于：
+Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于：
 
 - TLS/SSL隧道传输
 
@@ -144,7 +144,7 @@ CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client"
 
 ### 易用
 
-配置文件格式与原版兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
+配置文件格式与Trojan-GFW兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
 
 服务器配置文件
 
@@ -241,9 +241,9 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 
-服务端可以省略```hostname```, 但是服务器和客户端的```path```必须相同。服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
+可以省略```hostname```, 但是服务器和客户端的```path```必须一致。服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
 
-由于原版Trojan并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。
+由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容所有客户端，但是如果要使用Websocket承载流量，请确保双方都使用Trojan-Go。
 
 ### 多路复用
 
@@ -255,7 +255,7 @@ Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使�
 
 启用多路复用并不会增加你测速得到的链路速度，但会降低延迟，提升大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
 
-注意，这个特性和原版Trojan**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
+注意，这个特性和Trojan-GFW**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
 
 ```json
 "mux": {
@@ -297,7 +297,8 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
     ],
     "proxy": [
         "proxy_list.txt"
-    ]
+    ],
+    "default_policy": "proxy"
 }
 ```
 
@@ -357,3 +358,8 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full" -o trojan-go
 [tcplisten](https://github.com/valyala/tcplisten)
 
 [utls](https://github.com/refraction-networking/utls)
+
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/p4gefau1t/trojan-go.svg)](https://starchart.cc/p4gefau1t/trojan-go)

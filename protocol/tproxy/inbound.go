@@ -157,7 +157,7 @@ func (i *NATInboundPacketSession) Close() error {
 }
 
 func NewInboundPacketSession(ctx context.Context, config *conf.GlobalConfig) (protocol.PacketSession, error) {
-	localIP, err := config.LocalAddress.ResolveIP(false)
+	localIP, err := config.LocalAddress.ResolveIP()
 	if err != nil {
 		return nil, err
 	}

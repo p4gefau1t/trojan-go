@@ -127,7 +127,7 @@ type SocksInboundPacketSession struct {
 
 func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Request, []byte, error) {
 	if len(rawPacket) <= 4 {
-		return nil, nil, common.NewError("too short")
+		return nil, nil, common.NewError("packet too short")
 	}
 	buf := bytes.NewBuffer(rawPacket)
 	buf.Next(2)
@@ -139,7 +139,7 @@ func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Req
 	if err != nil {
 		return nil, nil, common.NewError("cannot parse udp request").Base(err)
 	}
-	//command make no sense here
+	//command makes no sense here
 	request := &protocol.Request{
 		Address: addr,
 	}
