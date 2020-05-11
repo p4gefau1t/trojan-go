@@ -83,7 +83,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
         sudo ./trojan-go -autocert renew
         ```
 
-    关于证书申请[更详细的说明](#证书申请)
+    关于证书申请[更详细的说明](#证书申请)。
 
 2. 快速启动服务器和客户端（简易模式）
 
@@ -102,7 +102,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 3. 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
 
     ```shell
-    ./trojan-go -config 你的配置文件.json
+    ./trojan-go -config config.json
     ```
 
 4. 使用Docker部署
@@ -112,7 +112,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
         --name trojan-go \
         -d \
         -v /etc/trojan-go/:/etc/trojan-go \
-        -p 1234:1234 \
+        --network host \
         p4gefau1t/trojan-go
     ```
 
@@ -123,16 +123,20 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
         --name trojan-go \
         -d \
         -v /path/to/host/config:/path/in/container \
-        -p 1234:1234 \
+        --network host \
         p4gefau1t/trojan-go \
         /path/in/container/config.json
     ```
+    
+    镜像的latest标签对应master分支，nightly标签对应dev分支。
 
 ## 特性
 
 ### 移植性
 
-运行Trojan-Go的可执行文件不依赖其他组件。你可以将编译得到的单个可执行文件在目标机器上直接执行而不需要考虑依赖的问题。你可以很方便地编译（或者交叉编译）它，然后在你的服务器，PC，树莓派，甚至路由器上部署。同时，可以方便地使用build tag删减各模块，以缩小可执行文件体积。
+运行Trojan-Go的可执行文件不依赖其他组件。
+
+可以将编译得到的单个可执行文件在目标机器上直接执行而不需要考虑依赖的问题。同时，你可以很方便地编译（或者交叉编译）它，然后在你的服务器，PC，树莓派，甚至路由器上部署。可以方便地使用build tag删减各模块，以缩小可执行文件体积。
 
 例如，交叉编译一个在mips处理器，linux操作系统上运行的，只有客户端功能的Trojan-Go，只需执行下面的命令即可
 
@@ -140,11 +144,11 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client"
 ```
 
-完整的说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
+完整的tag说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 
 ### 易用
 
-配置文件格式与Trojan-GFW兼容，但做了大幅简化，未指定的字段会被附上一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
+配置文件格式与Trojan-GFW兼容，但做了大幅简化，未指定的字段会被赋给一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
 
 服务器配置文件
 
@@ -251,11 +255,11 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 在很差的网络条件下，一次TLS握手可能会花费很多时间。
 
-Trojan-Go支持多路复用([smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TCP和TLS握手带来的延迟，以期提升高并发情景下的性能。
+Trojan-Go支持多路复用(基于[smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TCP和TLS握手带来的延迟，以期提升高并发情景下的性能。
 
 启用多路复用并不会增加你测速得到的链路速度，但会降低延迟，提升大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
 
-注意，这个特性和Trojan-GFW**不兼容**，所以出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
+注意，这个特性和Trojan-GFW**不兼容**，出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
 
 ```json
 "mux": {
@@ -334,13 +338,13 @@ go build -tags "full"
 Go支持通过设置环境变量进行交叉编译，例如
 
 ```shell
-CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -tags "full" -o trojan-go.exe
+CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -tags "full"
 ```
 
 以及
 
 ```shell
-CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full" -o trojan-go
+CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full"
 ```
 
 ## 致谢
