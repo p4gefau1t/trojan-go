@@ -1,7 +1,6 @@
 package simplesocks
 
 import (
-	"bytes"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -40,29 +39,13 @@ func (m *SimpleSocksConnSession) GetRequest() *protocol.Request {
 }
 
 func (m *SimpleSocksConnSession) parseRequest() error {
-	cmd, err := common.ReadByte(m.rwc)
-	if err != nil {
-		return common.NewError("Failed to read cmd").Base(err)
-	}
-	addr, err := protocol.ParseAddress(m.rwc, "tcp")
-	if err != nil {
-		return common.NewError("Failed to parse addr").Base(err)
-	}
-	req := &protocol.Request{
-		Address: addr,
-		Command: protocol.Command(cmd),
-	}
-	m.request = req
-	return nil
+	m.request = new(protocol.Request)
+	return m.request.Marshal(m.rwc)
 }
 
 func (m *SimpleSocksConnSession) writeRequest(req *protocol.Request) error {
-	buf := bytes.NewBuffer(make([]byte, 0, 64))
-	common.Must(buf.WriteByte(byte(req.Command)))
-	common.Must(protocol.WriteAddress(buf, req))
 	m.request = req
-	_, err := m.rwc.Write(buf.Bytes())
-	return err
+	return m.request.Unmarshal(m.rwc)
 }
 
 func NewInboundConnSession(conn io.ReadWriteCloser) (protocol.ConnSession, *protocol.Request, error) {

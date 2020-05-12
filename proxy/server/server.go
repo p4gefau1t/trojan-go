@@ -70,7 +70,15 @@ func (s *Server) handleConn(conn net.Conn) {
 	}
 	protocol.CancelTimeout(conn)
 
-	if req.Command == protocol.Mux {
+	if req.ContainsExtension(protocol.Compression) {
+		compConn, err := common.NewCompReadWriteCloser(inboundConn)
+		if err != nil {
+			log.Error(common.NewError("Failed to init compression layer").Base(err))
+		}
+		inboundConn = compConn
+	}
+
+	if req.ContainsExtension(protocol.Multiplexing) {
 		muxServer, err := smux.Server(inboundConn, nil)
 		common.Must(err)
 		defer muxServer.Close()

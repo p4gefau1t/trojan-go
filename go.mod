@@ -8,6 +8,7 @@ require (
 	github.com/go-acme/lego/v3 v3.5.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.1
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mediocregopher/radix/v3 v3.5.0
 	github.com/miekg/dns v1.1.29 // indirect

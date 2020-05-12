@@ -1,7 +1,7 @@
 package protocol
 
 import (
-	"encoding/binary"
+	"bytes"
 	"fmt"
 	"io"
 	"math/rand"
@@ -19,7 +19,15 @@ const (
 	Connect   Command = 1
 	Bind      Command = 2
 	Associate Command = 3
-	Mux       Command = 0x7f
+	Extend    Command = 0xff
+)
+
+type Extension byte
+
+const (
+	Multiplexing   Extension = 1
+	Compression    Extension = 2
+	GarbageTraffic Extension = 3
 )
 
 const (
@@ -31,16 +39,93 @@ const (
 type Request struct {
 	net.Addr
 
+	Command
 	*common.Address
-	Command Command
+	Extensions []Extension
+}
+
+func (r *Request) Marshal(rr io.Reader) error {
+	byteBuf := [1]byte{}
+	_, err := rr.Read(byteBuf[:])
+	if err != nil {
+		return err
+	}
+	r.Command = Command(byteBuf[0])
+	switch r.Command {
+	case Connect, Bind, Associate:
+		r.Address = new(common.Address)
+		err := r.Address.Marshal(rr)
+		if err != nil {
+			return common.NewError("Failed to marshal address").Base(err)
+		}
+	case Extend:
+		_, err := rr.Read(byteBuf[:])
+		if err != nil {
+			return common.NewError("Cannot read extensions count").Base(err)
+		}
+		extensionCount := byteBuf[0]
+		if extensionCount == 0 || extensionCount > 32 {
+			return common.NewError("Invalid extensions count").Base(err)
+		}
+		buf := [32]byte{}
+		_, err = rr.Read(buf[:extensionCount])
+		if err != nil {
+			return common.NewError("Cannot read extensions").Base(err)
+		}
+		r.Extensions = make([]Extension, extensionCount)
+		for i, e := range buf[:extensionCount] {
+			r.Extensions[i] = Extension(e)
+		}
+	default:
+		return common.NewError(fmt.Sprintf("Invalid command %d", r.Command))
+	}
+	return nil
+}
+
+func (r *Request) Unmarshal(w io.Writer) error {
+	buf := bytes.NewBuffer(make([]byte, 0, 64))
+	buf.WriteByte(byte(r.Command))
+	switch r.Command {
+	case Connect, Bind, Associate:
+		if err := r.Address.Unmarshal(buf); err != nil {
+			return err
+		}
+		//use tcp by default
+		r.Address.NetworkType = "tcp"
+	case Extend:
+		buf.WriteByte(byte(len(r.Extensions)))
+		for _, e := range r.Extensions {
+			buf.WriteByte(byte(e))
+		}
+	}
+	_, err := w.Write(buf.Bytes())
+	return err
 }
 
 func (r *Request) Network() string {
-	return r.Address.Network()
+	if r.Address != nil {
+		return r.Address.Network()
+	}
+	return "empty"
 }
 
 func (r *Request) String() string {
-	return r.Address.String()
+	if r.Address != nil {
+		return r.Address.String()
+	}
+	return "REQUEST_WITH_EXTENSION"
+}
+
+func (r *Request) ContainsExtension(e Extension) bool {
+	if r.Extensions == nil {
+		return false
+	}
+	for _, f := range r.Extensions {
+		if f == e {
+			return true
+		}
+	}
+	return false
 }
 
 type HasHash interface {
@@ -79,95 +164,6 @@ type ConnSession interface {
 type PacketSession interface {
 	PacketReadWriter
 	io.Closer
-}
-
-func ParseAddress(conn io.Reader, network string) (*common.Address, error) {
-	byteBuf := [1]byte{}
-	_, err := conn.Read(byteBuf[:])
-	if err != nil {
-		return nil, common.NewError("Cannot read atype").Base(err)
-	}
-	addr := &common.Address{
-		AddressType: common.AddressType(byteBuf[0]),
-	}
-	switch addr.AddressType {
-	case common.IPv4:
-		var buf [6]byte
-		_, err := conn.Read(buf[:])
-		if err != nil {
-			return nil, common.NewError("Failed to read ipv4").Base(err)
-		}
-		addr.IP = buf[0:4]
-		addr.Port = int(binary.BigEndian.Uint16(buf[4:6]))
-	case common.IPv6:
-		var buf [18]byte
-		conn.Read(buf[:])
-		if err != nil {
-			return nil, common.NewError("Failed to read ipv6").Base(err)
-		}
-		addr.IP = buf[0:16]
-		addr.Port = int(binary.BigEndian.Uint16(buf[16:18]))
-	case common.DomainName:
-		_, err := conn.Read(byteBuf[:])
-		length := byteBuf[0]
-		if err != nil {
-			return nil, common.NewError("Failed to read length")
-		}
-		buf := make([]byte, length+2)
-		_, err = conn.Read(buf)
-		if err != nil {
-			return nil, common.NewError("Failed to read domain")
-		}
-		//the fucking browser uses ip as a domain name sometimes
-		host := buf[0:length]
-		if ip := net.ParseIP(string(host)); ip != nil {
-			addr.IP = ip
-			if ip.To4() != nil {
-				addr.AddressType = common.IPv4
-			} else {
-				addr.AddressType = common.IPv6
-			}
-		} else {
-			addr.DomainName = string(host)
-		}
-		addr.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
-	default:
-		return nil, common.NewError("Invalid dest type")
-	}
-	addr.NetworkType = network
-	return addr, nil
-}
-
-func WriteAddress(w io.Writer, request *Request) error {
-	_, err := w.Write([]byte{byte(request.AddressType)})
-	switch request.AddressType {
-	case common.DomainName:
-		w.Write([]byte{byte((len(request.DomainName)))})
-		_, err = w.Write([]byte(request.DomainName))
-	case common.IPv4:
-		_, err = w.Write(request.IP.To4())
-	case common.IPv6:
-		_, err = w.Write(request.IP.To16())
-	default:
-		return common.NewError("invalid address type")
-	}
-	if err != nil {
-		return err
-	}
-	port := [2]byte{}
-	binary.BigEndian.PutUint16(port[:], uint16(request.Port))
-	_, err = w.Write(port[:])
-	return err
-}
-
-func ParsePort(addr net.Addr) (uint16, error) {
-	_, portStr, err := net.SplitHostPort(addr.String())
-	if err != nil {
-		return 0, err
-	}
-	var port uint16
-	_, err = fmt.Sscanf(portStr, "%d", &port)
-	return port, err
 }
 
 var timeout time.Duration

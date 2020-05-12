@@ -69,8 +69,7 @@ func (o *TrojanOutboundConnSession) writeRequest() {
 	crlf := []byte("\r\n")
 	buf.Write([]byte(hash))
 	buf.Write(crlf)
-	buf.WriteByte(byte(o.request.Command))
-	protocol.WriteAddress(buf, o.request)
+	o.request.Unmarshal(buf)
 	buf.Write(crlf)
 	o.trojanHeader = buf.Bytes()
 }

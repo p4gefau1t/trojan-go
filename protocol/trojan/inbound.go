@@ -64,20 +64,10 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 	crlf := [2]byte{}
 	r.Read(crlf[:])
 
-	cmd, err := r.ReadByte()
-	if err != nil {
-		return common.NewError("Failed to read cmd").Base(err)
+	i.request = new(protocol.Request)
+	if err := i.request.Marshal(r); err != nil {
+		return err
 	}
-
-	addr, err := protocol.ParseAddress(r, "tcp")
-	if err != nil {
-		return common.NewError("Failed to parse address").Base(err)
-	}
-	req := &protocol.Request{
-		Command: protocol.Command(cmd),
-		Address: addr,
-	}
-	i.request = req
 	r.Read(crlf[:])
 	return nil
 }

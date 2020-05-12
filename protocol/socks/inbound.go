@@ -59,9 +59,10 @@ func (i *SocksConnInboundSession) parseRequest() error {
 	default:
 		return common.NewError("Invalid command")
 	}
-
-	addr, err := protocol.ParseAddress(i.rwc, "tcp")
-	if err != nil {
+	addr := &common.Address{
+		NetworkType: "tcp",
+	}
+	if err := addr.Marshal(i.rwc); err != nil {
 		return common.NewError("Cannot read request").Base(err)
 	}
 	request := &protocol.Request{
@@ -79,7 +80,7 @@ func (i *SocksConnInboundSession) Respond() error {
 	}
 	//associate
 	resp := bytes.NewBuffer([]byte{0x05, 0x00, 0x00})
-	common.Must(protocol.WriteAddress(resp, i.request))
+	common.Must(i.request.Address.Unmarshal(resp))
 	_, err := i.Write(resp.Bytes())
 	return err
 }
@@ -135,8 +136,10 @@ func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Req
 	if frag != 0 {
 		return nil, nil, common.NewError("Fragment is not supported")
 	}
-	addr, err := protocol.ParseAddress(buf, "udp")
-	if err != nil {
+	addr := &common.Address{
+		NetworkType: "udp",
+	}
+	if err := addr.Marshal(buf); err != nil {
 		return nil, nil, common.NewError("cannot parse udp request").Base(err)
 	}
 	//command makes no sense here
@@ -148,7 +151,7 @@ func (i *SocksInboundPacketSession) parsePacket(rawPacket []byte) (*protocol.Req
 
 func (i *SocksInboundPacketSession) writePacketHeader(w io.Writer, req *protocol.Request) error {
 	w.Write([]byte{0, 0, 0})
-	if err := protocol.WriteAddress(w, req); err != nil {
+	if err := req.Address.Unmarshal(w); err != nil {
 		return err
 	}
 	return nil

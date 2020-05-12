@@ -15,15 +15,17 @@ type TrojanPacketSession struct {
 }
 
 func (i *TrojanPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
-	addr, err := protocol.ParseAddress(i.conn, "udp")
-	if err != nil {
-		return nil, nil, common.NewError("failed to parse addr").Base(err)
+	addr := &common.Address{
+		NetworkType: "udp",
+	}
+	if err := addr.Marshal(i.conn); err != nil {
+		return nil, nil, common.NewError("Failed to parse addr").Base(err)
 	}
 	req := &protocol.Request{
 		Address: addr,
 	}
 	lengthBuf := [2]byte{}
-	_, err = io.ReadFull(i.conn, lengthBuf[:])
+	_, err := io.ReadFull(i.conn, lengthBuf[:])
 	if err != nil {
 		return req, nil, common.NewError("failed to read length")
 	}
@@ -35,7 +37,7 @@ func (i *TrojanPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 
 func (i *TrojanPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, 128))
-	common.Must(protocol.WriteAddress(buf, req))
+	common.Must(req.Address.Unmarshal(buf))
 	length := len(packet)
 	lengthBuf := [2]byte{}
 	binary.BigEndian.PutUint16(lengthBuf[:], uint16(length))

@@ -235,7 +235,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 func (c *Client) listenUDP(errChan chan error) {
 	listener, err := net.ListenPacket("udp", c.config.LocalAddress.String())
 	if err != nil {
-		errChan <- common.NewError("failed to listen udp").Base(err)
+		errChan <- common.NewError("Failed to listen udp").Base(err)
 		return
 	}
 	c.udpListener = listener
@@ -277,7 +277,7 @@ func (c *Client) listenUDP(errChan chan error) {
 func (c *Client) listenTCP(errChan chan error) {
 	listener, err := net.Listen("tcp", c.config.LocalAddress.String())
 	if err != nil {
-		errChan <- common.NewError("failed to listen local address").Base(err)
+		errChan <- common.NewError("Failed to listen local address").Base(err)
 		return
 	}
 	c.tcpListener = listener

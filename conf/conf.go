@@ -100,6 +100,10 @@ type ForwardProxyConfig struct {
 	ProxyAddress *common.Address
 }
 
+type CompressionConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
 type RouterConfig struct {
 	Enabled             bool     `json:"enabled"`
 	Bypass              []string `json:"bypass"`
@@ -167,6 +171,7 @@ type GlobalConfig struct {
 	Websocket        WebsocketConfig    `json:"websocket"`
 	API              APIConfig          `json:"api"`
 	ForwardProxy     ForwardProxyConfig `json:"forward_proxy"`
+	Compression      CompressionConfig  `json:"compression"`
 
 	LocalAddress  *common.Address
 	RemoteAddress *common.Address
