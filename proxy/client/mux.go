@@ -45,8 +45,11 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 		return nil, common.NewError("Duplicated id")
 	}
 	req := &protocol.Request{
-		Command:    protocol.Extend,
-		Extensions: []protocol.Extension{protocol.Multiplexing},
+		Command: protocol.Mux,
+		Address: &common.Address{
+			DomainName:  "MUX_CONN",
+			AddressType: common.DomainName,
+		},
 	}
 	rwc, err := m.transport.DialToServer()
 	if err != nil {

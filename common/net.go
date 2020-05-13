@@ -24,7 +24,6 @@ type Address struct {
 	NetworkType string
 	net.IP
 	AddressType
-	Extensions []byte
 }
 
 func (a *Address) String() string {

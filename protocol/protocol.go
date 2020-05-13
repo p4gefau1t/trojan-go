@@ -19,15 +19,7 @@ const (
 	Connect   Command = 1
 	Bind      Command = 2
 	Associate Command = 3
-	Extend    Command = 0xff
-)
-
-type Extension byte
-
-const (
-	Multiplexing   Extension = 1
-	Compression    Extension = 2
-	GarbageTraffic Extension = 3
+	Mux       Command = 0x7f
 )
 
 const (
@@ -41,7 +33,6 @@ type Request struct {
 
 	Command
 	*common.Address
-	Extensions []Extension
 }
 
 func (r *Request) Marshal(rr io.Reader) error {
@@ -52,29 +43,11 @@ func (r *Request) Marshal(rr io.Reader) error {
 	}
 	r.Command = Command(byteBuf[0])
 	switch r.Command {
-	case Connect, Bind, Associate:
+	case Connect, Bind, Associate, Mux:
 		r.Address = new(common.Address)
 		err := r.Address.Marshal(rr)
 		if err != nil {
 			return common.NewError("Failed to marshal address").Base(err)
-		}
-	case Extend:
-		_, err := rr.Read(byteBuf[:])
-		if err != nil {
-			return common.NewError("Cannot read extensions count").Base(err)
-		}
-		extensionCount := byteBuf[0]
-		if extensionCount == 0 || extensionCount > 32 {
-			return common.NewError("Invalid extensions count").Base(err)
-		}
-		buf := [32]byte{}
-		_, err = rr.Read(buf[:extensionCount])
-		if err != nil {
-			return common.NewError("Cannot read extensions").Base(err)
-		}
-		r.Extensions = make([]Extension, extensionCount)
-		for i, e := range buf[:extensionCount] {
-			r.Extensions[i] = Extension(e)
 		}
 	default:
 		return common.NewError(fmt.Sprintf("Invalid command %d", r.Command))
@@ -85,19 +58,11 @@ func (r *Request) Marshal(rr io.Reader) error {
 func (r *Request) Unmarshal(w io.Writer) error {
 	buf := bytes.NewBuffer(make([]byte, 0, 64))
 	buf.WriteByte(byte(r.Command))
-	switch r.Command {
-	case Connect, Bind, Associate:
-		if err := r.Address.Unmarshal(buf); err != nil {
-			return err
-		}
-		//use tcp by default
-		r.Address.NetworkType = "tcp"
-	case Extend:
-		buf.WriteByte(byte(len(r.Extensions)))
-		for _, e := range r.Extensions {
-			buf.WriteByte(byte(e))
-		}
+	if err := r.Address.Unmarshal(buf); err != nil {
+		return err
 	}
+	//use tcp by default
+	r.Address.NetworkType = "tcp"
 	_, err := w.Write(buf.Bytes())
 	return err
 }
@@ -110,22 +75,7 @@ func (r *Request) Network() string {
 }
 
 func (r *Request) String() string {
-	if r.Address != nil {
-		return r.Address.String()
-	}
-	return "REQUEST_WITH_EXTENSION"
-}
-
-func (r *Request) ContainsExtension(e Extension) bool {
-	if r.Extensions == nil {
-		return false
-	}
-	for _, f := range r.Extensions {
-		if f == e {
-			return true
-		}
-	}
-	return false
+	return r.Address.String()
 }
 
 type HasHash interface {

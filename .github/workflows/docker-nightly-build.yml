@@ -1,0 +1,54 @@
+on:
+  push:
+    branches:
+      - 'dev'
+  pull_request:
+    branches:
+      - 'dev'
+name: docker-dev-build
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Dockerhub login
+        env:
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+
+      - name: Prepare
+        id: prepare
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo ::set-output name=version::${GITHUB_REF#refs/tags/}
+          else
+            echo ::set-output name=version::snapshot
+          fi
+          echo ::set-output name=docker_platforms::linux/arm/v7,linux/amd64
+          echo ::set-output name=docker_image::${{ secrets.DOCKER_USERNAME }}/trojan-go
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          buildx-version: latest
+          qemu-version: latest
+
+      - name: Build and push docker image
+        run: |
+          docker buildx build --platform ${{ steps.prepare.outputs.docker_platforms }} \
+          --output "type=image,push=true" \
+          --tag "${{ steps.prepare.outputs.docker_image }}:nightly" \
+          --file Dockerfile .
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test docker image
+        run: |
+          docker run --rm --entrypoint /usr/local/bin/trojan-go ${{ secrets.DOCKER_USERNAME }}/trojan-go -version

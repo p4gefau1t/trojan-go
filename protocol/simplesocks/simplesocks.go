@@ -30,7 +30,7 @@ func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
 }
 
 func (m *SimpleSocksConnSession) Close() error {
-	log.Info("simplesocks conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
+	log.Info("Simplesocks conn to", m.request, "closed", "sent:", common.HumanFriendlyTraffic(m.sent), "recv:", common.HumanFriendlyTraffic(m.recv))
 	return m.rwc.Close()
 }
 
