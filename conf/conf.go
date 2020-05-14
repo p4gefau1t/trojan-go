@@ -105,15 +105,14 @@ type CompressionConfig struct {
 }
 
 type RouterConfig struct {
-	Enabled             bool     `json:"enabled"`
-	Bypass              []string `json:"bypass"`
-	Proxy               []string `json:"proxy"`
-	Block               []string `json:"block"`
-	DefaultPolicy       string   `json:"default_policy"`
-	RouteByIP           bool     `json:"route_by_ip"`
-	RouteByIPOnNonmatch bool     `json:"route_by_ip_on_nonmatch"`
-	GeoIPFilename       string   `json:"geoip"`
-	GeoSiteFilename     string   `json:"geosite"`
+	Enabled         bool     `json:"enabled"`
+	Bypass          []string `json:"bypass"`
+	Proxy           []string `json:"proxy"`
+	Block           []string `json:"block"`
+	DomainStrategy  string   `json:"domain_strategy"`
+	DefaultPolicy   string   `json:"default_policy"`
+	GeoIPFilename   string   `json:"geoip"`
+	GeoSiteFilename string   `json:"geosite"`
 
 	BypassList []byte
 	ProxyList  []byte

@@ -70,9 +70,10 @@ weight: 30
     "bypass": [],
     "proxy": [],
     "block": [],
-    "route_by_ip": false,
-    "route_by_ip_on_nonmatch": false,
-    "default_policy": "proxy"
+    "default_policy": "proxy",
+    "domain_strategy": "as_is",
+    "geoip": "./geoip.dat",
+    "geosite": "./geoip.dat"
   },
   "websocket": {
     "enabled": false,
@@ -173,7 +174,7 @@ weight: 30
 
 ```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造。合法的值有
 
-- ""(空)，默认，不使用指纹伪造
+- ""，不使用指纹伪造
 
 - "auto"，自动选择(推荐)
 
@@ -181,7 +182,7 @@ weight: 30
 
 - "chrome"，伪造Chrome指纹
 
-- "ios"，伪造ios指纹
+- "ios"，伪造iOS指纹
 
 - "randomized"，随机指纹
 
@@ -215,11 +216,7 @@ weight: 30
 
 ```enabled```是否开启路由模块。
 
-```route_by_ip```开启后，所有域名会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS请求泄露和遭到污染。
-
-```route_by_ip_on_nonmatch```开启后，如果一个域名不在三个列表中，则会被在本地解析为IP后，仅使用IP列表进行匹配。如果开启这个选项，可能导致DNS请求泄露和遭到污染。
-
-```default_policy```指的是三个列表匹配均失败后，使用的默认策略，默认为Proxy，即进行代理。合法的值有
+```default_policy```指的是三个列表匹配均失败后，使用的默认策略，默认为"bypass"，即进行代理。合法的值有
 
 - "proxy"
 
@@ -228,6 +225,16 @@ weight: 30
 - "block"
 
 含义同上。
+
+```domain_strategy```域名解析策略，默认"as_is"。合法的值有：
+
+- "as_is"，只在域名列表中进行匹配。
+
+- "ip_if_nonmatch"，在域名列表中进行匹配，如果不匹配，解析为IP后在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
+
+- "ip_on_demand"，域名均解析为IP，在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
+
+```geoip```和```geosite```字段指geoip和geosite数据库文件路径，默认使用当前目录的geoip.dat和geosite.dat。
 
 ### ```websocket```选项
 

@@ -12,12 +12,11 @@ import (
 
 type ListRouter struct {
 	router.Router
-	domainList          []string
-	ipList              []*net.IPNet
-	matchPolicy         router.Policy
-	nonMatchPolicy      router.Policy
-	routeByIP           bool
-	routeByIPOnNonmatch bool
+	domainList     []string
+	ipList         []*net.IPNet
+	matchPolicy    router.Policy
+	nonMatchPolicy router.Policy
+	strategy       router.Strategy
 }
 
 func (r *ListRouter) isSubdomain(fulldomain, domain string) bool {
@@ -42,7 +41,7 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (router.Policy, error) 
 			}
 			return r.nonMatchPolicy, nil
 		}
-		if r.routeByIP {
+		if r.strategy == router.IPOnDemand {
 			addr, err := net.ResolveIPAddr("ip", domain)
 			if err != nil {
 				return router.Unknown, err
@@ -63,7 +62,7 @@ func (r *ListRouter) RouteRequest(req *protocol.Request) (router.Policy, error) 
 				return r.matchPolicy, nil
 			}
 		}
-		if r.routeByIPOnNonmatch {
+		if r.strategy == router.IPIfNonMatch {
 			addr, err := net.ResolveIPAddr("ip", domain)
 			if err != nil {
 				return router.Unknown, err
@@ -116,12 +115,11 @@ func (r *ListRouter) LoadList(data []byte) error {
 	return nil
 }
 
-func NewListRouter(matchPolicy router.Policy, nonMatchPolicy router.Policy, routeByIP bool, routeByIPOnNonmatch bool, list []byte) (*ListRouter, error) {
+func NewListRouter(matchPolicy router.Policy, nonMatchPolicy router.Policy, strategy router.Strategy, list []byte) (*ListRouter, error) {
 	r := ListRouter{
-		matchPolicy:         matchPolicy,
-		nonMatchPolicy:      nonMatchPolicy,
-		routeByIP:           routeByIP,
-		routeByIPOnNonmatch: routeByIPOnNonmatch,
+		matchPolicy:    matchPolicy,
+		nonMatchPolicy: nonMatchPolicy,
+		strategy:       strategy,
 	}
 	if err := r.LoadList(list); err != nil {
 		return nil, err

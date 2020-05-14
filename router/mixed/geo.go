@@ -14,12 +14,11 @@ import (
 )
 
 type GeoRouter struct {
-	domains             []*v2router.Domain
-	cidrs               []*v2router.CIDR
-	matchPolicy         router.Policy
-	nonMatchPolicy      router.Policy
-	routeByIP           bool
-	routeByIPOnNonmatch bool
+	domains        []*v2router.Domain
+	cidrs          []*v2router.CIDR
+	matchPolicy    router.Policy
+	nonMatchPolicy router.Policy
+	strategy       router.Strategy
 }
 
 func (r *GeoRouter) matchDomain(fulldomain string) bool {
@@ -64,11 +63,11 @@ func (r *GeoRouter) matchIP(ip net.IP) bool {
 		n := int(c.GetPrefix())
 		mask := net.CIDRMask(n, 8*len)
 		cidrIP := net.IP(c.GetIp())
-		if cidrIP.To4() != nil { //cidr is ipv4
+		if cidrIP.To4() != nil { //IPv4 CIDR
 			if isIPv6 {
 				continue
 			}
-		} else { //cidr is ipv6
+		} else { //IPv6 CIDR
 			if !isIPv6 {
 				continue
 			}
@@ -105,13 +104,13 @@ func (r *GeoRouter) RouteRequest(req *protocol.Request) (router.Policy, error) {
 	switch req.AddressType {
 	case common.DomainName:
 		domain := string(req.DomainName)
-		if r.routeByIP {
+		if r.strategy == router.IPOnDemand {
 			return r.routeRequestByIP(domain)
 		}
 		if r.matchDomain(domain) {
 			return r.matchPolicy, nil
 		}
-		if r.routeByIPOnNonmatch {
+		if r.strategy == router.IPIfNonMatch {
 			return r.routeRequestByIP(domain)
 		}
 		return r.nonMatchPolicy, nil
@@ -173,12 +172,11 @@ func (r *GeoRouter) LoadGeoData(geoipData []byte, ipCode []string, geositeData [
 	return nil
 }
 
-func NewGeoRouter(matchPolicy router.Policy, nonMatchPolicy router.Policy, routeByIP bool, routeByIPOnNonmatch bool) (*GeoRouter, error) {
+func NewGeoRouter(matchPolicy router.Policy, nonMatchPolicy router.Policy, strategy router.Strategy) (*GeoRouter, error) {
 	r := GeoRouter{
-		matchPolicy:         matchPolicy,
-		nonMatchPolicy:      nonMatchPolicy,
-		routeByIP:           routeByIP,
-		routeByIPOnNonmatch: routeByIPOnNonmatch,
+		matchPolicy:    matchPolicy,
+		nonMatchPolicy: nonMatchPolicy,
+		strategy:       strategy,
 	}
 	return &r, nil
 }

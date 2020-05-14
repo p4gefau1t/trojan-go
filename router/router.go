@@ -6,6 +6,7 @@ import (
 )
 
 type Policy int
+type Strategy int
 
 const (
 	Proxy Policy = iota
@@ -17,10 +18,20 @@ const (
 	NonMatch
 )
 
+const (
+	AsIs Strategy = iota
+	IPIfNonMatch
+	IPOnDemand
+)
+
 type EmptyRouter struct{}
 
 func (r *EmptyRouter) RouteRequest(req *protocol.Request) (Policy, error) {
 	return Proxy, nil
+}
+
+func NewEmptyRouter(*conf.RouterConfig) (Router, error) {
+	return &EmptyRouter{}, nil
 }
 
 type Router interface {
@@ -28,7 +39,3 @@ type Router interface {
 }
 
 var NewRouter func(config *conf.RouterConfig) (Router, error) = NewEmptyRouter
-
-func NewEmptyRouter(*conf.RouterConfig) (Router, error) {
-	return &EmptyRouter{}, nil
-}

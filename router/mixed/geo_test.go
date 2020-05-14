@@ -11,7 +11,7 @@ import (
 )
 
 func TestGeoRouter(t *testing.T) {
-	r, err := NewGeoRouter(router.Bypass, router.Proxy, false, false)
+	r, err := NewGeoRouter(router.Bypass, router.Proxy, router.IPIfNonMatch)
 	common.Must(err)
 	geoipData, err := ioutil.ReadFile("geoip.dat")
 	common.Must(err)

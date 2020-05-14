@@ -31,7 +31,6 @@ func (r *MixedRouter) match(rr router.Router, req *protocol.Request) bool {
 }
 
 func (r *MixedRouter) RouteRequest(req *protocol.Request) (router.Policy, error) {
-
 	if r.match(r.blockGeo, req) {
 		return router.Block, nil
 	}
@@ -66,10 +65,21 @@ func NewMixedRouter(config *conf.RouterConfig) (router.Router, error) {
 		defaultPolicy = router.Bypass
 	case "block":
 		defaultPolicy = router.Block
+	default:
+		return nil, common.NewError("Invalid router policy " + config.DefaultPolicy)
 	}
 
-	routeByIP := config.RouteByIP
-	routeByIPOnNonmatch := config.RouteByIPOnNonmatch
+	var strategy router.Strategy
+	switch config.DomainStrategy {
+	case "as_is":
+		strategy = router.AsIs
+	case "ip_if_nonmatch":
+		strategy = router.IPIfNonMatch
+	case "ip_on_demand":
+		strategy = router.IPOnDemand
+	default:
+		return nil, common.NewError("Invalid domain strategy " + config.DomainStrategy)
+	}
 
 	block := config.BlockList
 	bypass := config.BypassList
@@ -80,19 +90,19 @@ func NewMixedRouter(config *conf.RouterConfig) (router.Router, error) {
 	}
 
 	var err error
-	if r.blockList, err = NewListRouter(router.Match, router.NonMatch, routeByIP, routeByIPOnNonmatch, block); err != nil {
+	if r.blockList, err = NewListRouter(router.Match, router.NonMatch, strategy, block); err != nil {
 		return nil, err
 	}
-	if r.bypassList, err = NewListRouter(router.Match, router.NonMatch, routeByIP, routeByIPOnNonmatch, bypass); err != nil {
+	if r.bypassList, err = NewListRouter(router.Match, router.NonMatch, strategy, bypass); err != nil {
 		return nil, err
 	}
-	if r.proxyList, err = NewListRouter(router.Match, router.NonMatch, routeByIP, routeByIPOnNonmatch, proxy); err != nil {
+	if r.proxyList, err = NewListRouter(router.Match, router.NonMatch, strategy, proxy); err != nil {
 		return nil, err
 	}
 
-	r.blockGeo, _ = NewGeoRouter(router.Match, router.NonMatch, routeByIP, false)
-	r.bypassGeo, _ = NewGeoRouter(router.Match, router.NonMatch, routeByIP, routeByIPOnNonmatch)
-	r.proxyGeo, _ = NewGeoRouter(router.Match, router.NonMatch, routeByIP, routeByIPOnNonmatch)
+	r.blockGeo, _ = NewGeoRouter(router.Match, router.NonMatch, strategy)
+	r.bypassGeo, _ = NewGeoRouter(router.Match, router.NonMatch, strategy)
+	r.proxyGeo, _ = NewGeoRouter(router.Match, router.NonMatch, strategy)
 
 	if err := r.blockGeo.LoadGeoData(config.GeoIP, config.BlockIPCode, config.GeoSite, config.BlockSiteCode); err != nil {
 		log.Warn(err)

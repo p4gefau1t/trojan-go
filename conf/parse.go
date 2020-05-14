@@ -370,6 +370,7 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		},
 		Router: RouterConfig{
 			DefaultPolicy:   "proxy",
+			DomainStrategy:  "as_is",
 			GeoIPFilename:   common.GetProgramDir() + "/geoip.dat",
 			GeoSiteFilename: common.GetProgramDir() + "/geosite.dat",
 		},
