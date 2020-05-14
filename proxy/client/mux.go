@@ -64,7 +64,7 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 
 	client, err := smux.Client(conn, nil)
 	common.Must(err)
-	log.Info("Mux TLS tunnel established, id:", id)
+	log.Info("Mux TLS tunnel established, client id:", id)
 	return &muxClientInfo{
 		client:         client,
 		id:             id,
@@ -146,9 +146,7 @@ func (m *MuxManager) checkAndCloseIdleMuxClient() {
 					log.Info("Mux", id, "is closed due to inactive")
 				}
 			}
-			if len(m.muxPool) != 0 {
-				log.Info("Current mux pool clients: ", len(m.muxPool))
-			}
+			log.Debug("Current mux pool clients: ", len(m.muxPool))
 			m.Unlock()
 		case <-m.ctx.Done():
 			log.Debug("Shutting down mux manager..")

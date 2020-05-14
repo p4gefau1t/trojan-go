@@ -18,6 +18,78 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+func loadCert(tlsConfig *TLSConfig) error {
+	if tlsConfig.CertPath == "" {
+		log.Info("Cert of the remote server is unspecified. Using default CA list")
+	} else {
+		caCertByte, err := ioutil.ReadFile(tlsConfig.CertPath)
+		if err != nil {
+			return common.NewError("failed to load cert file").Base(err)
+		}
+		pool := x509.NewCertPool()
+		ok := pool.AppendCertsFromPEM(caCertByte)
+		if !ok {
+			log.Warn("Invalid CA cert list")
+		}
+		log.Info("Using custom CA list")
+		pemCerts := caCertByte
+		for len(pemCerts) > 0 {
+			tlsConfig.CertPool = pool
+			var block *pem.Block
+			block, pemCerts = pem.Decode(pemCerts)
+			if block == nil {
+				break
+			}
+			if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+				continue
+			}
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				continue
+			}
+			log.Trace("Issuer:", cert.Issuer, "Subject:", cert.Subject)
+		}
+	}
+	return nil
+}
+
+func loadCertAndKey(tlsConfig *TLSConfig) error {
+	if tlsConfig.KeyPassword != "" {
+		keyFile, err := ioutil.ReadFile(tlsConfig.KeyPath)
+		if err != nil {
+			return common.NewError("Failed to load key file").Base(err)
+		}
+		keyBlock, _ := pem.Decode(keyFile)
+		if keyBlock == nil {
+			return common.NewError("Failed to decode key file").Base(err)
+		}
+		decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(tlsConfig.KeyPassword))
+		if err == nil {
+			return common.NewError("Failed to decrypt key").Base(err)
+		}
+
+		certFile, err := ioutil.ReadFile(tlsConfig.CertPath)
+		certBlock, _ := pem.Decode(certFile)
+		if certBlock == nil {
+			return common.NewError("Failed to decode cert file").Base(err)
+		}
+
+		keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
+		if err != nil {
+			return err
+		}
+
+		tlsConfig.KeyPair = []tls.Certificate{keyPair}
+	} else {
+		keyPair, err := tls.LoadX509KeyPair(tlsConfig.CertPath, tlsConfig.KeyPath)
+		if err != nil {
+			return common.NewError("Failed to load key pair").Base(err)
+		}
+		tlsConfig.KeyPair = []tls.Certificate{keyPair}
+	}
+	return nil
+}
+
 func loadCommonConfig(config *GlobalConfig) error {
 	//log settigns
 	log.SetLogLevel(log.LogLevel(config.LogLevel))
@@ -207,43 +279,25 @@ func loadClientConfig(config *GlobalConfig) error {
 		log.Warn("SNI is unspecified, using remote_addr as SNI")
 		config.TLS.SNI = config.RemoteHost
 	}
-	if config.TLS.CertPath == "" {
-		log.Info("Cert of the remote server is unspecified. Using default CA list")
-	} else {
-		caCertByte, err := ioutil.ReadFile(config.TLS.CertPath)
-		if err != nil {
-			return common.NewError("failed to load cert file").Base(err)
-		}
-		pool := x509.NewCertPool()
-		ok := pool.AppendCertsFromPEM(caCertByte)
-		if !ok {
-			log.Warn("Invalid CA cert list")
-		}
-		log.Info("Using custom CA list")
-		pemCerts := caCertByte
-		for len(pemCerts) > 0 {
-			config.TLS.CertPool = pool
-			var block *pem.Block
-			block, pemCerts = pem.Decode(pemCerts)
-			if block == nil {
-				break
-			}
-			if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
-				continue
-			}
-			cert, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				continue
-			}
-			log.Trace("Issuer:", cert.Issuer, "Subject:", cert.Subject)
-		}
+	if err := loadCert(&config.TLS); err != nil {
+		return err
 	}
-
 	//forward proxy settings
 	if config.ForwardProxy.Enabled {
 		log.Info("Forward proxy enabled")
 		config.ForwardProxy.ProxyAddress = common.NewAddress(config.ForwardProxy.ProxyHost, config.ForwardProxy.ProxyPort, "tcp")
 		log.Debug("Forward proxy", config.ForwardProxy.ProxyAddress.String())
+	}
+
+	if config.Websocket.DoubleTLS {
+		if config.Websocket.TLS.CertPath == "" {
+			log.Warn("Empty double TLS settings, using default ssl settings")
+			config.Websocket.TLS = config.TLS
+		} else {
+			if err := loadCert(&config.Websocket.TLS); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -265,44 +319,15 @@ func loadServerConfig(config *GlobalConfig) error {
 	//tls settings
 	if config.TLS.ServePlainText {
 		log.Warn("Server will now use plain text. TLS config is ignored")
-	} else if config.TLS.KeyPassword != "" {
-		keyFile, err := ioutil.ReadFile(config.TLS.KeyPath)
-		if err != nil {
-			return common.NewError("Failed to load key file").Base(err)
-		}
-		keyBlock, _ := pem.Decode(keyFile)
-		if keyBlock == nil {
-			return common.NewError("Failed to decode key file").Base(err)
-		}
-		decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(config.TLS.KeyPassword))
-		if err == nil {
-			return common.NewError("Failed to decrypt key").Base(err)
-		}
-
-		certFile, err := ioutil.ReadFile(config.TLS.CertPath)
-		certBlock, _ := pem.Decode(certFile)
-		if certBlock == nil {
-			return common.NewError("Failed to decode cert file").Base(err)
-		}
-
-		keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
-		if err != nil {
+	} else {
+		if err := loadCertAndKey(&config.TLS); err != nil {
 			return err
 		}
-
-		config.TLS.KeyPair = []tls.Certificate{keyPair}
-	} else {
-		keyPair, err := tls.LoadX509KeyPair(config.TLS.CertPath, config.TLS.KeyPath)
-		if err != nil {
-			return common.NewError("Failed to load key pair").Base(err)
-		}
-		config.TLS.KeyPair = []tls.Certificate{keyPair}
 	}
-
-	if config.TLS.HTTPFile != "" {
-		payload, err := ioutil.ReadFile(config.TLS.HTTPFile)
+	if config.TLS.HTTPResponseFileName != "" {
+		payload, err := ioutil.ReadFile(config.TLS.HTTPResponseFileName)
 		if err != nil {
-			log.Warn("Failed to load http response file", err)
+			return common.NewError("Failed to load http response file").Base(err)
 		}
 		config.TLS.HTTPResponse = payload
 	}
@@ -330,8 +355,13 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			Concurrency: 8,
 		},
 		Websocket: WebsocketConfig{
-			DoubleTLS:       true,
-			DoubleTLSVerify: true,
+			DoubleTLS: true,
+			TLS: TLSConfig{
+				Verify:         true,
+				VerifyHostname: true,
+				SessionTicket:  true,
+				ReuseSession:   true,
+			},
 		},
 		MySQL: MySQLConfig{
 			CheckRate:  60,

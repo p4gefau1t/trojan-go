@@ -132,12 +132,12 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 	}
 	log.Debug("ws double tls enabled")
 	tlsConfig := &tls.Config{
-		CipherSuites:           config.TLS.CipherSuites,
-		RootCAs:                config.TLS.CertPool,
-		ServerName:             config.TLS.SNI,
-		SessionTicketsDisabled: !config.TLS.SessionTicket,
+		CipherSuites:           config.Websocket.TLS.CipherSuites,
+		RootCAs:                config.Websocket.TLS.CertPool,
+		ServerName:             config.Websocket.TLS.SNI,
+		SessionTicketsDisabled: !config.Websocket.TLS.SessionTicket,
+		InsecureSkipVerify:     !config.Websocket.TLS.Verify,
 		ClientSessionCache:     tlsSessionCache,
-		InsecureSkipVerify:     !config.Websocket.DoubleTLSVerify,
 	}
 	tlsConn := tls.Client(transport, tlsConfig)
 	if err := tlsConn.Handshake(); err != nil {
@@ -149,7 +149,7 @@ func NewOutboundWebosocket(conn net.Conn, config *conf.GlobalConfig) (io.ReadWri
 		log.Trace("Websocket double TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
 		for i := range chain {
 			for j := range chain[i] {
-				log.Trace("subject:", chain[i][j].Subject, ", issuer:", chain[i][j].Issuer)
+				log.Trace("Subject:", chain[i][j].Subject, "Issuer:", chain[i][j].Issuer)
 			}
 		}
 	}

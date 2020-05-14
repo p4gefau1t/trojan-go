@@ -79,7 +79,19 @@ weight: 30
     "path": "",
     "hostname": "",
     "obfuscation_password": "",
-    "double_tls": true
+    "double_tls": true,
+    "ssl": {
+      "verify": true,
+      "verify_hostname": true,
+      "cert": "",
+      "key": "",
+      "key_password": "",
+      "prefer_server_cipher": false,
+      "sni": "",
+      "session_ticket": true,
+      "reuse_session": true,
+      "plain_http_response": "",
+    }
   },
   "forward_proxy": {
     "enabled": false,
@@ -125,7 +137,7 @@ weight: 30
 
 ```password```可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
 
-```dns```指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOH/DOT，查询结果会被缓存五分钟。使用URL格式描述服务器，例如
+```dns```指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOT类型的DNS，查询结果会被缓存五分钟。使用URL格式描述服务器，例如
 
 - "udp://1.1.1.1"，基于UDP的DNS服务器，默认53端口
 
@@ -234,6 +246,8 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 ```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
 
 ```double_tls```是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+
+```ssl```如果```double_tls```启用，这个选项用于配置第二层TLS，如果没有填写则使用全局的```ssl```填充。各字段定义与全局```ssl```相同。
 
 ```obfuscation_password```指定混淆密码。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果需要使用混淆，服务端和客户端必须同时设置相同密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
 

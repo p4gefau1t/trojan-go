@@ -141,8 +141,10 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 例如，交叉编译一个在mips处理器，linux操作系统上运行的，只有客户端功能的Trojan-Go，只需执行下面的命令即可
 
 ```shell
-CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client"
+CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client" -ldflags "-s -w"
 ```
+
+得到的可执行文件可以直接在目标平台运行。
 
 完整的tag说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 

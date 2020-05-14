@@ -28,24 +28,24 @@ const (
 )
 
 type TLSConfig struct {
-	Verify             bool     `json:"verify"`
-	VerifyHostname     bool     `json:"verify_hostname"`
-	CertPath           string   `json:"cert"`
-	KeyPath            string   `json:"key"`
-	KeyPassword        string   `json:"key_password"`
-	Cipher             string   `json:"cipher"`
-	CipherTLS13        string   `json:"cipher_tls13"`
-	PreferServerCipher bool     `json:"prefer_server_cipher"`
-	SNI                string   `json:"sni"`
-	HTTPFile           string   `json:"plain_http_response"`
-	FallbackHost       string   `json:"fallback_addr"`
-	FallbackPort       int      `json:"fallback_port"`
-	ReuseSession       bool     `json:"reuse_session"`
-	ALPN               []string `json:"alpn"`
-	Curves             string   `json:"curves"`
-	Fingerprint        string   `json:"fingerprint"`
-	ServePlainText     bool     `json:"serve_plain_text"`
-	RedirectWithTLS    bool     `json:"redirect_with_tls"`
+	Verify               bool     `json:"verify"`
+	VerifyHostname       bool     `json:"verify_hostname"`
+	CertPath             string   `json:"cert"`
+	KeyPath              string   `json:"key"`
+	KeyPassword          string   `json:"key_password"`
+	Cipher               string   `json:"cipher"`
+	CipherTLS13          string   `json:"cipher_tls13"`
+	PreferServerCipher   bool     `json:"prefer_server_cipher"`
+	SNI                  string   `json:"sni"`
+	HTTPResponseFileName string   `json:"plain_http_response"`
+	FallbackHost         string   `json:"fallback_addr"`
+	FallbackPort         int      `json:"fallback_port"`
+	ReuseSession         bool     `json:"reuse_session"`
+	ALPN                 []string `json:"alpn"`
+	Curves               string   `json:"curves"`
+	Fingerprint          string   `json:"fingerprint"`
+	ServePlainText       bool     `json:"serve_plain_text"`
+	RedirectWithTLS      bool     `json:"redirect_with_tls"`
 
 	ClientHelloID    *utls.ClientHelloID
 	FallbackAddress  *common.Address
@@ -130,12 +130,12 @@ type RouterConfig struct {
 }
 
 type WebsocketConfig struct {
-	Enabled             bool   `json:"enabled"`
-	HostName            string `json:"hostname"`
-	Path                string `json:"path"`
-	ObfuscationPassword string `json:"obfuscation_password"`
-	DoubleTLS           bool   `json:"double_tls"`
-	DoubleTLSVerify     bool   `json:"double_tls_verify"`
+	Enabled             bool      `json:"enabled"`
+	HostName            string    `json:"hostname"`
+	Path                string    `json:"path"`
+	ObfuscationPassword string    `json:"obfuscation_password"`
+	DoubleTLS           bool      `json:"double_tls"`
+	TLS                 TLSConfig `json:"ssl"`
 
 	ObfuscationKey []byte
 }
