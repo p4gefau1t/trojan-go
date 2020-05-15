@@ -27,7 +27,7 @@ type ShadowManager struct {
 
 func (m *ShadowManager) SubmitScapegoat(goat *Scapegoat) {
 	m.scapegoatChan <- goat
-	log.Debug("scapegoat commited")
+	log.Debug("scapegoat submited")
 }
 
 func (m *ShadowManager) handleScapegoat() {

@@ -40,7 +40,7 @@ for PLATFORM in $PLATFORMS; do
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
   zip -j release/$ZIP_FILENAME temp/* ./*.dat
   zip release/$ZIP_FILENAME example/*
-  sha1sum release/$ZIP_FILENAME > release/$ZIP_FILENAME.sha1
+  sha1sum release/$ZIP_FILENAME >> release/checksum.sha1
   rm temp/*
 done
 
@@ -51,12 +51,12 @@ for GOOS in $PLATFORMS_ARM; do
   GOARCH="arm"
   for GOARM in 7 6 5; do
     ZIP_FILENAME="trojan-go-${GOOS}-${GOARCH}v${GOARM}.zip"
-    CMD="CGO_ENABLE=0 GOARM=${GOARM} GOOS=${GOOS} GOARCH=${GOARCH} go build -o temp -ldflags \"-s -w\""
+    CMD="CGO_ENABLE=0 GOARM=${GOARM} GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags \"-s -w\""
     echo "${CMD}"
     eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}v${GOARM}" 
     zip -j release/$ZIP_FILENAME temp/* ./*.dat
     zip release/$ZIP_FILENAME example/*
-    sha1sum release/$ZIP_FILENAME > release/$ZIP_FILENAME.sha1
+    sha1sum release/$ZIP_FILENAME >> release/checksum.sha1
     rm temp/*
   done
 done
