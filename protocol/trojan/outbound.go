@@ -24,10 +24,6 @@ type TrojanOutboundConnSession struct {
 	trojanHeader []byte
 }
 
-func (o *TrojanOutboundConnSession) SetMeter(meter stat.TrafficMeter) {
-	o.meter = meter
-}
-
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
 	if o.trojanHeader != nil {
 		//send the payload after the trojan request header

@@ -99,7 +99,6 @@ sudo ./trojan-go -autocert renew
         "your_awesome_password"
     ],
     "ssl": {
-        "fingerprint": "firefox",
         "sni": "your_domain_name"
     }
 }
@@ -107,8 +106,6 @@ sudo ./trojan-go -autocert renew
 
 这个客户端配置使Trojan-Go开启一个监听在本地1080端口的socks5/http代理（自动识别），远端服务器为your_awesome_server:443，your_awesome_server可以是IP或者域名。
 
-如果你在```remote_addr```中填写的是域名，```sni```可以省略。```sni```字段应当填写你申请证书的对应域名，或者你自己签发的证书的Common Name，而且必须一致。注意，```sni```字段目前的在TLS协议中是**明文传送**的(目的是使服务器提供相应证书)。GFW已经被证实具有SNI探测和阻断能力，所以不要填写类似```google.com```等已经被封锁的域名，否则很有可能导致你的服务器也被封锁。
-
-```fingerprint```将设置Trojan-Go伪造Firefox浏览器的TLS请求指纹，使得Trojan-Go的流量混杂在正常的HTTPS流量中无法被识别。还可以设置为```ios```，```chrome```,```randomized```等。
+如果你在```remote_addr```中填写的是域名，```sni```可以省略。如果你在```remote_addr```填写的是IP地址，```sni```字段应当填写你申请证书的对应域名，或者你自己签发的证书的Common Name，而且必须一致。注意，```sni```字段目前的在TLS协议中是**明文传送**的(目的是使服务器提供相应证书)。GFW已经被证实具有SNI探测和阻断能力，所以不要填写类似```google.com```等已经被封锁的域名，否则很有可能导致你的服务器也被遭到锁。
 
 更多关于配置文件的信息，可以在左侧导航栏中找到相应介绍。

@@ -50,7 +50,7 @@ weight: 30
     "reuse_session": true,
     "plain_http_response": "",
     "fallback_port": 0,
-    "fingerprint": ""
+    "fingerprint": "firefox"
   },
   "tcp": {
     "no_delay": true,
@@ -172,21 +172,19 @@ weight: 30
 
 ```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔。
 
-```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造。合法的值有
+```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
 
 - ""，不使用指纹伪造
 
-- "auto"，自动选择(推荐)
+- "auto"，自动尝试并选择
 
-- "firefox"，伪造Firefox指纹
+- "firefox"，伪造Firefox指纹（默认）
 
 - "chrome"，伪造Chrome指纹
 
 - "ios"，伪造iOS指纹
 
-- "randomized"，随机指纹
-
-一旦指纹的值被设置，```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。设置该选项有可能导致与服务器密钥协商失败，使用auto选项将自动尝试所有指纹并选出合适的一项。
+一旦指纹的值被设置，```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。
 
 ```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
