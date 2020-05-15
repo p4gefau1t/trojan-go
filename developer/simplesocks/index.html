@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="SimpleSocks协议" />
-<meta property="og:description" content="SimpleSocks协议是无认证机制的简单代理协议，本质上就是去除了sha224的Trojan协议，设计的目的是减少多路复用时的overh" />
+<meta property="og:description" content="SimpleSocks协议是无认证机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="SimpleSocks协议"/>
-<meta name="twitter:description" content="SimpleSocks协议是无认证机制的简单代理协议，本质上就是去除了sha224的Trojan协议，设计的目的是减少多路复用时的overh"/>
+<meta name="twitter:description" content="SimpleSocks协议是无认证机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove"/>
 <meta itemprop="name" content="SimpleSocks协议">
-<meta itemprop="description" content="SimpleSocks协议是无认证机制的简单代理协议，本质上就是去除了sha224的Trojan协议，设计的目的是减少多路复用时的overh">
+<meta itemprop="description" content="SimpleSocks协议是无认证机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove">
 
-<meta itemprop="wordCount" content="177">
+<meta itemprop="wordCount" content="179">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.8</span>
+ <span class="version">Version 0.4.9</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -53,14 +53,15 @@
 </div>
 <div class="content-container">
 <main><h1>SimpleSocks协议</h1>
-<p>SimpleSocks协议是无认证机制的简单代理协议，本质上就是去除了sha224的Trojan协议，设计的目的是减少多路复用时的overhead。只有启用多路复用之后，被复用的连接才会使用这个协议。</p>
+<p>SimpleSocks协议是无认证机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的overhead。</p>
+<p>只有启用多路复用之后，被复用的连接才会使用这个协议。</p>
 <p>SimpleSocks甚至比Socks5更简单，下面是头部结构。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">+-----+------+----------+----------+-----------+
 | CMD | ATYP | DST.ADDR | DST.PORT |  Payload  |
 +-----+------+----------+----------+-----------+
 |  1  |  1   | Variable |    2     |  Variable |
 +-----+------+----------+----------+-----------+
-</code></pre></div><p>各字段定义与Socks5相同，不再赘述。</p>
+</code></pre></div><p>各字段含义与Socks5相同，不再赘述。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/simplesocks.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/websocket/" title="Websocket"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - Websocket</a>
@@ -78,7 +79,7 @@
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/fullconfig/">完整的配置文件</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/full-config/">完整的配置文件</a></li>
 </ul>
   
 </li>

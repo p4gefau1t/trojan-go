@@ -30,10 +30,10 @@
     
     <item>
       <title>完整的配置文件</title>
-      <link>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</link>
+      <link>https://p4gefau1t.github.io/trojan-go/basic/full-config/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://p4gefau1t.github.io/trojan-go/basic/fullconfig/</guid>
+      <guid>https://p4gefau1t.github.io/trojan-go/basic/full-config/</guid>
       <description>下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo</description>
     </item>
     
