@@ -331,6 +331,17 @@ func loadServerConfig(config *GlobalConfig) error {
 		}
 		config.TLS.HTTPResponse = payload
 	}
+
+	if config.Websocket.DoubleTLS {
+		if config.Websocket.TLS.CertPath == "" {
+			log.Warn("Empty double TLS settings, using default ssl settings")
+			config.Websocket.TLS = config.TLS
+		}
+		if err := loadCertAndKey(&config.Websocket.TLS); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
