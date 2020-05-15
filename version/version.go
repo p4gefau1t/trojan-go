@@ -3,6 +3,7 @@ package version
 import (
 	"flag"
 	"fmt"
+	"runtime"
 
 	"github.com/p4gefau1t/trojan-go/common"
 )
@@ -22,7 +23,7 @@ func (*versionOption) Priority() int {
 
 func (c *versionOption) Handle() error {
 	if *c.arg {
-		fmt.Println("Trojan-Go", common.Version)
+		fmt.Println("Trojan-Go", common.Version, fmt.Sprintf("(%s %s/%s)", runtime.Version(), runtime.GOOS, runtime.GOARCH))
 		fmt.Println("Developed by PageFault (p4gefau1t)")
 		fmt.Println("Lisensed under GNU General Public License v3")
 		fmt.Println("GitHub Repository: https://github.com/p4gefau1t/trojan-go")

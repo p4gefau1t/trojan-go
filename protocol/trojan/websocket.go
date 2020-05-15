@@ -294,10 +294,10 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		return transport, nil
 	}
 	tlsConfig := &tls.Config{
-		Certificates:             config.TLS.KeyPair,
-		CipherSuites:             config.TLS.CipherSuites,
-		PreferServerCipherSuites: config.TLS.PreferServerCipher,
-		SessionTicketsDisabled:   !config.TLS.SessionTicket,
+		Certificates:             config.Websocket.TLS.KeyPair,
+		CipherSuites:             config.Websocket.TLS.CipherSuites,
+		PreferServerCipherSuites: config.Websocket.TLS.PreferServerCipher,
+		SessionTicketsDisabled:   !config.Websocket.TLS.SessionTicket,
 	}
 	tlsConn := tls.Server(transport, tlsConfig)
 	protocol.SetRandomizedTimeout(tlsConn)
