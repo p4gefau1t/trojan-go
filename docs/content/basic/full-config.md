@@ -50,7 +50,8 @@ weight: 30
     "reuse_session": true,
     "plain_http_response": "",
     "fallback_port": 0,
-    "fingerprint": "firefox"
+    "fingerprint": "firefox",
+    "serve_plain_text": false
   },
   "tcp": {
     "no_delay": true,
@@ -190,6 +191,8 @@ weight: 30
 
 ```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your_domain_name.com:443```进行验证。
 
+```serve_plain_text```服务端直接是否直接接受TCP连接并处理明文。此选项的意义在于支持nginx等Web服务器的分流。
+
 ### ```mux```多路复用选项
 
 多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。
@@ -311,12 +314,12 @@ CREATE TABLE users (
 
 ### ```api```选项
 
-trojan-go基于grpc提供了API，以支持服务端和客户端的管理和统计。可以实现客户端的流量和速度统计，服务端各用户的流量和速度统计，用户的动态增删和限速等。
+trojan-go基于gRPC提供了API，以支持服务端和客户端的管理和统计。可以实现客户端的流量和速度统计，服务端各用户的流量和速度统计，用户的动态增删和限速等。
 
 ```enabled```是否启用API功能。
 
-```api_addr```grpc监听的地址。
+```api_addr```gRPC监听的地址。
 
-```api_port```grpc监听的端口。
+```api_port```gRPC监听的端口。
 
 警告：**不要将API直接暴露在互联网上，否则可能导致各类安全问题**
