@@ -131,13 +131,6 @@ func (s *Server) ListenTCP(errChan chan error) {
 		return
 	}
 
-	tlsConfig := &tls.Config{
-		Certificates:             s.config.TLS.KeyPair,
-		CipherSuites:             s.config.TLS.CipherSuites,
-		PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
-		SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
-		NextProtos:               s.config.TLS.ALPN,
-	}
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -161,6 +154,13 @@ func (s *Server) ListenTCP(errChan chan error) {
 			rewindConn := common.NewRewindConn(conn)
 			rewindConn.R.SetBufferSize(2048)
 
+			tlsConfig := &tls.Config{
+				Certificates:             s.config.TLS.KeyPair,
+				CipherSuites:             s.config.TLS.CipherSuites,
+				PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
+				SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
+				NextProtos:               s.config.TLS.ALPN,
+			}
 			tlsConn := tls.Server(rewindConn, tlsConfig)
 			err = tlsConn.Handshake()
 			rewindConn.R.StopBuffering()

@@ -360,7 +360,11 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			VerifyHostname: true,
 			SessionTicket:  true,
 			ReuseSession:   true,
-			Fingerprint:    "firefox",
+			ALPN: []string{
+				"h2",
+				"http/1.1",
+			},
+			Fingerprint: "firefox",
 		},
 		Mux: MuxConfig{
 			IdleTimeout: 60,

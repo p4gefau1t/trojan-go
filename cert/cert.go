@@ -46,7 +46,7 @@ func (u *User) GetPrivateKey() crypto.PrivateKey {
 func createAndSaveUserKey() (*ecdsa.PrivateKey, error) {
 	_, err := os.Stat("user.key")
 	if os.IsExist(err) {
-		return nil, common.NewError("User.key exists, cannot create new user")
+		return nil, common.NewError("user.key exists, unable to create new user")
 	}
 	userKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	common.Must(err)

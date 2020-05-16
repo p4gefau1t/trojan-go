@@ -45,7 +45,10 @@ weight: 30
     "curves": "",
     "prefer_server_cipher": false,
     "sni": "",
-    "alpn": [],
+    "alpn": [
+      "h2",
+      "http/1.1"
+    ],
     "session_ticket": true,
     "reuse_session": true,
     "plain_http_response": "",
@@ -165,11 +168,11 @@ weight: 30
 
 ```sni```指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
-```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN握手失败**
+```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商错误的应用层协议**。
 
 ```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
 
-```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3
+```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
 
 ```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔。
 
@@ -191,7 +194,7 @@ weight: 30
 
 ```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your_domain_name.com:443```进行验证。
 
-```serve_plain_text```服务端直接是否直接接受TCP连接并处理明文。此选项的意义在于支持nginx等Web服务器的分流。
+```serve_plain_text```服务端直接是否直接接受TCP连接并处理trojan协议明文。开启此选项后，```ssl```的其他选项将失效，trojan-go将直接处理连入的TCP连接而不使用TLS。此选项的意义在于支持nginx等Web服务器的分流。如果开启，请不要将trojan-go服务对外暴露。
 
 ### ```mux```多路复用选项
 
