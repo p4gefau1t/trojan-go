@@ -23,7 +23,6 @@
         "block": [
             "geosite:category-ads"
         ],
-        "proxy": [],
-        "route_by_ip_on_nonmatch": true
+        "proxy": []
     }
 }

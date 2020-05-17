@@ -46,7 +46,6 @@ weight: 30
     "prefer_server_cipher": false,
     "sni": "",
     "alpn": [
-      "h2",
       "http/1.1"
     ],
     "session_ticket": true,

@@ -361,7 +361,6 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			SessionTicket:  true,
 			ReuseSession:   true,
 			ALPN: []string{
-				"h2",
 				"http/1.1",
 			},
 			Fingerprint: "firefox",
