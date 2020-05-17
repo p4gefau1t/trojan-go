@@ -2,6 +2,7 @@ package shadow
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -34,6 +35,10 @@ func (m *ShadowManager) handleScapegoat() {
 	for {
 		select {
 		case goat := <-m.scapegoatChan:
+			if goat.Conn == nil {
+				log.Error("Invalid inbound conn", goat.Conn)
+				return
+			}
 			if goat.Info != "" {
 				log.Info("Scapegoat: ", goat.Info)
 			}
@@ -52,9 +57,17 @@ func (m *ShadowManager) handleScapegoat() {
 					continue
 				}
 			}
-			go proxy.ProxyConn(m.ctx, goat.Conn, goat.ShadowConn, m.config.BufferSize)
+			go func(goat *Scapegoat) {
+				if goat.Conn == nil || goat.ShadowConn == nil {
+					panic(fmt.Sprintf("Empty conn: %v %v", goat.Conn, goat.ShadowConn))
+				}
+				proxy.ProxyConn(m.ctx, goat.Conn, goat.ShadowConn, m.config.BufferSize)
+				goat.Conn.Close()
+				goat.ShadowConn.Close()
+				log.Info("Scapegoat relaying done: ", goat.Info)
+			}(goat)
 		case <-m.ctx.Done():
-			log.Debug("shadow manager exiting..")
+			log.Debug("Shadow manager exiting..")
 			return
 		}
 	}

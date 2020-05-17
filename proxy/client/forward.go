@@ -163,7 +163,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 }
 
 func (f *Forward) Run() error {
-	log.Info("Forward is running at", f.config.LocalAddress)
+	log.Info("Trojan-Go forward is listening on", f.config.LocalAddress)
 	errChan := make(chan error, 2)
 	go f.listenUDP(errChan)
 	go f.listenTCP(errChan)

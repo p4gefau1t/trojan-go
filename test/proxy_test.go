@@ -106,7 +106,11 @@ func getTLSConfig() conf.TLSConfig {
 		ReuseSession:    true,
 		SessionTicket:   true,
 		FallbackAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),
-		Fingerprint:     "firefox",
+		ALPN: []string{
+			"http/1.1",
+			"h2",
+		},
+		Fingerprint: "firefox",
 	}
 	return c
 }
@@ -153,6 +157,7 @@ func addWsConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 		Path:                "/websocket",
 		ObfuscationPassword: "123456789",
 		DoubleTLS:           true,
+		TLS:                 getTLSConfig(),
 	}
 	hash := md5.New()
 	hash.Write([]byte(config.Websocket.ObfuscationPassword))

@@ -30,7 +30,7 @@ func (f *Relay) handleConn(conn net.Conn) {
 }
 
 func (f *Relay) Run() error {
-	log.Info("Relay is running at", f.config.LocalAddress)
+	log.Info("Trojan-Go relay is listening on", f.config.LocalAddress)
 	listener, err := net.Listen("tcp", f.config.LocalAddress.String())
 	f.listener = listener
 	if err != nil {

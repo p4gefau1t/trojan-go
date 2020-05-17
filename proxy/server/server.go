@@ -39,6 +39,8 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		log.Error(common.NewError("Failed to init inbound session").Base(err))
 		return
 	}
+	defer stream.Close()
+
 	switch req.Command {
 	case protocol.Connect:
 		outboundConn, err := direct.NewOutboundConnSession(s.ctx, req, s.config)
@@ -53,6 +55,7 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		outboundPacket, err := direct.NewOutboundPacketSession(s.ctx)
 		common.Must(err)
 		inboundPacket, err := trojan.NewPacketSession(inboundConn)
+		defer inboundPacket.Close()
 		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
 	default:
 		log.Error(fmt.Sprintf("Invalid command %d", req.Command))
@@ -69,6 +72,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		return
 	}
 	protocol.CancelTimeout(conn)
+	defer conn.Close()
 
 	if req.Command == protocol.Mux {
 		muxServer, err := smux.Server(inboundConn, nil)
@@ -114,7 +118,7 @@ func (s *Server) handleConn(conn net.Conn) {
 }
 
 func (s *Server) ListenTCP(errChan chan error) {
-	log.Info("Server is running at", s.config.LocalAddress)
+	log.Info("Trojan-Go server is listening on", s.config.LocalAddress)
 
 	var listener net.Listener
 	listener, err := net.Listen("tcp", s.config.LocalAddress.String())
@@ -168,7 +172,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 
 			if s.config.LogLevel == 0 {
 				state := tlsConn.ConnectionState()
-				log.Trace("TLS handshaked", "cipher:", tls.CipherSuiteName(state.CipherSuite), "resume:", state.DidResume)
+				log.Trace("TLS handshaked", tls.CipherSuiteName(state.CipherSuite), state.DidResume, state.NegotiatedProtocol)
 			}
 
 			if err != nil {
@@ -224,8 +228,7 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	authDriver := "memory"
 	if config.MySQL.Enabled {
 		authDriver = "mysql"
-	}
-	if config.Redis.Enabled {
+	} else if config.Redis.Enabled {
 		authDriver = "redis"
 	}
 	auth, err := stat.NewAuth(ctx, authDriver, config)

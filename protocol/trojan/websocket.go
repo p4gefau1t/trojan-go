@@ -304,7 +304,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	if tlsErr := tlsConn.Handshake(); tlsErr != nil {
 		rewindConn.R.Rewind()
 		//proxy this to our own ws server
-		tlsErr = common.NewError("Invalid double tls handshake from" + conn.RemoteAddr().String()).Base(tlsErr)
+		tlsErr = common.NewError("Invalid double tls handshake from " + conn.RemoteAddr().String()).Base(tlsErr)
 		goat, err := getWebsocketScapegoat(
 			config,
 			url,

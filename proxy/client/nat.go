@@ -100,7 +100,7 @@ func (n *NAT) listenTCP(errChan chan error) {
 }
 
 func (n *NAT) Run() error {
-	log.Info("NAT is running at", n.config.LocalAddress)
+	log.Info("Trojan-Go NAT is listening on", n.config.LocalAddress)
 	errChan := make(chan error, 2)
 	go n.listenUDP(errChan)
 	go n.listenTCP(errChan)

@@ -307,7 +307,7 @@ func (c *Client) listenTCP(errChan chan error) {
 }
 
 func (c *Client) Run() error {
-	log.Info("Client is running at", c.config.LocalAddress.String())
+	log.Info("Trojan-Go client is listening on", c.config.LocalAddress.String())
 	errChan := make(chan error, 3)
 	go c.listenUDP(errChan)
 	go c.listenTCP(errChan)

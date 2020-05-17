@@ -161,7 +161,7 @@ func RunServerAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Auth
 	if err != nil {
 		return err
 	}
-	log.Info("Server api service is running at", config.API.APIAddress)
+	log.Info("Trojan-Go server-side API service is listening on", config.API.APIAddress)
 	errChan := make(chan error, 1)
 	go func() {
 		errChan <- server.Serve(listener)
