@@ -44,7 +44,7 @@ func (n *NAT) handleConn(conn net.Conn) {
 	}
 	defer outboundConn.Close()
 	log.Info("[Tproxy] conn from", conn.RemoteAddr(), "tunneling to", req)
-	proxy.ProxyConn(n.ctx, inboundConn, outboundConn, n.config.BufferSize)
+	proxy.RelayConn(n.ctx, inboundConn, outboundConn, n.config.BufferSize)
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
@@ -71,7 +71,7 @@ func (n *NAT) listenUDP(errChan chan error) {
 		}
 		outboundPacket, err := trojan.NewPacketSession(outboundConn)
 		common.Must(err)
-		proxy.ProxyPacket(n.ctx, inboundPacket, outboundPacket)
+		proxy.RelayPacket(n.ctx, inboundPacket, outboundPacket)
 		outboundPacket.Close()
 	}
 }

@@ -10,6 +10,7 @@
 [![Commit](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)](https://img.shields.io/github/last-commit/p4gefau1t/trojan-go)
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)](https://img.shields.io/github/commit-activity/m/p4gefau1t/trojan-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/p4gefau1t/trojan-go)](https://goreportcard.com/report/github.com/p4gefau1t/trojan-go)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/p4gefau1t/trojan-go/pulls)
 
 使用Go实现的完整Trojan代理，与Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
 
@@ -21,11 +22,9 @@
 
 预编译的版本可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。直接运行解压得到的执行文件即可，无其他组件依赖。
 
-跨平台客户端[Trojan-Qt5](https://github.com/Trojan-Qt5/Trojan-Qt5/)已使用Trojan-Go核心，支持目前所有的Trojan-Go扩展特性，界面友好，推荐作为客户端使用。
+如果你遇到配置和使用方面的问题，发现了软件Bug，或是有更好的想法，欢迎加入Trojan-Go的[Telegram交流反馈群](https://t.me/trojan_go_chat)。
 
-[Telegram交流反馈群](https://t.me/trojan_go_chat)
-
-### 下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。
+## **下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。**
 
 Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于：
 
@@ -53,17 +52,29 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 
 - 多平台和多操作系统支持，无特殊依赖
 
-- 多路复用，显著提升并发性能
+- 多路复用，降低延迟，提升并发性能
 
 - 自定义路由模块，可实现国内直连/广告屏蔽等功能
 
-- Websocket，用于支持CDN流量中转(基于WebSocket over TLS/SSL)和对抗GFW中间人攻击
+- Websocket传输支持，用于实现CDN流量中转(基于WebSocket over TLS/SSL)和对抗GFW中间人攻击
 
-- 自动化HTTPS证书申请，使用ACME协议从Let's Encrypt自动申请和更新HTTPS证书
+- 自动化HTTPS证书申请，从Let's Encrypt自动申请和更新HTTPS证书
 
-- TLS指纹伪造，绕过针对TLS Client Hello的特征识别
+- TLS指纹伪造，绕过GFW针对TLS Client Hello的特征识别
 
 - 基于gRPC的API支持，支持动态用户管理和流量速度限制
+
+- 服务端支持处理Trojan协议明文（TCP明文传输），以适应前置nginx等服务器的场景
+
+## 图形界面客户端
+
+Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，ShadowRocket等。
+
+下面是支持Trojan-Go扩展特性（Websocket/Mux等）的客户端。
+
+[Trojan-Qt5](https://github.com/Trojan-Qt5/Trojan-Qt5/)，跨平台客户端，支持Windows/MacOS/Linux，使用Trojan-Go核心，支持所有Trojan-Go扩展特性。
+
+[Igniter-Go](https://github.com/p4gefau1t/trojan-go-android)，Fork自Igniter，将Igniter核心替换为Trojan-Go并做了一定修改，支持所有Trojan-Go扩展特性。
 
 ## 使用方法
 
@@ -108,7 +119,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 4. 使用Docker部署
 
     ```shell
-    docker run\
+    docker run \
         --name trojan-go \
         -d \
         -v /etc/trojan-go/:/etc/trojan-go \
@@ -119,7 +130,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
     或者
 
     ```shell
-    docker run\
+    docker run \
         --name trojan-go \
         -d \
         -v /path/to/host/config:/path/in/container \
@@ -171,7 +182,6 @@ server.json
         "key": "your_key.key"
     }
 }
-
 ```
 
 客户端配置文件
@@ -201,13 +211,13 @@ client.json
 sudo ./trojan-go -autocert request
 ```
 
-向Let's Encrypt申请证书
+向Let's Encrypt申请证书。
 
 申请过程中，按照ACME协议要求，trojan-go需要和letsencrypt服务器交互，因此需要暂时占用本地443和80端口，此时请暂时关闭nginx，apache，或者trojan等服务。
 
 Linux下，绑定80和443端口需要root权限，因此你需要使用sudo执行trojan-go才能正常证书申请流程。
 
-你也可以指定自定义端口，然后使用nginx等web服务器进行443和80分流，将acme协议代理到自定义端口上。
+你也可以指定自定义端口，然后使用nginx等web服务器进行443和80分流，将ACME协议流量代理到自定义端口上。
 
 如果申请成功，本目录下会得到
 
@@ -249,7 +259,7 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 可以省略```hostname```, 但是服务器和客户端的```path```必须一致。服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
 
-由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的服务端可以兼容所有客户端，但是如果要使用Websocket承载流量，请确保双方都使用Trojan-Go。
+由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的Trojan-Go服务端可以兼容所有客户端，但是如果要使用Websocket承载流量，请确保双方都使用Trojan-Go。
 
 ### 多路复用
 
@@ -257,11 +267,11 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 在很差的网络条件下，一次TLS握手可能会花费很多时间。
 
-Trojan-Go支持多路复用(基于[smux](https://github.com/xtaci/smux))。通过使一个TLS隧道连接承载多个TCP连接的方式，减少TCP和TLS握手带来的延迟，以期提升高并发情景下的性能。
+Trojan-Go支持多路复用(基于[smux](https://github.com/xtaci/smux))。通过一个TLS隧道连接承载多个TCP连接的方式，减少TCP和TLS握手带来的延迟，以期提升高并发情景下的性能。
 
 启用多路复用并不会增加你测速得到的链路速度，但会降低延迟，提升大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
 
-注意，这个特性和Trojan-GFW**不兼容**，出于兼容性考虑，这个特性是默认关闭的。你可以通过设置mux选项中的"enabled"字段启用它。如下
+注意，这个特性和Trojan-GFW**不兼容**，出于兼容性考虑，这个特性是默认关闭的。你可以通过设置客户端的mux选项"enabled"字段启用它。如下
 
 ```json
 "mux": {
@@ -361,10 +371,7 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full"
 
 [go-tproxy](https://github.com/LiamHaworth/go-tproxy)
 
-[tcplisten](https://github.com/valyala/tcplisten)
-
 [utls](https://github.com/refraction-networking/utls)
-
 
 ## Stargazers over time
 

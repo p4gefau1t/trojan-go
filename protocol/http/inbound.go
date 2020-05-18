@@ -79,7 +79,7 @@ func (i *HTTPInboundTunnelConnSession) parseRequest() (bool, error) {
 		return false, err
 	}
 	if httpRequest.Method != "CONNECT" {
-		return true, common.NewError("Not a connection")
+		return true, common.NewError("Not a CONNECT request")
 	}
 	i.bodyReader = httpRequest.Body
 	i.httpRequest = httpRequest

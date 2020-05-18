@@ -16,7 +16,7 @@ type Buildable interface {
 	Build(config *conf.GlobalConfig) (common.Runnable, error)
 }
 
-func ProxyConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
+func RelayConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
 	errChan := make(chan error, 2)
 	copyConn := func(dst io.Writer, src io.Reader) {
 		buf := make([]byte, bufferSize)
@@ -31,10 +31,11 @@ func ProxyConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
 			log.Debug(common.NewError("conn proxy ends").Base(err))
 		}
 	case <-ctx.Done():
+		return
 	}
 }
 
-func ProxyPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
+func RelayPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
 	errChan := make(chan error, 2)
 	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
 		for {
@@ -60,7 +61,7 @@ func ProxyPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
 	}
 }
 
-func ProxyPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, table map[router.Policy]protocol.PacketReadWriter, router router.Router) {
+func RelayPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, table map[router.Policy]protocol.PacketReadWriter, router router.Router) {
 	errChan := make(chan error, 1+len(table))
 	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
 		for {

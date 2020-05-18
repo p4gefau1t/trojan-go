@@ -201,12 +201,13 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 		strings.ToLower(httpRequest.Header.Get("Upgrade")) != "websocket" { //check upgrade field
 		//not a valid websocket conn
 		rewindConn.R.Rewind()
+		err := common.NewError("Invalid websocket request from " + conn.RemoteAddr().String())
 		shadowMan.SubmitScapegoat(&shadow.Scapegoat{
 			Conn:          rewindConn,
 			ShadowAddress: config.RemoteAddress,
-			Info:          "Invalid http upgrade request from " + conn.RemoteAddr().String(),
+			Info:          err.Error(),
 		})
-		return nil, common.NewError("Invalid websocket request" + conn.RemoteAddr().String())
+		return nil, err
 	}
 
 	//this is a websocket upgrade request
@@ -303,8 +304,9 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 	protocol.SetRandomizedTimeout(tlsConn)
 	if tlsErr := tlsConn.Handshake(); tlsErr != nil {
 		rewindConn.R.Rewind()
+		rewindConn.R.StopBuffering()
 		//proxy this to our own ws server
-		tlsErr = common.NewError("Invalid double tls handshake from " + conn.RemoteAddr().String()).Base(tlsErr)
+		tlsErr = common.NewError("Invalid double TLS handshake from " + conn.RemoteAddr().String()).Base(tlsErr)
 		goat, err := getWebsocketScapegoat(
 			config,
 			url,

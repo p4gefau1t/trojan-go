@@ -23,6 +23,7 @@
         "block": [
             "geosite:category-ads"
         ],
-        "proxy": []
+        "proxy": [],
+        "default_policy": "proxy"
     }
 }

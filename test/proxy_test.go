@@ -102,7 +102,6 @@ func getTLSConfig() conf.TLSConfig {
 		CertPool:        pool,
 		KeyPair:         KeyPair,
 		Verify:          true,
-		VerifyHostname:  true,
 		ReuseSession:    true,
 		SessionTicket:   true,
 		FallbackAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),

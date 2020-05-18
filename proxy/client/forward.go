@@ -156,7 +156,7 @@ func (f *Forward) listenTCP(errChan chan error) {
 				return
 			}
 			defer outboundConn.Close()
-			proxy.ProxyConn(f.ctx, inboundConn, outboundConn, f.config.BufferSize)
+			proxy.RelayConn(f.ctx, inboundConn, outboundConn, f.config.BufferSize)
 		}
 		go handle(inboundConn)
 	}

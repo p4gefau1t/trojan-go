@@ -356,10 +356,9 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 			KeepAlive:    true,
 		},
 		TLS: TLSConfig{
-			Verify:         true,
-			VerifyHostname: true,
-			SessionTicket:  true,
-			ReuseSession:   true,
+			Verify:        true,
+			SessionTicket: true,
+			ReuseSession:  true,
 			ALPN: []string{
 				"http/1.1",
 			},
@@ -372,10 +371,9 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		Websocket: WebsocketConfig{
 			DoubleTLS: true,
 			TLS: TLSConfig{
-				Verify:         true,
-				VerifyHostname: true,
-				SessionTicket:  true,
-				ReuseSession:   true,
+				Verify:        true,
+				SessionTicket: true,
+				ReuseSession:  true,
 			},
 		},
 		MySQL: MySQLConfig{

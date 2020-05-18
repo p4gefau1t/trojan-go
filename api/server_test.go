@@ -1,7 +1,7 @@
 package api
 
 import (
-	context "context"
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,7 +9,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/stat/memory"
-	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc"
 )
 
 func TestServerAPI(t *testing.T) {

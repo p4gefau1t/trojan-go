@@ -76,7 +76,7 @@ func (r *RewindReader) StopBuffering() {
 func (r *RewindReader) SetBufferSize(size int) {
 	if size == 0 { //disable buffering
 		if !r.buffered {
-			panic("already disabled")
+			panic("reader is already disabled")
 		}
 		r.buffered = false
 		r.buf = nil
@@ -84,7 +84,7 @@ func (r *RewindReader) SetBufferSize(size int) {
 		r.bufferSize = 0
 	} else {
 		if r.buffered {
-			panic("is already buffering")
+			panic("reader is already buffering")
 		}
 		r.buffered = true
 		r.bufReadIdx = 0

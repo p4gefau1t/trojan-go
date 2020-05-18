@@ -44,10 +44,10 @@ type Client struct {
 
 func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
+	defer rwc.Close()
 	inboundConn, req, err := socks.NewInboundConnSession(rwc)
 	if err != nil {
 		log.Error(common.NewError("Failed to handle socks requests").Base(err))
-		rwc.Close()
 		return
 	}
 	defer inboundConn.Close()
@@ -101,7 +101,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 			return
 		}
 		log.Info("[Bypass] conn to", req)
-		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
+		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 		return
 	} else if policy == router.Block {
 		log.Info("[Block] conn to", req)
@@ -113,11 +113,12 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		return
 	}
 	defer outboundConn.Close()
-	proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
+	proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 }
 
 func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
+	defer rwc.Close()
 	inboundConn, req, inboundPacket, err := http.NewHTTPInbound(rwc)
 	if err != nil {
 		log.Error(common.NewError("Failed to handle HTTP requests").Base(err))
@@ -145,7 +146,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 				return
 			}
 			log.Info("[Bypass] conn to", req)
-			proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
+			proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 			return
 		} else if policy == router.Block {
 			log.Info("[Block] conn to", req)
@@ -159,7 +160,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 		}
 		defer outboundConn.Close()
 		log.Info("Conn tunneling to", req)
-		proxy.ProxyConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
+		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 	} else { //GET/POST requests
 		defer inboundPacket.Close()
 		packetChan := make(chan *packetInfo, 512)
@@ -265,7 +266,7 @@ func (c *Client) listenUDP(errChan chan error) {
 				router.Proxy:  outboundPacket,
 				router.Bypass: directOutboundPacket,
 			}
-			proxy.ProxyPacketWithRouter(c.ctx, inboundPacket, table, c.router)
+			proxy.RelayPacketWithRouter(c.ctx, inboundPacket, table, c.router)
 			outboundPacket.Close()
 			directOutboundPacket.Close()
 		case <-c.ctx.Done():

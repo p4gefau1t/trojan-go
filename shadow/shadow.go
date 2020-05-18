@@ -61,7 +61,7 @@ func (m *ShadowManager) handleScapegoat() {
 				if goat.Conn == nil || goat.ShadowConn == nil {
 					panic(fmt.Sprintf("Empty conn: %v %v", goat.Conn, goat.ShadowConn))
 				}
-				proxy.ProxyConn(m.ctx, goat.Conn, goat.ShadowConn, m.config.BufferSize)
+				proxy.RelayConn(m.ctx, goat.Conn, goat.ShadowConn, m.config.BufferSize)
 				goat.Conn.Close()
 				goat.ShadowConn.Close()
 				log.Info("Scapegoat relaying done: ", goat.Info)

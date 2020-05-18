@@ -50,13 +50,13 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		}
 		log.Info("Mux conn tunneling to", req.String())
 		defer outboundConn.Close()
-		proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
+		proxy.RelayConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 	case protocol.Associate:
 		outboundPacket, err := direct.NewOutboundPacketSession(s.ctx)
 		common.Must(err)
 		inboundPacket, err := trojan.NewPacketSession(inboundConn)
 		defer inboundPacket.Close()
-		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
+		proxy.RelayPacket(s.ctx, inboundPacket, outboundPacket)
 	default:
 		log.Error(fmt.Sprintf("Invalid command %d", req.Command))
 		return
@@ -100,7 +100,7 @@ func (s *Server) handleConn(conn net.Conn) {
 		}
 		defer outboundPacket.Close()
 		log.Info("UDP tunnel established")
-		proxy.ProxyPacket(s.ctx, inboundPacket, outboundPacket)
+		proxy.RelayPacket(s.ctx, inboundPacket, outboundPacket)
 		log.Debug("UDP tunnel closed")
 		return
 	}
@@ -114,7 +114,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer outboundConn.Close()
 
 	log.Info("Conn from", conn.RemoteAddr(), "tunneling to", req.String())
-	proxy.ProxyConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
+	proxy.RelayConn(s.ctx, inboundConn, outboundConn, s.config.BufferSize)
 }
 
 func (s *Server) ListenTCP(errChan chan error) {

@@ -26,7 +26,7 @@ func (f *Relay) handleConn(conn net.Conn) {
 		return
 	}
 	defer newConn.Close()
-	proxy.ProxyConn(f.ctx, newConn, conn, f.config.BufferSize)
+	proxy.RelayConn(f.ctx, newConn, conn, f.config.BufferSize)
 }
 
 func (f *Relay) Run() error {

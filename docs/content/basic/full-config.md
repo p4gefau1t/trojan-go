@@ -36,7 +36,6 @@ weight: 30
   "dns": [],
   "ssl": {
     "verify": true,
-    "verify_hostname": true,
     "cert": *required*,
     "key": *required*,
     "key_password": "",
@@ -86,7 +85,6 @@ weight: 30
     "double_tls": true,
     "ssl": {
       "verify": true,
-      "verify_hostname": true,
       "cert": "",
       "key": "",
       "key_password": "",
@@ -155,13 +153,11 @@ weight: 30
 
 使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。
 
-```buffer_size```为单个连接缓冲区大小，单位KiB，默认32KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。
+```buffer_size```为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。
 
 ### ```ssl```选项
 
 ```verify```表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启```verify```会导致校验失败。这种情况下，应当保持```verify```开启，然后在```cert```中填写服务端的证书，即可正常连接。
-
-```verify_hostname```表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI字段的一致性。
 
 服务端必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写```cert```。如果使用自签名或者自签发的证书，应当在的```cert```处填入服务器证书文件，否则可能导致校验失败。
 
@@ -189,9 +185,9 @@ weight: 30
 
 一旦指纹的值被设置，```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。
 
-```plain_http_response```指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
+```plain_http_response```指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
-```fallback_port```指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your_domain_name.com:443```进行验证。
+```fallback_port```指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your_domain_name.com:443```进行验证。
 
 ```serve_plain_text```服务端直接是否直接接受TCP连接并处理trojan协议明文。开启此选项后，```ssl```的其他选项将失效，trojan-go将直接处理连入的TCP连接而不使用TLS。此选项的意义在于支持nginx等Web服务器的分流。如果开启，请不要将trojan-go服务对外暴露。
 
@@ -261,11 +257,11 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```ssl```如果```double_tls```启用，这个选项用于配置第二层TLS，如果没有填写则使用全局的```ssl```填充。各字段定义与全局```ssl```相同。
 
-```obfuscation_password```指定混淆密码。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果需要使用混淆，服务端和客户端必须同时设置相同密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+```obfuscation_password```指定混淆密码。用于混淆内层连接以避免遭到CDN运营商识别。如果需要使用混淆，服务端和客户端必须设置相同的密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
 
 ### ```tcp```选项
 
-```no_delay```是否禁用纳格算法(Nagle’s algorithm)，即TCP封包是否直接发出而不等待缓冲区填满。
+```no_delay```TCP封包是否直接发出而不等待缓冲区填满。
 
 ```keep_alive```是否启用TCP心跳存活检测。
 

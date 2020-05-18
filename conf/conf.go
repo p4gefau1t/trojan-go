@@ -29,7 +29,6 @@ const (
 
 type TLSConfig struct {
 	Verify               bool     `json:"verify"`
-	VerifyHostname       bool     `json:"verify_hostname"`
 	CertPath             string   `json:"cert"`
 	KeyPath              string   `json:"key"`
 	KeyPassword          string   `json:"key_password"`
@@ -45,7 +44,6 @@ type TLSConfig struct {
 	Curves               string   `json:"curves"`
 	Fingerprint          string   `json:"fingerprint"`
 	ServePlainText       bool     `json:"serve_plain_text"`
-	RedirectWithTLS      bool     `json:"redirect_with_tls"`
 
 	ClientHelloID    *utls.ClientHelloID
 	FallbackAddress  *common.Address
