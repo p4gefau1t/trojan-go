@@ -120,7 +120,14 @@ weight: 30
   "api": {
     "enabled": false,
     "api_addr": "",
-    "api_port": 0
+    "api_port": 0,
+    "api_tls": false,
+    "ssl": {
+      "cert": "",
+      "key": "",
+      "key_password": "",
+      "client_cert": []
+    },
   }
 }
 ```
@@ -320,4 +327,8 @@ trojan-go基于gRPC提供了API，以支持服务端和客户端的管理和统�
 
 ```api_port```gRPC监听的端口。
 
-警告：**不要将API直接暴露在互联网上，否则可能导致各类安全问题**
+```api_tls```gRPC是否启用TLS传输（双向认证）。
+
+```ssl``` TLS相关设置，如果开启TLS传输和双向认证，所有选项为必填。其中```key```, ```cert```为API服务器使用的密钥和证书文件，```client_cert```为客户端使用的证书文件路径，用于客户端认证。
+
+警告：**不要将未开启TLS双向认证的API服务直接暴露在互联网上，否则可能导致各类安全问题。**

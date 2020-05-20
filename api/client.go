@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -10,6 +11,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/stat"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type ClientAPI struct {
@@ -52,7 +54,17 @@ func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*Ge
 }
 
 func RunClientAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
-	server := grpc.NewServer()
+	var server *grpc.Server
+	if config.API.APITLS {
+		creds := credentials.NewTLS(&tls.Config{
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			Certificates: config.TLS.KeyPair,
+			ClientCAs:    config.TLS.ClientCertPool,
+		})
+		server = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		server = grpc.NewServer()
+	}
 	service := &ClientAPI{
 		ctx:  ctx,
 		auth: auth,

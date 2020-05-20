@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/stat"
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type ServerAPI struct {
@@ -152,7 +154,18 @@ func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_L
 }
 
 func RunServerAPI(ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
-	server := grpc.NewServer()
+	var server *grpc.Server
+	if config.API.APITLS {
+		creds := credentials.NewTLS(&tls.Config{
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			Certificates: config.TLS.KeyPair,
+			ClientCAs:    config.TLS.ClientCertPool,
+		})
+		server = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		server = grpc.NewServer()
+		log.Warn("Using insecure API service. Please set \"api_tls\" to enable TLS-based gRPC service.")
+	}
 	service := &ServerAPI{
 		auth: auth,
 	}

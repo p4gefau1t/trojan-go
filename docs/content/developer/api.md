@@ -9,8 +9,18 @@ Trojan-Go基于gRPC实现了API，使用protobuf交换数据。客户端可获�
 ```json
 "api": {
     "enabled": true,
-    "api_addr": "127.0.0.1",
-    "api_port": 10000
+    "api_addr": "0.0.0.0",
+    "api_port": 10000,
+    "api_tls": true,
+    "ssl": {
+      "cert": "api_cert.crt",
+      "key": "api_key.crt",
+      "key_password": "",
+      "client_cert": [
+          "api_client_cert1.crt",
+          "api_client_cert2.crt"
+      ]
+    },
 }
 ```
 

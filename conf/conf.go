@@ -31,6 +31,7 @@ type TLSConfig struct {
 	Verify               bool     `json:"verify"`
 	CertPath             string   `json:"cert"`
 	KeyPath              string   `json:"key"`
+	ClientCertPath       []string `json:"client_cert"`
 	KeyPassword          string   `json:"key_password"`
 	Cipher               string   `json:"cipher"`
 	CipherTLS13          string   `json:"cipher_tls13"`
@@ -48,6 +49,7 @@ type TLSConfig struct {
 	ClientHelloID    *utls.ClientHelloID
 	FallbackAddress  *common.Address
 	CertPool         *x509.CertPool
+	ClientCertPool   *x509.CertPool
 	KeyPair          []tls.Certificate
 	HTTPResponse     []byte
 	CipherSuites     []uint16
@@ -138,9 +140,11 @@ type WebsocketConfig struct {
 }
 
 type APIConfig struct {
-	Enabled bool   `json:"enabled"`
-	APIHost string `json:"api_addr"`
-	APIPort int    `json:"api_port"`
+	Enabled bool      `json:"enabled"`
+	APIHost string    `json:"api_addr"`
+	APIPort int       `json:"api_port"`
+	APITLS  bool      `json:"api_tls"`
+	TLS     TLSConfig `json:"ssl"`
 
 	APIAddress *common.Address
 }

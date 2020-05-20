@@ -26,15 +26,16 @@ func loadCert(tlsConfig *TLSConfig) error {
 		if err != nil {
 			return common.NewError("failed to load cert file").Base(err)
 		}
-		pool := x509.NewCertPool()
-		ok := pool.AppendCertsFromPEM(caCertByte)
+		tlsConfig.CertPool = x509.NewCertPool()
+		ok := tlsConfig.CertPool.AppendCertsFromPEM(caCertByte)
 		if !ok {
 			log.Warn("Invalid CA cert list")
 		}
 		log.Info("Using custom CA list")
+
+		//show info abount the cert
 		pemCerts := caCertByte
 		for len(pemCerts) > 0 {
-			tlsConfig.CertPool = pool
 			var block *pem.Block
 			block, pemCerts = pem.Decode(pemCerts)
 			if block == nil {
@@ -86,6 +87,19 @@ func loadCertAndKey(tlsConfig *TLSConfig) error {
 			return common.NewError("Failed to load key pair").Base(err)
 		}
 		tlsConfig.KeyPair = []tls.Certificate{keyPair}
+	}
+
+	tlsConfig.ClientCertPool = x509.NewCertPool()
+	for _, path := range tlsConfig.ClientCertPath {
+		log.Debug("Loading client cert: " + path)
+		certBytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			return common.NewError("Failed to load cert file").Base(err)
+		}
+		ok := tlsConfig.ClientCertPool.AppendCertsFromPEM(certBytes)
+		if !ok {
+			return common.NewError("Invalid client cert")
+		}
 	}
 	return nil
 }
@@ -139,6 +153,11 @@ func loadCommonConfig(config *GlobalConfig) error {
 	//api settings
 	if config.API.Enabled {
 		config.API.APIAddress = common.NewAddress(config.API.APIHost, config.API.APIPort, "tcp")
+		if config.API.APITLS {
+			if err := loadCertAndKey(&config.API.TLS); err != nil {
+				return err
+			}
+		}
 	}
 
 	//tls settings
