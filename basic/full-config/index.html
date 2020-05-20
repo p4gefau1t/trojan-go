@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6100">
+<meta itemprop="wordCount" content="6172">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.10</span>
+ <span class="version">Version 0.4.11</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -87,7 +87,6 @@
   <span style="color:#f92672">&#34;dns&#34;</span>: [],
   <span style="color:#f92672">&#34;ssl&#34;</span>: {
     <span style="color:#f92672">&#34;verify&#34;</span>: <span style="color:#66d9ef">true</span>,
-    <span style="color:#f92672">&#34;verify_hostname&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;cert&#34;</span>: <span style="color:#960050;background-color:#1e0010">*required*</span>,
     <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#960050;background-color:#1e0010">*required*</span>,
     <span style="color:#f92672">&#34;key_password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
@@ -97,7 +96,6 @@
     <span style="color:#f92672">&#34;prefer_server_cipher&#34;</span>: <span style="color:#66d9ef">false</span>,
     <span style="color:#f92672">&#34;sni&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;alpn&#34;</span>: [
-      <span style="color:#e6db74">&#34;h2&#34;</span>,
       <span style="color:#e6db74">&#34;http/1.1&#34;</span>
     ],
     <span style="color:#f92672">&#34;session_ticket&#34;</span>: <span style="color:#66d9ef">true</span>,
@@ -138,7 +136,6 @@
     <span style="color:#f92672">&#34;double_tls&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;ssl&#34;</span>: {
       <span style="color:#f92672">&#34;verify&#34;</span>: <span style="color:#66d9ef">true</span>,
-      <span style="color:#f92672">&#34;verify_hostname&#34;</span>: <span style="color:#66d9ef">true</span>,
       <span style="color:#f92672">&#34;cert&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
       <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
       <span style="color:#f92672">&#34;key_password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
@@ -174,7 +171,14 @@
   <span style="color:#f92672">&#34;api&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
     <span style="color:#f92672">&#34;api_addr&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-    <span style="color:#f92672">&#34;api_port&#34;</span>: <span style="color:#ae81ff">0</span>
+    <span style="color:#f92672">&#34;api_port&#34;</span>: <span style="color:#ae81ff">0</span>,
+    <span style="color:#f92672">&#34;api_tls&#34;</span>: <span style="color:#66d9ef">false</span>,
+    <span style="color:#f92672">&#34;ssl&#34;</span>: {
+      <span style="color:#f92672">&#34;cert&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+      <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+      <span style="color:#f92672">&#34;key_password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+      <span style="color:#f92672">&#34;client_cert&#34;</span>: []
+    },
   }
 }
 </code></pre></div><h2 id="说明">说明</h2>
@@ -203,10 +207,9 @@
 </li>
 </ul>
 <p>使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。</p>
-<p><code>buffer_size</code>为单个连接缓冲区大小，单位KiB，默认32KiB。提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。</p>
+<p><code>buffer_size</code>为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。</p>
 <h3 id="ssl选项"><code>ssl</code>选项</h3>
 <p><code>verify</code>表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
-<p><code>verify_hostname</code>表示客户端(client/nat/forward)是否校验服务端提供的证书的Common Name和本地提供的SNI字段的一致性。</p>
 <p>服务端必须填入<code>cert</code>和<code>key</code>，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写<code>cert</code>。如果使用自签名或者自签发的证书，应当在的<code>cert</code>处填入服务器证书文件，否则可能导致校验失败。</p>
 <p><code>sni</code>指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
 <p><code>alpn</code>为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。<strong>如果使用了CDN，错误的alpn字段可能导致与CDN协商错误的应用层协议</strong>。</p>
@@ -232,8 +235,8 @@
 </li>
 </ul>
 <p>一旦指纹的值被设置，<code>cipher</code>，<code>curves</code>，<code>alpn</code>，<code>session_ticket</code>等有可能影响指纹的字段将使用该指纹的特定设置覆写。</p>
-<p><code>plain_http_response</code>指定了当TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
-<p><code>fallback_port</code>指TLS握手失败时，trojan-go将该连接代理到该端口上。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问<code>http://your_domain_name.com:443</code>进行验证。</p>
+<p><code>plain_http_response</code>指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
+<p><code>fallback_port</code>指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问<code>http://your_domain_name.com:443</code>进行验证。</p>
 <p><code>serve_plain_text</code>服务端直接是否直接接受TCP连接并处理trojan协议明文。开启此选项后，<code>ssl</code>的其他选项将失效，trojan-go将直接处理连入的TCP连接而不使用TLS。此选项的意义在于支持nginx等Web服务器的分流。如果开启，请不要将trojan-go服务对外暴露。</p>
 <h3 id="mux多路复用选项"><code>mux</code>多路复用选项</h3>
 <p>多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。</p>
@@ -254,9 +257,9 @@
 <p>Block 封锁。不代理请求，直接关闭连接。</p>
 </li>
 </ul>
-<p>在<code>proxy</code>, <code>bypass</code>, <code>block</code>字段中填入对应列表文件名或者geoip/geosite标签名，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，trojan-go会自动识别。</p>
+<p>在<code>proxy</code>, <code>bypass</code>, <code>block</code>字段中填入对应列表文件名或者geoip/geosite标签名，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，trojan-go会自动识别。客户端(client)可以配置三种策略，服务端(server)只可配置block策略。</p>
 <p><code>enabled</code>是否开启路由模块。</p>
-<p><code>default_policy</code>指的是三个列表匹配均失败后，使用的默认策略，默认为&quot;bypass&rdquo;，即进行代理。合法的值有</p>
+<p><code>default_policy</code>指的是三个列表匹配均失败后，使用的默认策略，默认为&quot;proxy&rdquo;，即进行代理。合法的值有</p>
 <ul>
 <li>
 <p>&ldquo;proxy&rdquo;</p>
@@ -298,9 +301,9 @@
 <p><code>hostname</code>Websocket握手时使用的主机名，客户端如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。</p>
 <p><code>double_tls</code>是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
 <p><code>ssl</code>如果<code>double_tls</code>启用，这个选项用于配置第二层TLS，如果没有填写则使用全局的<code>ssl</code>填充。各字段定义与全局<code>ssl</code>相同。</p>
-<p><code>obfuscation_password</code>指定混淆密码。用于混淆内层连接以降低遭到国内无良CDN运营商识别的概率。如果需要使用混淆，服务端和客户端必须同时设置相同密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
+<p><code>obfuscation_password</code>指定混淆密码。用于混淆内层连接以避免遭到CDN运营商识别。如果需要使用混淆，服务端和客户端必须设置相同的密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
 <h3 id="tcp选项"><code>tcp</code>选项</h3>
-<p><code>no_delay</code>是否禁用纳格算法(Nagle’s algorithm)，即TCP封包是否直接发出而不等待缓冲区填满。</p>
+<p><code>no_delay</code>TCP封包是否直接发出而不等待缓冲区填满。</p>
 <p><code>keep_alive</code>是否启用TCP心跳存活检测。</p>
 <p><code>reuse_port</code>是否启用端口复用。由于trojan-gfw版本对多线程支持不佳，因而服务器使用此选项开启多个进程监听同一端口以提升并发性能。trojan-go本身的并发性能足够优秀，并无必要开启此选项。该选项仅为兼容而保留。</p>
 <p><code>prefer_ipv4</code>是否优先使用IPv4地址。</p>
@@ -333,7 +336,9 @@
 <p><code>enabled</code>是否启用API功能。</p>
 <p><code>api_addr</code>gRPC监听的地址。</p>
 <p><code>api_port</code>gRPC监听的端口。</p>
-<p>警告：<strong>不要将API直接暴露在互联网上，否则可能导致各类安全问题</strong></p>
+<p><code>api_tls</code>gRPC是否启用TLS传输（双向认证）。</p>
+<p><code>ssl</code> TLS相关设置，如果开启TLS传输和双向认证，所有选项为必填。其中<code>key</code>, <code>cert</code>为API服务器使用的密钥和证书文件，<code>client_cert</code>为客户端使用的证书文件路径，用于客户端认证。</p>
+<p>警告：<strong>不要将未开启TLS双向认证的API服务直接暴露在互联网上，否则可能导致各类安全问题。</strong></p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/basic/full-config.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/basic/config/" title="正确配置Trojan-Go"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 正确配置Trojan-Go</a>

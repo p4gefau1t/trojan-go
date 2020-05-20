@@ -30,7 +30,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域">
 
-<meta itemprop="wordCount" content="2191">
+<meta itemprop="wordCount" content="2284">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.4.10</span>
+ <span class="version">Version 0.4.11</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -122,7 +122,7 @@
 </li>
 </ul>
 <p>你可以通过使用浏览器访问你的域名<code>https://your_domain_name</code>来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用<code>http://your_domain_name:443</code>验证<code>fallback_port</code>工作是否正常。</p>
-<p>事实上，你甚至可以将Trojan-Go当作你的HTTPS服务器，用来给你的网站提供HTTPS服务。访客可以正常地通过Trojan-Go浏览你的网站，而和代理流量互不影响。</p>
+<p>事实上，你甚至可以将Trojan-Go当作你的HTTPS服务器，用来给你的网站提供HTTPS服务。访客可以正常地通过Trojan-Go浏览你的网站，而和代理流量互不影响。但是注意，不要在<code>remote_port</code>和<code>fallback_port</code>搭建有高实时性需求的服务，Trojan-Go识别到非Trojan协议流量时会有意增加少许延迟以抵抗GFW基于时间的检测。</p>
 <h3 id="客户端配置">客户端配置</h3>
 <p>对应的客户端配置</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
