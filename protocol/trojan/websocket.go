@@ -272,7 +272,7 @@ func NewInboundWebsocket(ctx context.Context, conn net.Conn, config *conf.Global
 
 		if err != nil {
 			rewindConn.R.Rewind()
-			//proxy this to our own ws server
+			//redirect this to our own ws server
 			err = common.NewError("Remote websocket " + conn.RemoteAddr().String() + "didn't send any valid iv").Base(err)
 			goat, err := getWebsocketScapegoat(
 				config,

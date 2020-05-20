@@ -202,11 +202,6 @@ func loadCommonConfig(config *GlobalConfig) error {
 			config.Websocket.ObfuscationKey = pbkdf2.Key(password, salt, 32, aes.BlockSize, sha256.New)
 		}
 	}
-	return nil
-}
-
-func loadClientConfig(config *GlobalConfig) error {
-	var err error
 
 	//router settings
 	config.Router.BlockList = []byte{}
@@ -264,6 +259,7 @@ func loadClientConfig(config *GlobalConfig) error {
 		config.Router.ProxyList = append(config.Router.ProxyList, byte('\n'))
 	}
 
+	var err error
 	config.Router.GeoIP, err = ioutil.ReadFile(config.Router.GeoIPFilename)
 	if err != nil {
 		config.Router.GeoIP = []byte{}
@@ -274,7 +270,10 @@ func loadClientConfig(config *GlobalConfig) error {
 		config.Router.GeoSite = []byte{}
 		log.Warn(err)
 	}
+	return nil
+}
 
+func loadClientConfig(config *GlobalConfig) error {
 	if config.TLS.SNI == "" {
 		log.Warn("SNI is unspecified, using remote_addr as SNI")
 		config.TLS.SNI = config.RemoteHost

@@ -25,7 +25,6 @@ func (*proxyOption) Priority() int {
 }
 
 func (c *proxyOption) Handle() error {
-	log.Info("Trojan-Go", common.Version, "initializing")
 	log.Info("Loading config file from", *c.args)
 
 	//exit code 23 stands for initializing error, and systemd will not trying to restart it

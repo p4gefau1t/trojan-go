@@ -213,11 +213,11 @@ weight: 30
 
 - Block 封锁。不代理请求，直接关闭连接。
 
-在```proxy```, ```bypass```, ```block```字段中填入对应列表文件名或者geoip/geosite标签名，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，trojan-go会自动识别。
+在```proxy```, ```bypass```, ```block```字段中填入对应列表文件名或者geoip/geosite标签名，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，trojan-go会自动识别。客户端(client)可以配置三种策略，服务端(server)只可配置block策略。
 
 ```enabled```是否开启路由模块。
 
-```default_policy```指的是三个列表匹配均失败后，使用的默认策略，默认为"bypass"，即进行代理。合法的值有
+```default_policy```指的是三个列表匹配均失败后，使用的默认策略，默认为"proxy"，即进行代理。合法的值有
 
 - "proxy"
 

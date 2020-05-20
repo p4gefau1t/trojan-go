@@ -50,10 +50,12 @@ func (i *TrojanInboundConnSession) Close() error {
 
 func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 	userHash := [56]byte{}
+
 	n, err := r.Read(userHash[:])
 	if err != nil || n != 56 {
 		return common.NewError("Failed to read hash").Base(err)
 	}
+
 	valid, meter := i.auth.AuthUser(string(userHash[:]))
 	if !valid {
 		return common.NewError("Invalid hash:" + string(userHash[:]))

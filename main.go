@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	log.Info("Trojan-Go", common.Version)
 	flag.Parse()
 	for {
 		h, err := common.PopOptionHandler()

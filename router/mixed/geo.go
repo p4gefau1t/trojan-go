@@ -47,6 +47,7 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 				return true
 			}
 		default:
+			log.Debug("Unknown type" + d.GetType().String())
 		}
 	}
 	return false

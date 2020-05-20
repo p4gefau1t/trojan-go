@@ -14,6 +14,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/protocol/simplesocks"
 	"github.com/p4gefau1t/trojan-go/protocol/trojan"
 	"github.com/p4gefau1t/trojan-go/proxy"
+	"github.com/p4gefau1t/trojan-go/router"
 	"github.com/p4gefau1t/trojan-go/shadow"
 	"github.com/p4gefau1t/trojan-go/sockopt"
 	"github.com/p4gefau1t/trojan-go/stat"
@@ -28,6 +29,7 @@ type Server struct {
 	auth     stat.Authenticator
 	config   *conf.GlobalConfig
 	shadow   *shadow.ShadowManager
+	router   router.Router
 	ctx      context.Context
 	cancel   context.CancelFunc
 }
@@ -40,6 +42,11 @@ func (s *Server) handleMuxConn(stream *smux.Stream) {
 		return
 	}
 	defer stream.Close()
+
+	if policy, err := s.router.RouteRequest(req); err != nil || policy == router.Block {
+		log.Info("[Block] conn to", req.String())
+		return
+	}
 
 	switch req.Command {
 	case protocol.Connect:
@@ -67,7 +74,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	protocol.SetRandomizedTimeout(conn)
 	inboundConn, req, err := trojan.NewInboundConnSession(s.ctx, conn, s.config, s.auth, s.shadow)
 	if err != nil {
-		//once the auth is failed, the conn will be took over by shadow manager. don't close it
+		//once the auth is failed, the conn will be took over by shadow manager. DO NOT close it.
 		log.Error(common.NewError("Failed to start inbound session, remote:" + conn.RemoteAddr().String()).Base(err))
 		return
 	}
@@ -86,6 +93,11 @@ func (s *Server) handleConn(conn net.Conn) {
 			}
 			go s.handleMuxConn(stream)
 		}
+	}
+
+	if policy, err := s.router.RouteRequest(req); err != nil || policy == router.Block {
+		log.Info("[Block] conn to", req.String())
+		return
 	}
 
 	if req.Command == protocol.Associate {
@@ -131,7 +143,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 
 	err = sockopt.ApplyTCPListenerOption(listener.(*net.TCPListener), &s.config.TCP)
 	if err != nil {
-		errChan <- common.NewError(fmt.Sprintf("failed to apply tcp option: %v", &s.config.TCP)).Base(err)
+		errChan <- common.NewError(fmt.Sprintf("Failed to apply tcp option: %v", &s.config.TCP)).Base(err)
 		return
 	}
 
@@ -177,7 +189,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 
 			if err != nil {
 				rewindConn.R.Rewind()
-				err = common.NewError("Failed to perform tls handshake with " + conn.RemoteAddr().String()).Base(err)
+				err = common.NewError("Failed to perform TLS handshake with " + conn.RemoteAddr().String()).Base(err)
 				log.Warn(err)
 				if s.config.TLS.FallbackAddress != nil {
 					s.shadow.SubmitScapegoat(&shadow.Scapegoat{
@@ -233,7 +245,10 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	}
 	auth, err := stat.NewAuth(ctx, authDriver, config)
 	if err != nil {
-		cancel()
+		return nil, err
+	}
+	router, err := router.NewRouter(&config.Router)
+	if err != nil {
 		return nil, err
 	}
 	s := &Server{
@@ -241,6 +256,7 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 		ctx:    ctx,
 		cancel: cancel,
 		shadow: shadow.NewShadowManager(ctx, config),
+		router: router,
 		auth:   auth,
 	}
 	return s, nil

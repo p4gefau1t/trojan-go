@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"time"
 
@@ -46,6 +47,10 @@ func (m *ShadowManager) handleScapegoat() {
 			if conn, ok := goat.Conn.(net.Conn); ok {
 				conn.SetDeadline(time.Time{})
 			}
+
+			//sleep for a while to resist time-based detection
+			time.Sleep(time.Millisecond * time.Duration(rand.Intn(50)))
+
 			if goat.ShadowConn == nil {
 				if goat.ShadowAddress == nil {
 					panic("incorrect shadow server")
