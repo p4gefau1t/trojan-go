@@ -28,7 +28,7 @@ func RelayConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
 	select {
 	case err := <-errChan:
 		if err != nil {
-			log.Debug(common.NewError("conn proxy ends").Base(err))
+			log.Debug(common.NewError("Conn relaying ends").Base(err))
 		}
 	case <-ctx.Done():
 		return
@@ -55,7 +55,7 @@ func RelayPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
 	go copyPacket(b, a)
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("Packet proxy ends").Base(err))
+		log.Debug(common.NewError("Packet relaying ends").Base(err))
 	case <-ctx.Done():
 		return
 	}
@@ -109,7 +109,7 @@ func RelayPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, 
 	go copyToDst()
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("Packet proxy with routing ends").Base(err))
+		log.Debug(common.NewError("Packet relaying with router ends").Base(err))
 	case <-ctx.Done():
 		return
 	}

@@ -307,7 +307,7 @@ func loadClientConfig(config *GlobalConfig) error {
 		log.Debug("Forward proxy", config.ForwardProxy.ProxyAddress.String())
 	}
 
-	if config.Websocket.DoubleTLS {
+	if config.Websocket.Enabled && config.Websocket.DoubleTLS {
 		if config.Websocket.TLS.CertPath == "" {
 			log.Warn("Empty double TLS settings, using default ssl settings")
 			config.Websocket.TLS = config.TLS
@@ -352,7 +352,7 @@ func loadServerConfig(config *GlobalConfig) error {
 
 	if config.Websocket.DoubleTLS {
 		if config.Websocket.TLS.CertPath == "" {
-			log.Warn("Empty double TLS settings, using default ssl settings")
+			log.Warn("Empty double TLS settings, using global TLS settings")
 			config.Websocket.TLS = config.TLS
 		}
 		if err := loadCertAndKey(&config.Websocket.TLS); err != nil {

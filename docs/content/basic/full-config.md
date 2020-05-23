@@ -127,7 +127,7 @@ weight: 30
       "key": "",
       "key_password": "",
       "client_cert": []
-    },
+    }
   }
 }
 ```

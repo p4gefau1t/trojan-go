@@ -138,7 +138,7 @@ func (a *MemoryAuthenticator) AddUser(hash string) error {
 	a.Lock()
 	defer a.Unlock()
 	if _, found := a.users[hash]; found {
-		return common.NewError("hash " + hash + " is already exist")
+		return common.NewError("Hash " + hash + " is already exist")
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &MemoryTrafficMeter{
@@ -156,7 +156,7 @@ func (a *MemoryAuthenticator) DelUser(hash string) error {
 	defer a.Unlock()
 	meter, found := a.users[hash]
 	if !found {
-		return common.NewError("hash " + hash + "is not exist")
+		return common.NewError("Hash " + hash + "is not exist")
 	}
 	meter.Close()
 	delete(a.users, hash)

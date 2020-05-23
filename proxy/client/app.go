@@ -24,7 +24,7 @@ func (m *AppManager) OpenAppConn(req *protocol.Request) (protocol.ConnSession, e
 	//transport layer
 	transport, err := m.transport.DialToServer()
 	if err != nil {
-		return nil, common.NewError("failed to init transport layer").Base(err)
+		return nil, common.NewError("Failed to init transport layer").Base(err)
 	}
 	//application layer
 	if m.config.Mux.Enabled {
@@ -33,7 +33,7 @@ func (m *AppManager) OpenAppConn(req *protocol.Request) (protocol.ConnSession, e
 		outboundConn, err = trojan.NewOutboundConnSession(req, transport, m.config, m.auth)
 	}
 	if err != nil {
-		return nil, common.NewError("fail to start conn session").Base(err)
+		return nil, common.NewError("Fail to start conn session").Base(err)
 	}
 	return outboundConn, nil
 }
