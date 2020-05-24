@@ -92,7 +92,7 @@ weight: 30
       "sni": "",
       "session_ticket": true,
       "reuse_session": true,
-      "plain_http_response": "",
+      "plain_http_response": ""
     }
   },
   "forward_proxy": {
