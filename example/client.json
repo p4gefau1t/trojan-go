@@ -17,13 +17,16 @@
         "enabled": true,
         "bypass": [
             "geoip:cn",
+            "geoip:private",
             "geosite:cn",
-            "geosite:private"
+            "geosite:geolocation-cn"
         ],
         "block": [
             "geosite:category-ads"
         ],
-        "proxy": [],
+        "proxy": [
+            "geosite:geolocation-!cn"
+        ],
         "default_policy": "proxy"
     }
 }

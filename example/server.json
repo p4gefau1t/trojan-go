@@ -10,5 +10,11 @@
     "ssl": {
         "cert": "your_cert.crt",
         "key": "your_key.key"
+    },
+    "router":{
+        "enabled": true,
+        "block": [
+            "geoip:private"
+        ]
     }
 }
