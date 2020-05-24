@@ -24,6 +24,7 @@ import (
 	tp "github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
+	_ "github.com/p4gefau1t/trojan-go/router/mixed"
 	_ "github.com/p4gefau1t/trojan-go/stat/memory"
 	_ "github.com/p4gefau1t/trojan-go/stat/mysql"
 	"golang.org/x/net/proxy"
@@ -384,6 +385,17 @@ func TestRealProxy(t *testing.T) {
 	go RunClient(context.Background(), clientConfig)
 	go RunHelloHTTPServer(context.Background())
 	RunServer(context.Background(), serverConfig)
+}
+
+func TestRealClient(t *testing.T) {
+	if os.Getenv("real_test") == "" {
+		t.Skip("skipping real proxy test")
+	}
+	b, err := ioutil.ReadFile("/etc/trojan-go/config.json")
+	common.Must(err)
+	config, err := conf.ParseJSON(b)
+	common.Must(err)
+	RunClient(context.Background(), config)
 }
 
 func TestNormal(t *testing.T) {

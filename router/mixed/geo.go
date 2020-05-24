@@ -29,25 +29,28 @@ func (r *GeoRouter) matchDomain(fulldomain string) bool {
 			if strings.HasSuffix(fulldomain, domain) {
 				idx := strings.Index(fulldomain, domain)
 				if idx == 0 || fulldomain[idx-1] == '.' {
+					log.Trace("Domain:", fulldomain, "hit domain rule:", domain)
 					return true
 				}
 			}
 		case v2router.Domain_Plain:
 			//keyword
 			if strings.Contains(fulldomain, d.GetValue()) {
+				log.Trace("Domain:", fulldomain, "hit keyword rule:", d.GetValue())
 				return true
 			}
 		case v2router.Domain_Regex:
 			matched, err := regexp.Match(d.GetValue(), []byte(fulldomain))
 			if err != nil {
-				log.Error("Invalid regex")
+				log.Error("Invalid regex", d.GetValue())
 				return false
 			}
 			if matched {
+				log.Trace("Domain:", fulldomain, "hit regex rule:", d.GetValue())
 				return true
 			}
 		default:
-			log.Debug("Unknown type" + d.GetType().String())
+			log.Debug("Unknown rule type:" + d.GetType().String())
 		}
 	}
 	return false
@@ -99,11 +102,11 @@ func (r *GeoRouter) routeRequestByIP(domain string) (router.Policy, error) {
 }
 
 func (r *GeoRouter) RouteRequest(req *protocol.Request) (router.Policy, error) {
-	if r.domains == nil || r.cidrs == nil {
-		return r.nonMatchPolicy, nil
-	}
 	switch req.AddressType {
 	case common.DomainName:
+		if r.domains == nil {
+			return r.nonMatchPolicy, nil
+		}
 		domain := string(req.DomainName)
 		if r.strategy == router.IPOnDemand {
 			return r.routeRequestByIP(domain)
@@ -116,6 +119,9 @@ func (r *GeoRouter) RouteRequest(req *protocol.Request) (router.Policy, error) {
 		}
 		return r.nonMatchPolicy, nil
 	case common.IPv4, common.IPv6:
+		if r.cidrs == nil {
+			return r.nonMatchPolicy, nil
+		}
 		if r.matchIP(req.IP) {
 			return r.matchPolicy, nil
 		}
