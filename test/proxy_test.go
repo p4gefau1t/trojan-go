@@ -24,7 +24,8 @@ import (
 	tp "github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
-	_ "github.com/p4gefau1t/trojan-go/router/mixed"
+
+	//_ "github.com/p4gefau1t/trojan-go/router/mixed"
 	_ "github.com/p4gefau1t/trojan-go/stat/memory"
 	_ "github.com/p4gefau1t/trojan-go/stat/mysql"
 	"golang.org/x/net/proxy"
@@ -128,7 +129,7 @@ func getPasswords(password string) []string {
 
 func getBasicServerConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4445, "tcp"),
+		LocalAddress:  common.NewAddress("0.0.0.0", 4445, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("trojanpassword"),
@@ -287,7 +288,7 @@ func CheckClientServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConf
 func CheckForwardServer(t *testing.T, clientConfig *conf.GlobalConfig, serverConfig *conf.GlobalConfig) {
 	time.Sleep(time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
-	clientConfig.TargetAddress = common.NewAddress("127.0.0.1", 5000, "tcp")
+	clientConfig.TargetAddress = common.NewAddress("localhost", 5000, "tcp")
 	go RunEchoTCPServer(ctx)
 	go RunEchoUDPServer(ctx)
 	go RunServer(ctx, serverConfig)
@@ -399,8 +400,10 @@ func TestRealClient(t *testing.T) {
 }
 
 func TestNormal(t *testing.T) {
-	CheckClientServer(t, getBasicClientConfig(), getBasicServerConfig())
-	CheckForwardServer(t, getBasicClientConfig(), getBasicServerConfig())
+	clientConfig := getBasicClientConfig()
+	serverConfig := getBasicServerConfig()
+	CheckClientServer(t, clientConfig, serverConfig)
+	CheckForwardServer(t, clientConfig, serverConfig)
 }
 
 func TestMux(t *testing.T) {

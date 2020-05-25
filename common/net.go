@@ -35,7 +35,7 @@ func (a *Address) String() string {
 	case DomainName:
 		return fmt.Sprintf("%s:%d", a.DomainName, a.Port)
 	default:
-		return ""
+		return "INVALID_ADDRESS_TYPE"
 	}
 }
 

@@ -17,7 +17,7 @@ import (
 
 func RunEchoUDPServer(ctx context.Context) {
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   net.ParseIP("127.0.0.1"),
+		IP:   net.ParseIP("0.0.0.0"),
 		Port: 5000,
 	})
 	common.Must(err)
@@ -40,7 +40,7 @@ func RunMultipleUDPEchoServer(ctx context.Context) {
 	for i := 0; i < 10; i++ {
 		go func(port int) {
 			conn, err := net.ListenUDP("udp", &net.UDPAddr{
-				IP:   net.ParseIP("127.0.0.1"),
+				IP:   net.ParseIP("0.0.0.0"),
 				Port: port,
 			})
 			common.Must(err)
@@ -64,7 +64,7 @@ func RunMultipleUDPEchoServer(ctx context.Context) {
 }
 
 func RunEchoTCPServer(ctx context.Context) {
-	listener, err := net.Listen("tcp", "127.0.0.1:5000")
+	listener, err := net.Listen("tcp", "0.0.0.0:5000")
 	common.Must(err)
 	defer listener.Close()
 	go func() {
@@ -93,7 +93,7 @@ func RunEchoTCPServer(ctx context.Context) {
 }
 
 func RunBlackHoleTCPServer(ctx context.Context) {
-	listener, err := net.Listen("tcp", "127.0.0.1:5000")
+	listener, err := net.Listen("tcp", "0.0.0.0:5000")
 	common.Must(err)
 	go func() {
 		for {

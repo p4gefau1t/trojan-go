@@ -155,20 +155,18 @@ type DirectOutboundPacketSession struct {
 	cancel     context.CancelFunc
 }
 
-func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn *net.UDPConn) {
+func (o *DirectOutboundPacketSession) listenConn(req *protocol.Request, conn net.PacketConn) {
 	defer conn.Close()
 	for {
 		buf := make([]byte, protocol.MaxUDPPacketSize)
 		conn.SetReadDeadline(time.Now().Add(protocol.UDPTimeout))
-		n, addr, err := conn.ReadFromUDP(buf)
+		n, addr, err := conn.ReadFrom(buf)
 		conn.SetReadDeadline(time.Time{})
 		if err != nil {
 			log.Debug(common.NewError("Packet session ends").Base(err))
 			return
 		}
-		if addr.String() != req.String() {
-			panic("addr != req, something went wrong")
-		}
+		log.Debug("UDP response from", addr)
 		info := &packetInfo{
 			request: req,
 			packet:  buf[0:n],
@@ -192,25 +190,12 @@ func (o *DirectOutboundPacketSession) ReadPacket() (*protocol.Request, []byte, e
 }
 
 func (o *DirectOutboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	var remote *net.UDPAddr
-	if req.AddressType == common.DomainName {
-		remote, err := net.ResolveUDPAddr("", string(req.DomainName))
-		if err != nil {
-			return 0, err
-		}
-		remote.Port = req.Port
-	} else {
-		remote = &net.UDPAddr{
-			IP:   req.IP,
-			Port: req.Port,
-		}
-	}
-	conn, err := net.DialUDP("udp", nil, remote)
+	conn, err := net.Dial("udp", req.Address.String())
 	if err != nil {
-		return 0, common.NewError("Failed to dial udp").Base(err)
+		return 0, common.NewError("Failed to dial UDP").Base(err)
 	}
-	log.Debug("udp directly dialing to", remote)
-	go o.listenConn(req, conn)
+	log.Debug("UDP directly dialing to", req)
+	go o.listenConn(req, conn.(net.PacketConn))
 	n, err := conn.Write(packet)
 	return n, err
 }

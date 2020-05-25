@@ -65,10 +65,10 @@ func (f *Forward) dispatchServerPacket(addr net.Addr) {
 			f.outboundPacketTableLock.Lock()
 			delete(f.outboundPacketTable, addr.String())
 			f.outboundPacketTableLock.Unlock()
-			log.Debug("udp timeout, exiting..")
+			log.Debug("UDP timeout, exiting..")
 			return
 		case <-f.ctx.Done():
-			log.Debug("forward closed, exiting..")
+			log.Debug("Forward closed, exiting..")
 			return
 		}
 	}
