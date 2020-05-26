@@ -326,6 +326,7 @@ func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
 		RootCAs:            m.config.TLS.CertPool,
 		ServerName:         m.config.TLS.SNI,
 		InsecureSkipVerify: !m.config.TLS.Verify,
+		KeyLogWriter:       m.config.TLS.KeyLogger,
 	}
 	if workingFingerprint != "" {
 		spec, err := m.genClientSpec(workingFingerprint)
@@ -414,6 +415,7 @@ func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
 			CurvePreferences:       m.config.TLS.CurvePreferences,
 			NextProtos:             m.config.TLS.ALPN,
 			ClientSessionCache:     m.sessionCache,
+			KeyLogWriter:           m.config.TLS.KeyLogger,
 		}
 		tlsConn := tls.Client(tcpConn, tlsConfig)
 		err = tlsConn.Handshake()

@@ -18,7 +18,23 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+func setKeyLogger(tlsConfig *TLSConfig) error {
+	if tlsConfig.KeyLogPath != "" {
+		log.Warn("TLS key logging activated. USE OF KEY LOGGING COMPROMISES SECURITY. IT SHOULD ONLY BE USED FOR DEBUGGING.")
+		file, err := os.OpenFile(tlsConfig.KeyLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			return common.NewError("Failed to open key log file").Base(err)
+		}
+		tlsConfig.KeyLogger = file
+	}
+	return nil
+}
+
 func loadCert(tlsConfig *TLSConfig) error {
+	err := setKeyLogger(tlsConfig)
+	if err != nil {
+		return err
+	}
 	if tlsConfig.CertPath == "" {
 		log.Info("Cert of the remote server is unspecified. Using default CA list")
 	} else {
@@ -55,6 +71,10 @@ func loadCert(tlsConfig *TLSConfig) error {
 }
 
 func loadCertAndKey(tlsConfig *TLSConfig) error {
+	err := setKeyLogger(tlsConfig)
+	if err != nil {
+		return err
+	}
 	if tlsConfig.KeyPassword != "" {
 		keyFile, err := ioutil.ReadFile(tlsConfig.KeyPath)
 		if err != nil {
