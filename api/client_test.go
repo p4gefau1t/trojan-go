@@ -22,11 +22,11 @@ func TestClientAPI(t *testing.T) {
 		},
 	}, auth)
 	common.Must(auth.AddUser("hash1234"))
-	valid, meter := auth.AuthUser("hash1234")
+	valid, user := auth.AuthUser("hash1234")
 	if !valid {
 		t.Fail()
 	}
-	meter.Count(1234, 5678)
+	user.AddTraffic(1234, 5678)
 	time.Sleep(time.Second)
 	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
 	common.Must(err)

@@ -33,12 +33,12 @@ func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*Ge
 	if req.User.Hash == "" {
 		req.User.Hash = common.SHA224String(req.User.Password)
 	}
-	valid, meter := s.auth.AuthUser(req.User.Hash)
+	valid, user := s.auth.AuthUser(req.User.Hash)
 	if !valid {
 		return nil, common.NewError("User " + req.User.Hash + " not found")
 	}
-	sent, recv := meter.Get()
-	sentSpeed, recvSpeed := meter.GetSpeed()
+	sent, recv := user.GetTraffic()
+	sentSpeed, recvSpeed := user.GetSpeed()
 	resp := &GetTrafficResponse{
 		Success: true,
 		TrafficTotal: &Traffic{

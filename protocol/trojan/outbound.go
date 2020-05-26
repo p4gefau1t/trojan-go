@@ -34,20 +34,20 @@ func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
 		} else {
 			n = 0
 		}
-		o.meter.Count(n, 0)
+		o.meter.AddTraffic(n, 0)
 		o.sent += uint64(n)
 		o.trojanHeader = nil
 		return n, err
 	}
 	n, err := o.rwc.Write(p)
-	o.meter.Count(n, 0)
+	o.meter.AddTraffic(n, 0)
 	o.sent += uint64(n)
 	return n, err
 }
 
 func (o *TrojanOutboundConnSession) Read(p []byte) (int, error) {
 	n, err := o.rwc.Read(p)
-	o.meter.Count(0, n)
+	o.meter.AddTraffic(0, n)
 	o.recv += uint64(n)
 	return n, err
 }

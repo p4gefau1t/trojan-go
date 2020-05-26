@@ -19,24 +19,24 @@ func TestMemoryAuth(t *testing.T) {
 	}
 	auth, err := NewMemoryAuth(ctx, config)
 	common.Must(err)
-	valid, traffic := auth.AuthUser("hash")
+	valid, user := auth.AuthUser("hash")
 	if !valid {
 		t.Fail()
 	}
-	traffic.Count(1234, 5678)
-	sent, recv := traffic.Get()
+	user.AddTraffic(1234, 5678)
+	sent, recv := user.GetTraffic()
 	if sent != 1234 || recv != 5678 {
 		t.Fail()
 	}
 	go func() {
 		for i := 0; i < 100; i++ {
-			traffic.Count(500, 200)
+			user.AddTraffic(500, 200)
 			time.Sleep(time.Millisecond * 100)
 		}
 	}()
 
 	for i := 0; i < 15; i++ {
-		fmt.Println(traffic.GetSpeed())
+		fmt.Println(user.GetSpeed())
 		time.Sleep(time.Millisecond * 1000)
 	}
 	cancel()
@@ -51,24 +51,53 @@ func TestLimitSpeed(t *testing.T) {
 	}
 	auth, err := NewMemoryAuth(ctx, config)
 	common.Must(err)
-	valid, traffic := auth.AuthUser("hash")
+	valid, user := auth.AuthUser("hash")
 	if !valid {
 		t.Fail()
 	}
-	traffic.LimitSpeed(5000, 6000)
+	user.SetSpeedLimit(5000, 6000)
 	go func() {
 		for {
-			traffic.Count(50, 0)
+			user.AddTraffic(50, 0)
 		}
 	}()
 	go func() {
 		for {
-			traffic.Count(0, 100)
+			user.AddTraffic(0, 100)
 		}
 	}()
 	for i := 0; i < 15; i++ {
-		fmt.Println(traffic.GetSpeed())
+		fmt.Println(user.GetSpeed())
 		time.Sleep(time.Millisecond * 1000)
+	}
+	cancel()
+}
+
+func TestIPLimit(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	config := &conf.GlobalConfig{
+		Hash: map[string]string{
+			"hash": "password",
+		},
+	}
+	auth, err := NewMemoryAuth(ctx, config)
+	common.Must(err)
+	valid, user := auth.AuthUser("hash")
+	if !valid {
+		t.Fail()
+	}
+	user.SetIPLimit(2)
+	ok := user.AddIP("ip1")
+	if !ok {
+		t.Fail()
+	}
+	ok = user.AddIP("ip2")
+	if !ok {
+		t.Fail()
+	}
+	ok = user.AddIP("ip3")
+	if ok {
+		t.Fail()
 	}
 	cancel()
 }

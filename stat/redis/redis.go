@@ -11,17 +11,15 @@ import (
 	"github.com/p4gefau1t/trojan-go/stat"
 )
 
-type RedisTrafficMeter struct {
-	stat.TrafficMeter
-
+type RedisUser struct {
 	hash string
 	db   *radix.Pool
 	ctx  context.Context
 }
 
-func (m *RedisTrafficMeter) Close() error { return nil }
+func (m *RedisUser) Close() error { return nil }
 
-func (m *RedisTrafficMeter) Count(sent, recv int) {
+func (m *RedisUser) AddTraffic(sent, recv int) {
 	key := m.hash
 	evalScript := radix.NewEvalScript(1, `
 		if redis.call('exists', KEYS[1]) == 1
@@ -36,19 +34,29 @@ func (m *RedisTrafficMeter) Count(sent, recv int) {
 	}
 }
 
-func (m *RedisTrafficMeter) LimitSpeed(send, recv int) {}
+// TODO implement these methods
 
-func (m *RedisTrafficMeter) GetSpeedLimit() (send, recv int) { return 0, 0 }
+func (m *RedisUser) SetSpeedLimit(send, recv int) {}
 
-func (m *RedisTrafficMeter) Hash() string { return m.hash }
+func (m *RedisUser) GetSpeedLimit() (send, recv int) { return 0, 0 }
 
-func (m *RedisTrafficMeter) Get() (uint64, uint64) { return 0, 0 }
+func (m *RedisUser) Hash() string { return m.hash }
 
-func (m *RedisTrafficMeter) Reset() {}
+func (m *RedisUser) GetTraffic() (uint64, uint64) { return 0, 0 }
 
-func (m *RedisTrafficMeter) GetAndReset() (uint64, uint64) { return 0, 0 }
+func (m *RedisUser) ResetTraffic() {}
 
-func (m *RedisTrafficMeter) GetSpeed() (uint64, uint64) { return 0, 0 }
+func (m *RedisUser) GetAndResetTraffic() (uint64, uint64) { return 0, 0 }
+
+func (m *RedisUser) GetSpeed() (uint64, uint64) { return 0, 0 }
+
+func (m *RedisUser) AddIP(string) bool { return true }
+
+func (m *RedisUser) DelIP(string) bool { return true }
+
+func (m *RedisUser) SetIPLimit(int) {}
+
+func (m *RedisUser) GetIPLimit() int { return 0 }
 
 type RedisAuthenticator struct {
 	stat.Authenticator
@@ -56,22 +64,24 @@ type RedisAuthenticator struct {
 	ctx context.Context
 }
 
-func (a *RedisAuthenticator) AuthUser(hash string) (bool, stat.TrafficMeter) {
+func (a *RedisAuthenticator) AuthUser(hash string) (bool, stat.User) {
 	var exist bool
 	if err := a.db.Do(radix.Cmd(&exist, "EXISTS", hash)); err != nil {
 		log.Error(common.NewError("Failed to check user in DB").Base(err))
 	}
 	if exist {
-		return true, &RedisTrafficMeter{hash: hash, db: a.db, ctx: a.ctx}
+		return true, &RedisUser{hash: hash, db: a.db, ctx: a.ctx}
 	}
 	return false, nil
 }
+
+// TODO implement these methods
 
 func (a *RedisAuthenticator) AddUser(hash string) error { return nil }
 
 func (a *RedisAuthenticator) DelUser(hash string) error { return nil }
 
-func (a *RedisAuthenticator) ListUsers() []stat.TrafficMeter { return []stat.TrafficMeter{} }
+func (a *RedisAuthenticator) ListUsers() []stat.User { return []stat.User{} }
 
 func NewRedisAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticator, error) {
 	addr := config.Redis.ServerHost + ":" + strconv.Itoa(config.Redis.ServerPort)

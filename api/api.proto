@@ -1,6 +1,6 @@
 syntax = "proto3";
 package trojan.api;
-option go_package = "api";
+option go_package = ".;api";
 
 message Traffic {
     uint64 upload_traffic = 1;
@@ -39,17 +39,19 @@ message ListUserResponse {
     Traffic traffic_total = 3;
     Speed speed_current = 4;
     Speed speed_limit = 5;
+    int32 ip_limit = 6;
 }
 
 message SetUserRequest {
     User user = 1;
-    Speed speed_limit = 2;
     enum Operation {
         Add = 0;
         Delete = 1;
         Modify = 2;
     }
-    Operation operation = 3;
+    Operation operation = 2;
+    Speed speed_limit = 3;
+    int32 ip_limit = 4;
 }
 
 message SetUserResponse {

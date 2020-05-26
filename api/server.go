@@ -36,7 +36,7 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 		if req.User.Hash == "" {
 			req.User.Hash = common.SHA224String(req.User.Password)
 		}
-		valid, meter := s.auth.AuthUser(req.User.Hash)
+		valid, user := s.auth.AuthUser(req.User.Hash)
 		if !valid {
 			stream.Send(&GetTrafficResponse{
 				Success: false,
@@ -44,9 +44,9 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 			})
 			continue
 		}
-		downloadTraffic, uploadTraffic := meter.Get()
-		downloadSpeed, uploadSpeed := meter.GetSpeed()
-		downloadSpeedLimit, uploadSpeedLimit := meter.GetSpeedLimit()
+		downloadTraffic, uploadTraffic := user.GetTraffic()
+		downloadSpeed, uploadSpeed := user.GetSpeed()
+		downloadSpeedLimit, uploadSpeedLimit := user.GetSpeedLimit()
 		err = stream.Send(&GetTrafficResponse{
 			Success: true,
 			TrafficTotal: &Traffic{
@@ -88,20 +88,25 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 		case SetUserRequest_Add:
 			err = s.auth.AddUser(req.User.Hash)
 			if req.SpeedLimit != nil {
-				valid, meter := s.auth.AuthUser(req.User.Hash)
+				valid, user := s.auth.AuthUser(req.User.Hash)
 				if !valid {
 					return common.NewError("Failed to add new user")
 				}
-				meter.LimitSpeed(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
 			}
 		case SetUserRequest_Delete:
 			err = s.auth.DelUser(req.User.Hash)
 		case SetUserRequest_Modify:
-			valid, meter := s.auth.AuthUser(req.User.Hash)
+			valid, user := s.auth.AuthUser(req.User.Hash)
 			if !valid {
 				err = common.NewError("Invalid user " + req.User.Hash)
 			} else {
-				meter.LimitSpeed(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				if req.SpeedLimit.DownloadSpeed > 0 || req.SpeedLimit.UploadSpeed > 0 {
+					user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				}
+				if req.IpLimit > 0 {
+					user.SetIPLimit(int(req.IpLimit))
+				}
 			}
 		}
 		if err != nil {
@@ -121,9 +126,10 @@ func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_L
 	log.Debug("API: ListUsers")
 	users := s.auth.ListUsers()
 	for _, meter := range users {
-		downloadTraffic, uploadTraffic := meter.Get()
+		downloadTraffic, uploadTraffic := meter.GetTraffic()
 		downloadSpeed, uploadSpeed := meter.GetSpeed()
 		downloadSpeedLimit, uploadSpeedLimit := meter.GetSpeedLimit()
+		ipLimit := meter.GetIPLimit()
 		online := false
 		if downloadSpeed > 0 || uploadSpeed > 0 {
 			online = true
@@ -145,6 +151,7 @@ func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_L
 				DownloadSpeed: uint64(downloadSpeedLimit),
 				UploadSpeed:   uint64(uploadSpeedLimit),
 			},
+			IpLimit: int32(ipLimit),
 		})
 		if err != nil {
 			return err

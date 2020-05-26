@@ -17,19 +17,19 @@ import (
 	"github.com/p4gefau1t/trojan-go/stat/memory"
 )
 
-type DBAuth struct {
+type MySQLAuthenticator struct {
 	*memory.MemoryAuthenticator
 	db             *sql.DB
 	updateDuration time.Duration
 	ctx            context.Context
 }
 
-func (a *DBAuth) updater() {
+func (a *MySQLAuthenticator) updater() {
 	for {
 		for _, user := range a.ListUsers() {
 			//swap upload and download for users
 			hash := user.Hash()
-			sent, recv := user.GetAndReset()
+			sent, recv := user.GetAndResetTraffic()
 
 			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `password`=?;", recv, sent, hash)
 			if err != nil {
@@ -69,7 +69,7 @@ func (a *DBAuth) updater() {
 		select {
 		case <-time.After(a.updateDuration):
 		case <-a.ctx.Done():
-			log.Debug("db daemon exiting...")
+			log.Debug("MySQL daemon exiting...")
 			return
 		}
 	}
@@ -80,7 +80,7 @@ func connectDatabase(driverName, username, password, ip string, port int, dbName
 	return sql.Open(driverName, path)
 }
 
-func NewDBAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticator, error) {
+func NewMySQLAuthenticator(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticator, error) {
 	db, err := connectDatabase(
 		"mysql",
 		config.MySQL.Username,
@@ -96,7 +96,7 @@ func NewDBAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticat
 	if err != nil {
 		return nil, err
 	}
-	a := &DBAuth{
+	a := &MySQLAuthenticator{
 		db:                  db,
 		ctx:                 ctx,
 		updateDuration:      time.Duration(config.MySQL.CheckRate) * time.Second,
@@ -107,5 +107,5 @@ func NewDBAuth(ctx context.Context, config *conf.GlobalConfig) (stat.Authenticat
 }
 
 func init() {
-	stat.RegisterAuthCreator("mysql", NewDBAuth)
+	stat.RegisterAuthCreator("mysql", NewMySQLAuthenticator)
 }

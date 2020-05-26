@@ -26,7 +26,7 @@ func TestDBAuth(t *testing.T) {
 	`))
 	common.Must2(db.Exec(`INSERT INTO users (password, quota, download, upload) VALUES ("hashhash", 20000, 0, 0);`))
 	memoryAuth, err := memory.NewMemoryAuth(ctx, &conf.GlobalConfig{})
-	auth := &DBAuth{
+	auth := &MySQLAuthenticator{
 		db:                  db,
 		ctx:                 ctx,
 		updateDuration:      time.Second,

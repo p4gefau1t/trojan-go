@@ -21,7 +21,8 @@ type TrojanInboundConnSession struct {
 	config       *conf.GlobalConfig
 	request      *protocol.Request
 	auth         stat.Authenticator
-	meter        stat.TrafficMeter
+	user         stat.User
+	ip           string
 	sent         uint64
 	recv         uint64
 	passwordHash string
@@ -31,20 +32,22 @@ type TrojanInboundConnSession struct {
 func (i *TrojanInboundConnSession) Write(p []byte) (int, error) {
 	n, err := i.rwc.Write(p)
 	i.sent += uint64(n)
-	i.meter.Count(n, 0)
+	i.user.AddTraffic(n, 0)
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Read(p []byte) (int, error) {
 	n, err := i.rwc.Read(p)
 	i.recv += uint64(n)
-	i.meter.Count(0, n)
+	i.user.AddTraffic(0, n)
 	return n, err
 }
 
 func (i *TrojanInboundConnSession) Close() error {
 	log.Info("User", i.passwordHash, "to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
 	i.cancel()
+	i.user.DelIP(i.ip)
+	log.Debug("IP " + i.ip + " deleted")
 	return i.rwc.Close()
 }
 
@@ -56,12 +59,18 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 		return common.NewError("Failed to read hash").Base(err)
 	}
 
-	valid, meter := i.auth.AuthUser(string(userHash[:]))
+	valid, user := i.auth.AuthUser(string(userHash[:]))
 	if !valid {
 		return common.NewError("Invalid hash:" + string(userHash[:]))
 	}
 	i.passwordHash = string(userHash[:])
-	i.meter = meter
+	i.user = user
+
+	ok := user.AddIP(i.ip)
+	if !ok {
+		return common.NewError("IP limit reached")
+	}
+	log.Debug("IP " + i.ip + " added")
 
 	crlf := [2]byte{}
 	r.Read(crlf[:])
@@ -70,18 +79,16 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 	if err := i.request.Marshal(r); err != nil {
 		return err
 	}
+
 	r.Read(crlf[:])
 	return nil
-}
-
-func (i *TrojanInboundConnSession) SetMeter(meter stat.TrafficMeter) {
-	i.meter = meter
 }
 
 func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator, shadowMan *shadow.ShadowManager) (protocol.ConnSession, *protocol.Request, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rewindConn := common.NewRewindConn(conn)
-
+	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	common.Must(err)
 	i := &TrojanInboundConnSession{
 		config:       config,
 		auth:         auth,
@@ -89,6 +96,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 		ctx:          ctx,
 		cancel:       cancel,
 		rwc:          rewindConn,
+		ip:           ip,
 	}
 
 	//start buffering
@@ -103,7 +111,7 @@ func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.Glob
 		}
 		if ws != nil {
 			//a websocket conn, try to verify it
-			log.Debug("websocket conn")
+			log.Debug("Incoming websocket conn")
 			//disable the current read buffer, use ws as the new transport layer
 			rewindConn.R.SetBufferSize(0)
 			newTrapsport := common.NewRewindReadWriteCloser(ws)

@@ -11,21 +11,33 @@ import (
 type TrafficMeter interface {
 	io.Closer
 	Hash() string
-	Count(sent, recv int)
-	Get() (sent, recv uint64)
-	Reset()
-	GetAndReset() (sent, recv uint64)
+	AddTraffic(sent, recv int)
+	GetTraffic() (sent, recv uint64)
+	ResetTraffic()
+	GetAndResetTraffic() (sent, recv uint64)
 	GetSpeed() (sent, recv uint64)
-	LimitSpeed(send, recv int)
+	SetSpeedLimit(send, recv int)
 	GetSpeedLimit() (send, recv int)
+}
+
+type IPRecorder interface {
+	AddIP(string) bool
+	DelIP(string) bool
+	SetIPLimit(int)
+	GetIPLimit() int
+}
+
+type User interface {
+	TrafficMeter
+	IPRecorder
 }
 
 type Authenticator interface {
 	io.Closer
-	AuthUser(hash string) (valid bool, meter TrafficMeter)
+	AuthUser(hash string) (valid bool, user User)
 	AddUser(hash string) error
 	DelUser(hash string) error
-	ListUsers() []TrafficMeter
+	ListUsers() []User
 }
 
 type AuthCreator func(ctx context.Context, config *conf.GlobalConfig) (Authenticator, error)

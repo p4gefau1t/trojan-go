@@ -23,7 +23,7 @@ func TestServerAPI(t *testing.T) {
 		},
 	}, auth)
 	common.Must(auth.AddUser("hash1234"))
-	_, meter := auth.AuthUser("hash1234")
+	_, user := auth.AuthUser("hash1234")
 	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
 	server := NewTrojanServerServiceClient(conn)
 	stream1, err := server.ListUsers(ctx, &ListUserRequest{})
@@ -41,7 +41,7 @@ func TestServerAPI(t *testing.T) {
 		fmt.Println(resp.SpeedLimit)
 	}
 	stream1.CloseSend()
-	meter.Count(1234, 5678)
+	user.AddTraffic(1234, 5678)
 	time.Sleep(time.Millisecond * 1000)
 	stream2, err := server.GetTraffic(ctx)
 	common.Must(err)
@@ -84,7 +84,7 @@ func TestServerAPI(t *testing.T) {
 	if err != nil || !resp3.Success {
 		t.Fail()
 	}
-	valid, meter = auth.AuthUser("newhash")
+	valid, user = auth.AuthUser("newhash")
 	if !valid {
 		t.Fail()
 	}
@@ -100,12 +100,12 @@ func TestServerAPI(t *testing.T) {
 	})
 	go func() {
 		for {
-			meter.Count(200, 0)
+			user.AddTraffic(200, 0)
 		}
 	}()
 	go func() {
 		for {
-			meter.Count(0, 300)
+			user.AddTraffic(0, 300)
 		}
 	}()
 	time.Sleep(time.Second * 3)
