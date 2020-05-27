@@ -173,6 +173,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 				PreferServerCipherSuites: s.config.TLS.PreferServerCipher,
 				SessionTicketsDisabled:   !s.config.TLS.SessionTicket,
 				NextProtos:               s.config.TLS.ALPN,
+				KeyLogWriter:             s.config.TLS.KeyLogger,
 			}
 			tlsConn := tls.Server(rewindConn, tlsConfig)
 			err = tlsConn.Handshake()
@@ -242,10 +243,12 @@ func (*Server) Build(config *conf.GlobalConfig) (common.Runnable, error) {
 	}
 	auth, err := stat.NewAuth(ctx, authDriver, config)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 	router, err := router.NewRouter(&config.Router)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 	s := &Server{

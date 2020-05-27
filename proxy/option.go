@@ -12,8 +12,7 @@ import (
 )
 
 type proxyOption struct {
-	args *string
-	common.OptionHandler
+	path *string
 }
 
 func (*proxyOption) Name() string {
@@ -25,10 +24,10 @@ func (*proxyOption) Priority() int {
 }
 
 func (c *proxyOption) Handle() error {
-	log.Info("Loading config file from", *c.args)
+	log.Info("Loading config file from", *c.path)
 
 	//exit code 23 stands for initializing error, and systemd will not trying to restart it
-	data, err := ioutil.ReadFile(*c.args)
+	data, err := ioutil.ReadFile(*c.path)
 	if err != nil {
 		log.Error(common.NewError("Failed to read config file").Base(err))
 		os.Exit(23)
@@ -62,6 +61,6 @@ func (c *proxyOption) Handle() error {
 
 func init() {
 	common.RegisterOptionHandler(&proxyOption{
-		args: flag.String("config", common.GetProgramDir()+"/config.json", "Config filename"),
+		path: flag.String("config", common.GetProgramDir()+"/config.json", "Config filename"),
 	})
 }

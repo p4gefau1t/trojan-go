@@ -11,7 +11,6 @@ type certOption struct {
 	mode     *string
 	httpPort *string
 	tlsPort  *string
-	common.OptionHandler
 }
 
 func (*certOption) Name() string {
