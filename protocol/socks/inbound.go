@@ -14,8 +14,6 @@ import (
 )
 
 type SocksConnInboundSession struct {
-	protocol.ConnSession
-	protocol.NeedRespond
 	request *protocol.Request
 	rwc     *common.RewindReadWriteCloser
 }
@@ -117,8 +115,6 @@ type udpSession struct {
 }
 
 type SocksInboundPacketSession struct {
-	protocol.PacketSession
-
 	conn         *net.UDPConn
 	sessionTable map[string]*udpSession
 	tableMutex   sync.Mutex

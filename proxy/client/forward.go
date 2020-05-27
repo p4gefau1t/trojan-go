@@ -21,9 +21,6 @@ type dispatchInfo struct {
 }
 
 type Forward struct {
-	common.Runnable
-	proxy.Buildable
-
 	config                  *conf.GlobalConfig
 	ctx                     context.Context
 	cancel                  context.CancelFunc

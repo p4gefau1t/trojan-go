@@ -9,8 +9,7 @@ import (
 )
 
 type versionOption struct {
-	arg *bool
-	common.OptionHandler
+	flag *bool
 }
 
 func (*versionOption) Name() string {
@@ -22,7 +21,7 @@ func (*versionOption) Priority() int {
 }
 
 func (c *versionOption) Handle() error {
-	if *c.arg {
+	if *c.flag {
 		fmt.Println("Trojan-Go", common.Version, fmt.Sprintf("(%s %s/%s)", runtime.Version(), runtime.GOOS, runtime.GOARCH))
 		fmt.Println("Developed by PageFault (p4gefau1t)")
 		fmt.Println("Lisensed under GNU General Public License v3")
@@ -35,6 +34,6 @@ func (c *versionOption) Handle() error {
 
 func init() {
 	common.RegisterOptionHandler(&versionOption{
-		arg: flag.Bool("version", false, "Display version and help info"),
+		flag: flag.Bool("version", false, "Display version and help info"),
 	})
 }

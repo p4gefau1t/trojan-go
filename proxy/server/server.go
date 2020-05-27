@@ -22,9 +22,6 @@ import (
 )
 
 type Server struct {
-	common.Runnable
-	proxy.Buildable
-
 	listener net.Listener
 	auth     stat.Authenticator
 	config   *conf.GlobalConfig

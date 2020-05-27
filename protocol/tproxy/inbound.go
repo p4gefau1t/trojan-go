@@ -16,7 +16,6 @@ import (
 )
 
 type TProxyInboundConnSession struct {
-	protocol.ConnSession
 	reqeust *protocol.Request
 	conn    net.Conn
 }
@@ -75,7 +74,6 @@ type udpSession struct {
 }
 
 type NATInboundPacketSession struct {
-	protocol.PacketSession
 	request      *protocol.Request
 	conn         *net.UDPConn
 	tableMutex   sync.Mutex

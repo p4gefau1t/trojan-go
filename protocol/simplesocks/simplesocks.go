@@ -10,8 +10,6 @@ import (
 )
 
 type SimpleSocksConnSession struct {
-	protocol.ConnSession
-
 	request *protocol.Request
 	rwc     io.ReadWriteCloser
 	recv    uint64

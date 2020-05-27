@@ -12,8 +12,6 @@ import (
 )
 
 type TrojanOutboundConnSession struct {
-	protocol.ConnSession
-
 	config  *conf.GlobalConfig
 	rwc     io.ReadWriteCloser
 	request *protocol.Request

@@ -17,8 +17,6 @@ const (
 )
 
 type Address struct {
-	net.Addr
-
 	DomainName  string
 	Port        int
 	NetworkType string

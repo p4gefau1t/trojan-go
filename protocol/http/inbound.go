@@ -45,9 +45,6 @@ func parseHTTPRequest(httpRequest *http.Request) *protocol.Request {
 }
 
 type HTTPInboundTunnelConnSession struct {
-	protocol.ConnSession
-	protocol.NeedRespond
-
 	request     *protocol.Request
 	httpRequest *http.Request
 	bufReader   *bufio.Reader

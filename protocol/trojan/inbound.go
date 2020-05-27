@@ -14,8 +14,6 @@ import (
 )
 
 type TrojanInboundConnSession struct {
-	protocol.ConnSession
-
 	rwc          io.ReadWriteCloser
 	ctx          context.Context
 	config       *conf.GlobalConfig
@@ -85,7 +83,7 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 }
 
 func NewInboundConnSession(ctx context.Context, conn net.Conn, config *conf.GlobalConfig, auth stat.Authenticator, shadowMan *shadow.ShadowManager) (protocol.ConnSession, *protocol.Request, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	rewindConn := common.NewRewindConn(conn)
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	common.Must(err)

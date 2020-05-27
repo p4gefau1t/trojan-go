@@ -11,7 +11,6 @@ import (
 )
 
 type Relay struct {
-	common.Runnable
 	config   *conf.GlobalConfig
 	ctx      context.Context
 	cancel   context.CancelFunc

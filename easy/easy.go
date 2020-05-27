@@ -12,8 +12,6 @@ import (
 )
 
 type EasyOption struct {
-	common.OptionHandler
-
 	server   *bool
 	client   *bool
 	password *string

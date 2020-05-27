@@ -29,8 +29,6 @@ const (
 )
 
 type Request struct {
-	net.Addr
-
 	Command
 	*common.Address
 }

@@ -8,9 +8,6 @@ import (
 )
 
 type RewindReader struct {
-	io.Reader
-	io.ByteReader
-
 	rawReader  io.Reader
 	buf        []byte
 	bufReadIdx int
@@ -142,8 +139,6 @@ func NewRewindConn(conn net.Conn) *RewindConn {
 }
 
 type StickyWriter struct {
-	io.Writer
-
 	rawWriter   io.Writer
 	writeBuffer []byte
 	MaxBuffered int

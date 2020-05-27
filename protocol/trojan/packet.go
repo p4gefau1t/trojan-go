@@ -10,7 +10,6 @@ import (
 )
 
 type TrojanPacketSession struct {
-	protocol.PacketSession
 	conn io.ReadWriteCloser
 }
 
