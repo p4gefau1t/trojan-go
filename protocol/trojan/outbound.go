@@ -14,30 +14,24 @@ import (
 type TrojanOutboundConnSession struct {
 	protocol.ConnSession
 
-	config       *conf.GlobalConfig
-	rwc          io.ReadWriteCloser
-	request      *protocol.Request
-	sent         uint64
-	recv         uint64
-	auth         stat.Authenticator
-	meter        stat.TrafficMeter
-	trojanHeader []byte
+	config  *conf.GlobalConfig
+	rwc     io.ReadWriteCloser
+	request *protocol.Request
+	sent    uint64
+	recv    uint64
+	auth    stat.Authenticator
+	meter   stat.TrafficMeter
+	header  []byte
 }
 
 func (o *TrojanOutboundConnSession) Write(p []byte) (int, error) {
-	if o.trojanHeader != nil {
+	if o.header != nil {
 		//send the payload after the trojan request header
-		headerLen := len(o.trojanHeader)
-		n, err := o.rwc.Write(append(o.trojanHeader, p...))
-		if n >= headerLen {
-			n -= headerLen
-		} else {
-			n = 0
-		}
-		o.meter.AddTraffic(n, 0)
-		o.sent += uint64(n)
-		o.trojanHeader = nil
-		return n, err
+		_, err := o.rwc.Write(append(o.header, p...))
+		o.meter.AddTraffic(len(p)+len(o.header), 0)
+		o.sent += uint64(len(p) + len(o.header))
+		o.header = nil
+		return len(p), err
 	}
 	n, err := o.rwc.Write(p)
 	o.meter.AddTraffic(n, 0)
@@ -67,7 +61,7 @@ func (o *TrojanOutboundConnSession) writeRequest() {
 	buf.Write(crlf)
 	o.request.Unmarshal(buf)
 	buf.Write(crlf)
-	o.trojanHeader = buf.Bytes()
+	o.header = buf.Bytes()
 }
 
 func NewOutboundConnSession(req *protocol.Request, rwc io.ReadWriteCloser, config *conf.GlobalConfig, auth stat.Authenticator) (protocol.ConnSession, error) {

@@ -16,14 +16,36 @@ import (
 	"github.com/xtaci/smux"
 )
 
-type MuxID uint32
+// HACK stick the smux 8 bytes header to the payload
+type smuxStickyReadWriteCloser struct {
+	io.ReadWriteCloser
+	smuxHeader []byte
+}
 
-func generateMuxID() MuxID {
-	return MuxID(rand.Uint32())
+func (rwc *smuxStickyReadWriteCloser) Write(p []byte) (int, error) {
+	if len(p) == 8 && rwc.smuxHeader == nil {
+		// check version and command, cmdPSH = 2
+		if (p[0] == 1 || p[0] == 2) && (p[1] == 2) {
+			rwc.smuxHeader = p
+			return 8, nil
+		}
+	}
+	if rwc.smuxHeader != nil {
+		_, err := rwc.ReadWriteCloser.Write(append(rwc.smuxHeader, p...))
+		rwc.smuxHeader = nil
+		return len(p), err
+	}
+	return rwc.ReadWriteCloser.Write(p)
+}
+
+type muxID uint32
+
+func generateMuxID() muxID {
+	return muxID(rand.Uint32())
 }
 
 type muxClientInfo struct {
-	id             MuxID
+	id             muxID
 	client         *smux.Session
 	lastActiveTime time.Time
 }
@@ -32,7 +54,7 @@ type MuxManager struct {
 	TransportManager
 
 	sync.Mutex
-	muxPool   map[MuxID]*muxClientInfo
+	muxPool   map[muxID]*muxClientInfo
 	config    *conf.GlobalConfig
 	auth      stat.Authenticator
 	ctx       context.Context
@@ -55,14 +77,18 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 	if err != nil {
 		return nil, common.NewError("Failed to dail to remote server").Base(err)
 	}
-	conn, err := trojan.NewOutboundConnSession(req, rwc, m.config, m.auth)
+	trojanConn, err := trojan.NewOutboundConnSession(req, rwc, m.config, m.auth)
 	if err != nil {
 		rwc.Close()
 		log.Error(common.NewError("Failed to dial tls tunnel").Base(err))
 		return nil, err
 	}
 
-	client, err := smux.Client(conn, nil)
+	smuxRWC := &smuxStickyReadWriteCloser{
+		ReadWriteCloser: trojanConn,
+	}
+
+	client, err := smux.Client(smuxRWC, nil)
 	common.Must(err)
 	log.Info("Mux TLS tunnel established, client id:", id)
 	return &muxClientInfo{
@@ -94,7 +120,7 @@ func (m *MuxManager) pickMuxClient() (*muxClientInfo, error) {
 	default:
 	}
 
-	//not found
+	// not found
 	info, err := m.newMuxClient()
 	if err != nil {
 		return nil, err
@@ -114,7 +140,7 @@ func (m *MuxManager) DialToServer() (io.ReadWriteCloser, error) {
 		defer m.Unlock()
 		delete(m.muxPool, info.id)
 		info.client.Close()
-		log.Info("Somthing wrong with mux client", info.id, ", closing")
+		log.Warn("Somthing wrong with mux client", info.id, ", closing")
 		return nil, err
 	}
 	log.Info("New mux conn established with client", info.id)
@@ -165,7 +191,7 @@ func NewMuxPoolManager(ctx context.Context, config *conf.GlobalConfig, auth stat
 	m := &MuxManager{
 		ctx:       ctx,
 		config:    config,
-		muxPool:   make(map[MuxID]*muxClientInfo),
+		muxPool:   make(map[muxID]*muxClientInfo),
 		transport: NewTLSManager(config),
 		auth:      auth,
 	}

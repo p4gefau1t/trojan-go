@@ -36,7 +36,7 @@ func (i *TrojanPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 }
 
 func (i *TrojanPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, 128))
+	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	common.Must(req.Address.Unmarshal(buf))
 	length := len(packet)
 	lengthBuf := [2]byte{}

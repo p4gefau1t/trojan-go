@@ -1,6 +1,7 @@
 package simplesocks
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -15,6 +16,7 @@ type SimpleSocksConnSession struct {
 	rwc     io.ReadWriteCloser
 	recv    uint64
 	sent    uint64
+	header  []byte
 }
 
 func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
@@ -24,6 +26,11 @@ func (m *SimpleSocksConnSession) Read(p []byte) (int, error) {
 }
 
 func (m *SimpleSocksConnSession) Write(p []byte) (int, error) {
+	if m.header != nil {
+		_, err := m.rwc.Write(append(m.header, p...))
+		m.header = nil
+		return len(p), err
+	}
 	n, err := m.rwc.Write(p)
 	m.sent += uint64(n)
 	return n, err
@@ -43,9 +50,11 @@ func (m *SimpleSocksConnSession) parseRequest() error {
 	return m.request.Marshal(m.rwc)
 }
 
-func (m *SimpleSocksConnSession) writeRequest(req *protocol.Request) error {
+func (m *SimpleSocksConnSession) writeRequest(req *protocol.Request) {
 	m.request = req
-	return m.request.Unmarshal(m.rwc)
+	buf := bytes.NewBuffer(make([]byte, 0, 128))
+	m.request.Unmarshal(buf)
+	m.header = buf.Bytes()
 }
 
 func NewInboundConnSession(conn io.ReadWriteCloser) (protocol.ConnSession, *protocol.Request, error) {
@@ -62,8 +71,6 @@ func NewOutboundConnSession(req *protocol.Request, conn io.ReadWriteCloser) (pro
 	m := &SimpleSocksConnSession{
 		rwc: conn,
 	}
-	if err := m.writeRequest(req); err != nil {
-		return nil, common.NewError("Failed to write mux request").Base(err)
-	}
+	m.writeRequest(req)
 	return m, nil
 }
