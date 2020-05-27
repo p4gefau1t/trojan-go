@@ -148,6 +148,9 @@ func getBasicClientConfig() *conf.GlobalConfig {
 		Passwords:     getPasswords("trojanpassword"),
 		BufferSize:    512 * 1024,
 	}
+	file, err := os.OpenFile("keylog.txt", os.O_CREATE|os.O_WRONLY, 0600)
+	common.Must(err)
+	config.TLS.KeyLogger = file
 	return config
 }
 
@@ -381,7 +384,7 @@ func TestRealProxy(t *testing.T) {
 	if os.Getenv("real_test") == "" {
 		t.Skip("skipping real proxy test")
 	}
-	clientConfig := getBasicClientConfig()
+	clientConfig := addMuxConfig(getBasicClientConfig())
 	serverConfig := getBasicServerConfig()
 	go RunClient(context.Background(), clientConfig)
 	go RunHelloHTTPServer(context.Background())

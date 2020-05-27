@@ -79,13 +79,15 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer conn.Close()
 
 	if req.Command == protocol.Mux {
-		muxServer, err := smux.Server(inboundConn, nil)
+		smuxConfig := smux.DefaultConfig()
+		smuxConfig.KeepAliveDisabled = true
+		muxServer, err := smux.Server(inboundConn, smuxConfig)
 		common.Must(err)
 		defer muxServer.Close()
 		for {
 			stream, err := muxServer.AcceptStream()
 			if err != nil {
-				log.Debug("Mux conn from", conn.RemoteAddr(), "closed:", err)
+				log.Error(common.NewError("Failed to accpet mux conn from " + conn.RemoteAddr().String()).Base(err))
 				return
 			}
 			go s.handleMuxConn(stream)

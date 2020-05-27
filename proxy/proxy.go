@@ -17,6 +17,10 @@ type Buildable interface {
 }
 
 func RelayConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
+	if a == nil || b == nil {
+		log.Debug("Empty RW")
+		return
+	}
 	errChan := make(chan error, 2)
 	copyConn := func(dst io.Writer, src io.Reader) {
 		buf := make([]byte, bufferSize)
@@ -36,6 +40,10 @@ func RelayConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
 }
 
 func RelayPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
+	if a == nil || b == nil {
+		log.Debug("Empty RW")
+		return
+	}
 	errChan := make(chan error, 2)
 	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
 		for {
