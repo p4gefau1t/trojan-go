@@ -41,18 +41,21 @@ func (o *apiOption) listUsers(apiClient service.TrojanServerServiceClient) error
 		return err
 	}
 	defer stream.CloseSend()
+	result := []service.ListUsersResponse{}
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
-				return nil
+				break
 			}
 			return err
 		}
-		data, err := json.Marshal(resp)
-		common.Must(err)
-		fmt.Print(string(data))
+		result = append(result, *resp)
 	}
+	data, err := json.Marshal(result)
+	common.Must(err)
+	fmt.Println(string(data))
+	return nil
 }
 
 func (o *apiOption) getUsers(apiClient service.TrojanServerServiceClient) error {

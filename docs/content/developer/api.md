@@ -24,4 +24,4 @@ Trojan-Go基于gRPC实现了API，使用protobuf交换数据。客户端可获�
 }
 ```
 
-目前API处于开发阶段，服务和RPC定义可以参考api文件夹下api.proto文件。
+如果需要实现API客户端进行对接，请参考api/service/api.proto文件。
