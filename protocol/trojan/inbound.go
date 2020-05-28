@@ -70,7 +70,6 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 
 	crlf := [2]byte{}
 	_, err = io.ReadFull(r, crlf[:])
-
 	if err != nil {
 		return err
 	}

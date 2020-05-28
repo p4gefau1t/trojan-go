@@ -54,7 +54,7 @@ func (o *TrojanOutboundConnSession) writeRequest() {
 	hash := user.Hash()
 	o.meter = user
 	buf := bytes.NewBuffer(make([]byte, 0, 128))
-	crlf := []byte("\r\n")
+	crlf := []byte{0x0d, 0x0a}
 	buf.Write([]byte(hash))
 	buf.Write(crlf)
 	o.request.Unmarshal(buf)

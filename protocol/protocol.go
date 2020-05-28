@@ -35,7 +35,7 @@ type Request struct {
 
 func (r *Request) Marshal(rr io.Reader) error {
 	byteBuf := [1]byte{}
-	_, err := rr.Read(byteBuf[:])
+	_, err := io.ReadFull(rr, byteBuf[:])
 	if err != nil {
 		return err
 	}

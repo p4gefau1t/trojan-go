@@ -83,7 +83,7 @@ func NewAddress(host string, port int, network string) *Address {
 
 func (a *Address) Marshal(r io.Reader) error {
 	byteBuf := [1]byte{}
-	_, err := r.Read(byteBuf[:])
+	_, err := io.ReadFull(r, byteBuf[:])
 	if err != nil {
 		return NewError("Unable to read ATYPE").Base(err)
 	}
@@ -91,30 +91,30 @@ func (a *Address) Marshal(r io.Reader) error {
 	switch a.AddressType {
 	case IPv4:
 		var buf [6]byte
-		_, err := r.Read(buf[:])
+		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return NewError("Failed to read ipv4").Base(err)
+			return NewError("Failed to read IPv4").Base(err)
 		}
 		a.IP = buf[0:4]
 		a.Port = int(binary.BigEndian.Uint16(buf[4:6]))
 	case IPv6:
 		var buf [18]byte
-		_, err := r.Read(buf[:])
+		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return NewError("Failed to read ipv6").Base(err)
+			return NewError("Failed to read IPv6").Base(err)
 		}
 		a.IP = buf[0:16]
 		a.Port = int(binary.BigEndian.Uint16(buf[16:18]))
 	case DomainName:
-		_, err := r.Read(byteBuf[:])
+		_, err := io.ReadFull(r, byteBuf[:])
 		length := byteBuf[0]
 		if err != nil {
-			return NewError("Failed to read length")
+			return NewError("Failed to read domain name length")
 		}
 		buf := make([]byte, length+2)
-		_, err = r.Read(buf)
+		_, err = io.ReadFull(r, buf)
 		if err != nil {
-			return NewError("Failed to read domain")
+			return NewError("Failed to read domain name")
 		}
 		//the fucking browser uses IP as a domain name sometimes
 		host := buf[0:length]

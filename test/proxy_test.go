@@ -21,7 +21,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
-	tp "github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/proxy/server"
 
@@ -141,7 +140,7 @@ func getBasicServerConfig() *conf.GlobalConfig {
 
 func getBasicClientConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
-		LocalAddress:  common.NewAddress("127.0.0.1", 4444, "tcp"),
+		LocalAddress:  common.NewAddress("0.0.0.0", 4444, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
 		Hash:          getHash("trojanpassword"),
@@ -380,28 +379,6 @@ func MultiThreadSpeedTestClientServer(b *testing.B, clientConfig *conf.GlobalCon
 	cancel()
 }
 
-func TestRealProxy(t *testing.T) {
-	if os.Getenv("real_test") == "" {
-		t.Skip("skipping real proxy test")
-	}
-	clientConfig := addMuxConfig(getBasicClientConfig())
-	serverConfig := getBasicServerConfig()
-	go RunClient(context.Background(), clientConfig)
-	go RunHelloHTTPServer(context.Background())
-	RunServer(context.Background(), serverConfig)
-}
-
-func TestRealClient(t *testing.T) {
-	if os.Getenv("real_test") == "" {
-		t.Skip("skipping real proxy test")
-	}
-	b, err := ioutil.ReadFile("/etc/trojan-go/config.json")
-	common.Must(err)
-	config, err := conf.ParseJSON(b)
-	common.Must(err)
-	RunClient(context.Background(), config)
-}
-
 func TestNormal(t *testing.T) {
 	clientConfig := getBasicClientConfig()
 	serverConfig := getBasicServerConfig()
@@ -574,18 +551,4 @@ func TestDNS(t *testing.T) {
 	fmt.Println(string(buf[:]))
 	conn.Close()
 	cancel()
-}
-
-func TestJSON(t *testing.T) {
-	if os.Getenv("CONFIG") == "" {
-		t.Skip("skip json test")
-	}
-	configFile1 := "/etc/trojan-go/config.json"
-	configBytes1, err := ioutil.ReadFile(configFile1)
-	common.Must(err)
-	config1, err := conf.ParseJSON(configBytes1)
-	common.Must(err)
-	r, err := tp.NewProxy(config1)
-	common.Must(err)
-	r.Run()
 }
