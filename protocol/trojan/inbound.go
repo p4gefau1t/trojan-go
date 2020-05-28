@@ -45,7 +45,6 @@ func (i *TrojanInboundConnSession) Close() error {
 	log.Info("User", i.passwordHash, "to", i.request, "closed", "sent:", common.HumanFriendlyTraffic(i.sent), "recv:", common.HumanFriendlyTraffic(i.recv))
 	i.cancel()
 	i.user.DelIP(i.ip)
-	log.Debug("IP " + i.ip + " deleted")
 	return i.rwc.Close()
 }
 
@@ -68,17 +67,23 @@ func (i *TrojanInboundConnSession) parseRequest(r *common.RewindReader) error {
 	if !ok {
 		return common.NewError("IP limit reached")
 	}
-	log.Debug("IP " + i.ip + " added")
 
 	crlf := [2]byte{}
-	r.Read(crlf[:])
+	_, err = io.ReadFull(r, crlf[:])
+
+	if err != nil {
+		return err
+	}
 
 	i.request = new(protocol.Request)
 	if err := i.request.Marshal(r); err != nil {
 		return err
 	}
 
-	r.Read(crlf[:])
+	_, err = io.ReadFull(r, crlf[:])
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

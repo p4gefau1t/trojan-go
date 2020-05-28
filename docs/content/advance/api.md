@@ -41,9 +41,9 @@ Trojan-Go本身集成了API控制功能，也即可以使用一个Trojan-Go实�
 ./trojan-go -api-addr SERVER_API_ADDRESS -api COMMAND
 ```
 
-其中SERVER_API_ADDRESS为API地址和端口，如127.0.0.1:10000
+其中```SERVER_API_ADDRESS```为API地址和端口，如127.0.0.1:10000
 
-COMMAND为API命令，合法的命令有
+```COMMAND```为API命令，合法的命令有
 
 - list 列出所有用户
 
@@ -59,7 +59,7 @@ COMMAND为API命令，合法的命令有
     ./trojan-go -api-addr 127.0.0.1:10000 -api list
     ```
 
-    所有的用户信息将以json的形式导出，信息包括在线IP数量，实时速度，总上传和下载流量等。下面是一个例子
+    所有的用户信息将以json的形式导出，信息包括在线IP数量，实时速度，总上传和下载流量等。下面是一个返回的结果的例子
 
     ```json
     [{"user":{"hash":"d63dc919e201d7bc4c825630d2cf25fdc93d4b2f0d46706d29038d01"},"status":{"traffic_total":{"upload_traffic":36393,"download_traffic":186478},"speed_current":{"upload_speed":25210,"download_speed":72384},"speed_limit":{"upload_speed":5242880,"download_speed":5242880},"ip_limit":50}}]
@@ -83,7 +83,7 @@ COMMAND为API命令，合法的命令有
 
     以上两条命令等价，下面的例子统一使用明文密码的方式，散列值指定某个用户的方式以此类推。
 
-    该用户信息将以json的形式导出，格式与list命令类似。下面是一个例子
+    该用户信息将以json的形式导出，格式与list命令类似。下面是一个返回的结果的例子
 
     ```json
     {"user":{"hash":"d63dc919e201d7bc4c825630d2cf25fdc93d4b2f0d46706d29038d01"},"status":{"traffic_total":{"upload_traffic":36393,"download_traffic":186478},"speed_current":{"upload_speed":25210,"download_speed":72384},"speed_limit":{"upload_speed":5242880,"download_speed":5242880},"ip_limit":50}}
@@ -110,4 +110,4 @@ COMMAND为API命令，合法的命令有
         -download-speed-limit 5242880
     ```
 
-    这个命令将密码为password的用户上传和下载速度限制为5MiB/s，同时连接的IP数量限制为3个，注意这里5242880的单位是字节。如果不填写相关限制或填写0，则维持原状。如果填写负数，则表示不进行限制。
+    这个命令将密码为password的用户上传和下载速度限制为5MiB/s，同时连接的IP数量限制为3个，注意这里5242880的单位是字节。如果不填写这些限制或填写0，则维持原状。如果填写负数，则表示不进行限制。

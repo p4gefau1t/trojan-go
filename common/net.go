@@ -85,7 +85,7 @@ func (a *Address) Marshal(r io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := r.Read(byteBuf[:])
 	if err != nil {
-		return NewError("Unable to read atype").Base(err)
+		return NewError("Unable to read ATYPE").Base(err)
 	}
 	a.AddressType = AddressType(byteBuf[0])
 	switch a.AddressType {
