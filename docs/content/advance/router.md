@@ -23,7 +23,7 @@ Trojan-Go内建的路由模块可以帮助你实现国内直连，即客户端�
         "your_password"
     ],
     "ssl": {
-        "sni": "your_domain_name"
+        "sni": "your-domain-name.com"
     },
     "mux" :{
         "enabled": true

@@ -34,8 +34,10 @@ weight: 30
   "password": [],
   "buffer_size": 32,
   "dns": [],
+  "disable_http_check": false,
   "ssl": {
     "verify": true,
+    "verify_hostname": true,
     "cert": *required*,
     "key": *required*,
     "key_password": "",
@@ -85,6 +87,7 @@ weight: 30
     "double_tls": true,
     "ssl": {
       "verify": true,
+      "verify_hostname": true,
       "cert": "",
       "key": "",
       "key_password": "",
@@ -92,7 +95,8 @@ weight: 30
       "sni": "",
       "session_ticket": true,
       "reuse_session": true,
-      "plain_http_response": ""
+      "plain_http_response": "",
+      "key_log": ""
     }
   },
   "forward_proxy": {
@@ -146,6 +150,8 @@ weight: 30
 
 ```password```可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
 
+```buffer_size```为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。
+
 ```dns```指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOT类型的DNS，查询结果会被缓存五分钟。使用URL格式描述服务器，例如
 
 - "udp://1.1.1.1"，基于UDP的DNS服务器，默认53端口
@@ -160,11 +166,13 @@ weight: 30
 
 使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。
 
-```buffer_size```为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。
+```disable_http_check```是否禁用HTTP可用性检查。
 
 ### ```ssl```选项
 
 ```verify```表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启```verify```会导致校验失败。这种情况下，应当保持```verify```开启，然后在```cert```中填写服务端的证书，即可正常连接。
+
+```verify_hostname```表示服务端是否校验客户端提供的SNI与服务端设置的一致性。如果服务端SNI字段留空，认证将被强制关闭。
 
 服务端必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写```cert```。如果使用自签名或者自签发的证书，应当在的```cert```处填入服务器证书文件，否则可能导致校验失败。
 
@@ -194,21 +202,23 @@ weight: 30
 
 ```plain_http_response```指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
-```fallback_port```指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your_domain_name.com:443```进行验证。
+```fallback_port```指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your-domain-name.com:443```进行验证。
 
 ```serve_plain_text```服务端直接是否直接接受TCP连接并处理trojan协议明文。开启此选项后，```ssl```的其他选项将失效，trojan-go将直接处理连入的TCP连接而不使用TLS。此选项的意义在于支持nginx等Web服务器的分流。如果开启，请不要将trojan-go服务对外暴露。
+
+```key_log```TLS密钥日志的文件路径。如果填写则开启密钥日志。**记录密钥将破坏TLS的安全性，此项不应该用于除调试以外的其他任何用途。**
 
 ### ```mux```多路复用选项
 
 多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。
 
-注意，开启多路复用不会提升你的链路速度。相反，它会增加客户端和服务端的CPU和内存消耗，从而可能造成速度下降。多路复用的意义在于降低延迟。
+注意，多路复用的意义在于降低握手延迟，而不是提升链路速度。相反，它会增加客户端和服务端的CPU和内存消耗，从而可能造成速度下降。
 
-```enabled```是否开启多路复用
+```enabled```是否开启多路复用。
 
 ```concurrency```指单个TLS隧道可以承载的最大连接数，默认为8。这个数值越大，多连接并发时TLS由于握手产生的延迟就越低，但网络吞吐量可能会有所降低，填入负数或者0表示所有连接只使用一个TLS隧道承载。
 
-```idle_timeout```指TLS隧道在空闲多久之后关闭，单位为秒。如果数值为负或0，则一旦TLS隧道空闲，则立即关闭
+```idle_timeout```指TLS隧道在空闲多久之后关闭，单位为秒。如果数值为负值或0，则一旦TLS隧道空闲，则立即关闭。
 
 ### ```router```路由选项
 
@@ -252,7 +262,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 - 你到代理节点的直接TLS连接遭到了GFW的中间人攻击
 
-警告：**由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以查看Websocket流量传输内容。如果你使用了国内的CDN，应当假定CDN不可信任，请务必开启double_tls进行双重加密，并使用obfuscation_password进行流量混淆**
+警告：**由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以直接审计Websocket流量传输内容。如果你使用了国内的CDN，应当假定CDN不可信任，请务必开启double_tls进行双重加密，并使用obfuscation_password进行流量混淆**
 
 ```enabled```表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。
 

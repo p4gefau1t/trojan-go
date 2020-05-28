@@ -9,7 +9,8 @@
     ],
     "ssl": {
         "cert": "your_cert.crt",
-        "key": "your_key.key"
+        "key": "your_key.key",
+        "sni": "your-domain-name.com"
     },
     "router":{
         "enabled": true,
