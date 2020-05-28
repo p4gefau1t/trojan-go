@@ -54,6 +54,8 @@ func (m *RedisUser) AddIP(string) bool { return true }
 
 func (m *RedisUser) DelIP(string) bool { return true }
 
+func (u *RedisUser) GetIP() int { return 0 }
+
 func (m *RedisUser) SetIPLimit(int) {}
 
 func (m *RedisUser) GetIPLimit() int { return 0 }

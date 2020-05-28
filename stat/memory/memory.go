@@ -67,6 +67,12 @@ func (u *MemoryUser) DelIP(ip string) bool {
 	return true
 }
 
+func (u *MemoryUser) GetIP() int {
+	u.ipTableLock.Lock()
+	defer u.ipTableLock.Unlock()
+	return len(u.ipTable)
+}
+
 func (u *MemoryUser) SetIPLimit(n int) {
 	u.maxIPNum = n
 }

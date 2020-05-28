@@ -23,6 +23,7 @@ type TrafficMeter interface {
 type IPRecorder interface {
 	AddIP(string) bool
 	DelIP(string) bool
+	GetIP() int
 	SetIPLimit(int)
 	GetIPLimit() int
 }

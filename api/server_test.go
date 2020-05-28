@@ -25,8 +25,9 @@ func TestServerAPI(t *testing.T) {
 	common.Must(auth.AddUser("hash1234"))
 	_, user := auth.AuthUser("hash1234")
 	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
+	common.Must(err)
 	server := NewTrojanServerServiceClient(conn)
-	stream1, err := server.ListUsers(ctx, &ListUserRequest{})
+	stream1, err := server.ListUsers(ctx, &ListUsersRequest{})
 	common.Must(err)
 	for {
 		resp, err := stream1.Recv()
@@ -37,25 +38,25 @@ func TestServerAPI(t *testing.T) {
 		if resp.User.Hash != "hash1234" {
 			t.Fail()
 		}
-		fmt.Println(resp.SpeedCurrent)
-		fmt.Println(resp.SpeedLimit)
+		fmt.Println(resp.Status.SpeedCurrent)
+		fmt.Println(resp.Status.SpeedLimit)
 	}
 	stream1.CloseSend()
 	user.AddTraffic(1234, 5678)
 	time.Sleep(time.Millisecond * 1000)
-	stream2, err := server.GetTraffic(ctx)
+	stream2, err := server.GetUsers(ctx)
 	common.Must(err)
-	stream2.Send(&GetTrafficRequest{
+	stream2.Send(&GetUsersRequest{
 		User: &User{
 			Hash: "hash1234",
 		},
 	})
 	resp2, err := stream2.Recv()
 	common.Must(err)
-	if resp2.TrafficTotal.DownloadTraffic != 1234 || resp2.TrafficTotal.UploadTraffic != 5678 {
+	if resp2.Status.TrafficTotal.DownloadTraffic != 1234 || resp2.Status.TrafficTotal.UploadTraffic != 5678 {
 		t.Fail()
 	}
-	if resp2.SpeedCurrent.DownloadSpeed != 1234 || resp2.TrafficTotal.UploadTraffic != 5678 {
+	if resp2.Status.SpeedCurrent.DownloadSpeed != 1234 || resp2.Status.TrafficTotal.UploadTraffic != 5678 {
 		t.Fail()
 	}
 
@@ -110,14 +111,14 @@ func TestServerAPI(t *testing.T) {
 	}()
 	time.Sleep(time.Second * 3)
 	for i := 0; i < 3; i++ {
-		stream2.Send(&GetTrafficRequest{
+		stream2.Send(&GetUsersRequest{
 			User: &User{
 				Hash: "newhash",
 			},
 		})
 		resp2, err = stream2.Recv()
-		fmt.Println(resp2.SpeedCurrent)
-		fmt.Println(resp2.SpeedLimit)
+		fmt.Println(resp2.Status.SpeedCurrent)
+		fmt.Println(resp2.Status.SpeedLimit)
 		time.Sleep(time.Second)
 	}
 	stream2.CloseSend()

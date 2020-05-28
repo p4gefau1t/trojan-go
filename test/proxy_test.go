@@ -573,7 +573,7 @@ func TestServerAPI(t *testing.T) {
 	common.Must(err)
 	server := api.NewTrojanServerServiceClient(grpcConn)
 
-	listUserStream, err := server.ListUsers(ctx, &api.ListUserRequest{})
+	listUserStream, err := server.ListUsers(ctx, &api.ListUsersRequest{})
 	common.Must(err)
 	defer listUserStream.CloseSend()
 	for {
@@ -582,8 +582,8 @@ func TestServerAPI(t *testing.T) {
 			break
 		}
 		fmt.Println(resp.User.Hash)
-		fmt.Println(*resp.SpeedCurrent)
-		fmt.Println(*resp.SpeedLimit)
+		fmt.Println(*resp.Status.SpeedCurrent)
+		fmt.Println(*resp.Status.SpeedLimit)
 	}
 	listUserStream.CloseSend()
 	setUserStream, err := server.SetUsers(ctx)
@@ -618,7 +618,7 @@ func TestServerAPI(t *testing.T) {
 	}()
 
 	time.Sleep(time.Second * 5)
-	listUserStream, err = server.ListUsers(ctx, &api.ListUserRequest{})
+	listUserStream, err = server.ListUsers(ctx, &api.ListUsersRequest{})
 	common.Must(err)
 	defer listUserStream.CloseSend()
 	for {
@@ -627,8 +627,8 @@ func TestServerAPI(t *testing.T) {
 			break
 		}
 		fmt.Println(resp.User.Hash)
-		fmt.Println(resp.SpeedCurrent.UploadSpeed)
-		fmt.Println(resp.SpeedLimit.UploadSpeed)
+		fmt.Println(resp.Status.SpeedCurrent.UploadSpeed)
+		fmt.Println(resp.Status.SpeedLimit.UploadSpeed)
 	}
 	listUserStream.CloseSend()
 	cancel()

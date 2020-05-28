@@ -20,8 +20,8 @@ type ServerAPI struct {
 	auth stat.Authenticator
 }
 
-func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) error {
-	log.Debug("API: GetTraffic")
+func (s *ServerAPI) GetUsers(stream TrojanServerService_GetUsersServer) error {
+	log.Debug("API: GetUsers")
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
@@ -38,28 +38,35 @@ func (s *ServerAPI) GetTraffic(stream TrojanServerService_GetTrafficServer) erro
 		}
 		valid, user := s.auth.AuthUser(req.User.Hash)
 		if !valid {
-			stream.Send(&GetTrafficResponse{
+			stream.Send(&GetUsersResponse{
 				Success: false,
-				Info:    "Invalid user " + req.User.Hash,
+				Info:    "Invalid user: " + req.User.Hash,
 			})
 			continue
 		}
 		downloadTraffic, uploadTraffic := user.GetTraffic()
 		downloadSpeed, uploadSpeed := user.GetSpeed()
 		downloadSpeedLimit, uploadSpeedLimit := user.GetSpeedLimit()
-		err = stream.Send(&GetTrafficResponse{
+		ipLimit := user.GetIPLimit()
+		ipCurrent := user.GetIP()
+		err = stream.Send(&GetUsersResponse{
 			Success: true,
-			TrafficTotal: &Traffic{
-				UploadTraffic:   uploadTraffic,
-				DownloadTraffic: downloadTraffic,
-			},
-			SpeedCurrent: &Speed{
-				DownloadSpeed: downloadSpeed,
-				UploadSpeed:   uploadSpeed,
-			},
-			SpeedLimit: &Speed{
-				DownloadSpeed: uint64(downloadSpeedLimit),
-				UploadSpeed:   uint64(uploadSpeedLimit),
+			Status: &UserStatus{
+				User: req.User,
+				TrafficTotal: &Traffic{
+					UploadTraffic:   uploadTraffic,
+					DownloadTraffic: downloadTraffic,
+				},
+				SpeedCurrent: &Speed{
+					DownloadSpeed: downloadSpeed,
+					UploadSpeed:   uploadSpeed,
+				},
+				SpeedLimit: &Speed{
+					DownloadSpeed: uint64(downloadSpeedLimit),
+					UploadSpeed:   uint64(uploadSpeedLimit),
+				},
+				IpCurrent: int32(ipCurrent),
+				IpLimit:   int32(ipLimit),
 			},
 		})
 		if err != nil {
@@ -122,36 +129,35 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 	}
 }
 
-func (s *ServerAPI) ListUsers(req *ListUserRequest, stream TrojanServerService_ListUsersServer) error {
+func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_ListUsersServer) error {
 	log.Debug("API: ListUsers")
 	users := s.auth.ListUsers()
-	for _, meter := range users {
-		downloadTraffic, uploadTraffic := meter.GetTraffic()
-		downloadSpeed, uploadSpeed := meter.GetSpeed()
-		downloadSpeedLimit, uploadSpeedLimit := meter.GetSpeedLimit()
-		ipLimit := meter.GetIPLimit()
-		online := false
-		if downloadSpeed > 0 || uploadSpeed > 0 {
-			online = true
-		}
-		err := stream.Send(&ListUserResponse{
+	for _, user := range users {
+		downloadTraffic, uploadTraffic := user.GetTraffic()
+		downloadSpeed, uploadSpeed := user.GetSpeed()
+		downloadSpeedLimit, uploadSpeedLimit := user.GetSpeedLimit()
+		ipLimit := user.GetIPLimit()
+		ipCurrent := user.GetIP()
+		err := stream.Send(&ListUsersResponse{
 			User: &User{
-				Hash: meter.Hash(),
+				Hash: user.Hash(),
 			},
-			Online: online,
-			TrafficTotal: &Traffic{
-				DownloadTraffic: downloadTraffic,
-				UploadTraffic:   uploadTraffic,
+			Status: &UserStatus{
+				TrafficTotal: &Traffic{
+					DownloadTraffic: downloadTraffic,
+					UploadTraffic:   uploadTraffic,
+				},
+				SpeedCurrent: &Speed{
+					DownloadSpeed: downloadSpeed,
+					UploadSpeed:   uploadSpeed,
+				},
+				SpeedLimit: &Speed{
+					DownloadSpeed: uint64(downloadSpeedLimit),
+					UploadSpeed:   uint64(uploadSpeedLimit),
+				},
+				IpLimit:   int32(ipLimit),
+				IpCurrent: int32(ipCurrent),
 			},
-			SpeedCurrent: &Speed{
-				DownloadSpeed: downloadSpeed,
-				UploadSpeed:   uploadSpeed,
-			},
-			SpeedLimit: &Speed{
-				DownloadSpeed: uint64(downloadSpeedLimit),
-				UploadSpeed:   uint64(uploadSpeedLimit),
-			},
-			IpLimit: int32(ipLimit),
 		})
 		if err != nil {
 			return err

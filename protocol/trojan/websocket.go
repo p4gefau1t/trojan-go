@@ -44,7 +44,7 @@ func (rwc *obfReadWriteCloser) Close() error {
 }
 
 func NewOutboundObfReadWriteCloser(key []byte, conn net.Conn) *obfReadWriteCloser {
-	//use bufio to avoid fixed ws packet length
+	// use bufio to avoid fixed ws packet length
 	bufrw := common.NewBufioReadWriter(conn)
 	iv := [aes.BlockSize]byte{}
 	common.Must2(io.ReadFull(rand.Reader, iv[:]))
