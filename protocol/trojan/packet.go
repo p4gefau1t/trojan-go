@@ -26,12 +26,15 @@ func (i *TrojanPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 	lengthBuf := [2]byte{}
 	_, err := io.ReadFull(i.conn, lengthBuf[:])
 	if err != nil {
-		return req, nil, common.NewError("failed to read length")
+		return req, nil, common.NewError("Failed to read length")
 	}
 	length := binary.BigEndian.Uint16(lengthBuf[:])
 	packet := make([]byte, length)
-	n, err := i.conn.Read(packet)
-	return req, packet[:n], err
+	_, err = io.ReadFull(i.conn, packet)
+	if err != nil {
+		return req, nil, common.NewError("Failed to read payload")
+	}
+	return req, packet[:], err
 }
 
 func (i *TrojanPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
