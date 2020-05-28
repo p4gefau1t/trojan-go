@@ -362,6 +362,12 @@ func loadServerConfig(config *GlobalConfig) error {
 			return err
 		}
 	}
+
+	if config.TLS.SNI == "" {
+		log.Warn("Empty SNI field. Server will not verify the SNI in client hello request")
+		config.TLS.VerifyHostName = false
+	}
+
 	if config.TLS.HTTPResponseFileName != "" {
 		payload, err := ioutil.ReadFile(config.TLS.HTTPResponseFileName)
 		if err != nil {
@@ -409,9 +415,10 @@ func ParseJSON(data []byte) (*GlobalConfig, error) {
 		Websocket: WebsocketConfig{
 			DoubleTLS: true,
 			TLS: TLSConfig{
-				Verify:        true,
-				SessionTicket: true,
-				ReuseSession:  true,
+				Verify:         true,
+				VerifyHostName: true,
+				SessionTicket:  true,
+				ReuseSession:   true,
 			},
 		},
 		MySQL: MySQLConfig{

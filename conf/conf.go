@@ -30,6 +30,7 @@ const (
 
 type TLSConfig struct {
 	Verify               bool     `json:"verify"`
+	VerifyHostName       bool     `json:"verify_hostname"`
 	CertPath             string   `json:"cert"`
 	KeyPath              string   `json:"key"`
 	ClientCertPath       []string `json:"client_cert"`
