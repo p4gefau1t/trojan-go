@@ -74,6 +74,15 @@
     </item>
     
     <item>
+      <title>使用API动态管理用户</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/api/</guid>
+      <description>Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接数统计 Trojan-Go本身集成</description>
+    </item>
+    
+    <item>
       <title>编译和自定义Trojan-Go</title>
       <link>https://p4gefau1t.github.io/trojan-go/developer/build/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

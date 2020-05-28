@@ -64,5 +64,14 @@
       <description>前言 Trojan 是一种通过 TLS 封装后进行加密数据传输的工具，利用其 TLS 的特性，我们可以通过 SNI 代理实现在同一主机端口上实现不同路径的分流中继。 所需工具及其他</description>
     </item>
     
+    <item>
+      <title>使用API动态管理用户</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/api/</guid>
+      <description>Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接数统计 Trojan-Go本身集成</description>
+    </item>
+    
   </channel>
 </rss>

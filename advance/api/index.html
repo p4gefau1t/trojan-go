@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>使用API动态管理用户 - Trojan-Go Docs</title>
+<meta name="description" content="An unidentifiable mechanism that helps you bypass GFW. ">
+<meta name="generator" content="Hugo 0.69.2" />
+<link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/api/">
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="使用API动态管理用户" />
+<meta property="og:description" content="Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接数统计 Trojan-Go本身集成" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/api/" />
+<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:site_name" content="Trojan-Go Docs" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+<meta name="twitter:title" content="使用API动态管理用户"/>
+<meta name="twitter:description" content="Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接数统计 Trojan-Go本身集成"/>
+<meta itemprop="name" content="使用API动态管理用户">
+<meta itemprop="description" content="Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接数统计 Trojan-Go本身集成">
+
+<meta itemprop="wordCount" content="722">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Trojan-Go Docs</h1>
+
+ <span class="version">Version 0.5.0</span>
+<a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
+<p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/trojan-go/">Home</a></li>
+<li><a href="https://github.com/p4gefau1t">GitHub</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>使用API动态管理用户</h1>
+<p>Trojan-Go使用gRPC提供了一组API，API支持以下功能：</p>
+<ul>
+<li>
+<p>用户信息增删改查</p>
+</li>
+<li>
+<p>流量统计</p>
+</li>
+<li>
+<p>速度统计</p>
+</li>
+<li>
+<p>IP连接数统计</p>
+</li>
+</ul>
+<p>Trojan-Go本身集成了API控制功能，也即可以使用一个Trojan-Go实例控制另一个Trojan-Go服务器。</p>
+<p>你需要在你需要被控制的服务端配置添加API设置，例如：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+    <span style="color:#960050;background-color:#1e0010">...</span>
+    <span style="color:#f92672">&#34;api&#34;</span>: {
+        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+        <span style="color:#f92672">&#34;api_addr&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+        <span style="color:#f92672">&#34;api_port&#34;</span>: <span style="color:#ae81ff">10000</span>,
+    }
+}
+</code></pre></div><p>然后启动Trojan-Go服务器</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -config ./server.json
+</code></pre></div><p>然后可以使用另一个Trojan-Go连接该服务器进行管理，基本命令格式为</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr SERVER_API_ADDRESS -api COMMAND
+</code></pre></div><p>其中<code>SERVER_API_ADDRESS</code>为API地址和端口，如127.0.0.1:10000</p>
+<p><code>COMMAND</code>为API命令，合法的命令有</p>
+<ul>
+<li>
+<p>list 列出所有用户</p>
+</li>
+<li>
+<p>get 获取某个用户信息</p>
+</li>
+<li>
+<p>set 设置某个用户信息（添加/删除/修改）</p>
+</li>
+</ul>
+<p>下面是一些例子</p>
+<ol>
+<li>
+<p>列出所有用户信息</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api list
+</code></pre></div><p>所有的用户信息将以json的形式导出，信息包括在线IP数量，实时速度，总上传和下载流量等。下面是一个返回的结果的例子</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">[{<span style="color:#f92672">&#34;user&#34;</span>:{<span style="color:#f92672">&#34;hash&#34;</span>:<span style="color:#e6db74">&#34;d63dc919e201d7bc4c825630d2cf25fdc93d4b2f0d46706d29038d01&#34;</span>},<span style="color:#f92672">&#34;status&#34;</span>:{<span style="color:#f92672">&#34;traffic_total&#34;</span>:{<span style="color:#f92672">&#34;upload_traffic&#34;</span>:<span style="color:#ae81ff">36393</span>,<span style="color:#f92672">&#34;download_traffic&#34;</span>:<span style="color:#ae81ff">186478</span>},<span style="color:#f92672">&#34;speed_current&#34;</span>:{<span style="color:#f92672">&#34;upload_speed&#34;</span>:<span style="color:#ae81ff">25210</span>,<span style="color:#f92672">&#34;download_speed&#34;</span>:<span style="color:#ae81ff">72384</span>},<span style="color:#f92672">&#34;speed_limit&#34;</span>:{<span style="color:#f92672">&#34;upload_speed&#34;</span>:<span style="color:#ae81ff">5242880</span>,<span style="color:#f92672">&#34;download_speed&#34;</span>:<span style="color:#ae81ff">5242880</span>},<span style="color:#f92672">&#34;ip_limit&#34;</span>:<span style="color:#ae81ff">50</span>}}]
+</code></pre></div><p>流量单位均为字节。</p>
+</li>
+<li>
+<p>获取一个用户信息</p>
+<p>可以使用 -target-password 指定密码，也可以使用 -target-hash 指定目标用户密码的SHA224散列值。格式和list命令相同</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api get -target-password password
+</code></pre></div><p>或者</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api get -target-hash d63dc919e201d7bc4c825630d2cf25fdc93d4b2f0d46706d29038d01
+</code></pre></div><p>以上两条命令等价，下面的例子统一使用明文密码的方式，散列值指定某个用户的方式以此类推。</p>
+<p>该用户信息将以json的形式导出，格式与list命令类似。下面是一个返回的结果的例子</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{<span style="color:#f92672">&#34;user&#34;</span>:{<span style="color:#f92672">&#34;hash&#34;</span>:<span style="color:#e6db74">&#34;d63dc919e201d7bc4c825630d2cf25fdc93d4b2f0d46706d29038d01&#34;</span>},<span style="color:#f92672">&#34;status&#34;</span>:{<span style="color:#f92672">&#34;traffic_total&#34;</span>:{<span style="color:#f92672">&#34;upload_traffic&#34;</span>:<span style="color:#ae81ff">36393</span>,<span style="color:#f92672">&#34;download_traffic&#34;</span>:<span style="color:#ae81ff">186478</span>},<span style="color:#f92672">&#34;speed_current&#34;</span>:{<span style="color:#f92672">&#34;upload_speed&#34;</span>:<span style="color:#ae81ff">25210</span>,<span style="color:#f92672">&#34;download_speed&#34;</span>:<span style="color:#ae81ff">72384</span>},<span style="color:#f92672">&#34;speed_limit&#34;</span>:{<span style="color:#f92672">&#34;upload_speed&#34;</span>:<span style="color:#ae81ff">5242880</span>,<span style="color:#f92672">&#34;download_speed&#34;</span>:<span style="color:#ae81ff">5242880</span>},<span style="color:#f92672">&#34;ip_limit&#34;</span>:<span style="color:#ae81ff">50</span>}}
+</code></pre></div></li>
+<li>
+<p>添加一个用户信息</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api list -add-profile -target-password password
+</code></pre></div></li>
+<li>
+<p>删除一个用户信息</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api set -delete-profile -target-password password
+</code></pre></div></li>
+<li>
+<p>修改一个用户信息</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api set -modify-profile -target-password password <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    -ip-limit <span style="color:#ae81ff">3</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    -upload-speed-limit <span style="color:#ae81ff">5242880</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    -download-speed-limit <span style="color:#ae81ff">5242880</span>
+</code></pre></div><p>这个命令将密码为password的用户上传和下载速度限制为5MiB/s，同时连接的IP数量限制为3个，注意这里5242880的单位是字节。如果不填写这些限制或填写0，则维持原状。如果填写负数，则表示不进行限制。</p>
+</li>
+</ol>
+<div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/api.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/" title="一种基于SNI代理的多路径分流中继方案"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 一种基于SNI代理的多路径分流中继方案</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南">Next - 实现细节和开发指南 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main><div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/config/">正确配置Trojan-Go</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/full-config/">完整的配置文件</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/build/">编译和自定义Trojan-Go</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>
