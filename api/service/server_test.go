@@ -1,4 +1,4 @@
-package api
+package service
 
 import (
 	"context"
@@ -61,11 +61,11 @@ func TestServerAPI(t *testing.T) {
 	}
 
 	stream3, err := server.SetUsers(ctx)
-	stream3.Send(&SetUserRequest{
+	stream3.Send(&SetUsersRequest{
 		User: &User{
 			Hash: "hash1234",
 		},
-		Operation: SetUserRequest_Delete,
+		Operation: SetUsersRequest_Delete,
 	})
 	resp3, err := stream3.Recv()
 	if err != nil || !resp3.Success {
@@ -75,11 +75,11 @@ func TestServerAPI(t *testing.T) {
 	if valid {
 		t.Fail()
 	}
-	stream3.Send(&SetUserRequest{
+	stream3.Send(&SetUsersRequest{
 		User: &User{
 			Hash: "newhash",
 		},
-		Operation: SetUserRequest_Add,
+		Operation: SetUsersRequest_Add,
 	})
 	resp3, err = stream3.Recv()
 	if err != nil || !resp3.Success {
@@ -89,11 +89,11 @@ func TestServerAPI(t *testing.T) {
 	if !valid {
 		t.Fail()
 	}
-	stream3.Send(&SetUserRequest{
+	stream3.Send(&SetUsersRequest{
 		User: &User{
 			Hash: "newhash",
 		},
-		Operation: SetUserRequest_Modify,
+		Operation: SetUsersRequest_Modify,
 		SpeedLimit: &Speed{
 			DownloadSpeed: 5000,
 			UploadSpeed:   3000,

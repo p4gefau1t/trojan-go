@@ -1,4 +1,4 @@
-package api
+package service
 
 import (
 	"context"
@@ -92,7 +92,7 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 			req.User.Hash = common.SHA224String(req.User.Password)
 		}
 		switch req.Operation {
-		case SetUserRequest_Add:
+		case SetUsersRequest_Add:
 			err = s.auth.AddUser(req.User.Hash)
 			if req.SpeedLimit != nil {
 				valid, user := s.auth.AuthUser(req.User.Hash)
@@ -101,9 +101,9 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 				}
 				user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
 			}
-		case SetUserRequest_Delete:
+		case SetUsersRequest_Delete:
 			err = s.auth.DelUser(req.User.Hash)
-		case SetUserRequest_Modify:
+		case SetUsersRequest_Modify:
 			valid, user := s.auth.AuthUser(req.User.Hash)
 			if !valid {
 				err = common.NewError("Invalid user " + req.User.Hash)
@@ -117,13 +117,13 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 			}
 		}
 		if err != nil {
-			stream.Send(&SetUserResponse{
+			stream.Send(&SetUsersResponse{
 				Success: false,
 				Info:    err.Error(),
 			})
 			continue
 		}
-		stream.Send(&SetUserResponse{
+		stream.Send(&SetUsersResponse{
 			Success: true,
 		})
 	}

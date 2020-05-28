@@ -1,6 +1,6 @@
 syntax = "proto3";
 package trojan.api;
-option go_package = ".;api";
+option go_package = ".;service";
 
 message Traffic {
     uint64 upload_traffic = 1;
@@ -57,7 +57,7 @@ message GetUsersResponse {
     UserStatus status = 4;
 }
 
-message SetUserRequest {
+message SetUsersRequest {
     User user = 1;
     enum Operation {
         Add = 0;
@@ -69,7 +69,7 @@ message SetUserRequest {
     int32 ip_limit = 4;
 }
 
-message SetUserResponse {
+message SetUsersResponse {
     bool success = 1;
     string info = 2;
 }
@@ -84,5 +84,5 @@ service TrojanServerService {
     // obtain specified user's info
     rpc GetUsers(stream GetUsersRequest) returns(stream GetUsersResponse){}
     // setup exsisting users' config
-    rpc SetUsers(stream SetUserRequest) returns(stream SetUserResponse){}
+    rpc SetUsers(stream SetUsersRequest) returns(stream SetUsersResponse){}
 }
