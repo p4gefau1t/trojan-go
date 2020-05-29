@@ -30,7 +30,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域">
 
-<meta itemprop="wordCount" content="2448">
+<meta itemprop="wordCount" content="2468">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.5.0</span>
+ <span class="version">Version 0.5.1</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -92,7 +92,7 @@
 <p>我们的目标是，使得你的服务器和正常的HTTPS网站表现相同。</p>
 <p>首先你需要一个HTTP服务器，可以使用nginx，apache，caddy等配置一个本地HTTP服务器，也可以使用别人的HTTP服务器。HTTP服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。</p>
 <p><strong>你需要在<code>remote_addr</code>和<code>remote_port</code>指定这个HTTP服务器的地址。<code>remote_addr</code>可以是IP或者域名。Trojan-Go将会测试这个HTTP服务器是否工作正常，如果不正常，Trojan-Go会拒绝启动。</strong></p>
-<p>下面是一份比较安全的服务器配置server.json，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如&quot;remote_addr&rdquo;: &ldquo;example.com&rdquo;），在1234端口配置一个HTTPS服务（可选，可以删除<code>fallback_port</code>字段，跳过这个步骤）</p>
+<p>下面是一份比较安全的服务器配置server.json，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如&quot;remote_addr&rdquo;: &ldquo;example.com&rdquo;），在1234端口配置一个HTTPS服务，或是一个展示&quot;400 Bad Request&quot;的静态HTTP网页服务。（可选，可以删除<code>fallback_port</code>字段，跳过这个步骤）</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
     <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;server&#34;</span>,
     <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>,
@@ -119,7 +119,7 @@
 <p>如果TLS握手成功，并且被确认是Trojan协议头部，并且其中的密码正确，那么服务器将解析来自客户端的请求并进行代理，否则和上一步的处理方法相同。</p>
 </li>
 <li>
-<p>如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务，本地HTTPS服务器也会检测到连接不是TLS连接，返回一个400 Bad Reqeust的HTTP页面。<code>fallback_port</code>是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。</p>
+<p>如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务，返回一个展示400 Bad Reqeust的HTTP页面。<code>fallback_port</code>是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。</p>
 </li>
 </ul>
 <p>你可以通过使用浏览器访问你的域名<code>https://your-domain-name.com</code>来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用<code>http://your-domain-name.com:443</code>验证<code>fallback_port</code>工作是否正常。</p>
@@ -143,7 +143,7 @@
     }
 }
 </code></pre></div><p>这个客户端配置使Trojan-Go开启一个监听在本地1080端口的socks5/http代理（自动识别），远端服务器为your_awesome_server:443，your_awesome_server可以是IP或者域名。</p>
-<p>如果你在<code>remote_addr</code>中填写的是域名，<code>sni</code>可以省略。如果你在<code>remote_addr</code>填写的是IP地址，<code>sni</code>字段应当填写你申请证书的对应域名，或者你自己签发的证书的Common Name，而且必须一致。注意，<code>sni</code>字段目前的在TLS协议中是<strong>明文传送</strong>的(目的是使服务器提供相应证书)。GFW已经被证实具有SNI探测和阻断能力，所以不要填写类似<code>google.com</code>等已经被封锁的域名，否则很有可能导致你的服务器也被遭到锁。</p>
+<p>如果你在<code>remote_addr</code>中填写的是域名，<code>sni</code>可以省略。如果你在<code>remote_addr</code>填写的是IP地址，<code>sni</code>字段应当填写你申请证书的对应域名，或者你自己签发的证书的Common Name，而且必须一致。注意，<code>sni</code>字段目前的在TLS协议中是<strong>明文传送</strong>的(目的是使服务器提供相应证书)。GFW已经被证实具有SNI探测和阻断能力，所以不要填写类似<code>google.com</code>等已经被封锁的域名，否则很有可能导致你的服务器也被遭到封锁。</p>
 <p>配置完成后，可以使用</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -config ./client.json
 </code></pre></div><p>启动客户端。</p>
@@ -193,7 +193,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 </ul>
   
 </li>
