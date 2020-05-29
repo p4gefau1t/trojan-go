@@ -50,7 +50,7 @@ sudo ./trojan-go -autocert renew
 
 **你需要在```remote_addr```和```remote_port```指定这个HTTP服务器的地址。```remote_addr```可以是IP或者域名。Trojan-Go将会测试这个HTTP服务器是否工作正常，如果不正常，Trojan-Go会拒绝启动。**
 
-下面是一份比较安全的服务器配置server.json，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如"remote_addr": "example.com"），在1234端口配置一个HTTPS服务（可选，可以删除```fallback_port```字段，跳过这个步骤）
+下面是一份比较安全的服务器配置server.json，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如"remote_addr": "example.com"），在1234端口配置一个HTTPS服务，或是一个展示"400 Bad Request"的静态HTTP网页服务。（可选，可以删除```fallback_port```字段，跳过这个步骤）
 
 ```json
 {
@@ -79,7 +79,7 @@ sudo ./trojan-go -autocert renew
 
 - 如果TLS握手成功，并且被确认是Trojan协议头部，并且其中的密码正确，那么服务器将解析来自客户端的请求并进行代理，否则和上一步的处理方法相同。
 
-- 如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务，本地HTTPS服务器也会检测到连接不是TLS连接，返回一个400 Bad Reqeust的HTTP页面。```fallback_port```是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。
+- 如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务，返回一个展示400 Bad Reqeust的HTTP页面。```fallback_port```是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。
 
 你可以通过使用浏览器访问你的域名```https://your-domain-name.com```来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用```http://your-domain-name.com:443```验证```fallback_port```工作是否正常。
 
@@ -115,7 +115,7 @@ sudo ./trojan-go -autocert renew
 
 这个客户端配置使Trojan-Go开启一个监听在本地1080端口的socks5/http代理（自动识别），远端服务器为your_awesome_server:443，your_awesome_server可以是IP或者域名。
 
-如果你在```remote_addr```中填写的是域名，```sni```可以省略。如果你在```remote_addr```填写的是IP地址，```sni```字段应当填写你申请证书的对应域名，或者你自己签发的证书的Common Name，而且必须一致。注意，```sni```字段目前的在TLS协议中是**明文传送**的(目的是使服务器提供相应证书)。GFW已经被证实具有SNI探测和阻断能力，所以不要填写类似```google.com```等已经被封锁的域名，否则很有可能导致你的服务器也被遭到锁。
+如果你在```remote_addr```中填写的是域名，```sni```可以省略。如果你在```remote_addr```填写的是IP地址，```sni```字段应当填写你申请证书的对应域名，或者你自己签发的证书的Common Name，而且必须一致。注意，```sni```字段目前的在TLS协议中是**明文传送**的(目的是使服务器提供相应证书)。GFW已经被证实具有SNI探测和阻断能力，所以不要填写类似```google.com```等已经被封锁的域名，否则很有可能导致你的服务器也被遭到封锁。
 
 配置完成后，可以使用
 

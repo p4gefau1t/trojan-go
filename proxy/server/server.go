@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -169,7 +170,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 			rewindConn := common.NewRewindConn(conn)
 			rewindConn.R.SetBufferSize(2048)
 
-			sniVerified := false
+			sniVerified := true
 			tlsConfig := &tls.Config{
 				Certificates:             s.config.TLS.KeyPair,
 				CipherSuites:             s.config.TLS.CipherSuites,
@@ -179,9 +180,9 @@ func (s *Server) ListenTCP(errChan chan error) {
 				KeyLogWriter:             s.config.TLS.KeyLogger,
 				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 					if s.config.TLS.VerifyHostName && hello.ServerName != s.config.TLS.SNI {
+						sniVerified = false
 						return nil, common.NewError("Invalid SNI: " + hello.ServerName)
 					}
-					sniVerified = true
 					return &s.config.TLS.KeyPair[0], nil
 				},
 			}
@@ -195,21 +196,25 @@ func (s *Server) ListenTCP(errChan chan error) {
 					// close tls conn immediately if the sni is invalid
 					tlsConn.Close()
 					return
-				}
-				rewindConn.R.Rewind()
-				err = common.NewError("Failed to perform TLS handshake with " + conn.RemoteAddr().String()).Base(err)
-				log.Warn(err)
-				if s.config.TLS.FallbackAddress != nil {
-					s.shadow.SubmitScapegoat(&shadow.Scapegoat{
-						Conn:          rewindConn,
-						ShadowAddress: s.config.TLS.FallbackAddress,
-						Info:          err.Error(),
-					})
-				} else if s.config.TLS.HTTPResponse != nil {
-					rewindConn.Write(s.config.TLS.HTTPResponse)
-					rewindConn.Close()
+				} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
+					rewindConn.R.Rewind()
+					err = common.NewError("Failed to perform TLS handshake with " + conn.RemoteAddr().String()).Base(err)
+					log.Warn(err)
+					if s.config.TLS.FallbackAddress != nil {
+						s.shadow.SubmitScapegoat(&shadow.Scapegoat{
+							Conn:          rewindConn,
+							ShadowAddress: s.config.TLS.FallbackAddress,
+							Info:          err.Error(),
+						})
+					} else if s.config.TLS.HTTPResponse != nil {
+						rewindConn.Write(s.config.TLS.HTTPResponse)
+						rewindConn.Close()
+					} else {
+						rewindConn.Close()
+					}
 				} else {
-					rewindConn.Close()
+					log.Error(err)
+					tlsConn.Close()
 				}
 				return
 			}
