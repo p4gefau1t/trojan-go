@@ -77,7 +77,7 @@ weight: 30
     "default_policy": "proxy",
     "domain_strategy": "as_is",
     "geoip": "./geoip.dat",
-    "geosite": "./geoip.dat"
+    "geosite": "./geosite.dat"
   },
   "websocket": {
     "enabled": false,
