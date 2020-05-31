@@ -361,22 +361,22 @@ func loadServerConfig(config *GlobalConfig) error {
 		if err := loadCertAndKey(&config.TLS); err != nil {
 			return err
 		}
-	}
+        	if config.TLS.SNI == "" {
+        		log.Warn("Empty SNI field. Server will not verify the SNI in client hello request")
+        		config.TLS.VerifyHostName = false
+        	}
+        
+        	if config.TLS.HTTPResponseFileName != "" {
+        		payload, err := ioutil.ReadFile(config.TLS.HTTPResponseFileName)
+        		if err != nil {
+        			return common.NewError("Failed to load http response file").Base(err)
+        		}
+        		config.TLS.HTTPResponse = payload
+        	}
+        }
 
-	if config.TLS.SNI == "" {
-		log.Warn("Empty SNI field. Server will not verify the SNI in client hello request")
-		config.TLS.VerifyHostName = false
-	}
 
-	if config.TLS.HTTPResponseFileName != "" {
-		payload, err := ioutil.ReadFile(config.TLS.HTTPResponseFileName)
-		if err != nil {
-			return common.NewError("Failed to load http response file").Base(err)
-		}
-		config.TLS.HTTPResponse = payload
-	}
-
-	if config.Websocket.DoubleTLS {
+	if config.Websocket.Enabled && config.Websocket.DoubleTLS {
 		if config.Websocket.TLS.CertPath == "" {
 			log.Warn("Empty double TLS settings, using global TLS settings")
 			config.Websocket.TLS = config.TLS
