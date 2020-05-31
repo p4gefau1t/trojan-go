@@ -286,8 +286,8 @@ github.com/timewasted/linode v0.0.0-20160829202747-37e84520dcf7/go.mod h1:imsgLp
 github.com/transip/gotransip v0.0.0-20190812104329-6d8d9179b66f/go.mod h1:i0f4R4o2HM0m3DZYQWsj6/MEowD57VzoH0v3d7igeFY=
 github.com/uber-go/atomic v1.3.2/go.mod h1:/Ct5t2lcmbJ4OSe/waGBoaVvVqtO0bmtfVNex1PFV8g=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
-github.com/v2ray/v2ray-core v4.23.1+incompatible h1:kqV93r0dFBcYAJp/XAXfUqlhsyt/Hxy8bcs2t9LHlgg=
-github.com/v2ray/v2ray-core v4.23.1+incompatible/go.mod h1:LtoljHM69/Tx4Niy/2vqWP8R2HPqS64NiaJaGkktn+Q=
+github.com/v2ray/v2ray-core v4.23.2+incompatible h1:kAz3OdOM+R2ApJZu+SsC2iwaK3YGbG3CAXcZ80f3DEw=
+github.com/v2ray/v2ray-core v4.23.2+incompatible/go.mod h1:LtoljHM69/Tx4Niy/2vqWP8R2HPqS64NiaJaGkktn+Q=
 github.com/vultr/govultr v0.1.4/go.mod h1:9H008Uxr/C4vFNGLqKx232C206GL0PBHzOP0809bGNA=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
