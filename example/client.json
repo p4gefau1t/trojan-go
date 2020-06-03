@@ -22,7 +22,7 @@
             "geosite:geolocation-cn"
         ],
         "block": [
-            "geosite:category-ads"
+            "geosite:category-ads-all"
         ],
         "proxy": [
             "geosite:geolocation-!cn"
