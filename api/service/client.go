@@ -30,10 +30,19 @@ func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*Ge
 	if req.User == nil {
 		return nil, common.NewError("User is unspecified")
 	}
+	valid := false
+	var user stat.User
 	if req.User.Hash == "" {
-		req.User.Hash = common.SHA224String(req.User.Password)
+		if req.User.Password == "" {
+			user = s.auth.ListUsers()[0]
+			valid = true
+		} else {
+			req.User.Hash = common.SHA224String(req.User.Password)
+		}
 	}
-	valid, user := s.auth.AuthUser(req.User.Hash)
+	if !valid {
+		valid, user = s.auth.AuthUser(req.User.Hash)
+	}
 	if !valid {
 		return nil, common.NewError("User " + req.User.Hash + " not found")
 	}
