@@ -127,6 +127,23 @@ func (o *apiOption) setUsers(apiClient service.TrojanServerServiceClient) error 
 	return nil
 }
 
+func (o *apiOption) getTraffic(apiClient service.TrojanClientServiceClient) error {
+	req := &service.GetTrafficRequest{
+		User: &service.User{
+			Password: *o.password,
+			Hash:     *o.hash,
+		},
+	}
+	result, err := apiClient.GetTraffic(o.ctx, req)
+	if err != nil {
+		return err
+	}
+	data, err := json.Marshal(result)
+	common.Must(err)
+	fmt.Println(string(data))
+	return nil
+}
+
 func (o *apiOption) Handle() error {
 	if *o.cmd == "" {
 		return common.NewError("")
@@ -154,6 +171,11 @@ func (o *apiOption) Handle() error {
 		if err != nil {
 			log.Error(err)
 		}
+	case "traffic":
+		err := o.getTraffic(service.NewTrojanClientServiceClient(conn))
+		if err != nil {
+			log.Error(err)
+		}
 	default:
 		log.Error("Unknown command " + *o.cmd)
 	}
@@ -166,7 +188,7 @@ func (o *apiOption) Priority() int {
 
 func init() {
 	common.RegisterOptionHandler(&apiOption{
-		cmd:                flag.String("api", "", "Connect to a Trojan-Go API service. \"-api add/get/list\""),
+		cmd:                flag.String("api", "", "Connect to a Trojan-Go API service. \"-api add/get/list/traffic\""),
 		address:            flag.String("api-addr", "127.0.0.1:10000", "Address of Trojan-Go API service"),
 		password:           flag.String("target-password", "", "Password of the target user"),
 		hash:               flag.String("target-hash", "", "Hash of the target user"),
