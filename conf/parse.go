@@ -11,6 +11,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -313,13 +315,6 @@ func loadCommonConfig(config *GlobalConfig) error {
 }
 
 func loadClientConfig(config *GlobalConfig) error {
-	if config.TLS.SNI == "" {
-		log.Warn("SNI is unspecified, using remote_addr as SNI")
-		config.TLS.SNI = config.RemoteHost
-	}
-	if err := loadCert(&config.TLS); err != nil {
-		return err
-	}
 	//forward proxy settings
 	if config.ForwardProxy.Enabled {
 		log.Info("Forward proxy enabled")
@@ -327,13 +322,50 @@ func loadClientConfig(config *GlobalConfig) error {
 		log.Debug("Forward proxy", config.ForwardProxy.ProxyAddress.String())
 	}
 
-	if config.Websocket.Enabled && config.Websocket.DoubleTLS {
-		if config.Websocket.TLS.CertPath == "" {
-			log.Warn("Empty double TLS settings, using default ssl settings")
-			config.Websocket.TLS = config.TLS
-		} else {
-			if err := loadCert(&config.Websocket.TLS); err != nil {
-				return err
+	if config.TransportPlugin.Enabled {
+		switch config.TransportPlugin.Type {
+		case "plaintext":
+			// do nothing
+		case "shadowsocks":
+			pluginHost := "127.0.0.1"
+			pluginPort := common.PickPort("tcp", pluginHost)
+			config.TransportPlugin.Env = append(
+				config.TransportPlugin.Env,
+				"SS_LOCAL_HOST="+pluginHost,
+				"SS_LOCAL_PORT="+strconv.FormatInt(int64(pluginPort), 10),
+				"SS_REMOTE_HOST="+config.RemoteHost,
+				"SS_REMOTE_PORT="+strconv.FormatInt(int64(config.RemotePort), 10),
+			)
+			config.RemoteHost = pluginHost
+			config.RemotePort = pluginPort
+			config.RemoteAddress = common.NewAddress(config.RemoteHost, config.RemotePort, "tcp")
+			log.Debug("New remote address", config.RemoteAddress.String())
+			log.Debug("Plugin env", config.TransportPlugin.Env)
+
+			cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			config.TransportPlugin.Cmd = cmd
+		default:
+			return common.NewError("Invalid plugin type: " + config.TransportPlugin.Type)
+		}
+	} else {
+		if config.TLS.SNI == "" {
+			log.Warn("SNI is unspecified, using remote_addr as SNI")
+			config.TLS.SNI = config.RemoteHost
+		}
+		if err := loadCert(&config.TLS); err != nil {
+			return err
+		}
+		if config.Websocket.Enabled && config.Websocket.DoubleTLS {
+			if config.Websocket.TLS.CertPath == "" {
+				log.Warn("Empty double TLS settings, using default ssl settings")
+				config.Websocket.TLS = config.TLS
+			} else {
+				if err := loadCert(&config.Websocket.TLS); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -354,35 +386,63 @@ func loadServerConfig(config *GlobalConfig) error {
 		resp.Body.Close()
 	}
 
-	//tls settings
-	if config.TLS.ServePlainText {
-		log.Warn("Server will now use plain text. TLS config is ignored")
+	// transport plugin settings
+	if config.TransportPlugin.Enabled {
+		log.Warn("Server will use transport plugin and work in plain text mode. TLS config is ignored.")
+		switch config.TransportPlugin.Type {
+		case "shadowsocks":
+			trojanHost := "127.0.0.1"
+			trojanPort := common.PickPort("tcp", trojanHost)
+			config.TransportPlugin.Env = append(
+				config.TransportPlugin.Env,
+				"SS_REMOTE_HOST="+config.LocalHost,
+				"SS_REMOTE_PORT="+strconv.FormatInt(int64(config.LocalPort), 10),
+				"SS_LOCAL_HOST="+trojanHost,
+				"SS_LOCAL_PORT="+strconv.FormatInt(int64(trojanPort), 10),
+			)
+
+			config.LocalHost = trojanHost
+			config.LocalPort = trojanPort
+			config.LocalAddress = common.NewAddress(config.LocalHost, config.LocalPort, "tcp")
+			log.Debug("New local address", config.RemoteAddress.String())
+			log.Debug("Plugin env", config.TransportPlugin.Env)
+
+			cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			config.TransportPlugin.Cmd = cmd
+		case "plaintext":
+			// do nothing
+		default:
+			return common.NewError("Invalid plugin type: " + config.TransportPlugin.Type)
+		}
 	} else {
 		if err := loadCertAndKey(&config.TLS); err != nil {
 			return err
 		}
-	}
-
-	if config.TLS.SNI == "" {
-		log.Warn("Empty SNI field. Server will not verify the SNI in client hello request")
-		config.TLS.VerifyHostName = false
-	}
-
-	if config.TLS.HTTPResponseFileName != "" {
-		payload, err := ioutil.ReadFile(config.TLS.HTTPResponseFileName)
-		if err != nil {
-			return common.NewError("Failed to load http response file").Base(err)
+		// tls settings
+		if config.TLS.SNI == "" {
+			log.Warn("Empty SNI field. Server will not verify the SNI in client hello request")
+			config.TLS.VerifyHostName = false
 		}
-		config.TLS.HTTPResponse = payload
-	}
 
-	if config.Websocket.DoubleTLS {
-		if config.Websocket.TLS.CertPath == "" {
-			log.Warn("Empty double TLS settings, using global TLS settings")
-			config.Websocket.TLS = config.TLS
+		if config.TLS.HTTPResponseFileName != "" {
+			payload, err := ioutil.ReadFile(config.TLS.HTTPResponseFileName)
+			if err != nil {
+				return common.NewError("Failed to load http response file").Base(err)
+			}
+			config.TLS.HTTPResponse = payload
 		}
-		if err := loadCertAndKey(&config.Websocket.TLS); err != nil {
-			return err
+
+		if config.Websocket.DoubleTLS {
+			if config.Websocket.TLS.CertPath == "" {
+				log.Warn("Empty double TLS settings, using global TLS settings")
+				config.Websocket.TLS = config.TLS
+			}
+			if err := loadCertAndKey(&config.Websocket.TLS); err != nil {
+				return err
+			}
 		}
 	}
 

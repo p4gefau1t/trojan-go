@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
+	"os/exec"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	utls "github.com/refraction-networking/utls"
@@ -46,7 +47,6 @@ type TLSConfig struct {
 	ALPN                 []string `json:"alpn"`
 	Curves               string   `json:"curves"`
 	Fingerprint          string   `json:"fingerprint"`
-	ServePlainText       bool     `json:"serve_plain_text"`
 	KeyLogPath           string   `json:"key_log"`
 
 	ClientHelloID    *utls.ClientHelloID
@@ -153,30 +153,42 @@ type APIConfig struct {
 	APIAddress *common.Address
 }
 
+type TransportPluginConfig struct {
+	Enabled  bool     `json:"enabled"`
+	Type     string   `json:"type"`
+	Command  string   `json:"command"`
+	SSOption string   `json:"ss_option"`
+	Arg      []string `json:"arg"`
+	Env      []string `json:"env"`
+
+	Cmd *exec.Cmd
+}
+
 type GlobalConfig struct {
-	RunType          RunType            `json:"run_type"`
-	LogLevel         int                `json:"log_level"`
-	LogFile          string             `json:"log_file"`
-	LocalHost        string             `json:"local_addr"`
-	LocalPort        int                `json:"local_port"`
-	TargetHost       string             `json:"target_addr"`
-	TargetPort       int                `json:"target_port"`
-	RemoteHost       string             `json:"remote_addr"`
-	RemotePort       int                `json:"remote_port"`
-	BufferSize       int                `json:"buffer_size"`
-	DisableHTTPCheck bool               `json:"disable_http_check"`
-	Passwords        []string           `json:"password"`
-	DNS              []string           `json:"dns"`
-	TLS              TLSConfig          `json:"ssl"`
-	TCP              TCPConfig          `json:"tcp"`
-	MySQL            MySQLConfig        `json:"mysql"`
-	Redis            RedisConfig        `json:"redis"`
-	Mux              MuxConfig          `json:"mux"`
-	Router           RouterConfig       `json:"router"`
-	Websocket        WebsocketConfig    `json:"websocket"`
-	API              APIConfig          `json:"api"`
-	ForwardProxy     ForwardProxyConfig `json:"forward_proxy"`
-	Compression      CompressionConfig  `json:"compression"`
+	RunType          RunType               `json:"run_type"`
+	LogLevel         int                   `json:"log_level"`
+	LogFile          string                `json:"log_file"`
+	LocalHost        string                `json:"local_addr"`
+	LocalPort        int                   `json:"local_port"`
+	TargetHost       string                `json:"target_addr"`
+	TargetPort       int                   `json:"target_port"`
+	RemoteHost       string                `json:"remote_addr"`
+	RemotePort       int                   `json:"remote_port"`
+	BufferSize       int                   `json:"buffer_size"`
+	DisableHTTPCheck bool                  `json:"disable_http_check"`
+	Passwords        []string              `json:"password"`
+	DNS              []string              `json:"dns"`
+	TLS              TLSConfig             `json:"ssl"`
+	TCP              TCPConfig             `json:"tcp"`
+	MySQL            MySQLConfig           `json:"mysql"`
+	Redis            RedisConfig           `json:"redis"`
+	Mux              MuxConfig             `json:"mux"`
+	Router           RouterConfig          `json:"router"`
+	Websocket        WebsocketConfig       `json:"websocket"`
+	API              APIConfig             `json:"api"`
+	ForwardProxy     ForwardProxyConfig    `json:"forward_proxy"`
+	Compression      CompressionConfig     `json:"compression"`
+	TransportPlugin  TransportPluginConfig `json:"transport_plugin"`
 
 	LocalAddress  *common.Address
 	RemoteAddress *common.Address

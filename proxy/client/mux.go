@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"math/rand"
 	"sync"
@@ -49,7 +50,7 @@ stick2:
 
 func (rwc *smuxStickyReadWriteCloser) Close() error {
 	const maxPaddingLength = 512
-	padding := [maxPaddingLength + 8]byte{0, 0, 'A', 'B', 'C', 'D', 'E', 'F'}
+	padding := [maxPaddingLength + 8]byte{'A', 'B', 'C', 'D', 'E', 'F'} // for debugging
 	buf := rwc.stickToPayload(nil)
 	rwc.Write(append(buf, padding[:rand.Intn(maxPaddingLength)]...))
 	return rwc.ReadWriteCloser.Close()
@@ -62,13 +63,13 @@ func (rwc *smuxStickyReadWriteCloser) Write(p []byte) (int, error) {
 			// THE CONTENT OF THE BUFFER MIGHT CHANGE
 			// NEVER STORE THE POINTER TO HEADER, COPY THE HEADER INSTEAD
 			case 0:
-				//cmdSYN
+				// cmdSYN
 				header := make([]byte, 8)
 				copy(header, p)
 				rwc.synQueue <- header
 				return 8, nil
 			case 1:
-				//cmdFIN
+				// cmdFIN
 				header := make([]byte, 8)
 				copy(header, p)
 				rwc.finQueue <- header
@@ -142,7 +143,7 @@ func (m *MuxManager) newMuxClient() (*muxClientInfo, error) {
 	smuxConfig.KeepAliveDisabled = true
 	client, err := smux.Client(smuxRWC, smuxConfig)
 	common.Must(err)
-	log.Info("Mux TLS tunnel established, client id:", id)
+	log.Info(fmt.Sprintf("Mux TLS tunnel established with mux client %x", id))
 	return &muxClientInfo{
 		client:         client,
 		id:             id,
@@ -157,7 +158,7 @@ func (m *MuxManager) pickMuxClient() (*muxClientInfo, error) {
 	for _, info := range m.muxPool {
 		if info.client.IsClosed() {
 			delete(m.muxPool, info.id)
-			log.Info("Mux client", info.id, "is dead")
+			log.Info(fmt.Sprintf("Mux client %x is closed", info.id))
 			continue
 		}
 		if info.client.NumStreams() < m.config.Mux.Concurrency || m.config.Mux.Concurrency <= 0 {
@@ -192,10 +193,10 @@ func (m *MuxManager) DialToServer() (io.ReadWriteCloser, error) {
 		defer m.Unlock()
 		delete(m.muxPool, info.id)
 		info.client.Close()
-		log.Warn("Somthing wrong with mux client", info.id, ", closing")
+		log.Warn(common.NewError(fmt.Sprintf("Somthing wrong with mux client %x, closing", info.id)).Base(err))
 		return nil, err
 	}
-	log.Info("New mux conn established with client", info.id)
+	log.Info(fmt.Sprintf("New mux stream established with mux client %x", info.id))
 	info.lastActiveTime = time.Now()
 	return stream, nil
 }
@@ -217,21 +218,24 @@ func (m *MuxManager) checkAndCloseIdleMuxClient() {
 			for id, info := range m.muxPool {
 				if info.client.IsClosed() {
 					delete(m.muxPool, id)
-					log.Info("Mux", id, "is dead")
+					log.Info("Mux client", id, "is dead")
 				} else if info.client.NumStreams() == 0 && time.Now().Sub(info.lastActiveTime) > muxIdleDuration {
 					info.client.Close()
 					delete(m.muxPool, id)
-					log.Info("Mux", id, "is closed due to inactive")
+					log.Info("Mux client", id, "is closed due to inactive")
 				}
 			}
 			log.Debug("Current mux pool clients: ", len(m.muxPool))
+			for i, c := range m.muxPool {
+				log.Debug(fmt.Sprintf("    Client %x: %d/%d", i, c.client.NumStreams(), m.config.Mux.Concurrency))
+			}
 			m.Unlock()
 		case <-m.ctx.Done():
 			log.Debug("Shutting down mux manager..")
 			m.Lock()
 			for id, info := range m.muxPool {
 				info.client.Close()
-				log.Info("Mux client", id, "closed")
+				log.Debug("Mux client", id, "closed")
 			}
 			m.Unlock()
 			return

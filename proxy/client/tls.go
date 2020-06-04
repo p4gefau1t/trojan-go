@@ -342,13 +342,13 @@ func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
 			m.fingerprintsLock.Lock()
 			workingFingerprint = ""
 			m.fingerprintsLock.Unlock()
-			log.Error(common.NewError("Failed to set working fingerprint").Base(err))
+			log.Error(common.NewError("Failed to apply working fingerprint").Base(err))
 		} else {
 			protocol.SetRandomizedTimeout(tlsConn)
 			err = tlsConn.Handshake()
 			protocol.CancelTimeout(tlsConn)
 			if err != nil {
-				log.Debug("Working hello id failed, err:", err)
+				log.Error("Working hello id is no longer working, err:", err)
 			} else {
 				return tlsConn, nil
 			}
@@ -369,7 +369,7 @@ func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
 		tlsConn := utls.UClient(tcpConn, utlsConfig, utls.HelloCustom)
 
 		if err := tlsConn.ApplyPreset(spec); err != nil {
-			log.Error(common.NewError("Failed to set " + name + " fingerprint").Base(err))
+			log.Error(common.NewError("Failed to apply fingerprint:" + name).Base(err))
 			continue
 		}
 
@@ -377,11 +377,11 @@ func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
 		err = tlsConn.Handshake()
 		protocol.CancelTimeout(tlsConn)
 		if err != nil {
-			log.Debug("Fingerprint", name, "failed, err:", err)
+			log.Info("Handshaking with fingerprint:", name, "failed:", err)
 			continue // on tls Dial error keep trying
 		}
 
-		log.Debug("Avaliable hello id found:", name)
+		log.Info("Avaliable hello id found:", name)
 		m.fingerprintsLock.Lock()
 		m.workingFingerprint = name
 		m.fingerprintsLock.Unlock()
@@ -391,9 +391,13 @@ func (m *TLSManager) dialTLSWithFakeFingerprint() (*utls.UConn, error) {
 }
 
 func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
+	if m.config.TransportPlugin.Enabled {
+		// plain text
+		return m.dialTCP()
+	}
 	var transport net.Conn
 	if m.config.TLS.Fingerprint != "" {
-		//use utls fingerprints
+		// use utls fingerprints
 		tlsConn, err := m.dialTLSWithFakeFingerprint()
 		if err != nil {
 			return nil, err
@@ -401,7 +405,7 @@ func (m *TLSManager) DialToServer() (io.ReadWriteCloser, error) {
 		m.printConnInfo(tlsConn)
 		transport = tlsConn
 	} else {
-		//normal golang tls
+		// default golang tls library
 		tcpConn, err := m.dialTCP()
 		if err != nil {
 			return nil, err
