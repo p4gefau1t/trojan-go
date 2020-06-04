@@ -73,5 +73,14 @@
       <description>Trojan-Go基于gRPC实现了API，使用protobuf交换数据。客户端可获取流量和速度信息；服务端可获取各用户流量，速度，在线情况</description>
     </item>
     
+    <item>
+      <title>可插拔传输层插件开发</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/plugin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/plugin/</guid>
+      <description>Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 插件与Trojan-Go基于TCP Socket通讯，与Tr</description>
+    </item>
+    
   </channel>
 </rss>

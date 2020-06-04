@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6345">
+<meta itemprop="wordCount" content="7227">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.5.1</span>
+ <span class="version">Version 0.6.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -127,8 +127,8 @@
     <span style="color:#f92672">&#34;block&#34;</span>: [],
     <span style="color:#f92672">&#34;default_policy&#34;</span>: <span style="color:#e6db74">&#34;proxy&#34;</span>,
     <span style="color:#f92672">&#34;domain_strategy&#34;</span>: <span style="color:#e6db74">&#34;as_is&#34;</span>,
-    <span style="color:#f92672">&#34;geoip&#34;</span>: <span style="color:#e6db74">&#34;./geoip.dat&#34;</span>,
-    <span style="color:#f92672">&#34;geosite&#34;</span>: <span style="color:#e6db74">&#34;./geosite.dat&#34;</span>
+    <span style="color:#f92672">&#34;geoip&#34;</span>: <span style="color:#e6db74">&#34;geoip.dat&#34;</span>,
+    <span style="color:#f92672">&#34;geosite&#34;</span>: <span style="color:#e6db74">&#34;geosite.dat&#34;</span>
   },
   <span style="color:#f92672">&#34;websocket&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
@@ -149,6 +149,14 @@
       <span style="color:#f92672">&#34;plain_http_response&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
       <span style="color:#f92672">&#34;key_log&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
     }
+  },
+  <span style="color:#f92672">&#34;transport_plugin&#34;</span>: {
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
+    <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+    <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+    <span style="color:#f92672">&#34;plugin_option&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+    <span style="color:#f92672">&#34;arg&#34;</span>: [],
+    <span style="color:#f92672">&#34;env&#34;</span>: []
   },
   <span style="color:#f92672">&#34;forward_proxy&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
@@ -309,6 +317,24 @@
 <p><code>double_tls</code>是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
 <p><code>ssl</code>如果<code>double_tls</code>启用，这个选项用于配置第二层TLS，如果没有填写则使用全局的<code>ssl</code>填充。各字段定义与全局<code>ssl</code>相同。</p>
 <p><code>obfuscation_password</code>指定混淆密码。用于混淆内层连接以避免遭到CDN运营商识别。如果需要使用混淆，服务端和客户端必须设置相同的密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。</p>
+<h3 id="transport_plugin传输层插件选项"><code>transport_plugin</code>传输层插件选项</h3>
+<p><code>enabled</code>是否启用传输层插件替代TLS传输。一旦启用传输层插件支持，trojan-go将会把<strong>未经TLS加密的trojan协议流量明文传输给插件</strong>，以允许用户对流量进行自定义的混淆和加密。</p>
+<p><code>type</code>插件类型。目前支持的类型有</p>
+<ul>
+<li>
+<p>&ldquo;shadowsocks&rdquo;，支持符合<a href="https://github.com/shadowsocks/shadowsocks-org/issues/28">SIP003</a>标准的shadowsocks混淆插件。trojan-go将在启动时按照SIP003标准替换环境变量并修改自身配置(<code>remote_addr/remote_port/local_addr/local_port</code>)，使插件与远端直接通讯，而trojan-go仅监听/连接插件。</p>
+</li>
+<li>
+<p>&ldquo;plaintext&rdquo;，使用明文传输。选择此项，trojan-go不会修改任何地址配置(<code>remote_addr/remote_port/local_addr/local_port</code>)，也不会启动<code>command</code>中插件，仅移除最底层的TLS传输层并使用TCP明文传输。此选项目的为支持nginx接管TLS并进行分流，以及高级用户进行调试测试。<strong>请勿直接使用明文传输模式穿透防火墙。</strong></p>
+</li>
+<li>
+<p>&ldquo;other&rdquo;，其他插件。选择此项，trojan-go不会修改任何地址配置(<code>remote_addr/remote_port/local_addr/local_port</code>)，但会启动<code>command</code>中插件并传入参数和环境变量。</p>
+</li>
+</ul>
+<p><code>command</code>传输层插件可执行文件的路径。trojan-go将在启动时一并执行它。</p>
+<p><code>arg</code>传输层插件启动参数。这是一个列表，例如<code>[&quot;-config&quot;, &quot;test.json&quot;]</code>。</p>
+<p><code>env</code>传输层插件环境变量。这是一个列表，例如<code>[&quot;VAR1=foo&quot;, &quot;VAR2=bar&quot;]</code>。</p>
+<p><code>option</code>传输层插件配置（SIP003)。例如<code>&quot;obfs=http;obfs-host=www.baidu.com&quot;</code>。</p>
 <h3 id="tcp选项"><code>tcp</code>选项</h3>
 <p><code>no_delay</code>TCP封包是否直接发出而不等待缓冲区填满。</p>
 <p><code>keep_alive</code>是否启用TCP心跳存活检测。</p>
@@ -378,6 +404,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/plugin/">使用Shadowsocks插件/可插拔传输层</a></li>
 </ul>
   
 </li>
@@ -392,6 +419,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
 </ul>
   
 </li>
