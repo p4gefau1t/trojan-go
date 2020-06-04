@@ -33,8 +33,9 @@ func (m *AppManager) OpenAppConn(req *protocol.Request) (protocol.ConnSession, e
 		outboundConn, err = trojan.NewOutboundConnSession(req, transport, m.config, m.auth)
 	}
 	if err != nil {
-		return nil, common.NewError("Fail to start conn session").Base(err)
+		return nil, common.NewError("Fail to open conn session").Base(err)
 	}
+	log.Info("Tunneling to", req)
 	return outboundConn, nil
 }
 

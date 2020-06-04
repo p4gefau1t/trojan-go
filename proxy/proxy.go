@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"io"
+	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
@@ -32,6 +33,9 @@ func RelayConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
 	select {
 	case err := <-errChan:
 		if err != nil {
+			if err == io.EOF {
+				return
+			}
 			log.Debug(common.NewError("Conn relaying ends").Base(err))
 		}
 	case <-ctx.Done():
@@ -63,7 +67,13 @@ func RelayPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
 	go copyPacket(b, a)
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("Packet relaying ends").Base(err))
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return
+		}
+		if err == io.EOF {
+			return
+		}
+		log.Error(common.NewError("Packet relaying ends").Base(err))
 	case <-ctx.Done():
 		return
 	}
@@ -99,10 +109,10 @@ func RelayPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, 
 			}
 			to, found := table[policy]
 			if !found {
-				log.Debug("policy not found, skiped:", policy)
+				log.Debug("Policy not found, skiped:", policy)
 				continue
 			}
-			log.Debug("udp packet ", req, "routing policy:", policy)
+			log.Debug("UDP packet ", req, "routing policy:", policy)
 			_, err = to.WritePacket(req, packet)
 			if err != nil {
 				errChan <- err
@@ -117,7 +127,13 @@ func RelayPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, 
 	go copyToDst()
 	select {
 	case err := <-errChan:
-		log.Debug(common.NewError("Packet relaying with router ends").Base(err))
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return
+		}
+		if err == io.EOF {
+			return
+		}
+		log.Error(common.NewError("Packet relaying with router ends").Base(err))
 	case <-ctx.Done():
 		return
 	}
@@ -148,7 +164,7 @@ func RegisterAPI(t conf.RunType, r APIRunner) {
 func RunAPIService(t conf.RunType, ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
 	r, ok := apis[t]
 	if !ok {
-		return common.NewError("API module for" + string(t) + "not found")
+		return common.NewError("API module for type " + string(t) + " not found")
 	}
 	return r(ctx, config, auth)
 }

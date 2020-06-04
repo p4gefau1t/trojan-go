@@ -160,7 +160,7 @@ func (s *Server) ListenTCP(errChan chan error) {
 		}
 		log.Info("Conn accepted from", conn.RemoteAddr())
 		go func(conn net.Conn) {
-			if s.config.TLS.ServePlainText {
+			if s.config.TransportPlugin.Enabled {
 				s.handleConn(conn)
 				return
 			}
@@ -229,11 +229,22 @@ func (s *Server) ListenTCP(errChan chan error) {
 }
 
 func (s *Server) Run() error {
-	errChan := make(chan error, 2)
+	errChan := make(chan error, 3)
 	if s.config.API.Enabled {
 		log.Info("API enabled")
 		go func() {
 			errChan <- proxy.RunAPIService(conf.Server, s.ctx, s.config, s.auth)
+		}()
+	}
+	if s.config.TransportPlugin.Enabled && s.config.TransportPlugin.Cmd != nil {
+		go func() {
+			log.Info("Initiating plugin...")
+			select {
+			case errChan <- s.config.TransportPlugin.Cmd.Run():
+			case <-s.ctx.Done():
+				s.config.TransportPlugin.Cmd.Process.Kill()
+				log.Info("Plugin killed")
+			}
 		}()
 	}
 	go s.ListenTCP(errChan)

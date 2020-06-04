@@ -76,8 +76,8 @@ weight: 30
     "block": [],
     "default_policy": "proxy",
     "domain_strategy": "as_is",
-    "geoip": "./geoip.dat",
-    "geosite": "./geosite.dat"
+    "geoip": "geoip.dat",
+    "geosite": "geosite.dat"
   },
   "websocket": {
     "enabled": false,
@@ -98,6 +98,14 @@ weight: 30
       "plain_http_response": "",
       "key_log": ""
     }
+  },
+  "transport_plugin": {
+    "enabled": false,
+    "type": "",
+    "command": "",
+    "plugin_option": "",
+    "arg": [],
+    "env": []
   },
   "forward_proxy": {
     "enabled": false,
@@ -275,6 +283,26 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 ```ssl```如果```double_tls```启用，这个选项用于配置第二层TLS，如果没有填写则使用全局的```ssl```填充。各字段定义与全局```ssl```相同。
 
 ```obfuscation_password```指定混淆密码。用于混淆内层连接以避免遭到CDN运营商识别。如果需要使用混淆，服务端和客户端必须设置相同的密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+
+### ```transport_plugin```传输层插件选项
+
+```enabled```是否启用传输层插件替代TLS传输。一旦启用传输层插件支持，trojan-go将会把**未经TLS加密的trojan协议流量明文传输给插件**，以允许用户对流量进行自定义的混淆和加密。
+
+```type```插件类型。目前支持的类型有
+
+- "shadowsocks"，支持符合[SIP003](https://github.com/shadowsocks/shadowsocks-org/issues/28)标准的shadowsocks混淆插件。trojan-go将在启动时按照SIP003标准替换环境变量并修改自身配置(```remote_addr/remote_port/local_addr/local_port```)，使插件与远端直接通讯，而trojan-go仅监听/连接插件。
+
+- "plaintext"，使用明文传输。选择此项，trojan-go不会修改任何地址配置(```remote_addr/remote_port/local_addr/local_port```)，也不会启动```command```中插件，仅移除最底层的TLS传输层并使用TCP明文传输。此选项目的为支持nginx接管TLS并进行分流，以及高级用户进行调试测试。**请勿直接使用明文传输模式穿透防火墙。**
+
+- "other"，其他插件。选择此项，trojan-go不会修改任何地址配置(```remote_addr/remote_port/local_addr/local_port```)，但会启动```command```中插件并传入参数和环境变量。
+
+```command```传输层插件可执行文件的路径。trojan-go将在启动时一并执行它。
+
+```arg```传输层插件启动参数。这是一个列表，例如```["-config", "test.json"]```。
+
+```env```传输层插件环境变量。这是一个列表，例如```["VAR1=foo", "VAR2=bar"]```。
+
+```option```传输层插件配置（SIP003)。例如```"obfs=http;obfs-host=www.baidu.com"```。
 
 ### ```tcp```选项
 

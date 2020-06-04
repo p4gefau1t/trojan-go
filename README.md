@@ -64,7 +64,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 
 - 基于gRPC的API支持，支持动态用户管理和流量速度限制
 
-- 服务端支持处理Trojan协议明文（TCP明文传输），以适应前置nginx等服务器的场景
+- 可插拔传输层，可将TLS替换为其他协议或明文传输。同时有完整的Shadowsocks混淆插件支持。
 
 ## 图形界面客户端
 
@@ -336,6 +336,38 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 ```
 
 所需要的geoip.dat和geosite.dat已经包含在release的压缩包中。它们来自v2ray的[domain-list-community](https://github.com/v2ray/domain-list-community)和[geoip](https://github.com/v2ray/geoip)。
+
+完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
+
+## 混淆插件
+
+Trojan-Go支持可插拔的传输层插件，并支持Shadowsocks SIP003标准的混淆插件。下面是使用v2ray-plugin的一个例子：
+
+**此配置并不安全，仅用作演示**
+
+服务端配置：
+
+```json
+"transport_plugin": {
+        "enabled": true,
+        "type": "shadowsocks",
+        "command": "./v2ray-plugin",
+        "arg": ["-server", "-host", "www.baidu.com"]
+}
+```
+
+客户端配置：
+
+```json
+"transport_plugin": {
+    "enabled": true,
+    "type": "shadowsocks",
+    "command": "./v2ray-plugin",
+    "arg": ["-host", "www.baidu.com"]
+}
+```
+
+完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 
 ## 构建
 

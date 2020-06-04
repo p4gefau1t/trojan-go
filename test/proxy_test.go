@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -128,6 +130,10 @@ func getPasswords(password string) []string {
 
 func getBasicServerConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
+		LocalHost:     "0.0.0.0",
+		LocalPort:     4445,
+		RemoteHost:    "127.0.0.1",
+		RemotePort:    10080,
 		LocalAddress:  common.NewAddress("0.0.0.0", 4445, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 10080, "tcp"),
 		TLS:           getTLSConfig(),
@@ -140,6 +146,10 @@ func getBasicServerConfig() *conf.GlobalConfig {
 
 func getBasicClientConfig() *conf.GlobalConfig {
 	config := &conf.GlobalConfig{
+		LocalHost:     "0.0.0.0",
+		LocalPort:     4444,
+		RemoteHost:    "127.0.0.1",
+		RemotePort:    4445,
 		LocalAddress:  common.NewAddress("0.0.0.0", 4444, "tcp"),
 		RemoteAddress: common.NewAddress("127.0.0.1", 4445, "tcp"),
 		TLS:           getTLSConfig(),
@@ -231,6 +241,58 @@ func addDNSConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
 		"dot://223.5.5.5",
 		"8.8.8.8",
 	}
+	return config
+}
+
+func addServerPluginConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.TransportPlugin.Enabled = true
+	config.TransportPlugin.Command = "v2ray-plugin"
+	config.TransportPlugin.Arg = []string{"-server"}
+
+	trojanHost := "127.0.0.1"
+	trojanPort := common.PickPort("tcp", trojanHost)
+	config.TransportPlugin.Env = append(
+		config.TransportPlugin.Env,
+		"SS_REMOTE_HOST="+config.LocalHost,
+		"SS_REMOTE_PORT="+strconv.FormatInt(int64(config.LocalPort), 10),
+		"SS_LOCAL_HOST="+trojanHost,
+		"SS_LOCAL_PORT="+strconv.FormatInt(int64(trojanPort), 10),
+	)
+
+	config.LocalHost = trojanHost
+	config.LocalPort = trojanPort
+	config.LocalAddress = common.NewAddress(config.LocalHost, config.LocalPort, "tcp")
+
+	cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
+	cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	config.TransportPlugin.Cmd = cmd
+	return config
+}
+
+func addClientPluginConfig(config *conf.GlobalConfig) *conf.GlobalConfig {
+	config.TransportPlugin.Enabled = true
+	config.TransportPlugin.Command = "v2ray-plugin"
+	pluginHost := "127.0.0.1"
+	pluginPort := common.PickPort("tcp", pluginHost)
+	config.TransportPlugin.Env = append(
+		config.TransportPlugin.Env,
+		"SS_LOCAL_HOST="+pluginHost,
+		"SS_LOCAL_PORT="+strconv.FormatInt(int64(pluginPort), 10),
+		"SS_REMOTE_HOST="+config.RemoteHost,
+		"SS_REMOTE_PORT="+strconv.FormatInt(int64(config.RemotePort), 10),
+	)
+
+	config.RemoteHost = pluginHost
+	config.RemotePort = pluginPort
+	config.RemoteAddress = common.NewAddress(config.RemoteHost, config.RemotePort, "tcp")
+
+	cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
+	cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	config.TransportPlugin.Cmd = cmd
 	return config
 }
 
@@ -551,4 +613,10 @@ func TestDNS(t *testing.T) {
 	fmt.Println(string(buf[:]))
 	conn.Close()
 	cancel()
+}
+
+func TestPlugin(t *testing.T) {
+	serverConfig := addServerPluginConfig(getBasicServerConfig())
+	clientConfig := addClientPluginConfig(getBasicClientConfig())
+	CheckClientServer(t, clientConfig, serverConfig)
 }

@@ -50,14 +50,14 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 	defer inboundConn.Close()
 
 	if req.Command == protocol.Associate {
-		//setting up the bind address to respond
-		//listenUDP() will handle the incoming udp packets
+		// setting up the bind address to respond
+		// listenUDP() will handle the incoming udp packets
 		localIP, err := c.config.LocalAddress.ResolveIP()
 		if err != nil {
 			log.Error(common.NewError("Invalid local address").Base(err))
 			return
 		}
-		//bind port and IP
+		// bind port and IP
 		req.IP = localIP
 		req.Port = c.config.LocalAddress.Port
 		if localIP.To4() != nil {
@@ -66,7 +66,7 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 			req.AddressType = common.IPv6
 		}
 
-		//notify listenUDP to get ready for relaying udp packets
+		// notify listenUDP to get ready for relaying udp packets
 		c.associated.Signal()
 		log.Debug("UDP associated to", req)
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
@@ -74,7 +74,6 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 			return
 		}
 
-		//stop relaying UDP once TCP connection is closed
 		var buf [1]byte
 		_, err = rwc.Read(buf[:])
 		log.Debug(common.NewError("UDP conn ends").Base(err))
@@ -91,7 +90,6 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		log.Error(err)
 		return
 	}
-	log.Info("Conn tunneling to", req)
 	log.Debug("Policy", policy)
 	if policy == router.Bypass {
 		outboundConn, err := direct.NewOutboundConnSession(c.ctx, req, c.config)
@@ -99,11 +97,11 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 			log.Error(err)
 			return
 		}
-		log.Info("[Bypass] conn to", req)
+		log.Info("[Bypass]", req)
 		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 		return
 	} else if policy == router.Block {
-		log.Info("[Block] conn to", req)
+		log.Info("[Block]", req)
 		return
 	}
 	outboundConn, err := c.appMan.OpenAppConn(req)
@@ -125,7 +123,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 		return
 	}
 
-	if inboundConn != nil { //CONNECT requests
+	if inboundConn != nil { // CONNECT requests
 		defer inboundConn.Close()
 
 		if err := inboundConn.(protocol.NeedRespond).Respond(); err != nil {
@@ -144,11 +142,11 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 				log.Error(err)
 				return
 			}
-			log.Info("[Bypass] conn to", req)
+			log.Info("[Bypass]", req)
 			proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 			return
 		} else if policy == router.Block {
-			log.Info("[Block] conn to", req)
+			log.Info("[Block]", req)
 			return
 		}
 
@@ -158,7 +156,6 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 			return
 		}
 		defer outboundConn.Close()
-		log.Info("Conn tunneling to", req)
 		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 	} else { //GET/POST requests
 		defer inboundPacket.Close()
@@ -212,10 +209,14 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 						for {
 							n, err := outboundConn.Read(buf[:])
 							if err != nil {
-								log.Debug(err)
-								return
+								if err == io.ErrShortBuffer {
+									log.Debug("Short buffer")
+								} else {
+									log.Error(err)
+									return
+								}
 							}
-							if _, err = inboundPacket.WritePacket(nil, buf[0:n]); err != nil {
+							if _, err = inboundPacket.WritePacket(nil, buf[:n]); err != nil {
 								log.Debug(err)
 								return
 							}
@@ -308,7 +309,18 @@ func (c *Client) listenTCP(errChan chan error) {
 
 func (c *Client) Run() error {
 	log.Info("Trojan-Go client is listening on", c.config.LocalAddress.String())
-	errChan := make(chan error, 3)
+	errChan := make(chan error, 4)
+	if c.config.TransportPlugin.Enabled && c.config.TransportPlugin.Cmd != nil {
+		go func() {
+			log.Info("Initiating plugin...")
+			select {
+			case errChan <- c.config.TransportPlugin.Cmd.Run():
+			case <-c.ctx.Done():
+				c.config.TransportPlugin.Cmd.Process.Kill()
+				log.Info("Plugin killed")
+			}
+		}()
+	}
 	go c.listenUDP(errChan)
 	go c.listenTCP(errChan)
 	if c.config.API.Enabled {

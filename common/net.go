@@ -175,3 +175,14 @@ func HumanFriendlyTraffic(bytes uint64) string {
 	}
 	return fmt.Sprintf("%.2f GiB", float32(bytes)/GiB)
 }
+
+func PickPort(network string, host string) int {
+	l, err := net.Listen(network, host+":0")
+	Must(err)
+	defer l.Close()
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	Must(err)
+	p, err := strconv.ParseInt(port, 10, 32)
+	Must(err)
+	return int(p)
+}
