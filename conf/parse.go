@@ -323,6 +323,7 @@ func loadClientConfig(config *GlobalConfig) error {
 	}
 
 	if config.TransportPlugin.Enabled {
+		log.Warn("Trojan-Go will use transport plugin and work in plain text mode")
 		switch config.TransportPlugin.Type {
 		case "plaintext":
 			// do nothing
@@ -335,6 +336,7 @@ func loadClientConfig(config *GlobalConfig) error {
 				"SS_LOCAL_PORT="+strconv.FormatInt(int64(pluginPort), 10),
 				"SS_REMOTE_HOST="+config.RemoteHost,
 				"SS_REMOTE_PORT="+strconv.FormatInt(int64(config.RemotePort), 10),
+				"SS_PLUGIN_OPTIONS="+config.TransportPlugin.PluginOption,
 			)
 			config.RemoteHost = pluginHost
 			config.RemotePort = pluginPort
@@ -342,6 +344,12 @@ func loadClientConfig(config *GlobalConfig) error {
 			log.Debug("New remote address", config.RemoteAddress.String())
 			log.Debug("Plugin env", config.TransportPlugin.Env)
 
+			cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			config.TransportPlugin.Cmd = cmd
+		case "other":
 			cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
 			cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
 			cmd.Stdout = os.Stdout
@@ -388,7 +396,7 @@ func loadServerConfig(config *GlobalConfig) error {
 
 	// transport plugin settings
 	if config.TransportPlugin.Enabled {
-		log.Warn("Server will use transport plugin and work in plain text mode. TLS config is ignored.")
+		log.Warn("Trojan-Go will use transport plugin and work in plain text mode")
 		switch config.TransportPlugin.Type {
 		case "shadowsocks":
 			trojanHost := "127.0.0.1"
@@ -399,6 +407,7 @@ func loadServerConfig(config *GlobalConfig) error {
 				"SS_REMOTE_PORT="+strconv.FormatInt(int64(config.LocalPort), 10),
 				"SS_LOCAL_HOST="+trojanHost,
 				"SS_LOCAL_PORT="+strconv.FormatInt(int64(trojanPort), 10),
+				"SS_PLUGIN_OPTIONS="+config.TransportPlugin.PluginOption,
 			)
 
 			config.LocalHost = trojanHost
@@ -407,6 +416,12 @@ func loadServerConfig(config *GlobalConfig) error {
 			log.Debug("New local address", config.RemoteAddress.String())
 			log.Debug("Plugin env", config.TransportPlugin.Env)
 
+			cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			config.TransportPlugin.Cmd = cmd
+		case "other":
 			cmd := exec.Command(config.TransportPlugin.Command, config.TransportPlugin.Arg...)
 			cmd.Env = append(cmd.Env, config.TransportPlugin.Env...)
 			cmd.Stdout = os.Stdout

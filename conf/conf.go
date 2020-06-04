@@ -154,12 +154,12 @@ type APIConfig struct {
 }
 
 type TransportPluginConfig struct {
-	Enabled  bool     `json:"enabled"`
-	Type     string   `json:"type"`
-	Command  string   `json:"command"`
-	SSOption string   `json:"ss_option"`
-	Arg      []string `json:"arg"`
-	Env      []string `json:"env"`
+	Enabled      bool     `json:"enabled"`
+	Type         string   `json:"type"`
+	Command      string   `json:"command"`
+	PluginOption string   `json:"plugin_option"`
+	Arg          []string `json:"arg"`
+	Env          []string `json:"env"`
 
 	Cmd *exec.Cmd
 }
