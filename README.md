@@ -20,6 +20,8 @@
 
 支持基于ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
 
+支持可插拔的[传输层插件](#传输层插件)，允许替换TLS，实现其他流量混淆和加密。
+
 预编译的版本可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。直接运行解压得到的执行文件即可，无其他组件依赖。
 
 如果你遇到配置和使用方面的问题，发现了软件Bug，或是有更好的想法，欢迎加入Trojan-Go的[Telegram交流反馈群](https://t.me/trojan_go_chat)。
@@ -339,9 +341,11 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 
-## 混淆插件
+<a name="传输层插件"></a>
 
-Trojan-Go支持可插拔的传输层插件，并支持Shadowsocks SIP003标准的混淆插件。下面是使用v2ray-plugin的一个例子：
+## 传输层插件
+
+Trojan-Go支持可插拔的传输层插件，并支持Shadowsocks [SIP003](https://shadowsocks.org/en/spec/Plugin.html)标准的混淆插件。下面是使用v2ray-plugin的一个例子：
 
 **此配置并不安全，仅用作演示**
 

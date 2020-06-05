@@ -48,6 +48,6 @@ Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何�
 
 注意，v2ray-plugin插件需要指定```-server```参数来区分客户端和服务端。更多关于该插件详细的说明，参考v2ray-plugin的文档。
 
-启动Trojan-Go后，你可以看到v2ray-plugin启动的输出。插件将回把流量伪装为websocket流量并传输。
+启动Trojan-Go后，你可以看到v2ray-plugin启动的输出。插件将把流量伪装为Websocket流量并传输。
 
 非SIP003标准的插件可能需要不同的配置，你可以指定```type```为"other"，并自行指定插件地址，插件启动参数、环境变量。

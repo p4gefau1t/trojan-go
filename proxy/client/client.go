@@ -42,6 +42,7 @@ type Client struct {
 func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 	rwc := common.NewRewindReadWriteCloser(conn)
 	defer rwc.Close()
+
 	inboundConn, req, err := socks.NewInboundConnSession(rwc)
 	if err != nil {
 		log.Error(common.NewError("Failed to handle socks requests").Base(err))
@@ -90,7 +91,6 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 		log.Error(err)
 		return
 	}
-	log.Debug("Policy", policy)
 	if policy == router.Bypass {
 		outboundConn, err := direct.NewOutboundConnSession(c.ctx, req, c.config)
 		if err != nil {
@@ -98,19 +98,19 @@ func (c *Client) handleSocksConn(conn io.ReadWriteCloser) {
 			return
 		}
 		log.Info("[Bypass]", req)
+		defer outboundConn.Close()
 		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
-		return
 	} else if policy == router.Block {
 		log.Info("[Block]", req)
-		return
+	} else {
+		outboundConn, err := c.appMan.OpenAppConn(req)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		defer outboundConn.Close()
+		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 	}
-	outboundConn, err := c.appMan.OpenAppConn(req)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	defer outboundConn.Close()
-	proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
 }
 
 func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
@@ -119,7 +119,6 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 	inboundConn, req, inboundPacket, err := http.NewHTTPInbound(rwc)
 	if err != nil {
 		log.Error(common.NewError("Failed to handle HTTP requests").Base(err))
-		rwc.Close()
 		return
 	}
 
@@ -157,7 +156,7 @@ func (c *Client) handleHTTPConn(conn io.ReadWriteCloser) {
 		}
 		defer outboundConn.Close()
 		proxy.RelayConn(c.ctx, inboundConn, outboundConn, c.config.BufferSize)
-	} else { //GET/POST requests
+	} else { // GET/POST requests
 		defer inboundPacket.Close()
 		packetChan := make(chan *packetInfo, 512)
 		errChan := make(chan error, 1)

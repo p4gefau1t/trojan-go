@@ -10,34 +10,18 @@ import (
 
 	"github.com/LiamHaworth/go-tproxy"
 	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/protocol"
 )
 
 type TProxyInboundConnSession struct {
 	reqeust *protocol.Request
-	conn    net.Conn
-}
-
-func (i *TProxyInboundConnSession) Read(p []byte) (int, error) {
-	return i.conn.Read(p)
-}
-
-func (i *TProxyInboundConnSession) Write(p []byte) (int, error) {
-	return i.conn.Write(p)
-}
-
-func (i *TProxyInboundConnSession) Close() error {
-	return i.conn.Close()
-}
-
-func (i *TProxyInboundConnSession) GetRequest() *protocol.Request {
-	return i.reqeust
+	net.Conn
 }
 
 func (i *TProxyInboundConnSession) parseRequest() error {
-	addr, err := getOriginalTCPDest(i.conn.(*net.TCPConn))
+	tcpConn := i.Conn.(*tproxy.Conn).TCPConn
+	addr, err := getOriginalTCPDest(tcpConn)
 	if err != nil {
 		return common.NewError("Failed to get original dst").Base(err)
 	}
@@ -59,7 +43,7 @@ func (i *TProxyInboundConnSession) parseRequest() error {
 
 func NewInboundConnSession(conn net.Conn) (protocol.ConnSession, *protocol.Request, error) {
 	i := &TProxyInboundConnSession{
-		conn: conn,
+		Conn: conn,
 	}
 	if err := i.parseRequest(); err != nil {
 		return nil, nil, common.NewError("Failed to parse request").Base(err)
@@ -73,7 +57,7 @@ type udpSession struct {
 	expire time.Time
 }
 
-type NATInboundPacketSession struct {
+type TProxyInboundPacketSession struct {
 	request      *protocol.Request
 	conn         *net.UDPConn
 	tableMutex   sync.Mutex
@@ -82,7 +66,7 @@ type NATInboundPacketSession struct {
 	cancel       context.CancelFunc
 }
 
-func (i *NATInboundPacketSession) cleanExpiredSession() {
+func (i *TProxyInboundPacketSession) cleanExpiredSession() {
 	for {
 		i.tableMutex.Lock()
 		now := time.Now()
@@ -101,7 +85,7 @@ func (i *NATInboundPacketSession) cleanExpiredSession() {
 	}
 }
 
-func (i *NATInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
+func (i *TProxyInboundPacketSession) WritePacket(req *protocol.Request, packet []byte) (int, error) {
 	i.tableMutex.Lock()
 	defer i.tableMutex.Unlock()
 	session, found := i.sessionTable[req.String()]
@@ -116,7 +100,7 @@ func (i *NATInboundPacketSession) WritePacket(req *protocol.Request, packet []by
 	return conn.Write(packet)
 }
 
-func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
+func (i *TProxyInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error) {
 	buf := [protocol.MaxUDPPacketSize]byte{}
 	n, src, dst, err := tproxy.ReadFromUDP(i.conn, buf[:])
 	if err != nil {
@@ -149,26 +133,14 @@ func (i *NATInboundPacketSession) ReadPacket() (*protocol.Request, []byte, error
 	return req, buf[0:n], nil
 }
 
-func (i *NATInboundPacketSession) Close() error {
+func (i *TProxyInboundPacketSession) Close() error {
 	i.cancel()
 	return nil
 }
 
-func NewInboundPacketSession(ctx context.Context, config *conf.GlobalConfig) (protocol.PacketSession, error) {
-	localIP, err := config.LocalAddress.ResolveIP()
-	if err != nil {
-		return nil, err
-	}
-	addr := &net.UDPAddr{
-		IP:   localIP,
-		Port: int(config.LocalAddress.Port),
-	}
-	conn, err := tproxy.ListenUDP("udp", addr)
-	if err != nil {
-		return nil, common.NewError("Failed to listen udp addr").Base(err)
-	}
+func NewInboundPacketSession(ctx context.Context, conn *net.UDPConn) (protocol.PacketSession, error) {
 	ctx, cancel := context.WithCancel(ctx)
-	i := &NATInboundPacketSession{
+	i := &TProxyInboundPacketSession{
 		conn:         conn,
 		sessionTable: make(map[string]*udpSession, 1024),
 		ctx:          ctx,

@@ -290,7 +290,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```type```插件类型。目前支持的类型有
 
-- "shadowsocks"，支持符合[SIP003](https://github.com/shadowsocks/shadowsocks-org/issues/28)标准的shadowsocks混淆插件。trojan-go将在启动时按照SIP003标准替换环境变量并修改自身配置(```remote_addr/remote_port/local_addr/local_port```)，使插件与远端直接通讯，而trojan-go仅监听/连接插件。
+- "shadowsocks"，支持符合[SIP003](https://shadowsocks.org/en/spec/Plugin.html)标准的shadowsocks混淆插件。trojan-go将在启动时按照SIP003标准替换环境变量并修改自身配置(```remote_addr/remote_port/local_addr/local_port```)，使插件与远端直接通讯，而trojan-go仅监听/连接插件。
 
 - "plaintext"，使用明文传输。选择此项，trojan-go不会修改任何地址配置(```remote_addr/remote_port/local_addr/local_port```)，也不会启动```command```中插件，仅移除最底层的TLS传输层并使用TCP明文传输。此选项目的为支持nginx接管TLS并进行分流，以及高级用户进行调试测试。**请勿直接使用明文传输模式穿透防火墙。**
 

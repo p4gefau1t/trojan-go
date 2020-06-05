@@ -6,7 +6,7 @@ weight: 150
 
 Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。
 
-插件与Trojan-Go基于TCP Socket通讯，与Trojan-Go本身不存在任何耦合关系，你可以使用任何你喜欢的语言和设计模式进行开发。我们建议的参照[SIP003](https://github.com/shadowsocks/shadowsocks-org/issues/28)标准进行开发。如此开发的插件可以同时用于Trojan-Go和Shadowsocks。
+插件与Trojan-Go基于TCP Socket通讯，与Trojan-Go本身不存在任何耦合关系，你可以使用任何你喜欢的语言和设计模式进行开发。我们建议的参照[SIP003](https://shadowsocks.org/en/spec/Plugin.html)标准进行开发。如此开发的插件可以同时用于Trojan-Go和Shadowsocks。
 
 Trojan-Go开启插件功能后，仅使用TCP进行传输（明文）。你的插件只需要处理入站的TCP请求即可。你可以将这些TCP流量转换成任何你喜欢的流量格式，如QUIC，HTTP，甚至是ICMP。
 

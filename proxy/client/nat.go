@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	gotproxy "github.com/LiamHaworth/go-tproxy"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -18,13 +19,13 @@ import (
 )
 
 type NAT struct {
-	config        *conf.GlobalConfig
-	ctx           context.Context
-	cancel        context.CancelFunc
-	inboundPacket protocol.PacketSession
-	listener      net.Listener
-	auth          stat.Authenticator
-	appMan        *AppManager
+	config      *conf.GlobalConfig
+	ctx         context.Context
+	cancel      context.CancelFunc
+	tcpListener net.Listener
+	udpListener net.PacketConn
+	auth        stat.Authenticator
+	appMan      *AppManager
 }
 
 func (n *NAT) handleConn(conn net.Conn) {
@@ -40,18 +41,29 @@ func (n *NAT) handleConn(conn net.Conn) {
 		return
 	}
 	defer outboundConn.Close()
-	log.Info("[Tproxy] conn from", conn.RemoteAddr(), "tunneling to", req)
+	log.Info("[TProxy] conn from", conn.RemoteAddr(), "tunneling to", req)
 	proxy.RelayConn(n.ctx, inboundConn, outboundConn, n.config.BufferSize)
 }
 
 func (n *NAT) listenUDP(errChan chan error) {
-	inboundPacket, err := tproxy.NewInboundPacketSession(n.ctx, n.config)
+	ip, err := n.config.LocalAddress.ResolveIP()
+	if err != nil {
+		errChan <- err
+	}
+
+	// listen with IP_TRANSPARENT option
+	listener, err := gotproxy.ListenUDP("udp", &net.UDPAddr{
+		IP:   ip,
+		Port: n.config.LocalAddress.Port,
+	})
+
+	inboundPacket, err := tproxy.NewInboundPacketSession(n.ctx, listener)
 	if err != nil {
 		errChan <- err
 		return
 	}
-	n.inboundPacket = inboundPacket
 	defer inboundPacket.Close()
+
 	req := &protocol.Request{
 		Address: &common.Address{
 			DomainName:  "UDP_CONN",
@@ -59,6 +71,7 @@ func (n *NAT) listenUDP(errChan chan error) {
 		},
 		Command: protocol.Associate,
 	}
+
 	for {
 		outboundConn, err := n.appMan.OpenAppConn(req)
 		if err != nil {
@@ -74,15 +87,25 @@ func (n *NAT) listenUDP(errChan chan error) {
 }
 
 func (n *NAT) listenTCP(errChan chan error) {
-	listener, err := net.Listen("tcp", n.config.LocalAddress.String())
+	ip, err := n.config.LocalAddress.ResolveIP()
+	if err != nil {
+		errChan <- err
+	}
+
+	// listen with IP_TRANSPARENT option
+	listener, err := gotproxy.ListenTCP("tcp", &net.TCPAddr{
+		IP:   ip,
+		Port: n.config.LocalAddress.Port,
+	})
 	if err != nil {
 		errChan <- err
 		return
 	}
-	n.listener = listener
+	n.tcpListener = listener
 	defer listener.Close()
+
 	for {
-		conn, err := n.listener.Accept()
+		conn, err := n.tcpListener.Accept()
 		if err != nil {
 			select {
 			case <-n.ctx.Done():
@@ -112,11 +135,11 @@ func (n *NAT) Run() error {
 func (n *NAT) Close() error {
 	log.Info("Shutting down NAT...")
 	n.cancel()
-	if n.listener != nil {
-		n.listener.Close()
+	if n.tcpListener != nil {
+		n.tcpListener.Close()
 	}
-	if n.inboundPacket != nil {
-		n.inboundPacket.Close()
+	if n.udpListener != nil {
+		n.udpListener.Close()
 	}
 	return nil
 }
