@@ -326,7 +326,16 @@ func loadClientConfig(config *GlobalConfig) error {
 		log.Warn("Trojan-Go will use transport plugin and work in plain text mode")
 		switch config.TransportPlugin.Type {
 		case "plaintext":
-			// do nothing
+			if config.Websocket.Enabled && config.Websocket.DoubleTLS {
+				if config.Websocket.TLS.CertPath == "" {
+					log.Warn("Empty double TLS settings, using default ssl settings")
+					config.Websocket.TLS = config.TLS
+				} else {
+					if err := loadCert(&config.Websocket.TLS); err != nil {
+						return err
+					}
+				}
+			}
 		case "shadowsocks":
 			pluginHost := "127.0.0.1"
 			pluginPort := common.PickPort("tcp", pluginHost)
@@ -428,7 +437,15 @@ func loadServerConfig(config *GlobalConfig) error {
 			cmd.Stderr = os.Stdout
 			config.TransportPlugin.Cmd = cmd
 		case "plaintext":
-			// do nothing
+			if config.Websocket.Enabled && config.Websocket.DoubleTLS {
+				if config.Websocket.TLS.CertPath == "" {
+					log.Warn("Empty double TLS settings, using global TLS settings")
+					config.Websocket.TLS = config.TLS
+				}
+				if err := loadCertAndKey(&config.Websocket.TLS); err != nil {
+					return err
+				}
+			}
 		default:
 			return common.NewError("Invalid plugin type: " + config.TransportPlugin.Type)
 		}
