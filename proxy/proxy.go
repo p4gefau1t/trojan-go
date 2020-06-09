@@ -4,167 +4,181 @@ import (
 	"context"
 	"io"
 	"net"
+	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
-	"github.com/p4gefau1t/trojan-go/protocol"
-	"github.com/p4gefau1t/trojan-go/router"
-	"github.com/p4gefau1t/trojan-go/stat"
+	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
-type Buildable interface {
-	Build(config *conf.GlobalConfig) (common.Runnable, error)
+const Name = "PROXY"
+
+const (
+	MaxPacketSize = 1024 * 8
+)
+
+// Proxy relay connections and packets
+type Proxy struct {
+	sources []tunnel.Server
+	sink    tunnel.Client
+	errChan chan error
+	ctx     context.Context
+	cancel  context.CancelFunc
 }
 
-func RelayConn(ctx context.Context, a, b io.ReadWriter, bufferSize int) {
-	if a == nil || b == nil {
-		log.Debug("Empty RW")
-		return
+func (p *Proxy) Run() error {
+	p.relayConnLoop()
+	p.relayPacketLoop()
+	return <-p.errChan
+}
+
+func (p *Proxy) Close() error {
+	p.cancel()
+	for _, source := range p.sources {
+		source.Close()
 	}
-	errChan := make(chan error, 2)
-	copyConn := func(dst io.Writer, src io.Reader) {
-		buf := make([]byte, bufferSize)
-		_, err := io.CopyBuffer(dst, src, buf)
-		errChan <- err
+	return p.sink.Close()
+}
+
+func (p *Proxy) relayConnLoop() {
+	for _, source := range p.sources {
+		go func(source tunnel.Server) {
+			for {
+				inbound, err := source.AcceptConn(nil)
+				if err != nil {
+					select {
+					case <-p.ctx.Done():
+						log.Debug("exiting")
+						return
+					default:
+					}
+					log.Error(common.NewError("failed to accept connection").Base(err))
+					continue
+				}
+				go func(inbound tunnel.Conn) {
+					defer inbound.Close()
+					outbound, err := p.sink.DialConn(inbound.Metadata().Address, nil)
+					if err != nil {
+						log.Error(err)
+						return
+					}
+					defer outbound.Close()
+					log.Debug("relaying connection")
+					errChan := make(chan error, 2)
+					copyConn := func(a, b net.Conn) {
+						_, err := io.Copy(a, b)
+						errChan <- err
+						return
+					}
+					go copyConn(inbound, outbound)
+					go copyConn(outbound, inbound)
+					err = <-errChan
+					if err != nil {
+						log.Error(err)
+					}
+					log.Debug("connection relay ends")
+				}(inbound)
+			}
+		}(source)
 	}
-	go copyConn(a, b)
-	go copyConn(b, a)
-	select {
-	case err := <-errChan:
+}
+
+func (p *Proxy) relayPacketLoop() {
+	for _, source := range p.sources {
+		go func(source tunnel.Server) {
+			for {
+				inbound, err := source.AcceptPacket(nil)
+				if err != nil {
+					select {
+					case <-p.ctx.Done():
+						log.Debug("exiting")
+						return
+					default:
+					}
+					log.Error(common.NewError("failed to accept packet").Base(err))
+					continue
+				}
+				go func(inbound tunnel.PacketConn) {
+					defer inbound.Close()
+					outbound, err := p.sink.DialPacket(nil)
+					if err != nil {
+						log.Error(err)
+						return
+					}
+					defer outbound.Close()
+					log.Debug("relaying packets")
+					errChan := make(chan error, 2)
+					copyPacket := func(a, b tunnel.PacketConn) {
+						buf := make([]byte, MaxPacketSize)
+						n, metadata, err := a.ReadWithMetadata(buf)
+						if err != nil {
+							errChan <- err
+							return
+						}
+						n, err = b.WriteWithMetadata(buf[:n], metadata)
+						if err != nil {
+							errChan <- err
+							return
+						}
+					}
+					go copyPacket(inbound, outbound)
+					go copyPacket(outbound, inbound)
+					err = <-errChan
+					if err != nil {
+						log.Error(err)
+					}
+					log.Debug("packet relay ends")
+				}(inbound)
+			}
+		}(source)
+	}
+}
+
+func NewProxy(ctx context.Context, sources []tunnel.Server, sink tunnel.Client) *Proxy {
+	ctx, cancel := context.WithCancel(ctx)
+	return &Proxy{
+		sources: sources,
+		sink:    sink,
+		errChan: make(chan error, 32),
+		ctx:     ctx,
+		cancel:  cancel,
+	}
+}
+
+type Creator func(ctx context.Context) (*Proxy, error)
+
+var creators = make(map[string]Creator)
+
+func RegisterProxyCreator(name string, creator Creator) {
+	creators[name] = creator
+}
+
+func RunProxy(data []byte, isJSON bool) error {
+	ctx := context.Background()
+	var err error
+	if isJSON {
+		ctx, err = config.WithJSONConfig(context.Background(), data)
 		if err != nil {
-			if err == io.EOF {
-				return
-			}
-			log.Debug(common.NewError("Conn relaying ends").Base(err))
+			return err
 		}
-	case <-ctx.Done():
-		return
-	}
-}
-
-func RelayPacket(ctx context.Context, a, b protocol.PacketReadWriter) {
-	if a == nil || b == nil {
-		log.Debug("Empty RW")
-		return
-	}
-	errChan := make(chan error, 2)
-	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
-		for {
-			req, packet, err := src.ReadPacket()
-			if err != nil {
-				errChan <- err
-				return
-			}
-			_, err = dst.WritePacket(req, packet)
-			if err != nil {
-				errChan <- err
-				return
-			}
+	} else {
+		ctx, err = config.WithYAMLConfig(context.Background(), data)
+		if err != nil {
+			return err
 		}
 	}
-	go copyPacket(a, b)
-	go copyPacket(b, a)
-	select {
-	case err := <-errChan:
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return
-		}
-		if err == io.EOF {
-			return
-		}
-		log.Error(common.NewError("Packet relaying ends").Base(err))
-	case <-ctx.Done():
-		return
-	}
-}
-
-func RelayPacketWithRouter(ctx context.Context, from protocol.PacketReadWriter, table map[router.Policy]protocol.PacketReadWriter, router router.Router) {
-	errChan := make(chan error, 1+len(table))
-	copyPacket := func(dst protocol.PacketWriter, src protocol.PacketReader) {
-		for {
-			req, packet, err := src.ReadPacket()
-			if err != nil {
-				errChan <- err
-				return
-			}
-			_, err = dst.WritePacket(req, packet)
-			if err != nil {
-				errChan <- err
-				return
-			}
-		}
-	}
-	copyToDst := func() {
-		for {
-			req, packet, err := from.ReadPacket()
-			if err != nil {
-				errChan <- err
-				return
-			}
-			policy, err := router.RouteRequest(req)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			to, found := table[policy]
-			if !found {
-				log.Debug("Policy not found, skiped:", policy)
-				continue
-			}
-			log.Debug("UDP packet ", req, "routing policy:", policy)
-			_, err = to.WritePacket(req, packet)
-			if err != nil {
-				errChan <- err
-				return
-			}
-		}
-	}
-
-	for _, to := range table {
-		go copyPacket(from, to)
-	}
-	go copyToDst()
-	select {
-	case err := <-errChan:
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return
-		}
-		if err == io.EOF {
-			return
-		}
-		log.Error(common.NewError("Packet relaying with router ends").Base(err))
-	case <-ctx.Done():
-		return
-	}
-}
-
-var proxys = make(map[conf.RunType]Buildable)
-
-func NewProxy(config *conf.GlobalConfig) (common.Runnable, error) {
-	runType := config.RunType
-	if buildable, found := proxys[runType]; found {
-		return buildable.Build(config)
-	}
-	return nil, common.NewError("Invalid run_type " + string(runType))
-}
-
-func RegisterProxy(t conf.RunType, b Buildable) {
-	proxys[t] = b
-}
-
-type APIRunner func(context.Context, *conf.GlobalConfig, stat.Authenticator) error
-
-var apis = make(map[conf.RunType]APIRunner)
-
-func RegisterAPI(t conf.RunType, r APIRunner) {
-	apis[t] = r
-}
-
-func RunAPIService(t conf.RunType, ctx context.Context, config *conf.GlobalConfig, auth stat.Authenticator) error {
-	r, ok := apis[t]
+	cfg := config.FromContext(ctx, Name).(*Config)
+	create, ok := creators[strings.ToUpper(cfg.RunType)]
 	if !ok {
-		return common.NewError("API module for type " + string(t) + " not found")
+		return common.NewError("unknown type " + cfg.RunType)
 	}
-	return r(ctx, config, auth)
+	proxy, err := create(ctx)
+	if err != nil {
+		return common.NewError("failed to create proxy instance").Base(err)
+	}
+	if err := proxy.Run(); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }

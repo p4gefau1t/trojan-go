@@ -3,6 +3,7 @@ package version
 import (
 	"flag"
 	"fmt"
+	"github.com/p4gefau1t/trojan-go/option"
 	"runtime"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -33,7 +34,7 @@ func (c *versionOption) Handle() error {
 }
 
 func init() {
-	common.RegisterOptionHandler(&versionOption{
+	option.RegisterOptionHandler(&versionOption{
 		flag: flag.Bool("version", false, "Display version and help info"),
 	})
 }

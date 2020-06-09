@@ -12,7 +12,7 @@ type RewindReader struct {
 	buf        []byte
 	bufReadIdx int
 	rewinded   bool
-	buffered   bool
+	buffering  bool
 	bufferSize int
 }
 
@@ -23,10 +23,10 @@ func (r *RewindReader) Read(p []byte) (int, error) {
 			r.bufReadIdx += n
 			return n, nil
 		}
-		r.rewinded = false //all buffered content has been read
+		r.rewinded = false //all buffering content has been read
 	}
 	n, err := r.rawReader.Read(p)
-	if r.buffered {
+	if r.buffering {
 		r.buf = append(r.buf, p[:n]...)
 		if len(r.buf) > r.bufferSize*2 {
 			log.Debug("read too many bytes!")
@@ -67,74 +67,44 @@ func (r *RewindReader) Rewind() {
 }
 
 func (r *RewindReader) StopBuffering() {
-	r.buffered = false
+	r.buffering = false
 }
 
 func (r *RewindReader) SetBufferSize(size int) {
 	if size == 0 { //disable buffering
-		if !r.buffered {
+		if !r.buffering {
 			panic("reader is already disabled")
 		}
-		r.buffered = false
+		r.buffering = false
 		r.buf = nil
 		r.bufReadIdx = 0
 		r.bufferSize = 0
 	} else {
-		if r.buffered {
+		if r.buffering {
 			panic("reader is already buffering")
 		}
-		r.buffered = true
+		r.buffering = true
 		r.bufReadIdx = 0
 		r.bufferSize = size
 		r.buf = make([]byte, 0, size)
 	}
 }
 
-func NewRewindReader(r io.Reader) *RewindReader {
-	return &RewindReader{
-		rawReader: r,
-	}
-}
-
-type RewindReadWriteCloser struct {
-	rawRWC io.ReadWriteCloser
+type RewindConn struct {
+	net.Conn
 	*RewindReader
 }
 
-func (rwc *RewindReadWriteCloser) Write(p []byte) (int, error) {
-	return rwc.rawRWC.Write(p)
-}
-
-func (rwc *RewindReadWriteCloser) Close() error {
-	return rwc.rawRWC.Close()
-}
-
-func NewRewindReadWriteCloser(rwc io.ReadWriteCloser) *RewindReadWriteCloser {
-	return &RewindReadWriteCloser{
-		rawRWC:       rwc,
-		RewindReader: NewRewindReader(rwc),
-	}
-}
-
-func ReadByte(r io.Reader) (byte, error) {
-	buf := [1]byte{}
-	_, err := r.Read(buf[:])
-	return buf[0], err
-}
-
-type RewindConn struct {
-	net.Conn
-	R *RewindReader
-}
-
 func (c *RewindConn) Read(p []byte) (int, error) {
-	return c.R.Read(p)
+	return c.RewindReader.Read(p)
 }
 
 func NewRewindConn(conn net.Conn) *RewindConn {
 	return &RewindConn{
 		Conn: conn,
-		R:    NewRewindReader(conn),
+		RewindReader: &RewindReader{
+			rawReader: conn,
+		},
 	}
 }
 

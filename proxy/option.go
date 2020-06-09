@@ -2,66 +2,45 @@ package proxy
 
 import (
 	"flag"
-	"io/ioutil"
-	"os"
-	"os/signal"
-
-	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/conf"
 	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/option"
+	"io/ioutil"
+	"strings"
 )
 
-type proxyOption struct {
+type Option struct {
 	path *string
 }
 
-func (*proxyOption) Name() string {
-	return "proxy"
+func (o *Option) Name() string {
+	return Name
 }
 
-func (*proxyOption) Priority() int {
+func (o *Option) Handle() error {
+	data, err := ioutil.ReadFile(*o.path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if strings.HasSuffix(*o.path, ".json") {
+		if err := RunProxy(data, true); err != nil {
+			log.Fatal(err)
+		}
+	} else if strings.HasSuffix(*o.path, ".yaml") {
+		if err := RunProxy(data, false); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Fatal("unknown file suffix", *o.path)
+	}
+	return nil
+}
+
+func (o *Option) Priority() int {
 	return 0
 }
 
-func (c *proxyOption) Handle() error {
-	log.Info("Trojan-Go", common.Version)
-	log.Info("Loading config file from", *c.path)
-
-	//exit code 23 stands for initializing error, and systemd will not trying to restart it
-	data, err := ioutil.ReadFile(*c.path)
-	if err != nil {
-		log.Error(common.NewError("Failed to read config file").Base(err))
-		os.Exit(23)
-	}
-	config, err := conf.ParseJSON(data)
-	if err != nil {
-		log.Error(common.NewError("Failed to parse config file").Base(err))
-		os.Exit(23)
-	}
-	proxy, err := NewProxy(config)
-	if err != nil {
-		log.Error(common.NewError("Failed to launch proxy").Base(err))
-		os.Exit(23)
-	}
-	errChan := make(chan error)
-	go func() {
-		errChan <- proxy.Run()
-	}()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt)
-	select {
-	case <-sigs:
-		proxy.Close()
-		return nil
-	case err := <-errChan:
-		log.Fatal(err)
-		return err
-	}
-}
-
 func init() {
-	common.RegisterOptionHandler(&proxyOption{
-		path: flag.String("config", common.GetProgramDir()+"/config.json", "Config filename"),
+	option.RegisterOptionHandler(&Option{
+		path: flag.String("config", "config.json", "Trojan-Go config filename (.yaml/.json)"),
 	})
 }

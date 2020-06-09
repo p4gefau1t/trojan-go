@@ -1,0 +1,176 @@
+package mux
+
+import (
+	"context"
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+
+	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/config"
+	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/xtaci/smux"
+)
+
+type muxID uint32
+
+func generateMuxID() muxID {
+	return muxID(rand.Uint32())
+}
+
+type smuxClientInfo struct {
+	id             muxID
+	client         *smux.Session
+	lastActiveTime time.Time
+	underlayConn   tunnel.Conn
+}
+
+//Client is a smux client
+type Client struct {
+	clientPoolLock sync.Mutex
+	clientPool     map[muxID]*smuxClientInfo
+	underlay       tunnel.Client
+	concurrency    int
+	timeout        time.Duration
+	ctx            context.Context
+	cancel         context.CancelFunc
+}
+
+func (c *Client) Close() error {
+	c.cancel()
+	c.clientPoolLock.Lock()
+	defer c.clientPoolLock.Unlock()
+	for id, info := range c.clientPool {
+		info.client.Close()
+		log.Debug("mux client", id, "closed")
+	}
+	return nil
+}
+
+func (c *Client) cleanWorker() {
+	var checkDuration time.Duration
+	if c.timeout <= 0 {
+		checkDuration = time.Second * 10
+		log.Warn("invalid mux timeout")
+	} else {
+		checkDuration = c.timeout / 4
+	}
+	for {
+		select {
+		case <-time.After(checkDuration):
+			c.clientPoolLock.Lock()
+			for id, info := range c.clientPool {
+				if info.client.IsClosed() {
+					delete(c.clientPool, id)
+					log.Info("mux client", id, "is dead")
+				} else if info.client.NumStreams() == 0 && time.Now().Sub(info.lastActiveTime) > c.timeout {
+					info.client.Close()
+					info.underlayConn.Close()
+					delete(c.clientPool, id)
+					log.Info("mux client", id, "is closed due to inactivity")
+				}
+			}
+			for id, info := range c.clientPool {
+				log.Debug(fmt.Sprintf("    %x: %d/%d", id, info.client.NumStreams(), c.concurrency))
+			}
+			log.Debug("current mux clients: ", len(c.clientPool))
+			c.clientPoolLock.Unlock()
+		case <-c.ctx.Done():
+			log.Debug("shutting down mux cleaner..")
+			c.clientPoolLock.Lock()
+			for id, info := range c.clientPool {
+				info.client.Close()
+				log.Debug("mux client", id, "closed")
+			}
+			c.clientPoolLock.Unlock()
+			return
+		}
+	}
+}
+
+func (c *Client) newMuxClient() (*smuxClientInfo, error) {
+	// The mutex should be locked when this function is called
+	id := generateMuxID()
+	if _, found := c.clientPool[id]; found {
+		return nil, common.NewError("Duplicated id")
+	}
+
+	fakeAddr := &tunnel.Address{
+		DomainName:  "MUX_CONN",
+		AddressType: tunnel.DomainName,
+	}
+	conn, err := c.underlay.DialConn(fakeAddr, &Tunnel{})
+	if err != nil {
+		return nil, err
+	}
+	conn = newStickyConn(conn)
+
+	smuxConfig := smux.DefaultConfig()
+	smuxConfig.KeepAliveDisabled = true
+	client, err := smux.Client(conn, smuxConfig)
+	info := &smuxClientInfo{
+		client:         client,
+		underlayConn:   conn,
+		id:             id,
+		lastActiveTime: time.Now(),
+	}
+	c.clientPool[id] = info
+	return info, nil
+}
+
+func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, error) {
+	c.clientPoolLock.Lock()
+	defer c.clientPoolLock.Unlock()
+
+	createNewConn := func(info *smuxClientInfo) (tunnel.Conn, error) {
+		info.lastActiveTime = time.Now()
+		rwc, err := info.client.Open()
+		info.lastActiveTime = time.Now()
+		if err != nil {
+			return nil, err
+		}
+		return &Conn{
+			rwc:  rwc,
+			Conn: info.underlayConn,
+		}, nil
+	}
+
+	for _, info := range c.clientPool {
+		if info.client.IsClosed() {
+			delete(c.clientPool, info.id)
+			log.Info(fmt.Sprintf("Mux client %x is closed", info.id))
+			continue
+		}
+		if info.client.NumStreams() < c.concurrency || c.concurrency <= 0 {
+			return createNewConn(info)
+		}
+	}
+
+	info, err := c.newMuxClient()
+	if err != nil {
+		return nil, common.NewError("no avaliable mux client found")
+	}
+	return createNewConn(info)
+}
+
+func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
+	panic("not supported")
+}
+
+func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
+	clientConfig := config.FromContext(ctx, Name).(*Config)
+	ctx, cancel := context.WithCancel(ctx)
+	client := &Client{
+		underlay:    underlay,
+		concurrency: clientConfig.Mux.Concurrency,
+		timeout:     time.Duration(clientConfig.Mux.Timeout) * time.Second,
+		ctx:         ctx,
+		cancel:      cancel,
+		clientPool:  make(map[muxID]*smuxClientInfo),
+	}
+	go client.cleanWorker()
+	log.Debug("mux client created")
+	return client, nil
+}

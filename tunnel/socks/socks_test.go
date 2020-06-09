@@ -1,0 +1,49 @@
+package socks
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"sync"
+	"testing"
+
+	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/config"
+	"github.com/p4gefau1t/trojan-go/test/util"
+	"github.com/p4gefau1t/trojan-go/tunnel"
+	"golang.org/x/net/proxy"
+)
+
+func TestSocks(t *testing.T) {
+	port := common.PickPort("tcp", "127.0.0.1")
+	ctx := config.WithConfig(context.Background(), Name, &Config{
+		LocalHost: "127.0.0.1",
+		LocalPort: port,
+	})
+	addr := tunnel.NewAddressFromHostPort("tcp", "127.0.0.1", port)
+	s, err := NewServer(ctx, nil)
+	common.Must(err)
+	socksClient, err := proxy.SOCKS5("tcp", addr.String(), nil, proxy.Direct)
+	common.Must(err)
+	var conn1, conn2 net.Conn
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		conn2, err = s.AcceptConn(nil)
+		common.Must(err)
+		wg.Done()
+	}()
+
+	go func() {
+		conn1, err = socksClient.Dial("tcp", "www.baidu.com:80")
+		common.Must(err)
+		wg.Done()
+	}()
+
+	wg.Wait()
+	if !util.CheckConn(conn1, conn2) {
+		t.Fail()
+	}
+	fmt.Println(conn2.(tunnel.Conn).Metadata())
+}
