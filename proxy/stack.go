@@ -2,14 +2,46 @@ package proxy
 
 import (
 	"context"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
 type Node struct {
 	Name       string
-	Next       []*Node
+	Next       map[string]*Node
 	IsEndpoint bool
+	context.Context
 	tunnel.Server
+}
+
+func (n *Node) BuildNext(name string) *Node {
+	if next, found := n.Next[name]; found {
+		return next
+	}
+	t, err := tunnel.GetTunnel(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	s, err := t.NewServer(n.Context, n.Server)
+	newNode := &Node{
+		Name:    name,
+		Next:    make(map[string]*Node),
+		Context: n.Context,
+		Server:  s,
+	}
+	n.Next[name] = newNode
+	return newNode
+}
+
+func FindAllEndpoints(root *Node) []tunnel.Server {
+	list := make([]tunnel.Server, 0)
+	if root.IsEndpoint || len(root.Next) == 0 {
+		list = append(list, root.Server)
+	}
+	for _, next := range root.Next {
+		list = append(list, FindAllEndpoints(next)...)
+	}
+	return list
 }
 
 func buildServerStacksTree(ctx context.Context, current *Node, parent *Node) ([]tunnel.Server, error) {

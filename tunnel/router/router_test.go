@@ -6,9 +6,11 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"net"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 type MockClient struct{}
@@ -18,11 +20,51 @@ func (m *MockClient) DialConn(address *tunnel.Address, t tunnel.Tunnel) (tunnel.
 }
 
 func (m *MockClient) DialPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
-	return nil, common.NewError("mockproxy")
+	//return nil, common.NewError("mockproxy")
+	return MockPacketConn{}, nil
 }
 
 func (m MockClient) Close() error {
 	return nil
+}
+
+type MockPacketConn struct {
+}
+
+func (m MockPacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
+	panic("implement me")
+}
+
+func (m MockPacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
+	panic("implement me")
+}
+
+func (m MockPacketConn) Close() error {
+	panic("implement me")
+}
+
+func (m MockPacketConn) LocalAddr() net.Addr {
+	panic("implement me")
+}
+
+func (m MockPacketConn) SetDeadline(t time.Time) error {
+	panic("implement me")
+}
+
+func (m MockPacketConn) SetReadDeadline(t time.Time) error {
+	panic("implement me")
+}
+
+func (m MockPacketConn) SetWriteDeadline(t time.Time) error {
+	panic("implement me")
+}
+
+func (m MockPacketConn) WriteWithMetadata(bytes []byte, metadata *tunnel.Metadata) (int, error) {
+	return 0, common.NewError("mockproxy")
+}
+
+func (m MockPacketConn) ReadWithMetadata(bytes []byte) (int, *tunnel.Metadata, error) {
+	return 0, nil, common.NewError("mockproxy")
 }
 
 func TestRouter(t *testing.T) {
@@ -88,6 +130,20 @@ router:
 		Port:        port,
 	}, nil)
 	if err != nil {
+		t.Fail()
+	}
+
+	packet, err := client.DialPacket(nil)
+	common.Must(err)
+	buf := [10]byte{}
+	_, err = packet.WriteWithMetadata(buf[:], &tunnel.Metadata{
+		Address: &tunnel.Address{
+			AddressType: tunnel.DomainName,
+			DomainName:  "proxyfull",
+			Port:        port,
+		},
+	})
+	if err.Error() != "mockproxy" {
 		t.Fail()
 	}
 }

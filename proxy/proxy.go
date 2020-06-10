@@ -154,31 +154,24 @@ func RegisterProxyCreator(name string, creator Creator) {
 	creators[name] = creator
 }
 
-func RunProxy(data []byte, isJSON bool) error {
+func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
 	ctx := context.Background()
 	var err error
 	if isJSON {
 		ctx, err = config.WithJSONConfig(context.Background(), data)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		ctx, err = config.WithYAMLConfig(context.Background(), data)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	cfg := config.FromContext(ctx, Name).(*Config)
 	create, ok := creators[strings.ToUpper(cfg.RunType)]
 	if !ok {
-		return common.NewError("unknown type " + cfg.RunType)
+		return nil, common.NewError("unknown proxy type: " + cfg.RunType)
 	}
-	proxy, err := create(ctx)
-	if err != nil {
-		return common.NewError("failed to create proxy instance").Base(err)
-	}
-	if err := proxy.Run(); err != nil {
-		log.Fatal(err)
-	}
-	return nil
+	return create(ctx)
 }

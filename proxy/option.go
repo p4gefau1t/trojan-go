@@ -21,16 +21,21 @@ func (o *Option) Handle() error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	isJSON := false
 	if strings.HasSuffix(*o.path, ".json") {
-		if err := RunProxy(data, true); err != nil {
-			log.Fatal(err)
-		}
+		isJSON = true
 	} else if strings.HasSuffix(*o.path, ".yaml") {
-		if err := RunProxy(data, false); err != nil {
-			log.Fatal(err)
-		}
+		isJSON = false
 	} else {
-		log.Fatal("unknown file suffix", *o.path)
+		log.Fatal("unsupported filename suffix", *o.path, ". use .yaml or .json instead.")
+	}
+	proxy, err := NewProxyFromConfigData(data, isJSON)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = proxy.Run()
+	if err != nil {
+		log.Fatal(err)
 	}
 	return nil
 }

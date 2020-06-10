@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/refraction-networking/utls v0.0.0-20200601200209-ada0bb9b38a0
+	github.com/shadowsocks/go-shadowsocks2 v0.1.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/xtaci/smux v1.5.15-0.20200523091831-637399ad4398
 	golang.org/x/crypto v0.0.0-20200602180216-279210d13fed

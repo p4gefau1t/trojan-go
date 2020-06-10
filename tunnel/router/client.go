@@ -197,6 +197,7 @@ func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
 	}
 	ctx, cancel := context.WithCancel(c.Context)
 	return &PacketConn{
+		Client:     c,
 		PacketConn: direct,
 		proxy:      proxy,
 		CancelFunc: cancel,

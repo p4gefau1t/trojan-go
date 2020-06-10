@@ -94,7 +94,7 @@ func (c *Client) newMuxClient() (*smuxClientInfo, error) {
 	// The mutex should be locked when this function is called
 	id := generateMuxID()
 	if _, found := c.clientPool[id]; found {
-		return nil, common.NewError("Duplicated id")
+		return nil, common.NewError("duplicated id")
 	}
 
 	fakeAddr := &tunnel.Address{
@@ -129,7 +129,7 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 		rwc, err := info.client.Open()
 		info.lastActiveTime = time.Now()
 		if err != nil {
-			return nil, err
+			return nil, common.NewError("mux failed to open stream from client").Base(err)
 		}
 		return &Conn{
 			rwc:  rwc,

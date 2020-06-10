@@ -20,7 +20,7 @@ import (
 	netproxy "golang.org/x/net/proxy"
 )
 
-var cert string = `
+var cert = `
 -----BEGIN CERTIFICATE-----
 MIIDZTCCAk0CFFphZh018B5iAD9F5fV4y0AlD0LxMA0GCSqGSIb3DQEBCwUAMG8x
 CzAJBgNVBAYTAlVTMQ0wCwYDVQQIDARNYXJzMRMwEQYDVQQHDAppVHJhbnN3YXJw
@@ -44,7 +44,7 @@ Haz8uKI4EciU
 -----END CERTIFICATE-----
 `
 
-var key string = `
+var key = `
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEAml44fThYMkCcT627o7ibEs7mq2WOhImjDwYijYJ1684BatrC
 sHJNcw8PJGTuP+tgGdngmALjA3l+RipjaE/UK4FJrAjruphA/hOCjZfWqk8KBR4q
@@ -98,12 +98,17 @@ websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
 mux:
     enabled: true
 `, socksPort, serverPort)
 	go func() {
-		err := proxy.RunProxy([]byte(clientData), false)
+		proxy, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
 		common.Must(err)
+		common.Must(proxy.Run())
 	}()
 
 	serverData := fmt.Sprintf(`
@@ -118,15 +123,20 @@ ssl:
     verify-hostname: false
     key: server.key
     cert: server.crt
-    sni: "localhost"
+    sni: localhost
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
 websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
 `, serverPort, util.HTTPPort)
 	go func() {
-		err := proxy.RunProxy([]byte(serverData), false)
+		proxy, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
 		common.Must(err)
+		common.Must(proxy.Run())
 	}()
 
 	time.Sleep(time.Second * 2)
@@ -168,12 +178,17 @@ websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
 mux:
     enabled: true
 `, clientPort, serverPort, targetPort)
 	go func() {
-		err := proxy.RunProxy([]byte(clientData), false)
+		proxy, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
 		common.Must(err)
+		common.Must(proxy.Run())
 	}()
 
 	serverData := fmt.Sprintf(`
@@ -193,10 +208,15 @@ websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
 `, serverPort, util.HTTPPort)
 	go func() {
-		err := proxy.RunProxy([]byte(serverData), false)
+		proxy, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
 		common.Must(err)
+		common.Must(proxy.Run())
 	}()
 
 	time.Sleep(time.Second * 2)
