@@ -6,6 +6,7 @@ require (
 	github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/refraction-networking/utls v0.0.0-20200601200209-ada0bb9b38a0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/xtaci/smux v1.5.15-0.20200523091831-637399ad4398
 	golang.org/x/crypto v0.0.0-20200602180216-279210d13fed

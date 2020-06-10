@@ -1,15 +1,23 @@
 package senario_test
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/p4gefau1t/trojan-go/test/util"
 	"io/ioutil"
+	"net"
 	"testing"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	_ "github.com/p4gefau1t/trojan-go/proxy/client"
+	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
+	_ "github.com/p4gefau1t/trojan-go/proxy/nat"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
+	netproxy "golang.org/x/net/proxy"
 )
 
 var cert string = `
@@ -71,46 +79,150 @@ func init() {
 	ioutil.WriteFile("server.key", []byte(key), 0777)
 }
 
-func TestProxy(t *testing.T) {
-	clientData := `
+func TestClientServer(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+	clientData := fmt.Sprintf(`
 run-type: client
 local-addr: 127.0.0.1
-local-port: 4444
-local-addr: 127.0.0.1
-remote-port: 4443
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
 password:
     - password
 ssl:
     verify: false
+    fingerprint: firefox
+    sni: localhost
 websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
 mux:
     enabled: true
-`
+`, socksPort, serverPort)
 	go func() {
 		err := proxy.RunProxy([]byte(clientData), false)
 		common.Must(err)
 	}()
 
-	serverData := `
+	serverData := fmt.Sprintf(`
 run-type: server
 local-addr: 127.0.0.1
-local-port: 4443
+local-port: %d
 remote-addr: 127.0.0.1
-remote-port: 80
+remote-port: %s
 password:
     - password
 ssl:
-    verify: false
+    verify-hostname: false
     key: server.key
     cert: server.crt
+    sni: "localhost"
 websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
-`
-	err := proxy.RunProxy([]byte(serverData), false)
+`, serverPort, util.HTTPPort)
+	go func() {
+		err := proxy.RunProxy([]byte(serverData), false)
+		common.Must(err)
+	}()
+
+	time.Sleep(time.Second * 2)
+	dialer, err := netproxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, netproxy.Direct)
+
+	payload := util.GeneratePayload(1024)
+	buf := [1024]byte{}
+
+	conn, err := dialer.Dial("tcp", util.EchoAddr)
 	common.Must(err)
+
+	common.Must2(conn.Write(payload))
+	common.Must2(conn.Read(buf[:]))
+
+	if !bytes.Equal(payload, buf[:]) {
+		t.Fail()
+	}
+}
+
+func TestForward(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	clientPort := common.PickPort("tcp", "127.0.0.1")
+	_, targetPort, _ := net.SplitHostPort(util.EchoAddr)
+	clientData := fmt.Sprintf(`
+run-type: forward
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
+target-addr: 127.0.0.1
+target-port: %s
+password:
+    - password
+ssl:
+    verify: false
+    fingerprint: firefox
+    sni: localhost
+websocket:
+    enabled: true
+    path: /ws
+    hostname: 127.0.0.1
+mux:
+    enabled: true
+`, clientPort, serverPort, targetPort)
+	go func() {
+		err := proxy.RunProxy([]byte(clientData), false)
+		common.Must(err)
+	}()
+
+	serverData := fmt.Sprintf(`
+run-type: server
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %s
+password:
+    - password
+ssl:
+    verify-hostname: false
+    key: server.key
+    cert: server.crt
+    sni: "localhost"
+websocket:
+    enabled: true
+    path: /ws
+    hostname: 127.0.0.1
+`, serverPort, util.HTTPPort)
+	go func() {
+		err := proxy.RunProxy([]byte(serverData), false)
+		common.Must(err)
+	}()
+
+	time.Sleep(time.Second * 2)
+
+	payload := util.GeneratePayload(1024)
+	buf := [1024]byte{}
+
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", clientPort))
+	common.Must(err)
+
+	common.Must2(conn.Write(payload))
+	common.Must2(conn.Read(buf[:]))
+
+	if !bytes.Equal(payload, buf[:]) {
+		t.Fail()
+	}
+
+	packet, err := net.ListenPacket("udp", "")
+	common.Must(err)
+	common.Must2(packet.WriteTo(payload, &net.UDPAddr{
+		IP:   net.ParseIP("127.0.0.1"),
+		Port: clientPort,
+	}))
+	_, _, err = packet.ReadFrom(buf[:])
+	common.Must(err)
+	if !bytes.Equal(payload, buf[:]) {
+		t.Fail()
+	}
 }

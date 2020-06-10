@@ -68,7 +68,7 @@ func (s *Server) packetDispatchLoop() {
 			s.mappingLock.Unlock()
 			continue
 		}
-		log.Info("tproxy udp session from", src, "to", dst)
+		log.Info("tproxy udp session, from", src, "to", dst)
 		ctx, cancel := context.WithCancel(s.ctx)
 		conn := &PacketConn{
 			dokodemo.PacketConn{

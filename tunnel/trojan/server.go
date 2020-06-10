@@ -3,6 +3,8 @@ package trojan
 import (
 	"context"
 	"fmt"
+	"github.com/p4gefau1t/trojan-go/statistic/memory"
+	"github.com/p4gefau1t/trojan-go/statistic/mysql"
 	"io"
 	"net"
 
@@ -96,7 +98,6 @@ type Server struct {
 	connChan   chan tunnel.Conn
 	muxChan    chan tunnel.Conn
 	packetChan chan tunnel.PacketConn
-	errChan    chan error
 	ctx        context.Context
 }
 
@@ -151,7 +152,7 @@ func (s *Server) acceptLoop() {
 				s.muxChan <- inboundConn
 				log.Debug("mux connection")
 			default:
-				s.errChan <- common.NewError(fmt.Sprintf("unknown trojan command %d", inboundConn.metadata.Command))
+				log.Error(common.NewError(fmt.Sprintf("unknown trojan command %d", inboundConn.metadata.Command)))
 			}
 		}(conn)
 	}
@@ -163,8 +164,6 @@ func (s *Server) AcceptConn(nextTunnel tunnel.Tunnel) (tunnel.Conn, error) {
 		select {
 		case t := <-s.muxChan:
 			return t, nil
-		case err := <-s.errChan:
-			return nil, err
 		case <-s.ctx.Done():
 			return nil, common.NewError("trojan client closed")
 		}
@@ -172,8 +171,6 @@ func (s *Server) AcceptConn(nextTunnel tunnel.Tunnel) (tunnel.Conn, error) {
 		select {
 		case t := <-s.connChan:
 			return t, nil
-		case err := <-s.errChan:
-			return nil, err
 		case <-s.ctx.Done():
 			return nil, common.NewError("trojan client closed")
 		}
@@ -190,11 +187,16 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 }
 
 func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, error) {
-	auth, err := statistic.NewAuthenticator(ctx, "memory")
-	if err != nil {
-		return nil, common.NewError("failed to create server authenticator").Base(err)
-	}
 	cfg := config.FromContext(ctx, Name).(*Config)
+
+	// TODO replace this dirty code
+	auth, err := statistic.NewAuthenticator(ctx, memory.Name)
+	if cfg.MySQL.Enabled {
+		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+	}
+	if err != nil {
+		return nil, common.NewError("failed to create authenticator").Base(err)
+	}
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
 	s := &Server{
 		underlay:   underlay,
@@ -204,8 +206,14 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 		connChan:   make(chan tunnel.Conn, 32),
 		muxChan:    make(chan tunnel.Conn, 32),
 		packetChan: make(chan tunnel.PacketConn, 32),
-		errChan:    make(chan error, 32),
 	}
+
+	redirConn, err := net.Dial("tcp", redirAddr.String())
+	if err != nil {
+		return nil, common.NewError("invalid redirect address").Base(err)
+	}
+	redirConn.Close()
+
 	go s.acceptLoop()
 	log.Debug("trojan server created")
 	return s, nil

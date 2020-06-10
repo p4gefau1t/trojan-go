@@ -40,7 +40,6 @@ type Server struct {
 	redir              *redirector.Redirector
 	connChan           chan tunnel.Conn
 	wsChan             chan tunnel.Conn
-	errChan            chan error
 	ctx                context.Context
 	cancel             context.CancelFunc
 }
@@ -56,7 +55,7 @@ func (s *Server) acceptLoop() {
 		tcpConn, err := s.tcpListener.Accept()
 		if err != nil {
 			s.cancel()
-			s.errChan <- common.NewError("transport accept error")
+			log.Error(common.NewError("transport accept error"))
 			return
 		}
 		go func(tcpConn net.Conn) {
@@ -83,7 +82,6 @@ func (s *Server) acceptLoop() {
 			rewindConn.SetBufferSize(2048)
 
 			tlsConn := tls.Server(rewindConn, tlsConfig)
-			tlsConn.Handshake()
 			err = tlsConn.Handshake()
 			rewindConn.StopBuffering()
 
@@ -91,12 +89,11 @@ func (s *Server) acceptLoop() {
 				if !sniVerified {
 					// close tls conn immediately if the sni is invalid
 					tlsConn.Close()
-					s.errChan <- common.NewError("tls client hello with wrong sni").Base(err)
+					log.Error(common.NewError("tls client hello with wrong sni").Base(err))
 				} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
 					// not a valid tls client hello
 					rewindConn.Rewind()
-					err = common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err)
-					s.errChan <- err
+					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
 					if s.fallbackAddress != nil {
 						s.redir.Redirect(&redirector.Redirection{
 							InboundConn: rewindConn,
@@ -111,7 +108,7 @@ func (s *Server) acceptLoop() {
 				} else {
 					// other cases, simply close it
 					tlsConn.Close()
-					s.errChan <- common.NewError("tls handshake failed").Base(err)
+					log.Error(common.NewError("tls handshake failed").Base(err))
 				}
 				return
 			}
@@ -150,8 +147,6 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 			return conn, nil
 		case <-s.ctx.Done():
 			return nil, io.EOF
-		case err := <-s.errChan:
-			return nil, err
 		}
 	}
 	// trojan overlay
@@ -160,21 +155,35 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 		return conn, nil
 	case <-s.ctx.Done():
 		return nil, io.EOF
-	case err := <-s.errChan:
-		return nil, err
 	}
 }
 
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	return nil, common.NewError("not supported")
+	panic("not supported")
 }
 
 // NewServer creates a transport layer server
 func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
+	if cfg.TLS.FallbackHost == "" {
+		cfg.TLS.FallbackHost = cfg.RemoteHost
+		log.Warn("empty fallback address")
+	}
+	if cfg.TLS.FallbackPort == 0 {
+		cfg.TLS.FallbackPort = cfg.RemotePort
+		log.Warn("empty fallback port")
+	}
+
 	listenAddress := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
 	fallbackAddress := tunnel.NewAddressFromHostPort("tcp", cfg.TLS.FallbackHost, cfg.TLS.FallbackPort)
+	if cfg.TLS.FallbackPort != 0 {
+		fallbackConn, err := net.Dial("tcp", fallbackAddress.String())
+		if err != nil {
+			return nil, common.NewError("invalid fallback address").Base(err)
+		}
+		fallbackConn.Close()
+	}
 
 	tcpListener, err := net.Listen("tcp", listenAddress.String())
 	if err != nil {
@@ -191,6 +200,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		wsChan:          make(chan tunnel.Conn, 32),
 		sni:             cfg.TLS.SNI,
 		alpn:            cfg.TLS.ALPN,
+		verifySNI:       cfg.TLS.VerifyHostName,
 	}
 
 	if cfg.TLS.KeyLogPath != "" {

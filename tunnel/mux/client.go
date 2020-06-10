@@ -103,7 +103,7 @@ func (c *Client) newMuxClient() (*smuxClientInfo, error) {
 	}
 	conn, err := c.underlay.DialConn(fakeAddr, &Tunnel{})
 	if err != nil {
-		return nil, err
+		return nil, common.NewError("mux failed to dial").Base(err)
 	}
 	conn = newStickyConn(conn)
 
@@ -150,7 +150,7 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 
 	info, err := c.newMuxClient()
 	if err != nil {
-		return nil, common.NewError("no avaliable mux client found")
+		return nil, common.NewError("no available mux client found").Base(err)
 	}
 	return createNewConn(info)
 }

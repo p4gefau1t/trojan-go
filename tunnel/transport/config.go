@@ -11,6 +11,11 @@ type Config struct {
 	RemotePort      int                   `json:"remote_port" yaml:"remote-port"`
 	TLS             TLSConfig             `json:"ssl" yaml:"ssl"`
 	TransportPlugin TransportPluginConfig `json:"transport_plugin" yaml:"transport-plugin"`
+	Websocket       WebsocketConfig       `json:"websocket" yaml:"websocket"`
+}
+
+type WebsocketConfig struct {
+	Enabled bool `json:"enabled" yaml:"enabled"'`
 }
 
 type TLSConfig struct {
@@ -43,17 +48,15 @@ type TransportPluginConfig struct {
 	Env          []string `json:"env" yaml:"env"`
 }
 
-func newDefaultConfig() interface{} {
-	return &Config{
-		TLS: TLSConfig{
-			Verify:         true,
-			VerifyHostName: true,
-			Fingerprint:    "firefox",
-			ALPN:           []string{"http/1.1"},
-		},
-	}
-}
-
 func init() {
-	config.RegisterConfigCreator(Name, newDefaultConfig)
+	config.RegisterConfigCreator(Name, func() interface{} {
+		return &Config{
+			TLS: TLSConfig{
+				Verify:         true,
+				VerifyHostName: true,
+				Fingerprint:    "firefox",
+				ALPN:           []string{"http/1.1"},
+			},
+		}
+	})
 }

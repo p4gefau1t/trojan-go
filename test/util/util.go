@@ -96,7 +96,7 @@ func CheckPacket(a, b net.PacketConn) bool {
 	return true
 }
 
-func FindAvaliableAddr() string {
+func GetTestAddr() string {
 	port := common.PickPort("tcp", "127.0.0.1")
 	return fmt.Sprintf("127.0.0.1:%d", port)
 }
