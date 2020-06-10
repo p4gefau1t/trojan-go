@@ -64,7 +64,6 @@ func (p *Proxy) relayConnLoop() {
 						return
 					}
 					defer outbound.Close()
-					log.Debug("relaying connection")
 					errChan := make(chan error, 2)
 					copyConn := func(a, b net.Conn) {
 						_, err := io.Copy(a, b)
@@ -77,7 +76,7 @@ func (p *Proxy) relayConnLoop() {
 					if err != nil {
 						log.Error(err)
 					}
-					log.Debug("connection relay ends")
+					log.Debug("conn relay ends")
 				}(inbound)
 			}
 		}(source)
@@ -107,7 +106,6 @@ func (p *Proxy) relayPacketLoop() {
 						return
 					}
 					defer outbound.Close()
-					log.Debug("relaying packets")
 					errChan := make(chan error, 2)
 					copyPacket := func(a, b tunnel.PacketConn) {
 						buf := make([]byte, MaxPacketSize)
@@ -172,6 +170,10 @@ func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
 	create, ok := creators[strings.ToUpper(cfg.RunType)]
 	if !ok {
 		return nil, common.NewError("unknown proxy type: " + cfg.RunType)
+	}
+	log.SetLogLevel(log.LogLevel(cfg.LogLevel))
+	if cfg.LogFile != "" {
+
 	}
 	return create(ctx)
 }

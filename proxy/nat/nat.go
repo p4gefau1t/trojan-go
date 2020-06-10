@@ -1,4 +1,4 @@
-// +build linux darwin
+// +build linux
 
 package nat
 

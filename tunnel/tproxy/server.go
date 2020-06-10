@@ -143,7 +143,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		Port: cfg.LocalPort,
 	})
 	if err != nil {
-		return nil, common.NewError("tproxy failed to listen tcp").Base(err)
+		return nil, common.NewError("tproxy failed to listen udp").Base(err)
 	}
 
 	server := &Server{

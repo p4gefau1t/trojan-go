@@ -82,7 +82,8 @@ func TestTLS(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: serverCfg.LocalPort,
 		TLS: TLSConfig{
-			Verify: false,
+			Verify:      false,
+			Fingerprint: "firefox",
 		},
 	}
 	sctx := config.WithConfig(context.Background(), Name, serverCfg)

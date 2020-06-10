@@ -322,6 +322,8 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		}
 	}
 	go server.acceptLoop()
+
+	log.Info("transport server is listening on tcp:", tcpListener.Addr().String())
 	log.Debug("transport server created")
 	return server, nil
 }

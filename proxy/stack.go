@@ -23,6 +23,9 @@ func (n *Node) BuildNext(name string) *Node {
 		log.Fatal(err)
 	}
 	s, err := t.NewServer(n.Context, n.Server)
+	if err != nil {
+		log.Fatal(err)
+	}
 	newNode := &Node{
 		Name:    name,
 		Next:    make(map[string]*Node),

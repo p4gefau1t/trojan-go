@@ -10,6 +10,8 @@ type Config struct {
 
 func init() {
 	config.RegisterConfigCreator(Name, func() interface{} {
-		return new(Config)
+		return &Config{
+			LogLevel: 1,
+		}
 	})
 }

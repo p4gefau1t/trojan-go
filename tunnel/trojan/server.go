@@ -208,11 +208,13 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 		packetChan: make(chan tunnel.PacketConn, 32),
 	}
 
-	redirConn, err := net.Dial("tcp", redirAddr.String())
-	if err != nil {
-		return nil, common.NewError("invalid redirect address").Base(err)
+	if !cfg.DisableHTTPCheck {
+		redirConn, err := net.Dial("tcp", redirAddr.String())
+		if err != nil {
+			return nil, common.NewError("invalid redirect address. check your http server: " + redirAddr.String()).Base(err)
+		}
+		redirConn.Close()
 	}
-	redirConn.Close()
 
 	go s.acceptLoop()
 	log.Debug("trojan server created")

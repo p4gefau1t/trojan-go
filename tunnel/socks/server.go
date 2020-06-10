@@ -27,18 +27,15 @@ const (
 type Server struct {
 	connChan    chan tunnel.Conn
 	packetChan  chan tunnel.PacketConn
-	errChan     chan error
-	listenAddr  net.Addr
 	tcpListener net.Listener
 	ctx         context.Context
+	localHost   string
 }
 
 func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	select {
 	case conn := <-s.connChan:
 		return conn, nil
-	case err := <-s.errChan:
-		return nil, err
 	case <-s.ctx.Done():
 		return nil, common.NewError("socks server closed")
 	}
@@ -48,8 +45,6 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	select {
 	case conn := <-s.packetChan:
 		return conn, nil
-	case err := <-s.errChan:
-		return nil, err
 	case <-s.ctx.Done():
 		return nil, common.NewError("socks server closed")
 	}
@@ -110,30 +105,23 @@ func (s *Server) associate(conn net.Conn, addr *tunnel.Address) error {
 }
 
 func (s *Server) acceptLoop() {
-	l, err := net.Listen("tcp", s.listenAddr.String())
-	if err != nil {
-		s.errChan <- common.NewError("socks5 failed to listen").Base(err)
-		return
-	}
-	s.tcpListener = l
-
 	for {
-		conn, err := l.Accept()
+		conn, err := s.tcpListener.Accept()
 		if err != nil {
-			s.errChan <- common.NewError("socks5 accept err").Base(err)
+			log.Error(common.NewError("socks5 accept err").Base(err))
 			return
 		}
 		go func(conn net.Conn) {
 			newConn, err := s.handshake(conn)
 			if err != nil {
-				s.errChan <- common.NewError("socks5 failed to handshake with client").Base(err)
+				log.Error(common.NewError("socks5 failed to handshake with client").Base(err))
 				return
 			}
 			log.Info("socks5 connection from", conn.RemoteAddr(), "metadata", newConn.metadata.String())
 			switch newConn.metadata.Command {
 			case Connect:
 				if err := s.connect(newConn); err != nil {
-					s.errChan <- common.NewError("socks5 failed to respond CONNECT").Base(err)
+					log.Error(common.NewError("socks5 failed to respond CONNECT").Base(err))
 					newConn.Close()
 					return
 				}
@@ -141,26 +129,24 @@ func (s *Server) acceptLoop() {
 				return
 			case Associate:
 				defer newConn.Close()
-				host, _, err := net.SplitHostPort(s.listenAddr.String())
-				common.Must(err)
-				port := common.PickPort("udp", host)
-				associateAddr := tunnel.NewAddressFromHostPort("udp", host, port)
+				port := common.PickPort("udp", s.localHost)
+				associateAddr := tunnel.NewAddressFromHostPort("udp", s.localHost, port)
 				l, err := net.ListenPacket("udp", associateAddr.String())
 				if err != nil {
-					s.errChan <- common.NewError("socks5 failed to bind udp").Base(err)
+					log.Error(common.NewError("socks5 failed to bind udp").Base(err))
 					return
 				}
 				s.packetChan <- NewPacketConn(l)
 				log.Info("socks5 udp session")
 				if err := s.associate(newConn, associateAddr); err != nil {
-					s.errChan <- common.NewError("socks5 failed to respond to ASSOCIATE").Base(err)
+					log.Error(common.NewError("socks5 failed to respond to associate request").Base(err))
 					return
 				}
 				buf := [1]byte{}
 				newConn.Read(buf[:])
 				log.Debug("socks5 udp session ends")
 			default:
-				s.errChan <- common.NewError(fmt.Sprintf("unknown socks5 command %d", newConn.metadata.Command))
+				log.Error(common.NewError(fmt.Sprintf("unknown socks5 command %d", newConn.metadata.Command)))
 				newConn.Close()
 			}
 		}(conn)
@@ -171,12 +157,16 @@ func (s *Server) acceptLoop() {
 func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	listenAddr := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
+	l, err := net.Listen("tcp", listenAddr.String())
+	if err != nil {
+		return nil, common.NewError("socks5 failed to listen").Base(err)
+	}
+	log.Info("socks5 server is listening on tcp:", l.Addr().String())
 	server := &Server{
-		listenAddr: listenAddr,
-		ctx:        ctx,
-		connChan:   make(chan tunnel.Conn, 32),
-		packetChan: make(chan tunnel.PacketConn, 32),
-		errChan:    make(chan error, 32),
+		tcpListener: l,
+		ctx:         ctx,
+		connChan:    make(chan tunnel.Conn, 32),
+		packetChan:  make(chan tunnel.PacketConn, 32),
 	}
 	go server.acceptLoop()
 	log.Debug("socks server created")
