@@ -4,14 +4,8 @@ import (
 	"flag"
 	"github.com/p4gefau1t/trojan-go/option"
 
+	_ "github.com/p4gefau1t/trojan-go/build"
 	"github.com/p4gefau1t/trojan-go/log"
-	_ "github.com/p4gefau1t/trojan-go/log/golog"
-	_ "github.com/p4gefau1t/trojan-go/proxy/client"
-	_ "github.com/p4gefau1t/trojan-go/proxy/forward"
-	_ "github.com/p4gefau1t/trojan-go/proxy/nat"
-	_ "github.com/p4gefau1t/trojan-go/proxy/server"
-	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
-	_ "github.com/p4gefau1t/trojan-go/statistic/mysql"
 )
 
 func main() {

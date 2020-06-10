@@ -45,7 +45,7 @@ func (o *Option) Priority() int {
 }
 
 func init() {
-	option.RegisterOptionHandler(&Option{
+	option.RegisterHandler(&Option{
 		path: flag.String("config", "config.json", "Trojan-Go config filename (.yaml/.json)"),
 	})
 }

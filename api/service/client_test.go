@@ -28,6 +28,8 @@ func TestClientAPI(t *testing.T) {
 	auth, err := memory.NewAuthenticator(ctx)
 	common.Must(err)
 	go RunClientAPI(ctx, auth)
+
+	time.Sleep(time.Second * 3)
 	common.Must(auth.AddUser("hash1234"))
 	valid, user := auth.AuthUser("hash1234")
 	if !valid {

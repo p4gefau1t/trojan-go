@@ -28,6 +28,7 @@ func TestServerAPI(t *testing.T) {
 	auth, err := memory.NewAuthenticator(ctx)
 	common.Must(err)
 	go RunServerAPI(ctx, auth)
+	time.Sleep(time.Second * 3)
 	common.Must(auth.AddUser("hash1234"))
 	_, user := auth.AuthUser("hash1234")
 	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", port), grpc.WithInsecure())

@@ -2,20 +2,20 @@ package option
 
 import "github.com/p4gefau1t/trojan-go/common"
 
-type OptionHandler interface {
+type Handler interface {
 	Name() string
 	Handle() error
 	Priority() int
 }
 
-var handlers = make(map[string]OptionHandler)
+var handlers = make(map[string]Handler)
 
-func RegisterOptionHandler(h OptionHandler) {
+func RegisterHandler(h Handler) {
 	handlers[h.Name()] = h
 }
 
-func PopOptionHandler() (OptionHandler, error) {
-	var maxHandler OptionHandler = nil
+func PopOptionHandler() (Handler, error) {
+	var maxHandler Handler = nil
 	for _, h := range handlers {
 		if maxHandler == nil || maxHandler.Priority() < h.Priority() {
 			maxHandler = h
