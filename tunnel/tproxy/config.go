@@ -1,3 +1,5 @@
+// +build linux
+
 package tproxy
 
 import "github.com/p4gefau1t/trojan-go/config"
