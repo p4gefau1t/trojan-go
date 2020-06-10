@@ -14,6 +14,7 @@ import (
 func TestWebsocket(t *testing.T) {
 	cfg := &Config{
 		Websocket: WebsocketConfig{
+			Enabled:  true,
 			Hostname: "localhost",
 			Path:     "/ws",
 		},

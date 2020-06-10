@@ -2,9 +2,6 @@ on:
   push:
     branches:
       - 'dev'
-  pull_request:
-    branches:
-      - 'dev'
 name: docker-dev-build
 jobs:
   build:

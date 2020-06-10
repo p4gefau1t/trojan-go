@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -43,6 +44,7 @@ func runHelloHTTPServer() {
 	}
 	go server.ListenAndServe()
 	fmt.Println("http test server listening on", HTTPAddr)
+	wg.Done()
 }
 
 var EchoAddr string
@@ -50,6 +52,7 @@ var EchoAddr string
 func runTCPEchoServer() {
 	listener, err := net.Listen("tcp", EchoAddr)
 	common.Must(err)
+	wg.Done()
 	go func() {
 		for {
 			conn, err := listener.Accept()
@@ -77,6 +80,7 @@ func runTCPEchoServer() {
 func runUDPEchoServer() {
 	conn, err := net.ListenPacket("udp", EchoAddr)
 	common.Must(err)
+	wg.Done()
 	go func() {
 		for {
 			buf := make([]byte, 1024*8)
@@ -96,9 +100,13 @@ func GeneratePayload(length int) []byte {
 	return buf
 }
 
+var wg = sync.WaitGroup{}
+
 func init() {
+	wg.Add(3)
 	runHelloHTTPServer()
 	EchoAddr = GetTestAddr()
 	runTCPEchoServer()
 	runUDPEchoServer()
+	wg.Wait()
 }

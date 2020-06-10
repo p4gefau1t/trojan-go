@@ -7,12 +7,6 @@ on:
       - 'docs'
     tags:
       - 'v*.*.*'
-  pull_request:
-    branches:
-      - 'master'
-    paths-ignore:
-      - '**.md'
-      - 'docs'
 name: docker-build
 jobs:
   build:

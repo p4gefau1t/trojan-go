@@ -16,7 +16,14 @@ import (
 )
 
 func TestMux(t *testing.T) {
-	cfg := newDefaultConfig().(*Config)
+	cfg := &Config{
+		Mux: MuxConfig{
+			Enabled:     true,
+			Concurrency: 8,
+			Timeout:     10,
+		},
+	}
+
 	data, err := yaml.Marshal(cfg)
 	common.Must(err)
 	fmt.Println(string(data))

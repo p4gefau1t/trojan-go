@@ -3,15 +3,15 @@ package socks
 import (
 	"context"
 	"fmt"
-	"net"
-	"sync"
-	"testing"
-
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"golang.org/x/net/proxy"
+	"net"
+	"sync"
+	"testing"
+	"time"
 )
 
 func TestSocks(t *testing.T) {
@@ -29,14 +29,16 @@ func TestSocks(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
+	time.Sleep(time.Second * 2)
 	go func() {
 		conn2, err = s.AcceptConn(nil)
 		common.Must(err)
 		wg.Done()
 	}()
 
+	time.Sleep(time.Second * 1)
 	go func() {
-		conn1, err = socksClient.Dial("tcp", "www.baidu.com:80")
+		conn1, err = socksClient.Dial("tcp", util.EchoAddr)
 		common.Must(err)
 		wg.Done()
 	}()
