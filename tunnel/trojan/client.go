@@ -3,6 +3,8 @@ package trojan
 import (
 	"bytes"
 	"context"
+	"github.com/p4gefau1t/trojan-go/api"
+	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 	"net"
 	"time"
@@ -146,10 +148,13 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 }
 
 func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
-	auth, err := statistic.NewAuthenticator(ctx, "memory")
+	auth, err := statistic.NewAuthenticator(ctx, memory.Name)
 	if err != nil {
 		return nil, err
 	}
+
+	go api.RunService(ctx, Name+"_CLIENT", auth)
+
 	log.Debug("trojan client created")
 	return &Client{
 		underlay: client,

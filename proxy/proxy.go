@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"io"
+	"math/rand"
 	"net"
 	"strings"
 
@@ -153,7 +154,8 @@ func RegisterProxyCreator(name string, creator Creator) {
 }
 
 func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
-	ctx := context.Background()
+	// create a unique context for each proxy instance to avoid duplicated authenticator
+	ctx := context.WithValue(context.Background(), Name+"_ID", rand.Int())
 	var err error
 	if isJSON {
 		ctx, err = config.WithJSONConfig(context.Background(), data)

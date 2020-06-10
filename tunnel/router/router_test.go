@@ -84,6 +84,7 @@ router:
     - "regex:proxyreg(.*)"
     - "full:proxyfull"
     - "domain:proxy.com"
+    - "cidr:192.168.1.1/16"
 `
 	ctx, err := config.WithYAMLConfig(context.Background(), []byte(data))
 	common.Must(err)
@@ -108,6 +109,15 @@ router:
 	_, err = client.DialConn(&tunnel.Address{
 		AddressType: tunnel.DomainName,
 		DomainName:  "proxyfull",
+		Port:        80,
+	}, nil)
+	if err.Error() != "mockproxy" {
+		t.Fail()
+	}
+
+	_, err = client.DialConn(&tunnel.Address{
+		AddressType: tunnel.IPv4,
+		IP:          net.ParseIP("192.168.123.123"),
 		Port:        80,
 	}, nil)
 	if err.Error() != "mockproxy" {

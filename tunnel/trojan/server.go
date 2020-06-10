@@ -3,6 +3,7 @@ package trojan
 import (
 	"context"
 	"fmt"
+	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/statistic/mysql"
 	"io"
@@ -194,6 +195,8 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 	if cfg.MySQL.Enabled {
 		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
 	}
+	go api.RunService(ctx, Name+"_SERVER", auth)
+
 	if err != nil {
 		return nil, common.NewError("failed to create authenticator").Base(err)
 	}

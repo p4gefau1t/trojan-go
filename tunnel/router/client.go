@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 	v2router "v2ray.com/core/app/router"
 )
@@ -356,6 +357,26 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			Type:      v2router.Domain_Regex,
 			Value:     info.code,
 			Attribute: nil,
+		})
+	}
+
+	cidrInfo := loadCode(cfg, "cidr:")
+	for _, info := range cidrInfo {
+		tmp := strings.Split(info.code, "/")
+		if len(tmp) != 2 {
+			return nil, common.NewError("invalid cidr:" + info.code)
+		}
+		ip := net.ParseIP(tmp[0])
+		if ip == nil {
+			return nil, common.NewError("invalid cidr ip:" + info.code)
+		}
+		prefix, err := strconv.ParseInt(tmp[1], 10, 32)
+		if err != nil {
+			return nil, common.NewError("invalid prefix").Base(err)
+		}
+		client.cidrs[info.strategy] = append(client.cidrs[info.strategy], &v2router.CIDR{
+			Ip:     ip,
+			Prefix: uint32(prefix),
 		})
 	}
 

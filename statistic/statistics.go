@@ -8,11 +8,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-const (
-	TrafficMeterKey  = "TRAFFIC_METER"
-	AuthenticatorKey = "AUTHENTICATOR"
-)
-
 type TrafficMeter interface {
 	io.Closer
 	Hash() string
@@ -49,15 +44,25 @@ type Authenticator interface {
 type Creator func(ctx context.Context) (Authenticator, error)
 
 var authCreators = map[string]Creator{}
+var createdAuth = map[context.Context]Authenticator{}
 
 func RegisterAuthenticatorCreator(name string, creator Creator) {
 	authCreators[name] = creator
 }
 
 func NewAuthenticator(ctx context.Context, name string) (Authenticator, error) {
+	// one authenticator for each context
+	if auth, found := createdAuth[ctx]; found {
+		return auth, nil
+	}
 	creator, found := authCreators[strings.ToUpper(name)]
 	if !found {
-		return nil, common.NewError("Auth driver name " + name + " not found")
+		return nil, common.NewError("auth driver name " + name + " not found")
 	}
-	return creator(ctx)
+	auth, err := creator(ctx)
+	if err != nil {
+		return nil, err
+	}
+	createdAuth[ctx] = auth
+	return auth, err
 }
