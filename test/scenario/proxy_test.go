@@ -117,6 +117,7 @@ local-addr: 127.0.0.1
 local-port: %d
 remote-addr: 127.0.0.1
 remote-port: %s
+disable-http-check: true
 password:
     - password
 ssl:
@@ -197,6 +198,7 @@ local-addr: 127.0.0.1
 local-port: %d
 remote-addr: 127.0.0.1
 remote-port: %s
+disable-http-check: true
 password:
     - password
 ssl:

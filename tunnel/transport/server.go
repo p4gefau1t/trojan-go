@@ -254,6 +254,9 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		cfg.TLS.FallbackPort = cfg.RemotePort
 		log.Warn("empty fallback port")
 	}
+	if cfg.TLS.SNI == "" && cfg.TLS.VerifyHostName {
+		return nil, common.NewError("cannot verify hostname without sni")
+	}
 
 	tcpListener, err := net.Listen("tcp", listenAddress.String())
 	if err != nil {

@@ -113,8 +113,6 @@ func NewClient(ctx context.Context, c tunnel.Client) (*Client, error) {
 		var cmd *exec.Cmd
 		log.Warn("trojan-go will use transport plugin and work in plain text mode")
 		switch cfg.TransportPlugin.Type {
-		case "plaintext":
-			// do nothing
 		case "shadowsocks":
 			pluginHost := "127.0.0.1"
 			pluginPort := common.PickPort("tcp", pluginHost)
@@ -143,6 +141,8 @@ func NewClient(ctx context.Context, c tunnel.Client) (*Client, error) {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stdout
 			cmd.Start()
+		case "plaintext":
+			// do nothing
 		default:
 			return nil, common.NewError("invalid plugin type: " + cfg.TransportPlugin.Type)
 		}
