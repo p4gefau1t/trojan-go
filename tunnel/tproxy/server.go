@@ -38,7 +38,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	if err != nil {
 		return nil, common.NewError("tproxy failed to accept connection").Base(err)
 	}
-	addr, err := getOriginalTCPDest(conn.(*net.TCPConn))
+	addr, err := getOriginalTCPDest(conn.(*tproxy.Conn).TCPConn)
 	if err != nil {
 		return nil, common.NewError("tproxy failed to obtain original address of tcp socket").Base(err)
 	}

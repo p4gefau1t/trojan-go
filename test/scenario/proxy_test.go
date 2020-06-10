@@ -1,4 +1,4 @@
-package senario_test
+package scenario
 
 import (
 	"bytes"

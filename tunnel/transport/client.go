@@ -10,6 +10,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -31,10 +34,18 @@ type Client struct {
 	fingerprint   string
 	keyLogger     io.WriteCloser
 	websocket     bool
+	plugin        bool
+	cmd           *exec.Cmd
 }
 
 func (c *Client) Close() error {
-	return c.keyLogger.Close()
+	if c.cmd != nil {
+		c.cmd.Process.Kill()
+	}
+	if c.keyLogger != nil {
+		c.keyLogger.Close()
+	}
+	return nil
 }
 
 func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
@@ -43,6 +54,15 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 // DialConn implements tunnel.Client. It will ignore the params and directly dial to remote server
 func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
+	if c.plugin {
+		conn, err := net.Dial("tcp", c.serverAddress.String())
+		if err != nil {
+			return nil, common.NewError("transport failed to connect to plugin")
+		}
+		return &Conn{
+			Conn: conn,
+		}, nil
+	}
 	if c.fingerprint != "" {
 		tcpConn, err := net.Dial("tcp", c.serverAddress.String())
 		if err != nil {
@@ -88,6 +108,51 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 func NewClient(ctx context.Context, c tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	serverAddress := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+
+	if cfg.TransportPlugin.Enabled {
+		var cmd *exec.Cmd
+		log.Warn("trojan-go will use transport plugin and work in plain text mode")
+		switch cfg.TransportPlugin.Type {
+		case "plaintext":
+			// do nothing
+		case "shadowsocks":
+			pluginHost := "127.0.0.1"
+			pluginPort := common.PickPort("tcp", pluginHost)
+			cfg.TransportPlugin.Env = append(
+				cfg.TransportPlugin.Env,
+				"SS_LOCAL_HOST="+pluginHost,
+				"SS_LOCAL_PORT="+strconv.FormatInt(int64(pluginPort), 10),
+				"SS_REMOTE_HOST="+cfg.RemoteHost,
+				"SS_REMOTE_PORT="+strconv.FormatInt(int64(cfg.RemotePort), 10),
+				"SS_PLUGIN_OPTIONS="+cfg.TransportPlugin.PluginOption,
+			)
+			cfg.RemoteHost = pluginHost
+			cfg.RemotePort = pluginPort
+			serverAddress = tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+			log.Debug("plugin address", serverAddress.String())
+			log.Debug("plugin env", cfg.TransportPlugin.Env)
+
+			cmd = exec.Command(cfg.TransportPlugin.Command, cfg.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, cfg.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			cmd.Start()
+		case "other":
+			cmd = exec.Command(cfg.TransportPlugin.Command, cfg.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, cfg.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			cmd.Start()
+		default:
+			return nil, common.NewError("invalid plugin type: " + cfg.TransportPlugin.Type)
+		}
+		client := &Client{
+			serverAddress: serverAddress,
+			cmd:           cmd,
+			plugin:        true,
+		}
+		return client, nil
+	}
 
 	if cfg.TLS.Fingerprint != "" {
 		_, err := fingerprint.GetClientHelloSpec(cfg.TLS.Fingerprint, cfg.Websocket.Enabled)

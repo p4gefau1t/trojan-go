@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 	"net"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -36,7 +37,7 @@ func (c *OutboundConn) Metadata() *tunnel.Metadata {
 	return c.metadata
 }
 
-func (c *OutboundConn) WriteHeader() error {
+func (c *OutboundConn) WriteHeader(payload []byte) error {
 	if !c.headerWritten {
 		users := c.auth.ListUsers()
 		if len(users) == 0 {
@@ -45,31 +46,29 @@ func (c *OutboundConn) WriteHeader() error {
 		user := users[0]
 		hash := user.Hash()
 		c.user = user
-		buf := bytes.NewBuffer(make([]byte, 0, 128))
+		buf := bytes.NewBuffer(make([]byte, 0, MaxPacketSize))
 		crlf := []byte{0x0d, 0x0a}
 		buf.Write([]byte(hash))
 		buf.Write(crlf)
 		c.metadata.WriteTo(buf)
 		buf.Write(crlf)
+		if payload != nil {
+			buf.Write(payload)
+		}
 		_, err := c.Conn.Write(buf.Bytes())
 		c.headerWritten = true
 		return err
-		/*
-			// stick the payload after the trojan request header
-			_, err := c.Conn.Write(append(buf.Bytes(), p...))
-			c.meter.AddTraffic(len(p)+len(buf.Bytes()), 0)
-			c.sent += uint64(len(p) + len(buf.Bytes()))
-			c.headerWritten = true
-			log.Debug("trojan header and payload flushed")
-			return len(p), err
-		*/
 	}
 	return common.NewError("header is already written")
 }
 
 func (c *OutboundConn) Write(p []byte) (int, error) {
 	if !c.headerWritten {
-		c.WriteHeader()
+		err := c.WriteHeader(p)
+		if err != nil {
+			return 0, err
+		}
+		return len(p), nil
 	}
 	n, err := c.Conn.Write(p)
 	c.user.AddTraffic(n, 0)
@@ -115,7 +114,13 @@ func (c *Client) DialConn(addr *tunnel.Address, overlay tunnel.Tunnel) (tunnel.C
 	if _, ok := overlay.(*mux.Tunnel); ok {
 		newConn.metadata.Command = Mux
 	}
-	newConn.WriteHeader()
+
+	go func(newConn *OutboundConn) {
+		// if the trojan header is still buffered after 100 ms, the client may expect data from the server
+		// so we flush the trojan header
+		time.Sleep(time.Millisecond * 100)
+		newConn.WriteHeader(nil)
+	}(newConn)
 	return newConn, nil
 }
 

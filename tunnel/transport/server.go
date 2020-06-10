@@ -12,6 +12,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -40,13 +42,20 @@ type Server struct {
 	redir              *redirector.Redirector
 	connChan           chan tunnel.Conn
 	wsChan             chan tunnel.Conn
+	plugin             bool
+	cmd                *exec.Cmd
 	ctx                context.Context
 	cancel             context.CancelFunc
 }
 
 func (s *Server) Close() error {
 	s.cancel()
-	s.keyLogger.Close()
+	if s.keyLogger != nil {
+		s.keyLogger.Close()
+	}
+	if s.cmd != nil {
+		s.cmd.Process.Kill()
+	}
 	return s.tcpListener.Close()
 }
 
@@ -59,6 +68,12 @@ func (s *Server) acceptLoop() {
 			return
 		}
 		go func(tcpConn net.Conn) {
+			if s.plugin {
+				s.connChan <- &Conn{
+					Conn: tcpConn,
+				}
+				return
+			}
 			sniVerified := true
 			tlsConfig := &tls.Config{
 				Certificates:             s.keyPair,
@@ -165,16 +180,7 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 // NewServer creates a transport layer server
 func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
-
-	if cfg.TLS.FallbackHost == "" {
-		cfg.TLS.FallbackHost = cfg.RemoteHost
-		log.Warn("empty fallback address")
-	}
-	if cfg.TLS.FallbackPort == 0 {
-		cfg.TLS.FallbackPort = cfg.RemotePort
-		log.Warn("empty fallback port")
-	}
-
+	ctx, cancel := context.WithCancel(ctx)
 	listenAddress := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
 	fallbackAddress := tunnel.NewAddressFromHostPort("tcp", cfg.TLS.FallbackHost, cfg.TLS.FallbackPort)
 	if cfg.TLS.FallbackPort != 0 {
@@ -185,11 +191,74 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		fallbackConn.Close()
 	}
 
+	if cfg.TransportPlugin.Enabled {
+		log.Warn("transport server will use transport plugin and work in plain text mode")
+		var cmd *exec.Cmd
+		switch cfg.TransportPlugin.Type {
+		case "shadowsocks":
+			trojanHost := "127.0.0.1"
+			trojanPort := common.PickPort("tcp", trojanHost)
+			cfg.TransportPlugin.Env = append(
+				cfg.TransportPlugin.Env,
+				"SS_REMOTE_HOST="+cfg.LocalHost,
+				"SS_REMOTE_PORT="+strconv.FormatInt(int64(cfg.LocalPort), 10),
+				"SS_LOCAL_HOST="+trojanHost,
+				"SS_LOCAL_PORT="+strconv.FormatInt(int64(trojanPort), 10),
+				"SS_PLUGIN_OPTIONS="+cfg.TransportPlugin.PluginOption,
+			)
+
+			cfg.LocalHost = trojanHost
+			cfg.LocalPort = trojanPort
+			listenAddress = tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
+			log.Debug("new listen address", listenAddress)
+			log.Debug("plugin env", cfg.TransportPlugin.Env)
+
+			cmd = exec.Command(cfg.TransportPlugin.Command, cfg.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, cfg.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			cmd.Start()
+		case "other":
+			cmd = exec.Command(cfg.TransportPlugin.Command, cfg.TransportPlugin.Arg...)
+			cmd.Env = append(cmd.Env, cfg.TransportPlugin.Env...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+			cmd.Start()
+		case "plaintext":
+			// do nothing
+		default:
+			return nil, common.NewError("invalid plugin type: " + cfg.TransportPlugin.Type)
+		}
+		tcpListener, err := net.Listen("tcp", listenAddress.String())
+		if err != nil {
+			return nil, err
+		}
+		server := &Server{
+			connChan:    make(chan tunnel.Conn, 32),
+			tcpListener: tcpListener,
+			redir:       redirector.NewRedirector(ctx),
+			cmd:         cmd,
+			plugin:      true,
+			ctx:         ctx,
+			cancel:      cancel,
+		}
+		go server.acceptLoop()
+		return server, nil
+	}
+
+	if cfg.TLS.FallbackHost == "" {
+		cfg.TLS.FallbackHost = cfg.RemoteHost
+		log.Warn("empty fallback address")
+	}
+	if cfg.TLS.FallbackPort == 0 {
+		cfg.TLS.FallbackPort = cfg.RemotePort
+		log.Warn("empty fallback port")
+	}
+
 	tcpListener, err := net.Listen("tcp", listenAddress.String())
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithCancel(ctx)
 	server := &Server{
 		fallbackAddress: fallbackAddress,
 		redir:           redirector.NewRedirector(ctx),

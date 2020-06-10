@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/LiamHaworth/go-tproxy v0.0.0-20190726054950-ef7efd7f24ed
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/golang/protobuf v1.3.2
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/refraction-networking/utls v0.0.0-20200601200209-ada0bb9b38a0
 	github.com/smartystreets/goconvey v1.6.4
@@ -15,6 +16,7 @@ require (
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v2 v2.3.0
+	v2ray.com/core v0.0.0-00010101000000-000000000000
 )
 
 replace v2ray.com/core => github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0

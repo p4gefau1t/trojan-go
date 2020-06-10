@@ -15,7 +15,7 @@ func init() {
 	proxy.RegisterProxyCreator(Name, func(ctx context.Context) (*proxy.Proxy, error) {
 		cfg := config.FromContext(ctx, Name).(*client.Config)
 		serverStack := []string{dokodemo.Name}
-		clientStack := client.GenerateClientTree(cfg.Mux.Enabled, cfg.Websocket.Enabled)
+		clientStack := client.GenerateClientTree(cfg.Mux.Enabled, cfg.Websocket.Enabled, cfg.Router.Enabled)
 		c, err := proxy.CreateClientStack(ctx, clientStack)
 		if err != nil {
 			return nil, err
