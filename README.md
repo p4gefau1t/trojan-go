@@ -253,45 +253,25 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 "router": {
     "enabled": true,
     "bypass": [
-        "geoip:tag1",
-        "geosite:tag2",
-        "bypass_list1.txt",
-        "bypass_list2.txt"
+        "geoip:cn",
+        "geoip:private",
+        "full:localhost"
     ],
     "block": [
-        "block_list.txt"
+        "cidr:192.168.1.1/24",
     ],
     "proxy": [
-        "proxy_list.txt"
+        "domain:google.com",
     ],
     "default_policy": "proxy"
 }
 ```
 
-其中```bypass```,```block```, ```proxy```字段中填入相应的列表文件或者geo数据库tag。列表文件每行是一个域名或者IP地址段(CIDR)。geo数据库geoip和geosite为IP数据库和域名数据库。一旦匹配，则执行相应策略。
-
-完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
-
-下面是一个实现国内直连的选项，它将绕过中国大陆IP地址，中国大陆域名，以及内网IP等保留的私有IP地址，直接连接远端而不通过隧道代理。
-
-```json
-"router": {
-    "enabled": true,
-    "bypass": [
-        "geoip:cn",
-        "geoip:private",
-        "geosite:cn"
-    ]
-}
-```
-
-所需要的geoip.dat和geosite.dat已经包含在release的压缩包中。它们来自v2ray的[domain-list-community](https://github.com/v2ray/domain-list-community)和[geoip](https://github.com/v2ray/geoip)。
-
 完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 
 <a name="AEAD"></a>
 
-## AEAD加密
+### AEAD加密
 
 Trojan-Go允许对Trojan协议基于Shadowsocks AEAD进行加密，以保证Websocket传输流量无法被不可信的CDN识别和审查。下面是一个例子
 
@@ -303,11 +283,11 @@ Trojan-Go允许对Trojan协议基于Shadowsocks AEAD进行加密，以保证Webs
 }
 ```
 
-一旦开启，服务端和客户端必须同时开启并保证密码一致。
+如果需要开启，服务端和客户端必须同时开启并保证密码一致。
 
 <a name="传输层插件"></a>
 
-## 传输层插件
+### 传输层插件
 
 Trojan-Go支持可插拔的传输层插件，并支持Shadowsocks [SIP003](https://shadowsocks.org/en/spec/Plugin.html)标准的混淆插件。下面是使用v2ray-plugin的一个例子：
 

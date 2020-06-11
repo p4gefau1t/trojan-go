@@ -54,7 +54,6 @@ weight: 30
     "plain_http_response": "",
     "fallback_port": 0,
     "fingerprint": "firefox",
-    "serve_plain_text": false
   },
   "tcp": {
     "no_delay": true,
@@ -83,7 +82,7 @@ weight: 30
   },
   "shadowsocks": {
     "enabled": false,
-    "method": "",
+    "method": "AES-128-GCM",
     "password": ""
   },
   "transport_plugin": {
@@ -197,8 +196,6 @@ weight: 30
 
 ```fallback_port```指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your-domain-name.com:443```进行验证。
 
-```serve_plain_text```服务端直接是否直接接受TCP连接并处理trojan协议明文。开启此选项后，```ssl```的其他选项将失效，trojan-go将直接处理连入的TCP连接而不使用TLS。此选项的意义在于支持nginx等Web服务器的分流。如果开启，请不要将trojan-go服务对外暴露。
-
 ```key_log```TLS密钥日志的文件路径。如果填写则开启密钥日志。**记录密钥将破坏TLS的安全性，此项不应该用于除调试以外的其他任何用途。**
 
 ### ```mux```多路复用选项
@@ -257,7 +254,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
 
-## ``shadowsocks`` AEAD加密选项
+### ``shadowsocks`` AEAD加密选项
 
 此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。
 
@@ -279,7 +276,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 - "CHACHA20-IETF-POLY1305"
 
-- "AES-128-GCM"
+- "AES-128-GCM" (默认)
 
 - "AES-256-GCM"
 
