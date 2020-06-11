@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6905">
+<meta itemprop="wordCount" content="6761">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -105,7 +105,6 @@
     <span style="color:#f92672">&#34;plain_http_response&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;fallback_port&#34;</span>: <span style="color:#ae81ff">0</span>,
     <span style="color:#f92672">&#34;fingerprint&#34;</span>: <span style="color:#e6db74">&#34;firefox&#34;</span>,
-    <span style="color:#f92672">&#34;serve_plain_text&#34;</span>: <span style="color:#66d9ef">false</span>
   },
   <span style="color:#f92672">&#34;tcp&#34;</span>: {
     <span style="color:#f92672">&#34;no_delay&#34;</span>: <span style="color:#66d9ef">true</span>,
@@ -134,7 +133,7 @@
   },
   <span style="color:#f92672">&#34;shadowsocks&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
-    <span style="color:#f92672">&#34;method&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+    <span style="color:#f92672">&#34;method&#34;</span>: <span style="color:#e6db74">&#34;AES-128-GCM&#34;</span>,
     <span style="color:#f92672">&#34;password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
   },
   <span style="color:#f92672">&#34;transport_plugin&#34;</span>: {
@@ -235,7 +234,6 @@
 <p>一旦指纹的值被设置，<code>cipher</code>，<code>curves</code>，<code>alpn</code>，<code>session_ticket</code>等有可能影响指纹的字段将使用该指纹的特定设置覆写。</p>
 <p><code>plain_http_response</code>指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
 <p><code>fallback_port</code>指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问<code>http://your-domain-name.com:443</code>进行验证。</p>
-<p><code>serve_plain_text</code>服务端直接是否直接接受TCP连接并处理trojan协议明文。开启此选项后，<code>ssl</code>的其他选项将失效，trojan-go将直接处理连入的TCP连接而不使用TLS。此选项的意义在于支持nginx等Web服务器的分流。如果开启，请不要将trojan-go服务对外暴露。</p>
 <p><code>key_log</code>TLS密钥日志的文件路径。如果填写则开启密钥日志。<strong>记录密钥将破坏TLS的安全性，此项不应该用于除调试以外的其他任何用途。</strong></p>
 <h3 id="mux多路复用选项"><code>mux</code>多路复用选项</h3>
 <p>多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。</p>
@@ -289,7 +287,7 @@
 <p><code>enabled</code>表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。</p>
 <p><code>path</code>指的是Websocket使用的URL路径，必须以斜杠(&quot;/&quot;)开头，如&rdquo;/longlongwebsocketpath&rdquo;，并且服务器和客户端必须一致。</p>
 <p><code>hostname</code>Websocket握手时使用的主机名，客户端如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。</p>
-<h2 id="shadowsocks-aead加密选项"><code>shadowsocks</code> AEAD加密选项</h2>
+<h3 id="shadowsocks-aead加密选项"><code>shadowsocks</code> AEAD加密选项</h3>
 <p>此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。</p>
 <p>注意，开启这个选项将有可能降低传输性能，你只应该在不信任承载Trojan协议的传输信道的情况下，启用这个选项。例如：</p>
 <ul>
@@ -312,7 +310,7 @@
 <p>&ldquo;CHACHA20-IETF-POLY1305&rdquo;</p>
 </li>
 <li>
-<p>&ldquo;AES-128-GCM&rdquo;</p>
+<p>&ldquo;AES-128-GCM&rdquo; (默认)</p>
 </li>
 <li>
 <p>&ldquo;AES-256-GCM&rdquo;</p>
