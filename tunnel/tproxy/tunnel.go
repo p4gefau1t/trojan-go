@@ -1,4 +1,4 @@
-// +build linux
+// +build linux,!386
 
 package tproxy
 

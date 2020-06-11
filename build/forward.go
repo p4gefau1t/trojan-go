@@ -1,4 +1,4 @@
-// +build forward full standard
+// +build forward full mini
 
 package build
 

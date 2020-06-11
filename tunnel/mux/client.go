@@ -108,7 +108,7 @@ func (c *Client) newMuxClient() (*smuxClientInfo, error) {
 	conn = newStickyConn(conn)
 
 	smuxConfig := smux.DefaultConfig()
-	smuxConfig.KeepAliveDisabled = true
+	//smuxConfig.KeepAliveDisabled = true
 	client, err := smux.Client(conn, smuxConfig)
 	info := &smuxClientInfo{
 		client:         client,
@@ -129,6 +129,9 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 		rwc, err := info.client.Open()
 		info.lastActiveTime = time.Now()
 		if err != nil {
+			c.clientPoolLock.Lock()
+			defer c.clientPoolLock.Unlock()
+			delete(c.clientPool, info.id)
 			return nil, common.NewError("mux failed to open stream from client").Base(err)
 		}
 		return &Conn{

@@ -7,6 +7,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/proxy/client"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 	"github.com/p4gefau1t/trojan-go/tunnel/raw"
+	"github.com/p4gefau1t/trojan-go/tunnel/router"
 	"github.com/p4gefau1t/trojan-go/tunnel/shadowsocks"
 	"github.com/p4gefau1t/trojan-go/tunnel/simplesocks"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
@@ -18,11 +19,14 @@ const Name = "SERVER"
 
 func init() {
 	proxy.RegisterProxyCreator(Name, func(ctx context.Context) (*proxy.Proxy, error) {
-		clientStack := []string{raw.Name}
 		cfg := config.FromContext(ctx, Name).(*client.Config)
 		s, err := transport.NewServer(ctx, nil)
 		if err != nil {
 			return nil, err
+		}
+		clientStack := []string{raw.Name}
+		if cfg.Router.Enabled {
+			clientStack = []string{raw.Name, router.Name}
 		}
 		root := &proxy.Node{
 			Name:       transport.Name,

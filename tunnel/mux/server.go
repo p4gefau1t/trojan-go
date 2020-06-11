@@ -31,7 +31,7 @@ func (s *Server) acceptConnWorker() {
 			continue
 		}
 		smuxConfig := smux.DefaultConfig()
-		smuxConfig.KeepAliveDisabled = true
+		//smuxConfig.KeepAliveDisabled = true
 		smuxSession, err := smux.Server(conn, smuxConfig)
 		if err != nil {
 			s.errChan <- err

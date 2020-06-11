@@ -1,4 +1,4 @@
-// +build nat full standard
+// +build nat full mini
 
 package build
 

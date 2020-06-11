@@ -176,6 +176,7 @@ func (c *Client) DialConn(address *tunnel.Address, overlay tunnel.Tunnel) (tunne
 	case Block:
 		return nil, common.NewError("router blocked address: " + address.String())
 	case Bypass:
+		// TODO use raw.Client
 		conn, err := net.Dial("tcp", address.String())
 		if err != nil {
 			return nil, common.NewError("router dial error").Base(err)
@@ -188,6 +189,7 @@ func (c *Client) DialConn(address *tunnel.Address, overlay tunnel.Tunnel) (tunne
 }
 
 func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
+	// TODO use raw.Client
 	direct, err := net.ListenPacket("udp", "")
 	if err != nil {
 		return nil, common.NewError("router failed to dial udp (direct)").Base(err)

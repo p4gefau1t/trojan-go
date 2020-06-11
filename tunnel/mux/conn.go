@@ -66,7 +66,7 @@ func (c *stickyConn) Write(p []byte) (int, error) {
 				return 8, nil
 			}
 		} else {
-			log.Debug("Unknown 8 bytes header")
+			log.Debug("other 8 bytes header")
 		}
 	}
 	_, err := c.Conn.Write(c.stickToPayload(p))

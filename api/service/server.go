@@ -166,13 +166,16 @@ func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_
 }
 
 func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
+	cfg := config.FromContext(ctx, Name).(*Config)
+	if !cfg.API.Enabled {
+		return nil
+	}
 	server := grpc.NewServer()
 	service := &ServerAPI{
 		auth: auth,
 	}
 	RegisterTrojanServerServiceServer(server, service)
-	cfg := config.FromContext(ctx, Name).(*Config)
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.APIHost, cfg.APIPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.API.APIHost, cfg.API.APIPort))
 	if err != nil {
 		return err
 	}

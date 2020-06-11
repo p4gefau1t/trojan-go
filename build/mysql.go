@@ -1,4 +1,4 @@
-// +build mysql full standard
+// +build mysql full mini
 
 package build
 

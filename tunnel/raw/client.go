@@ -49,7 +49,8 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func NewFreeClient(ctx context.Context, client tunnel.Client) (*Client, error) {
+func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
+	// TODO implement dns
 	cfg := config.FromContext(ctx, Name).(*Config)
 	return &Client{
 		noDelay:    cfg.TCP.NoDelay,

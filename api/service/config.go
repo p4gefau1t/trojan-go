@@ -11,7 +11,7 @@ type APIConfig struct {
 }
 
 type Config struct {
-	APIConfig `json,yaml:"api"`
+	API APIConfig `json,yaml:"api"`
 }
 
 func init() {

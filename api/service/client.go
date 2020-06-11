@@ -53,14 +53,17 @@ func (s *ClientAPI) GetTraffic(ctx context.Context, req *GetTrafficRequest) (*Ge
 }
 
 func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
+	cfg := config.FromContext(ctx, Name).(*Config)
+	if !cfg.API.Enabled {
+		return nil
+	}
 	server := grpc.NewServer()
 	service := &ClientAPI{
 		ctx:  ctx,
 		auth: auth,
 	}
 	RegisterTrojanClientServiceServer(server, service)
-	cfg := config.FromContext(ctx, Name).(*Config)
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.APIHost, cfg.APIPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.API.APIHost, cfg.API.APIPort))
 	if err != nil {
 		return err
 	}

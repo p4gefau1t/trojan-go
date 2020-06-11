@@ -1,3 +1,1 @@
-// +build !linux
-
 package tproxy

@@ -1,4 +1,4 @@
-// +build server full standard
+// +build server full mini
 
 package build
 
