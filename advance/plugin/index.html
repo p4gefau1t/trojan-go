@@ -30,7 +30,7 @@
 <meta itemprop="name" content="使用Shadowsocks插件/可插拔传输层">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软">
 
-<meta itemprop="wordCount" content="907">
+<meta itemprop="wordCount" content="906">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.6.0</span>
+ <span class="version">Version 0.7.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -79,7 +79,7 @@
     <span style="color:#f92672">&#34;arg&#34;</span>: [<span style="color:#e6db74">&#34;-host&#34;</span>, <span style="color:#e6db74">&#34;www.baidu.com&#34;</span>]
 }
 </code></pre></div><p>注意，v2ray-plugin插件需要指定<code>-server</code>参数来区分客户端和服务端。更多关于该插件详细的说明，参考v2ray-plugin的文档。</p>
-<p>启动Trojan-Go后，你可以看到v2ray-plugin启动的输出。插件将回把流量伪装为websocket流量并传输。</p>
+<p>启动Trojan-Go后，你可以看到v2ray-plugin启动的输出。插件将把流量伪装为Websocket流量并传输。</p>
 <p>非SIP003标准的插件可能需要不同的配置，你可以指定<code>type</code>为&quot;other&rdquo;，并自行指定插件地址，插件启动参数、环境变量。</p>
 <div class="edit-meta">
 
@@ -109,7 +109,6 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>

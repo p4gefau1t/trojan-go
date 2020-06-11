@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="可插拔传输层插件开发" />
-<meta property="og:description" content="Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 插件与Trojan-Go基于TCP Socket通讯，与Tr" />
+<meta property="og:description" content="Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 传输层插件的作用，是替代tansport隧道的TLS进行传" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/plugin/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="可插拔传输层插件开发"/>
-<meta name="twitter:description" content="Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 插件与Trojan-Go基于TCP Socket通讯，与Tr"/>
+<meta name="twitter:description" content="Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 传输层插件的作用，是替代tansport隧道的TLS进行传"/>
 <meta itemprop="name" content="可插拔传输层插件开发">
-<meta itemprop="description" content="Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 插件与Trojan-Go基于TCP Socket通讯，与Tr">
+<meta itemprop="description" content="Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 传输层插件的作用，是替代tansport隧道的TLS进行传">
 
-<meta itemprop="wordCount" content="1036">
+<meta itemprop="wordCount" content="1072">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.6.0</span>
+ <span class="version">Version 0.7.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -54,7 +54,8 @@
 <div class="content-container">
 <main><h1>可插拔传输层插件开发</h1>
 <p>Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。</p>
-<p>插件与Trojan-Go基于TCP Socket通讯，与Trojan-Go本身不存在任何耦合关系，你可以使用任何你喜欢的语言和设计模式进行开发。我们建议的参照<a href="https://github.com/shadowsocks/shadowsocks-org/issues/28">SIP003</a>标准进行开发。如此开发的插件可以同时用于Trojan-Go和Shadowsocks。</p>
+<p>传输层插件的作用，是替代tansport隧道的TLS进行传输加密和混淆。</p>
+<p>插件与Trojan-Go基于TCP Socket通讯，与Trojan-Go本身不存在任何耦合关系，你可以使用任何你喜欢的语言和设计模式进行开发。我们建议的参照<a href="https://shadowsocks.org/en/spec/Plugin.html">SIP003</a>标准进行开发。如此开发的插件可以同时用于Trojan-Go和Shadowsocks。</p>
 <p>Trojan-Go开启插件功能后，仅使用TCP进行传输（明文）。你的插件只需要处理入站的TCP请求即可。你可以将这些TCP流量转换成任何你喜欢的流量格式，如QUIC，HTTP，甚至是ICMP。</p>
 <p>Trojan-Go插件设计原则，与Shadowsocks略有不同：</p>
 <ol>
@@ -113,7 +114,6 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>

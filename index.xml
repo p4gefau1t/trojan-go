@@ -25,7 +25,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/overview/</guid>
-      <description>Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模</description>
+      <description>Trojan-Go的核心部分有 tunnel 各个协议具体实现 proxy 代理核心 config 配置注册和解析模块 redirector 主动检测欺骗模块 statistics 用户认证和统计模块 可以在对应文件夹中找到相</description>
     </item>
     
     <item>
@@ -44,15 +44,6 @@
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/router/</guid>
       <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go内建的路由模块可以帮助你实现国内直连，即客户端对于国内网站不经过代理，直接连接</description>
-    </item>
-    
-    <item>
-      <title>流量中继</title>
-      <link>https://p4gefau1t.github.io/trojan-go/advance/relay/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://p4gefau1t.github.io/trojan-go/advance/relay/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持进行流量转发。一个典型的使用场景是，你所使用的ISP提供的网络服务，出境的</description>
     </item>
     
     <item>
@@ -151,7 +142,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/websocket/</guid>
-      <description>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容，而Trojan协议明文的头部特征过于明显，而TLS握</description>
+      <description>由于使用CDN中转时，HTTPS对CDN透明，CDN可以审查Websocket传输内容。而Trojan协议本身是明文传输，因此为保证安全性，</description>
     </item>
     
     <item>
@@ -160,7 +151,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/simplesocks/</guid>
-      <description>SimpleSocks协议是无认证机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove</description>
+      <description>SimpleSocks协议是无鉴权机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove</description>
     </item>
     
     <item>
@@ -178,7 +169,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/plugin/</guid>
-      <description>Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 插件与Trojan-Go基于TCP Socket通讯，与Tr</description>
+      <description>Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 传输层插件的作用，是替代tansport隧道的TLS进行传</description>
     </item>
     
   </channel>

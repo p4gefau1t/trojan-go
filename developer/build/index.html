@@ -30,7 +30,7 @@
 <meta itemprop="name" content="编译和自定义Trojan-Go">
 <meta itemprop="description" content="编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译过程非常简单 go build -tags &#34;full&#34; #编译完整版本 bu">
 
-<meta itemprop="wordCount" content="407">
+<meta itemprop="wordCount" content="388">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.6.0</span>
+ <span class="version">Version 0.7.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -64,10 +64,9 @@ GOOS<span style="color:#f92672">=</span>linux GOARCH<span style="color:#f92672">
 <p>Trojan-Go的大多数模块是可插拔的。在build文件夹下可以找到各个模块的导入声明。如果你不需要其中某些功能，或者需要缩小可执行文件的体积，可以使用构建标签(tags)进行模块的自定义，例如</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">go build -tags <span style="color:#e6db74">&#34;full&#34;</span> <span style="color:#75715e">#编译所有模块</span>
 go build -tags <span style="color:#e6db74">&#34;client&#34;</span> -ldflags<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;-s -w&#34;</span> <span style="color:#75715e">#只有客户端功能，且去除符号表缩小体积</span>
-go build -tags <span style="color:#e6db74">&#34;server auth_mysql&#34;</span> <span style="color:#75715e">#只有服务端和mysql支持</span>
-go build -tags <span style="color:#e6db74">&#34;client router&#34;</span> <span style="color:#75715e">#只有客户端和路由模块</span>
+go build -tags <span style="color:#e6db74">&#34;server mysql&#34;</span> <span style="color:#75715e">#只有服务端和mysql支持</span>
 </code></pre></div><p>使用full标签等价于</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">go build -tags <span style="color:#e6db74">&#34;api client router server auth_mysql auth_redis relay cert other&#34;</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">go build -tags <span style="color:#e6db74">&#34;api client server forward nat other&#34;</span>
 </code></pre></div><div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/build.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/overview/" title="基本介绍"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 基本介绍</a>
@@ -96,7 +95,6 @@ go build -tags <span style="color:#e6db74">&#34;client router&#34;</span> <span 
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>

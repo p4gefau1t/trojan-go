@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="基本介绍" />
-<meta property="og:description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模" />
+<meta property="og:description" content="Trojan-Go的核心部分有 tunnel 各个协议具体实现 proxy 代理核心 config 配置注册和解析模块 redirector 主动检测欺骗模块 statistics 用户认证和统计模块 可以在对应文件夹中找到相" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/overview/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="基本介绍"/>
-<meta name="twitter:description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模"/>
+<meta name="twitter:description" content="Trojan-Go的核心部分有 tunnel 各个协议具体实现 proxy 代理核心 config 配置注册和解析模块 redirector 主动检测欺骗模块 statistics 用户认证和统计模块 可以在对应文件夹中找到相"/>
 <meta itemprop="name" content="基本介绍">
-<meta itemprop="description" content="Trojan-Go的核心部分有 protocol 各个协议具体实现 proxy 代理核心，使用protocol的协议实现，处理入站和出站流量 conf 配置解析模块 shadow 主动检测欺骗模">
+<meta itemprop="description" content="Trojan-Go的核心部分有 tunnel 各个协议具体实现 proxy 代理核心 config 配置注册和解析模块 redirector 主动检测欺骗模块 statistics 用户认证和统计模块 可以在对应文件夹中找到相">
 
-<meta itemprop="wordCount" content="98">
+<meta itemprop="wordCount" content="1193">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.6.0</span>
+ <span class="version">Version 0.7.0</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -56,22 +56,76 @@
 <p>Trojan-Go的核心部分有</p>
 <ul>
 <li>
-<p>protocol 各个协议具体实现</p>
+<p>tunnel 各个协议具体实现</p>
 </li>
 <li>
-<p>proxy 代理核心，使用protocol的协议实现，处理入站和出站流量</p>
+<p>proxy 代理核心</p>
 </li>
 <li>
-<p>conf 配置解析模块</p>
+<p>config 配置注册和解析模块</p>
 </li>
 <li>
-<p>shadow 主动检测欺骗模块</p>
+<p>redirector 主动检测欺骗模块</p>
 </li>
 <li>
-<p>stat 用户认证和统计模块</p>
+<p>statistics 用户认证和统计模块</p>
 </li>
 </ul>
 <p>可以在对应文件夹中找到相关源代码。</p>
+<h2 id="tunneltunnel隧道">tunnel.Tunnel隧道</h2>
+<p>Trojan-Go将所有协议（包括路由功能等）抽象为隧道(tunnel.Tunnel接口)，每个隧道可开启服务端（tunnel.Server接口）和客户端（tunnel.Client）。每个服务端可以从其底层隧道中，剥离并接受流（tunnel.Conn）和包（tunnel.PacketConn)。客户端可以向底层隧道，创建流和包。</p>
+<p>每个隧道并不关心其下方的隧道是什么，但是每个隧道清楚知道这个它上方的其他隧道的相关信息。</p>
+<p>所有隧道需要下层提供流或包传输支持，或两者都要求提供。所有隧道必须向上层隧道提供流传输支持，但不一定提供包传输。</p>
+<p>隧道可能只有服务端，也可能只有客户端，也可能两者皆有。两者皆有的隧道，可被用于作为Trojan-Go客户端和服务端间的传输隧道。</p>
+<p>注意，请区分Trojan-Go的服务端/客户端，和隧道的服务端/客户端的区别。下面是一个方便理解的图例。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">
+  入站                              GFW                                  出站
+--------&gt;隧道A服务端-&gt;隧道B客户端 ----------------&gt; 隧道B服务端-&gt;隧道C客户端-----------&gt;
+           (Trojan-Go客户端)                          (Trojan-Go服务端)
+
+</code></pre></div><p>最底层的隧道为传输层，即不从其他隧道获取或者创建流和包的隧道，充当上图中隧道A或者C的角色。</p>
+<ul>
+<li>
+<p>transport，TLS和可插拔传输层</p>
+</li>
+<li>
+<p>socks，socks5代理，仅隧道服务端</p>
+</li>
+<li>
+<p>tproxy，透明代理，仅隧道服务端</p>
+</li>
+<li>
+<p>dokodemo，反向代理，仅隧道服务端</p>
+</li>
+<li>
+<p>raw，原始TCP/UDP</p>
+</li>
+</ul>
+<p>这几个隧道直接从TCP/UDP Socket创建流和包，不接受为其底层添加的任何隧道。</p>
+<p>其他隧道，只要下层能满足上层对包和流传输的需求，则原则上可以任何方式，任何数量进行组合和堆叠。这些隧道在上图中充当隧道B的角色，他们有</p>
+<ul>
+<li>
+<p>trojan</p>
+</li>
+<li>
+<p>websocket</p>
+</li>
+<li>
+<p>mux</p>
+</li>
+<li>
+<p>simplesocks</p>
+</li>
+<li>
+<p>router，路由功能，仅隧道客户端</p>
+</li>
+</ul>
+<p>他们都不关心其下层隧道实现。但可以根据到来的流和包，将其分发给上层隧道。</p>
+<h1 id="proxyproxy代理核心">proxy.Proxy代理核心</h1>
+<p>代理核心的作用，监听上述隧道进行组合堆叠并形成的协议栈，将所有的入站协议栈（多个的隧道Server）中抽取的流和包，以及对应元信息，转送给出站协议栈（一个隧道Client）。</p>
+<p>注意，这里的入站协议栈可以有多个，如客户端可以同时从Socks5和HTTP协议栈中抽取流和包，服务端可以同时从Websocket承载的Trojan协议，和TLS承载的Trojan协议中抽取流和包等。但是出站协议栈只能有一个。</p>
+<p>为了描述入站协议栈（隧道服务端）的组合和堆叠方式，使用一棵多叉树对所有协议栈进行描述。你可以在client/forward/nat/server中看到构建树的过程。</p>
+<p>而出站协议栈则比较简单，使用一个简单列表即可描述。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/overview.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 实现细节和开发指南</a>
@@ -100,7 +154,6 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/relay/">流量中继</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
