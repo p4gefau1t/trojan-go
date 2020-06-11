@@ -79,7 +79,7 @@ func init() {
 	ioutil.WriteFile("server.key", []byte(key), 0777)
 }
 
-func TestClientServer(t *testing.T) {
+func TestClientServerWebsocketSubTree(t *testing.T) {
 	serverPort := common.PickPort("tcp", "127.0.0.1")
 	socksPort := common.PickPort("tcp", "127.0.0.1")
 	clientData := fmt.Sprintf(`
@@ -133,6 +133,76 @@ websocket:
     enabled: true
     path: /ws
     hostname: 127.0.0.1
+`, serverPort, util.HTTPPort)
+	go func() {
+		proxy, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
+		common.Must(err)
+		common.Must(proxy.Run())
+	}()
+
+	time.Sleep(time.Second * 2)
+	dialer, err := netproxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, netproxy.Direct)
+
+	payload := util.GeneratePayload(1024)
+	buf := [1024]byte{}
+
+	conn, err := dialer.Dial("tcp", util.EchoAddr)
+	common.Must(err)
+
+	common.Must2(conn.Write(payload))
+	common.Must2(conn.Read(buf[:]))
+
+	if !bytes.Equal(payload, buf[:]) {
+		t.Fail()
+	}
+}
+
+func TestClientServerTrojanSubTree(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+	clientData := fmt.Sprintf(`
+run-type: client
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
+password:
+    - password
+ssl:
+    verify: false
+    fingerprint: firefox
+    sni: localhost
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
+mux:
+    enabled: true
+`, socksPort, serverPort)
+	go func() {
+		proxy, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
+		common.Must(err)
+		common.Must(proxy.Run())
+	}()
+
+	serverData := fmt.Sprintf(`
+run-type: server
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %s
+disable-http-check: true
+password:
+    - password
+ssl:
+    verify-hostname: false
+    key: server.key
+    cert: server.crt
+    sni: localhost
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
 `, serverPort, util.HTTPPort)
 	go func() {
 		proxy, err := proxy.NewProxyFromConfigData([]byte(serverData), false)

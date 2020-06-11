@@ -1,4 +1,4 @@
-// +build mysql full
+// +build mysql full standard
 
 package build
 

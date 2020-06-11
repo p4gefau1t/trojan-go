@@ -18,11 +18,11 @@
 
 支持[CDN流量中转](#Websocket)(基于WebSocket over TLS/SSL)。
 
-支持基于ACME协议从Let's Encrypt[自动申请和更新](#证书申请)HTTPS证书，只需提供域名和邮箱。
+支持使用AEAD对Trojan流量[二次加密](#AEAD)(基于Shadowsocks AEAD)
 
-支持可插拔的[传输层插件](#传输层插件)，允许替换TLS，实现其他流量混淆和加密。
+支持可插拔的[传输层插件](#传输层插件)，允许替换TLS，使用其他加密隧道传输Trojan协议流量。
 
-预编译的版本可在 [Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。直接运行解压得到的执行文件即可，无其他组件依赖。
+预编译的版本可在[Release 页面](https://github.com/p4gefau1t/trojan-go/releases)下载。直接运行解压得到的执行文件即可，无其他组件依赖。
 
 如果你遇到配置和使用方面的问题，发现了软件Bug，或是有更好的想法，欢迎加入Trojan-Go的[Telegram交流反馈群](https://t.me/trojan_go_chat)。
 
@@ -44,8 +44,6 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 
 - 从数据库中的用户列表进行认证
 
-- TCP Keep Alive，TCP Fast Open，端口复用等TCP选项
-
 同时，Trojan-Go还扩展了更多高效易用的功能特性：
 
 - 简易模式，快速部署使用
@@ -54,7 +52,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 
 - 多平台和多操作系统支持，无特殊依赖
 
-- 多路复用，降低延迟，提升并发性能
+- 基于多路复用(smux)降低延迟，提升并发性能
 
 - 自定义路由模块，可实现国内直连/广告屏蔽等功能
 
@@ -68,6 +66,8 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 
 - 可插拔传输层，可将TLS替换为其他协议或明文传输。同时有完整的Shadowsocks混淆插件支持。
 
+- 支持对人类更友好的YAML配置文件格式
+
 ## 图形界面客户端
 
 Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，ShadowRocket等。
@@ -80,25 +80,7 @@ Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，Shadow
 
 ## 使用方法
 
-1. 快速证书配置
-
-    - 自动申请证书
-
-        ```shell
-        sudo ./trojan-go -autocert request
-        ```
-
-        (**注意备份生成的证书和密钥，并确保其安全**)
-
-    - 为证书续期
-
-        ```shell
-        sudo ./trojan-go -autocert renew
-        ```
-
-    关于证书申请[更详细的说明](#证书申请)。
-
-2. 快速启动服务器和客户端（简易模式）
+1. 快速启动服务器和客户端（简易模式）
 
     - 服务端
 
@@ -112,13 +94,13 @@ Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，Shadow
         ./trojan-go -client -remote example.com:443 -local 127.0.0.1:1080 -password your_password
         ```
 
-3. 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
+2. 使用配置文件启动客户端/服务端/透明代理/中继（一般模式）
 
     ```shell
     ./trojan-go -config config.json
     ```
 
-4. 使用Docker部署
+3. 使用Docker部署
 
     ```shell
     docker run \
@@ -203,53 +185,16 @@ client.json
 }
 ```
 
-<a name="证书申请"></a>
-
-### 自动证书申请
-
-使用
-
-```shell
-sudo ./trojan-go -autocert request
-```
-
-向Let's Encrypt申请证书。
-
-申请过程中，按照ACME协议要求，trojan-go需要和letsencrypt服务器交互，因此需要暂时占用本地443和80端口，此时请暂时关闭nginx，apache，或者trojan等服务。
-
-Linux下，绑定80和443端口需要root权限，因此你需要使用sudo执行trojan-go才能正常证书申请流程。
-
-你也可以指定自定义端口，然后使用nginx等web服务器进行443和80分流，将ACME协议流量代理到自定义端口上。
-
-如果申请成功，本目录下会得到
-
-- server.key 服务器私钥
-
-- server.crt 经过Let's Encrypt签名的服务器证书
-
-- user.key 用户Email对应的私钥
-
-- domain_info.json 域名和用户Email信息
-
-请备份这几个文件并且妥善保管。接下来你可以将服务器私钥和证书文件名填入你的配置文件，开启你的trojan-go服务器即可。
-
-如果证书过期了，使用
-
-```shell
-sudo ./trojan-go -autocert renew
-```
-
-更新证书，确保上面提到的四个文件在trojan-go所在目录，运行后trojan-go将自动更新证书文件。
+<a name="WebSocket"></a>
 
 ### WebSocket
-
-<a name="WebSocket"></a>
 
 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。
 
 服务器和客户端配置文件中同时添加```websocket```选项即可启用Websocket支持，例如
 
 ```json
+...
 "websocket": {
     "enabled": true,
     "path": "/im_a_url_path",
@@ -263,9 +208,10 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的Trojan-Go服务端可以兼容所有客户端，但是如果要使用Websocket承载流量，请确保双方都使用Trojan-Go。
 
+<a name="多路复用"></a>
+
 ### 多路复用
 
-<a name="多路复用"></a>
 
 在很差的网络条件下，一次TLS握手可能会花费很多时间。
 
@@ -276,6 +222,7 @@ Trojan-Go支持多路复用(基于[smux](https://github.com/xtaci/smux))。通�
 注意，这个特性和Trojan-GFW**不兼容**，出于兼容性考虑，这个特性是默认关闭的。你可以通过设置客户端的mux选项"enabled"字段启用它。如下
 
 ```json
+...
 "mux": {
     "enabled": true
 }
@@ -285,9 +232,9 @@ Trojan-Go支持多路复用(基于[smux](https://github.com/xtaci/smux))。通�
 
 你只需要设置客户端的配置文件即可，服务端会自动检测是否启用多路复用并提供支持。
 
-### 路由模块
-
 <a name="路由模块"></a>
+
+### 路由模块
 
 Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现国内直连等自定义路由功能。
 
@@ -302,6 +249,7 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 要激活模块，在你的配置文件中添加router选项，并且设置enabled为true，例如
 
 ```json
+...
 "router": {
     "enabled": true,
     "bypass": [
@@ -341,6 +289,22 @@ Trojan-Go的客户端内建一个简单实用的路由模块用以方便实现�
 
 完整的选项说明参见[Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
 
+<a name="AEAD"></a>
+
+## AEAD加密
+
+Trojan-Go允许对Trojan协议基于Shadowsocks AEAD进行加密，以保证Websocket传输流量无法被不可信的CDN识别和审查。下面是一个例子
+
+```json
+...
+"shadowsocks": {
+    "enabled": true,
+    "password": "my_password"
+}
+```
+
+一旦开启，服务端和客户端必须同时开启并保证密码一致。
+
 <a name="传输层插件"></a>
 
 ## 传输层插件
@@ -352,17 +316,19 @@ Trojan-Go支持可插拔的传输层插件，并支持Shadowsocks [SIP003](https
 服务端配置：
 
 ```json
+...
 "transport_plugin": {
-        "enabled": true,
-        "type": "shadowsocks",
-        "command": "./v2ray-plugin",
-        "arg": ["-server", "-host", "www.baidu.com"]
+    "enabled": true,
+    "type": "shadowsocks",
+    "command": "./v2ray-plugin",
+    "arg": ["-server", "-host", "www.baidu.com"]
 }
 ```
 
 客户端配置：
 
 ```json
+...
 "transport_plugin": {
     "enabled": true,
     "type": "shadowsocks",

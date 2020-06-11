@@ -5,14 +5,17 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/redirector"
 	"github.com/p4gefau1t/trojan-go/tunnel"
-	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"github.com/shadowsocks/go-shadowsocks2/core"
+	"net"
 )
 
 type Server struct {
-	underlay tunnel.Server
 	core.Cipher
+	*redirector.Redirector
+	underlay  tunnel.Server
+	redirAddr net.Addr
 }
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
@@ -20,8 +23,29 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	if err != nil {
 		return nil, common.NewError("shadowsocks failed to accept connection from underlying tunnel")
 	}
-	return &transport.Conn{
-		Conn: s.Cipher.StreamConn(conn),
+	rewindConn := common.NewRewindConn(conn)
+	rewindConn.SetBufferSize(1024)
+	defer rewindConn.StopBuffering()
+
+	// try to read something from this connection
+	buf := [1024]byte{}
+	testConn := s.Cipher.StreamConn(rewindConn)
+	if _, err := testConn.Read(buf[:]); err != nil {
+		// we are under attack
+		rewindConn.Rewind()
+		rewindConn.StopBuffering()
+		s.Redirect(&redirector.Redirection{
+			RedirectTo:  s.redirAddr,
+			InboundConn: rewindConn,
+		})
+		return nil, common.NewError("invalid aead payload")
+	}
+	rewindConn.Rewind()
+	rewindConn.StopBuffering()
+
+	return &Conn{
+		aeadConn: s.Cipher.StreamConn(rewindConn),
+		Conn:     conn,
 	}, nil
 }
 
@@ -41,7 +65,9 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	}
 	log.Debug("shadowsocks client created")
 	return &Server{
-		underlay: underlay,
-		Cipher:   cipher,
+		underlay:   underlay,
+		Cipher:     cipher,
+		Redirector: redirector.NewRedirector(ctx),
+		redirAddr:  tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort),
 	}, nil
 }

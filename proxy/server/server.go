@@ -32,8 +32,12 @@ func init() {
 			Server:     s,
 		}
 
-		root.BuildNext(trojan.Name).BuildNext(mux.Name).BuildNext(simplesocks.Name).IsEndpoint = true
-		root.BuildNext(trojan.Name).IsEndpoint = true
+		trojanSubTree := root
+		if cfg.Shadowsocks.Enabled {
+			trojanSubTree = trojanSubTree.BuildNext(shadowsocks.Name)
+		}
+		trojanSubTree.BuildNext(trojan.Name).BuildNext(mux.Name).BuildNext(simplesocks.Name).IsEndpoint = true
+		trojanSubTree.BuildNext(trojan.Name).IsEndpoint = true
 
 		wsSubTree := root.BuildNext(websocket.Name)
 		if cfg.Shadowsocks.Enabled {

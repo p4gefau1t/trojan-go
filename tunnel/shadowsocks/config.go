@@ -9,11 +9,17 @@ type ShadowsocksConfig struct {
 }
 
 type Config struct {
+	RemoteHost  string            `json:"remote_addr", yaml:"remote-addr"`
+	RemotePort  int               `json:"remote_port", yaml:"remote-port"`
 	Shadowsocks ShadowsocksConfig `json,yaml:"shadowsocks"`
 }
 
 func init() {
 	config.RegisterConfigCreator(Name, func() interface{} {
-		return new(Config)
+		return &Config{
+			Shadowsocks: ShadowsocksConfig{
+				Method: "AES-128-GCM",
+			},
+		}
 	})
 }

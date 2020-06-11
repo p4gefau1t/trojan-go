@@ -1,4 +1,4 @@
-// +build client full
+// +build client full standard
 
 package build
 

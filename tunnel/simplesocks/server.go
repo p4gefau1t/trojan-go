@@ -89,5 +89,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		errChan:    make(chan error, 32),
 	}
 	go server.acceptLoop()
+	log.Debug("simplesocks server created")
 	return server, nil
 }

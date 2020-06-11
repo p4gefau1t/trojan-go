@@ -4,7 +4,7 @@ draft: false
 weight: 50
 ---
 
-SimpleSocks协议是无认证机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的overhead。
+SimpleSocks协议是无鉴权机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的overhead。
 
 只有启用多路复用之后，被复用的连接才会使用这个协议。也即SimpleSocks总是被SMux承载。
 

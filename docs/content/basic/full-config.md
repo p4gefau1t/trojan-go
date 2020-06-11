@@ -59,10 +59,7 @@ weight: 30
   "tcp": {
     "no_delay": true,
     "keep_alive": true,
-    "reuse_port": false,
     "prefer_ipv4": false,
-    "fast_open": false,
-    "fast_open_qlen": 20
   },
   "mux": {
     "enabled": false,
@@ -82,22 +79,12 @@ weight: 30
   "websocket": {
     "enabled": false,
     "path": "",
-    "hostname": "",
-    "obfuscation_password": "",
-    "double_tls": true,
-    "ssl": {
-      "verify": true,
-      "verify_hostname": true,
-      "cert": "",
-      "key": "",
-      "key_password": "",
-      "prefer_server_cipher": false,
-      "sni": "",
-      "session_ticket": true,
-      "reuse_session": true,
-      "plain_http_response": "",
-      "key_log": ""
-    }
+    "hostname": ""
+  },
+  "shadowsocks": {
+    "enabled": false,
+    "method": "",
+    "password": ""
   },
   "transport_plugin": {
     "enabled": false,
@@ -184,7 +171,7 @@ weight: 30
 
 服务端必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写```cert```。如果使用自签名或者自签发的证书，应当在的```cert```处填入服务器证书文件，否则可能导致校验失败。
 
-```sni```指的是证书的Common Name，如果你使用letsencrypt等机构签名的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
+```sni```指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let'sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
 ```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商错误的应用层协议**。
 
@@ -197,8 +184,6 @@ weight: 30
 ```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
 
 - ""，不使用指纹伪造
-
-- "auto"，自动尝试并选择
 
 - "firefox"，伪造Firefox指纹（默认）
 
@@ -238,7 +223,7 @@ weight: 30
 
 - Block 封锁。不代理请求，直接关闭连接。
 
-在```proxy```, ```bypass```, ```block```字段中填入对应列表文件名或者geoip/geosite标签名，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。列表文件中每行是一个IP或者域名，trojan-go会自动识别。客户端(client)可以配置三种策略，服务端(server)只可配置block策略。
+在```proxy```, ```bypass```, ```block```字段中填入对应列表geoip/geosite或路由规则，trojan-go即根据列表中的IP（CIDR）或域名执行相应路由策略。客户端(client)可以配置三种策略，服务端(server)只可配置block策略。
 
 ```enabled```是否开启路由模块。
 
@@ -256,7 +241,7 @@ weight: 30
 
 - "as_is"，只在域名列表中进行匹配。
 
-- "ip_if_nonmatch"，在域名列表中进行匹配，如果不匹配，解析为IP后在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
+- "ip_if_non_match"，在域名列表中进行匹配，如果不匹配，解析为IP后在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
 
 - "ip_on_demand"，域名均解析为IP，在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
 
@@ -264,13 +249,7 @@ weight: 30
 
 ### ```websocket```选项
 
-Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**的情况下，开启这个选项不会改善你的链路速度（甚至有可能下降），也不会提升你的连接安全性。你只应该在下面两种情况下启用它：
-
-- 你需要利用CDN进行流量中转
-
-- 你到代理节点的直接TLS连接遭到了GFW的中间人攻击
-
-警告：**由于信任CDN证书并使用CDN网络进行传输，HTTPS连接对于CDN是透明的，CDN运营商可以直接审计Websocket流量传输内容。如果你使用了国内的CDN，应当假定CDN不可信任，请务必开启double_tls进行双重加密，并使用obfuscation_password进行流量混淆**
+Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**的情况下，开启这个选项不会改善你的链路速度（甚至有可能下降），也不会提升你的连接安全性。你只应该在需要利用CDN进行中转，或利用nginx等服务器根据路径分发的情况下，使用websocket。
 
 ```enabled```表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。
 
@@ -278,11 +257,33 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
 
-```double_tls```是否开启双重TLS，默认开启。开启后在TLS+Websocket上将会再承载一次TLS连接。双重TLS的意义在于即使第一层TLS遭到中间人攻击也能保证通信安全。第二层TLS的证书校验被强制打开。客户端和服务端设置必须相同。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+## ``shadowsocks`` AEAD加密选项
 
-```ssl```如果```double_tls```启用，这个选项用于配置第二层TLS，如果没有填写则使用全局的```ssl```填充。各字段定义与全局```ssl```相同。
+此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。
 
-```obfuscation_password```指定混淆密码。用于混淆内层连接以避免遭到CDN运营商识别。如果需要使用混淆，服务端和客户端必须设置相同的密码。这个选项对性能有一定影响，请自行斟酌安全性和性能的平衡。
+注意，开启这个选项将有可能降低传输性能，你只应该在不信任承载Trojan协议的传输信道的情况下，启用这个选项。例如：
+
+- 你使用了Websocket，经过不可信的CDN进行中转（如国内CDN）
+
+- 你与服务器的连接遭到了GFW针对TLS的中间人攻击
+
+- 你的证书失效，无法验证证书有效性
+
+等等。
+
+由于使用的是AEAD，trojan-go启用了AEAD加密后依然可以正确判断是否遭到主动探测，并作出相应的响应。
+
+```enabled```是否启用Shadowsocks AEAD加密Trojan协议层。
+
+```method```加密方式。合法的值有：
+
+- "CHACHA20-IETF-POLY1305"
+
+- "AES-128-GCM"
+
+- "AES-256-GCM"
+
+```password```用于生成主密钥的密码。必须确保客户端和服务端一致。
 
 ### ```transport_plugin```传输层插件选项
 
@@ -292,7 +293,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 - "shadowsocks"，支持符合[SIP003](https://shadowsocks.org/en/spec/Plugin.html)标准的shadowsocks混淆插件。trojan-go将在启动时按照SIP003标准替换环境变量并修改自身配置(```remote_addr/remote_port/local_addr/local_port```)，使插件与远端直接通讯，而trojan-go仅监听/连接插件。
 
-- "plaintext"，使用明文传输。选择此项，trojan-go不会修改任何地址配置(```remote_addr/remote_port/local_addr/local_port```)，也不会启动```command```中插件，仅移除最底层的TLS传输层并使用TCP明文传输。此选项目的为支持nginx接管TLS并进行分流，以及高级用户进行调试测试。**请勿直接使用明文传输模式穿透防火墙。**
+- "plaintext"，使用明文传输。选择此项，trojan-go不会修改任何地址配置(```remote_addr/remote_port/local_addr/local_port```)，也不会启动```command```中插件，仅移除最底层的TLS传输层并使用TCP明文传输。此选项目的为支持nginx等接管TLS并进行分流，以及高级用户进行调试测试。**请勿直接使用明文传输模式穿透防火墙。**
 
 - "other"，其他插件。选择此项，trojan-go不会修改任何地址配置(```remote_addr/remote_port/local_addr/local_port```)，但会启动```command```中插件并传入参数和环境变量。
 
@@ -310,13 +311,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```keep_alive```是否启用TCP心跳存活检测。
 
-```reuse_port```是否启用端口复用。由于trojan-gfw版本对多线程支持不佳，因而服务器使用此选项开启多个进程监听同一端口以提升并发性能。trojan-go本身的并发性能足够优秀，并无必要开启此选项。该选项仅为兼容而保留。
-
 ```prefer_ipv4```是否优先使用IPv4地址。
-
-```fast_open```是否启用TCP Fast Open。开启此选项需要操作系统支持。考虑到TFO开启后的TCP封包特征明显，容易被GFW阻断，且可能存在安全性问题，trojan-go仅仅出于兼容目的在服务端实现TFO支持。
-
-```fast_open_qlen```TCP Fast Open的qlen值，即允许的同时发起的未经三次握手的TFO连接数量。
 
 ### ```mysql```数据库选项
 

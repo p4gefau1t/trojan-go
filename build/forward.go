@@ -1,4 +1,4 @@
-// +build forward full
+// +build forward full standard
 
 package build
 
