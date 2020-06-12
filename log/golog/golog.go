@@ -37,7 +37,7 @@ type Logger struct {
 	timestamp bool
 	quiet     bool
 	buf       colorful.ColorBuffer
-	logLevel  int
+	logLevel  log.LogLevel
 }
 
 // Prefix struct define plain and color byte
@@ -109,7 +109,7 @@ func New(out FdWriter) *Logger {
 func (l *Logger) SetLogLevel(level log.LogLevel) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.logLevel = int(level)
+	l.logLevel = level
 }
 
 func (l *Logger) SetOutput(w io.Writer) {
