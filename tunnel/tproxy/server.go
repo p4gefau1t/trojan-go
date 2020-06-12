@@ -51,6 +51,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	}
 	address, err := tunnel.NewAddressFromAddr("tcp", addr.String())
 	common.Must(err)
+	log.Info("tproxy connection from", conn.RemoteAddr().String(), "metadata", addr.String())
 	return &Conn{
 		metadata: &tunnel.Metadata{
 			Address: address,
@@ -67,19 +68,19 @@ func (s *Server) packetDispatchLoop() {
 			select {
 			case <-s.ctx.Done():
 			default:
-				log.Fatal(common.NewError("tproxy failed to read from udp").Base(err))
+				log.Fatal(common.NewError("tproxy failed to read from udp socket").Base(err))
 			}
 			s.Close()
 			return
 		}
-		log.Debug("udp packet from", src, "to", dst)
+		log.Debug("udp packet from", src, "to", dst, "size", n)
 		s.mappingLock.Lock()
 		if conn, found := s.mapping[src.String()]; found {
 			conn.Input <- buf[:n]
 			s.mappingLock.Unlock()
 			continue
 		}
-		log.Info("tproxy udp session, from", src, "to", dst)
+		log.Info("tproxy udp session, from", src, "metadata", dst)
 
 		address, err := tunnel.NewAddressFromAddr("udp", dst.String())
 		common.Must(err)
@@ -170,5 +171,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		packetChan:  make(chan tunnel.PacketConn, 32),
 	}
 	go server.packetDispatchLoop()
+	log.Info("tproxy server listening on", tcpListener.Addr(), "(udp/tcp)")
+	log.Debug("tproxy server created")
 	return server, nil
 }

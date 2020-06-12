@@ -147,7 +147,6 @@ shadowsocks:
 mux:
     enabled: true
 `, socksPort, serverPort)
-
 	serverData := fmt.Sprintf(`
 run-type: server
 local-addr: 127.0.0.1
@@ -217,6 +216,58 @@ shadowsocks:
     enabled: true
     method: AEAD_CHACHA20_POLY1305
     password: 12345678
+`, serverPort, util.HTTPPort)
+
+	if !CheckClientServer(clientData, serverData, socksPort) {
+		t.Fail()
+	}
+}
+
+func TestWebsocketDetection(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+
+	clientData := fmt.Sprintf(`
+run-type: client
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
+password:
+    - password
+ssl:
+    verify: false
+    fingerprint: firefox
+    sni: localhost
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
+mux:
+    enabled: true
+`, socksPort, serverPort)
+	serverData := fmt.Sprintf(`
+run-type: server
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %s
+disable-http-check: true
+password:
+    - password
+ssl:
+    verify-hostname: false
+    key: server.key
+    cert: server.crt
+    sni: localhost
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
+websocket:
+    enabled: true
+    path: /ws
+    hostname: 127.0.0.1
 `, serverPort, util.HTTPPort)
 
 	if !CheckClientServer(clientData, serverData, socksPort) {

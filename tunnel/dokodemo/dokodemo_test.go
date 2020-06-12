@@ -72,10 +72,19 @@ func TestDokodemo(t *testing.T) {
 	}
 	fmt.Println(n, m, string(buf[:n]))
 
-	if !util.CheckPacket(packet3, packet4) {
-		t.Fail()
-	}
-	if !util.CheckPacket(packet1, packet2) {
-		t.Fail()
-	}
+	wg = sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		if !util.CheckPacket(packet3, packet4) {
+			t.Fail()
+		}
+		wg.Done()
+	}()
+	go func() {
+		if !util.CheckPacket(packet1, packet2) {
+			t.Fail()
+		}
+		wg.Done()
+	}()
+	wg.Wait()
 }

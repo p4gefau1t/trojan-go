@@ -24,7 +24,7 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 // TODO implement net.PacketConn
 type PacketConn struct {
 	net.PacketConn
-	M      *tunnel.Metadata //fixed
+	M      *tunnel.Metadata
 	Input  chan []byte
 	Output chan []byte
 	Source net.Addr

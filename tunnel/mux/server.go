@@ -37,7 +37,6 @@ func (s *Server) acceptConnWorker() {
 				log.Error(err)
 				return
 			}
-			// TODO context
 			go func(session *smux.Session, conn tunnel.Conn) {
 				defer session.Close()
 				defer conn.Close()

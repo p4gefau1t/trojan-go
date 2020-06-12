@@ -7,6 +7,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/raw"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"io/ioutil"
 	"net"
@@ -122,6 +123,7 @@ type Client struct {
 	defaultPolicy  int
 	domainStrategy int
 	underlay       tunnel.Client
+	direct         *raw.Client
 	ctx            context.Context
 	cancel         context.CancelFunc
 }
@@ -176,8 +178,7 @@ func (c *Client) DialConn(address *tunnel.Address, overlay tunnel.Tunnel) (tunne
 	case Block:
 		return nil, common.NewError("router blocked address: " + address.String())
 	case Bypass:
-		// TODO use raw.Client
-		conn, err := net.Dial("tcp", address.String())
+		conn, err := c.direct.DialConn(address, &Tunnel{})
 		if err != nil {
 			return nil, common.NewError("router dial error").Base(err)
 		}
@@ -189,8 +190,7 @@ func (c *Client) DialConn(address *tunnel.Address, overlay tunnel.Tunnel) (tunne
 }
 
 func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
-	// TODO use raw.Client
-	direct, err := net.ListenPacket("udp", "")
+	directConn, err := net.ListenPacket("udp", "")
 	if err != nil {
 		return nil, common.NewError("router failed to dial udp (direct)").Base(err)
 	}
@@ -201,7 +201,7 @@ func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
 	ctx, cancel := context.WithCancel(c.ctx)
 	return &PacketConn{
 		Client:     c,
-		PacketConn: direct,
+		PacketConn: directConn,
 		proxy:      proxy,
 		cancel:     cancel,
 		ctx:        ctx,
@@ -251,10 +251,16 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
+
+	direct, err := raw.NewClient(ctx, nil)
+	if err != nil {
+		return nil, common.NewError("failed to initialize raw client").Base(err)
+	}
 	client := &Client{
 		domains:  [3][]*v2router.Domain{},
 		cidrs:    [3][]*v2router.CIDR{},
 		underlay: underlay,
+		direct:   direct,
 		ctx:      ctx,
 		cancel:   cancel,
 	}
