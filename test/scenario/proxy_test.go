@@ -6,6 +6,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"io/ioutil"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -79,6 +80,47 @@ func init() {
 	ioutil.WriteFile("server.key", []byte(key), 0777)
 }
 
+func CheckClientServer(clientData, serverData string, socksPort int) (ok bool) {
+	server, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
+	common.Must(err)
+	go server.Run()
+
+	client, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
+	common.Must(err)
+	go client.Run()
+
+	time.Sleep(time.Second * 2)
+	dialer, err := netproxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, netproxy.Direct)
+
+	ok = true
+	const num = 100
+	wg := sync.WaitGroup{}
+	wg.Add(num)
+	for i := 0; i < num; i++ {
+		go func() {
+			const payloadSize = 1024
+			payload := util.GeneratePayload(payloadSize)
+			buf := [payloadSize]byte{}
+
+			conn, err := dialer.Dial("tcp", util.EchoAddr)
+			common.Must(err)
+
+			common.Must2(conn.Write(payload))
+			common.Must2(conn.Read(buf[:]))
+
+			if !bytes.Equal(payload, buf[:]) {
+				ok = false
+			}
+			conn.Close()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	client.Close()
+	server.Close()
+	return
+}
+
 func TestClientServerWebsocketSubTree(t *testing.T) {
 	serverPort := common.PickPort("tcp", "127.0.0.1")
 	socksPort := common.PickPort("tcp", "127.0.0.1")
@@ -105,11 +147,6 @@ shadowsocks:
 mux:
     enabled: true
 `, socksPort, serverPort)
-	go func() {
-		proxy, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
-		common.Must(err)
-		common.Must(proxy.Run())
-	}()
 
 	serverData := fmt.Sprintf(`
 run-type: server
@@ -134,25 +171,8 @@ websocket:
     path: /ws
     hostname: 127.0.0.1
 `, serverPort, util.HTTPPort)
-	go func() {
-		proxy, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
-		common.Must(err)
-		common.Must(proxy.Run())
-	}()
 
-	time.Sleep(time.Second * 2)
-	dialer, err := netproxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, netproxy.Direct)
-
-	payload := util.GeneratePayload(1024)
-	buf := [1024]byte{}
-
-	conn, err := dialer.Dial("tcp", util.EchoAddr)
-	common.Must(err)
-
-	common.Must2(conn.Write(payload))
-	common.Must2(conn.Read(buf[:]))
-
-	if !bytes.Equal(payload, buf[:]) {
+	if !CheckClientServer(clientData, serverData, socksPort) {
 		t.Fail()
 	}
 }
@@ -179,12 +199,6 @@ shadowsocks:
 mux:
     enabled: true
 `, socksPort, serverPort)
-	go func() {
-		proxy, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
-		common.Must(err)
-		common.Must(proxy.Run())
-	}()
-
 	serverData := fmt.Sprintf(`
 run-type: server
 local-addr: 127.0.0.1
@@ -204,25 +218,8 @@ shadowsocks:
     method: AEAD_CHACHA20_POLY1305
     password: 12345678
 `, serverPort, util.HTTPPort)
-	go func() {
-		proxy, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
-		common.Must(err)
-		common.Must(proxy.Run())
-	}()
 
-	time.Sleep(time.Second * 2)
-	dialer, err := netproxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, netproxy.Direct)
-
-	payload := util.GeneratePayload(1024)
-	buf := [1024]byte{}
-
-	conn, err := dialer.Dial("tcp", util.EchoAddr)
-	common.Must(err)
-
-	common.Must2(conn.Write(payload))
-	common.Must2(conn.Read(buf[:]))
-
-	if !bytes.Equal(payload, buf[:]) {
+	if !CheckClientServer(clientData, serverData, socksPort) {
 		t.Fail()
 	}
 }

@@ -2,9 +2,10 @@ package dokodemo
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/tunnel"
 	"io"
 	"net"
+
+	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
 const MaxPacketSize = 1024 * 8
@@ -27,13 +28,13 @@ type PacketConn struct {
 	Input  chan []byte
 	Output chan []byte
 	Source net.Addr
-	context.Context
-	context.CancelFunc
+	Ctx    context.Context
+	Cancel context.CancelFunc
 }
 
 func (c *PacketConn) Close() error {
-	c.CancelFunc()
-	return nil
+	c.Cancel()
+	return c.PacketConn.Close()
 }
 
 func (c *PacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
@@ -55,7 +56,7 @@ func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 	case payload := <-c.Input:
 		n := copy(p, payload)
 		return n, c.M, nil
-	case <-c.Done():
+	case <-c.Ctx.Done():
 		return 0, nil, io.EOF
 	}
 }
@@ -63,7 +64,7 @@ func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error) {
 	select {
 	case c.Output <- p:
-	case <-c.Done():
+	case <-c.Ctx.Done():
 		return 0, io.EOF
 	}
 	return len(p), nil

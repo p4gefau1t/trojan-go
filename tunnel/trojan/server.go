@@ -3,11 +3,12 @@ package trojan
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
+
 	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/statistic/mysql"
-	"io"
-	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -100,9 +101,11 @@ type Server struct {
 	muxChan    chan tunnel.Conn
 	packetChan chan tunnel.PacketConn
 	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 func (s *Server) Close() error {
+	s.cancel()
 	return s.underlay.Close()
 }
 
@@ -110,7 +113,7 @@ func (s *Server) acceptLoop() {
 	for {
 		conn, err := s.underlay.AcceptConn(&Tunnel{})
 		if err != nil { // Closing
-			log.Debug(err)
+			log.Error(err)
 			select {
 			case <-s.ctx.Done():
 				return
@@ -201,14 +204,16 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 		return nil, common.NewError("failed to create authenticator").Base(err)
 	}
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	ctx, cancel := context.WithCancel(ctx)
 	s := &Server{
 		underlay:   underlay,
 		auth:       auth,
-		ctx:        ctx,
 		redirAddr:  redirAddr,
 		connChan:   make(chan tunnel.Conn, 32),
 		muxChan:    make(chan tunnel.Conn, 32),
 		packetChan: make(chan tunnel.PacketConn, 32),
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 
 	if !cfg.DisableHTTPCheck {

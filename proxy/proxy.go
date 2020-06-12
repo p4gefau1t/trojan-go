@@ -5,6 +5,7 @@ import (
 	"io"
 	"math/rand"
 	"net"
+	"os"
 	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -23,7 +24,6 @@ const (
 type Proxy struct {
 	sources []tunnel.Server
 	sink    tunnel.Client
-	errChan chan error
 	ctx     context.Context
 	cancel  context.CancelFunc
 }
@@ -31,15 +31,17 @@ type Proxy struct {
 func (p *Proxy) Run() error {
 	p.relayConnLoop()
 	p.relayPacketLoop()
-	return <-p.errChan
+	<-p.ctx.Done()
+	return nil
 }
 
 func (p *Proxy) Close() error {
 	p.cancel()
+	p.sink.Close()
 	for _, source := range p.sources {
 		source.Close()
 	}
-	return p.sink.Close()
+	return nil
 }
 
 func (p *Proxy) relayConnLoop() {
@@ -73,9 +75,14 @@ func (p *Proxy) relayConnLoop() {
 					}
 					go copyConn(inbound, outbound)
 					go copyConn(outbound, inbound)
-					err = <-errChan
-					if err != nil {
-						log.Error(err)
+					select {
+					case err = <-errChan:
+						if err != nil {
+							log.Error(err)
+						}
+					case <-p.ctx.Done():
+						log.Debug("shutting down conn relay")
+						return
 					}
 					log.Debug("conn relay ends")
 				}(inbound)
@@ -109,23 +116,33 @@ func (p *Proxy) relayPacketLoop() {
 					defer outbound.Close()
 					errChan := make(chan error, 2)
 					copyPacket := func(a, b tunnel.PacketConn) {
-						buf := make([]byte, MaxPacketSize)
-						n, metadata, err := a.ReadWithMetadata(buf)
-						if err != nil {
-							errChan <- err
-							return
-						}
-						n, err = b.WriteWithMetadata(buf[:n], metadata)
-						if err != nil {
-							errChan <- err
-							return
+						for {
+							buf := make([]byte, MaxPacketSize)
+							n, metadata, err := a.ReadWithMetadata(buf)
+							if err != nil {
+								errChan <- err
+								return
+							}
+							if n == 0 {
+								errChan <- nil
+								return
+							}
+							n, err = b.WriteWithMetadata(buf[:n], metadata)
+							if err != nil {
+								errChan <- err
+								return
+							}
 						}
 					}
 					go copyPacket(inbound, outbound)
 					go copyPacket(outbound, inbound)
-					err = <-errChan
-					if err != nil {
-						log.Error(err)
+					select {
+					case err = <-errChan:
+						if err != nil {
+							log.Error(err)
+						}
+					case <-p.ctx.Done():
+						log.Debug("shutting down packet relay")
 					}
 					log.Debug("packet relay ends")
 				}(inbound)
@@ -139,7 +156,6 @@ func NewProxy(ctx context.Context, sources []tunnel.Server, sink tunnel.Client) 
 	return &Proxy{
 		sources: sources,
 		sink:    sink,
-		errChan: make(chan error, 32),
 		ctx:     ctx,
 		cancel:  cancel,
 	}
@@ -175,7 +191,11 @@ func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
 	}
 	log.SetLogLevel(log.LogLevel(cfg.LogLevel))
 	if cfg.LogFile != "" {
-
+		file, err := os.OpenFile(cfg.LogFile, os.O_APPEND|os.O_CREATE, 0600)
+		if err != nil {
+			return nil, common.NewError("failed to open log file").Base(err)
+		}
+		log.SetOutput(file)
 	}
 	return create(ctx)
 }

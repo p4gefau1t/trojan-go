@@ -21,13 +21,11 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 
 type PacketConn struct {
 	net.PacketConn
-	srcAddr      net.Addr
-	timeout      time.Duration
-	shutdownChan chan struct{}
+	srcAddr net.Addr
+	timeout time.Duration
 }
 
 func (c *PacketConn) Close() error {
-	c.shutdownChan <- struct{}{}
 	return c.PacketConn.Close()
 }
 
@@ -72,11 +70,10 @@ func (c *PacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, er
 	}, nil
 }
 
-func NewPacketConn(packet net.PacketConn) *PacketConn {
+func NewPacketConn(packet net.PacketConn, timeout time.Duration) *PacketConn {
 	conn := &PacketConn{
-		PacketConn:   packet,
-		timeout:      time.Second * 10,
-		shutdownChan: make(chan struct{}),
+		PacketConn: packet,
+		timeout:    timeout,
 	}
 	return conn
 }

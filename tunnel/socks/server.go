@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -23,13 +24,15 @@ const (
 	MaxPacketSize = 1024 * 8
 )
 
-// Server is a socks4/5 server
+// Server is a socks5 server
 type Server struct {
 	connChan    chan tunnel.Conn
 	packetChan  chan tunnel.PacketConn
 	tcpListener net.Listener
-	ctx         context.Context
 	localHost   string
+	timeout     time.Duration
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
@@ -51,6 +54,7 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 }
 
 func (s *Server) Close() error {
+	s.cancel()
 	return s.tcpListener.Close()
 }
 
@@ -136,7 +140,7 @@ func (s *Server) acceptLoop() {
 					log.Error(common.NewError("socks5 failed to bind udp").Base(err))
 					return
 				}
-				s.packetChan <- NewPacketConn(l)
+				s.packetChan <- NewPacketConn(l, s.timeout)
 				log.Info("socks5 udp session")
 				if err := s.associate(newConn, associateAddr); err != nil {
 					log.Error(common.NewError("socks5 failed to respond to associate request").Base(err))
@@ -161,14 +165,17 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 	if err != nil {
 		return nil, common.NewError("socks5 failed to listen").Base(err)
 	}
-	log.Info("socks5 server is listening on tcp:", l.Addr().String())
+	ctx, cancel := context.WithCancel(ctx)
 	server := &Server{
 		tcpListener: l,
 		ctx:         ctx,
+		cancel:      cancel,
 		connChan:    make(chan tunnel.Conn, 32),
 		packetChan:  make(chan tunnel.PacketConn, 32),
+		timeout:     time.Duration(cfg.UDPTimeout) * time.Second,
 	}
 	go server.acceptLoop()
+	log.Info("socks5 server is listening on tcp:", l.Addr().String())
 	log.Debug("socks server created")
 	return server, nil
 }

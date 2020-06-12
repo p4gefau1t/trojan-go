@@ -122,8 +122,8 @@ type Client struct {
 	defaultPolicy  int
 	domainStrategy int
 	underlay       tunnel.Client
-	context.Context
-	context.CancelFunc
+	ctx            context.Context
+	cancel         context.CancelFunc
 }
 
 func (c *Client) Route(address *tunnel.Address) int {
@@ -198,19 +198,19 @@ func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
 	if err != nil {
 		return nil, common.NewError("router failed to dial udp (proxy)").Base(err)
 	}
-	ctx, cancel := context.WithCancel(c.Context)
+	ctx, cancel := context.WithCancel(c.ctx)
 	return &PacketConn{
 		Client:     c,
 		PacketConn: direct,
 		proxy:      proxy,
-		CancelFunc: cancel,
-		Context:    ctx,
+		cancel:     cancel,
+		ctx:        ctx,
 		packetChan: make(chan *packetInfo, 16),
 	}, nil
 }
 
 func (c *Client) Close() error {
-	c.CancelFunc()
+	c.cancel()
 	return c.underlay.Close()
 }
 
@@ -252,11 +252,11 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 	client := &Client{
-		domains:    [3][]*v2router.Domain{},
-		cidrs:      [3][]*v2router.CIDR{},
-		underlay:   underlay,
-		Context:    ctx,
-		CancelFunc: cancel,
+		domains:  [3][]*v2router.Domain{},
+		cidrs:    [3][]*v2router.CIDR{},
+		underlay: underlay,
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 	switch cfg.Router.DomainStrategy {
 	case "as_is":

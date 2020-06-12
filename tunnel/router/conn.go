@@ -19,8 +19,8 @@ type PacketConn struct {
 	net.PacketConn
 	packetChan chan *packetInfo
 	*Client
-	context.Context
-	context.CancelFunc
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func (c *PacketConn) packetLoop() {
@@ -30,7 +30,7 @@ func (c *PacketConn) packetLoop() {
 			n, addr, err := c.proxy.ReadWithMetadata(buf)
 			if err != nil {
 				select {
-				case <-c.Done():
+				case <-c.ctx.Done():
 					return
 				default:
 					log.Error("router packetConn error", err)
@@ -48,7 +48,7 @@ func (c *PacketConn) packetLoop() {
 		n, addr, err := c.PacketConn.ReadFrom(buf)
 		if err != nil {
 			select {
-			case <-c.Done():
+			case <-c.ctx.Done():
 				return
 			default:
 				log.Error("router packetConn error", err)
@@ -66,7 +66,7 @@ func (c *PacketConn) packetLoop() {
 }
 
 func (c *PacketConn) Close() error {
-	c.CancelFunc()
+	c.cancel()
 	c.proxy.Close()
 	return c.PacketConn.Close()
 }
@@ -105,7 +105,7 @@ func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 	case info := <-c.packetChan:
 		n := copy(p, info.payload)
 		return n, info.src, nil
-	case <-c.Done():
+	case <-c.ctx.Done():
 		return 0, nil, io.EOF
 	}
 }

@@ -13,7 +13,6 @@ import (
 type Server struct {
 	underlay tunnel.Server
 	connChan chan tunnel.Conn
-	errChan  chan error
 	ctx      context.Context
 	cancel   context.CancelFunc
 }
@@ -30,29 +29,36 @@ func (s *Server) acceptConnWorker() {
 			}
 			continue
 		}
-		smuxConfig := smux.DefaultConfig()
-		//smuxConfig.KeepAliveDisabled = true
-		smuxSession, err := smux.Server(conn, smuxConfig)
-		if err != nil {
-			s.errChan <- err
-			continue
-		}
-		// TODO context
-		go func(session *smux.Session, conn tunnel.Conn) {
-			defer session.Close()
-			defer conn.Close()
-			for {
-				stream, err := session.AcceptStream()
-				if err != nil {
-					s.errChan <- err
-					return
-				}
-				s.connChan <- &Conn{
-					rwc:  stream,
-					Conn: conn,
-				}
+		go func(conn tunnel.Conn) {
+			smuxConfig := smux.DefaultConfig()
+			//smuxConfig.KeepAliveDisabled = true
+			smuxSession, err := smux.Server(conn, smuxConfig)
+			if err != nil {
+				log.Error(err)
+				return
 			}
-		}(smuxSession, conn)
+			// TODO context
+			go func(session *smux.Session, conn tunnel.Conn) {
+				defer session.Close()
+				defer conn.Close()
+				for {
+					stream, err := session.AcceptStream()
+					if err != nil {
+						log.Error(err)
+						return
+					}
+					select {
+					case s.connChan <- &Conn{
+						rwc:  stream,
+						Conn: conn,
+					}:
+					case <-s.ctx.Done():
+						log.Debug("exiting")
+						return
+					}
+				}
+			}(smuxSession, conn)
+		}(conn)
 	}
 }
 
@@ -60,10 +66,8 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	select {
 	case conn := <-s.connChan:
 		return conn, nil
-	case err := <-s.errChan:
-		return nil, err
 	case <-s.ctx.Done():
-		return nil, common.NewError("mux client closed")
+		return nil, common.NewError("mux server closed")
 	}
 }
 

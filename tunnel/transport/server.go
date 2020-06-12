@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 	"io"
 	"io/ioutil"
 	"net"
@@ -15,6 +14,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -39,10 +40,10 @@ type Server struct {
 	sessionTicket      bool
 	curve              []tls.CurveID
 	keyLogger          io.WriteCloser
-	redir              *redirector.Redirector
 	connChan           chan tunnel.Conn
 	wsChan             chan tunnel.Conn
 	plugin             bool
+	redir              *redirector.Redirector
 	cmd                *exec.Cmd
 	ctx                context.Context
 	cancel             context.CancelFunc
@@ -63,8 +64,12 @@ func (s *Server) acceptLoop() {
 	for {
 		tcpConn, err := s.tcpListener.Accept()
 		if err != nil {
-			s.cancel()
-			log.Error(common.NewError("transport accept error"))
+			select {
+			case <-s.ctx.Done():
+				return
+			default:
+				log.Fatal(common.NewError("transport accept error"))
+			}
 			return
 		}
 		go func(tcpConn net.Conn) {
@@ -161,7 +166,7 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 		case conn := <-s.wsChan:
 			return conn, nil
 		case <-s.ctx.Done():
-			return nil, io.EOF
+			return nil, common.NewError("transport server closed")
 		}
 	}
 	// trojan overlay
@@ -169,7 +174,7 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	case conn := <-s.connChan:
 		return conn, nil
 	case <-s.ctx.Done():
-		return nil, io.EOF
+		return nil, common.NewError("transport server closed")
 	}
 }
 

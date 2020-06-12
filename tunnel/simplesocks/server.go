@@ -15,11 +15,12 @@ type Server struct {
 	underlay   tunnel.Server
 	connChan   chan tunnel.Conn
 	packetChan chan tunnel.PacketConn
-	errChan    chan error
 	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 func (s *Server) Close() error {
+	s.cancel()
 	return s.underlay.Close()
 }
 
@@ -37,7 +38,7 @@ func (s *Server) acceptLoop() {
 		}
 		metadata := new(tunnel.Metadata)
 		if err := metadata.ReadFrom(conn); err != nil {
-			s.errChan <- common.NewError("simplesocks server faield to read header").Base(err)
+			log.Error(common.NewError("simplesocks server faield to read header").Base(err))
 			conn.Close()
 			continue
 		}
@@ -54,7 +55,7 @@ func (s *Server) acceptLoop() {
 				},
 			}
 		default:
-			s.errChan <- common.NewError(fmt.Sprintf("simplesocks unknown command %d", metadata.Command))
+			log.Error(common.NewError(fmt.Sprintf("simplesocks unknown command %d", metadata.Command)))
 			conn.Close()
 		}
 	}
@@ -64,8 +65,6 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	select {
 	case conn := <-s.connChan:
 		return conn, nil
-	case err := <-s.errChan:
-		return nil, err
 	case <-s.ctx.Done():
 		return nil, common.NewError("simplesocks server closed")
 	}
@@ -81,12 +80,13 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 }
 
 func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
+	ctx, cancel := context.WithCancel(ctx)
 	server := &Server{
 		underlay:   underlay,
 		ctx:        ctx,
 		connChan:   make(chan tunnel.Conn, 32),
 		packetChan: make(chan tunnel.PacketConn, 32),
-		errChan:    make(chan error, 32),
+		cancel:     cancel,
 	}
 	go server.acceptLoop()
 	log.Debug("simplesocks server created")

@@ -19,6 +19,7 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 }
 
 func (c *Conn) Close() error {
+	c.Conn.Close()
 	return c.aeadConn.Close()
 }
 

@@ -163,7 +163,8 @@ server.json
     ],
     "ssl": {
         "cert": "your_cert.crt",
-        "key": "your_key.key"
+        "key": "your_key.key",
+        "sni": "www.your_awesome_domain_name.com"
     }
 }
 ```

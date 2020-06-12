@@ -38,7 +38,12 @@ func (s *Server) Close() error {
 func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := s.tcpListener.Accept()
 	if err != nil {
-		return nil, common.NewError("tproxy failed to accept connection").Base(err)
+		select {
+		case <-s.ctx.Done():
+		default:
+			log.Fatal(common.NewError("tproxy failed to accept connection").Base(err))
+		}
+		return nil, common.NewError("tproxy failed to accept conn")
 	}
 	addr, err := getOriginalTCPDest(conn.(*tproxy.Conn).TCPConn)
 	if err != nil {
@@ -59,8 +64,12 @@ func (s *Server) packetDispatchLoop() {
 		buf := make([]byte, MaxPacketSize)
 		n, src, dst, err := tproxy.ReadFromUDP(s.udpListener, buf)
 		if err != nil {
-			s.cancel()
-			log.Error("tproxy failed to read from udp")
+			select {
+			case <-s.ctx.Done():
+			default:
+				log.Fatal("tproxy failed to read from udp")
+			}
+			s.Close()
 			return
 		}
 		log.Debug("udp packet from", src, "to", dst)
@@ -78,8 +87,8 @@ func (s *Server) packetDispatchLoop() {
 				Output:     make(chan []byte, 16),
 				Source:     src,
 				PacketConn: s.udpListener,
-				Context:    ctx,
-				CancelFunc: cancel,
+				Ctx:        ctx,
+				Cancel:     cancel,
 				M: &tunnel.Metadata{
 					Address: &tunnel.Address{},
 				},
