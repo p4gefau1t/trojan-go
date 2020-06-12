@@ -20,7 +20,6 @@ func (m *MockClient) DialConn(address *tunnel.Address, t tunnel.Tunnel) (tunnel.
 }
 
 func (m *MockClient) DialPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
-	//return nil, common.NewError("mockproxy")
 	return MockPacketConn{}, nil
 }
 
@@ -96,7 +95,7 @@ router:
 		Port:        80,
 	}, nil)
 	if err.Error() != "mockproxy" {
-		t.Fail()
+		t.Fatal(err)
 	}
 	_, err = client.DialConn(&tunnel.Address{
 		AddressType: tunnel.DomainName,
@@ -104,7 +103,7 @@ router:
 		Port:        80,
 	}, nil)
 	if err.Error() != "mockproxy" {
-		t.Fail()
+		t.Fatal(err)
 	}
 	_, err = client.DialConn(&tunnel.Address{
 		AddressType: tunnel.DomainName,
@@ -112,7 +111,7 @@ router:
 		Port:        80,
 	}, nil)
 	if err.Error() != "mockproxy" {
-		t.Fail()
+		t.Fatal(err)
 	}
 
 	_, err = client.DialConn(&tunnel.Address{
@@ -121,7 +120,7 @@ router:
 		Port:        80,
 	}, nil)
 	if err.Error() != "mockproxy" {
-		t.Fail()
+		t.Fatal(err)
 	}
 
 	_, err = client.DialConn(&tunnel.Address{
@@ -130,17 +129,18 @@ router:
 		Port:        80,
 	}, nil)
 	if !strings.Contains(err.Error(), "block") {
-		t.Fail()
+		t.Fatal("block??")
 	}
 	port, err := strconv.Atoi(util.HTTPPort)
 	common.Must(err)
+
 	_, err = client.DialConn(&tunnel.Address{
 		AddressType: tunnel.DomainName,
 		DomainName:  "localhost",
 		Port:        port,
 	}, nil)
 	if err != nil {
-		t.Fail()
+		t.Fatal("dial http failed", err)
 	}
 
 	packet, err := client.DialPacket(nil)

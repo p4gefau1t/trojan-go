@@ -43,6 +43,7 @@ func runHelloHTTPServer() {
 		Handler: mux,
 	}
 	go server.ListenAndServe()
+	time.Sleep(time.Second * 3) // wait for http server
 	fmt.Println("http test server listening on", HTTPAddr)
 	wg.Done()
 }
