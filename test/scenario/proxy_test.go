@@ -275,6 +275,60 @@ websocket:
 	}
 }
 
+func TestPluginWebsocket(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+
+	clientData := fmt.Sprintf(`
+run-type: client
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
+password:
+    - password
+transport-plugin:
+    enabled: true
+    type: plaintext
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
+mux:
+    enabled: true
+websocket:
+    enabled: true
+    path: /ws
+    hostname: 127.0.0.1
+`, socksPort, serverPort)
+	serverData := fmt.Sprintf(`
+run-type: server
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %s
+disable-http-check: true
+password:
+    - password
+transport-plugin:
+    enabled: true
+    type: plaintext
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
+websocket:
+    enabled: true
+    path: /ws
+    hostname: 127.0.0.1
+`, serverPort, util.HTTPPort)
+
+	if !CheckClientServer(clientData, serverData, socksPort) {
+		t.Fail()
+	}
+
+}
+
 func TestForward(t *testing.T) {
 	serverPort := common.PickPort("tcp", "127.0.0.1")
 	clientPort := common.PickPort("tcp", "127.0.0.1")

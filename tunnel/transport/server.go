@@ -70,6 +70,7 @@ func (s *Server) acceptLoop() {
 			}
 			return
 		}
+		log.Info("tcp connection from", tcpConn.RemoteAddr())
 		go func(tcpConn net.Conn) {
 			var transportConn net.Conn
 			if s.plugin {
@@ -96,12 +97,12 @@ func (s *Server) acceptLoop() {
 
 				// ------------------------ WAR ZONE ----------------------------
 
-				rewindConn := common.NewRewindConn(tcpConn)
-				rewindConn.SetBufferSize(2048)
+				handshakeRewindConn := common.NewRewindConn(tcpConn)
+				handshakeRewindConn.SetBufferSize(2048)
 
-				tlsConn := tls.Server(rewindConn, tlsConfig)
+				tlsConn := tls.Server(handshakeRewindConn, tlsConfig)
 				err = tlsConn.Handshake()
-				rewindConn.StopBuffering()
+				handshakeRewindConn.StopBuffering()
 
 				if err != nil {
 					if !sniVerified {
@@ -110,18 +111,18 @@ func (s *Server) acceptLoop() {
 						log.Error(common.NewError("tls client hello with wrong sni").Base(err))
 					} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
 						// not a valid tls client hello
-						rewindConn.Rewind()
+						handshakeRewindConn.Rewind()
 						log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
 						if s.fallbackAddress != nil {
 							s.redir.Redirect(&redirector.Redirection{
-								InboundConn: rewindConn,
+								InboundConn: handshakeRewindConn,
 								RedirectTo:  s.fallbackAddress,
 							})
 						} else if s.httpResp != nil {
-							rewindConn.Write(s.httpResp)
-							rewindConn.Close()
+							handshakeRewindConn.Write(s.httpResp)
+							handshakeRewindConn.Close()
 						} else {
-							rewindConn.Close()
+							handshakeRewindConn.Close()
 						}
 					} else {
 						// other cases, simply close it
@@ -137,22 +138,22 @@ func (s *Server) acceptLoop() {
 			}
 
 			// we use real http header parser to mimic a real http server
-			tlsRewindConn := common.NewRewindConn(transportConn)
-			tlsRewindConn.SetBufferSize(512)
-			defer tlsRewindConn.StopBuffering()
-			r := bufio.NewReader(tlsRewindConn)
+			rewindConn := common.NewRewindConn(transportConn)
+			rewindConn.SetBufferSize(512)
+			defer rewindConn.StopBuffering()
+			r := bufio.NewReader(rewindConn)
 			httpReq, err := http.ReadRequest(r)
-			tlsRewindConn.Rewind()
+			rewindConn.Rewind()
 			if err != nil {
 				// this is not a http request, pass it to trojan protocol layer for further inspection
 				s.connChan <- &Conn{
-					Conn: tlsRewindConn,
+					Conn: rewindConn,
 				}
 			} else {
 				// this is a http request, pass it to websocket protocol layer
 				log.Debug("http req: ", httpReq)
 				s.wsChan <- &Conn{
-					Conn: tlsRewindConn,
+					Conn: rewindConn,
 				}
 			}
 		}(tcpConn)
@@ -240,6 +241,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		}
 		server := &Server{
 			connChan:    make(chan tunnel.Conn, 32),
+			wsChan:      make(chan tunnel.Conn, 32),
 			tcpListener: tcpListener,
 			redir:       redirector.NewRedirector(ctx),
 			cmd:         cmd,
