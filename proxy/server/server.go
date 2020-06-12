@@ -38,17 +38,19 @@ func init() {
 
 		trojanSubTree := root
 		if cfg.Shadowsocks.Enabled {
-			trojanSubTree = trojanSubTree.BuildNext(shadowsocks.Name)
+			trojanSubTree = root.BuildNext(shadowsocks.Name)
 		}
 		trojanSubTree.BuildNext(trojan.Name).BuildNext(mux.Name).BuildNext(simplesocks.Name).IsEndpoint = true
 		trojanSubTree.BuildNext(trojan.Name).IsEndpoint = true
 
-		wsSubTree := root.BuildNext(websocket.Name)
-		if cfg.Shadowsocks.Enabled {
-			wsSubTree = wsSubTree.BuildNext(shadowsocks.Name)
+		if cfg.Websocket.Enabled {
+			wsSubTree := root.BuildNext(websocket.Name)
+			if cfg.Shadowsocks.Enabled {
+				wsSubTree = wsSubTree.BuildNext(shadowsocks.Name)
+			}
+			wsSubTree.BuildNext(trojan.Name).BuildNext(mux.Name).BuildNext(simplesocks.Name).IsEndpoint = true
+			wsSubTree.BuildNext(trojan.Name).IsEndpoint = true
 		}
-		wsSubTree.BuildNext(trojan.Name).BuildNext(mux.Name).BuildNext(simplesocks.Name).IsEndpoint = true
-		wsSubTree.BuildNext(trojan.Name).IsEndpoint = true
 
 		serverList := proxy.FindAllEndpoints(root)
 		clientList, err := proxy.CreateClientStack(ctx, clientStack)

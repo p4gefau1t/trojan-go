@@ -63,7 +63,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	if err != nil {
 		return nil, common.NewError("invalid shadowsocks cipher").Base(err)
 	}
-	log.Debug("shadowsocks client created")
+	log.Debug("shadowsocks server created")
 	return &Server{
 		underlay:   underlay,
 		Cipher:     cipher,
