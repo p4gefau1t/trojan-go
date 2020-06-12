@@ -30,7 +30,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域">
 
-<meta itemprop="wordCount" content="2468">
+<meta itemprop="wordCount" content="2021">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -65,29 +65,10 @@
 <li>
 <p>Trojan-Go，可以从release页面下载</p>
 </li>
-</ul>
-<h3 id="配置证书">配置证书</h3>
-<p>为了伪装成一个正常的HTTPS站点，也为了保证传输的安全，我们需要一份经过权威证书机构签名的证书。Trojan-Go支持从Let&rsquo;s Encrypt自动申请证书。首先将你的域名正确解析到你的服务器IP。然后准备好一个邮箱地址，合乎邮箱地址规则即可，不需要真实邮箱地址。保证你的服务器443和80端口没有被其他程序（nginx，apache，正在运行的Trojan等）占用。然后执行</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">sudo ./trojan-go -autocert request
-</code></pre></div><p>按照屏幕提示填入相关信息。如果操作成功，当前目录下将得到四个文件</p>
-<ul>
 <li>
-<p>server.key 服务器私钥</p>
-</li>
-<li>
-<p>server.crt 经过Let&rsquo;s Encrypt签名的服务器证书</p>
-</li>
-<li>
-<p>user.key 用户Email对应的私钥</p>
-</li>
-<li>
-<p>domain_info.json 域名和用户Email信息</p>
+<p>证书密钥对，可以从letsencrpyt等机构免费申请签发</p>
 </li>
 </ul>
-<p>备份好这些文件，不要将.key文件分享给其他任何人，否则你的身份可能被冒用。</p>
-<p>证书的有效期通常是三个月，你可以使用</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">sudo ./trojan-go -autocert renew
-</code></pre></div><p>进行证书更新。更新之前请确保同目录下有上述的四个文件。如果你没有指定ACME challenge使用的端口，Trojan-Go将默认使用443和80端口，请确保这两个端口没有被Trojan-Go或者其他程序（nginx, caddy等等）占用。</p>
 <h3 id="服务端配置">服务端配置</h3>
 <p>我们的目标是，使得你的服务器和正常的HTTPS网站表现相同。</p>
 <p>首先你需要一个HTTP服务器，可以使用nginx，apache，caddy等配置一个本地HTTP服务器，也可以使用别人的HTTP服务器。HTTP服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。</p>
