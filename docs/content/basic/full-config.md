@@ -16,11 +16,13 @@ weight: 30
 
 - ```remote_port```
 
-对于服务器server，```key```和```cert```为必填。
+对于服务器```server```，```key```和```cert```为必填。
 
-对于客户端client，反向代理隧道forward，以及透明代理nat，```password```必填
+对于客户端```client```，反向代理隧道```forward```，以及透明代理```nat```，```password```必填
 
 其余未填的选项，用下面给出的值进行填充。
+
+*Trojan-Go支持对人类更友好的YAML语法，配置文件的基本结构与JSON相同，效果等价。不过为了遵守YAML的命名习惯，你需要把下划线("_")转换为横杠("-")，如```remote_addr```在YAML文件中为```remote-addr```*
 
 ```json
 {
@@ -52,6 +54,7 @@ weight: 30
     "session_ticket": true,
     "reuse_session": true,
     "plain_http_response": "",
+    "fallback_addr": "",
     "fallback_port": 0,
     "fingerprint": "firefox",
   },
@@ -72,8 +75,8 @@ weight: 30
     "block": [],
     "default_policy": "proxy",
     "domain_strategy": "as_is",
-    "geoip": "geoip.dat",
-    "geosite": "geosite.dat"
+    "geoip": "$PROGRAM_DIR$/geoip.dat",
+    "geosite": "$PROGRAM_DIR$/geosite.dat"
   },
   "websocket": {
     "enabled": false,
@@ -172,7 +175,7 @@ weight: 30
 
 ```sni```指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let'sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
-```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商错误的应用层协议**。
+```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议**。
 
 ```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
 
@@ -194,7 +197,7 @@ weight: 30
 
 ```plain_http_response```指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
-```fallback_port```指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your-domain-name.com:443```进行验证。
+```fallback_addr```和```fallback_port```指服务端TLS握手失败时，trojan-go将该连接重定向到该地址。这是trojan-go的特性，以便更好地隐蔽服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果```fallback_port```不为空，则流量将会被代理至fallback_addr:fallback_port。如果```fallback_addr```为空，则用```remote_addr```填充。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问```http://your-domain-name.com:443```进行验证。
 
 ```key_log```TLS密钥日志的文件路径。如果填写则开启密钥日志。**记录密钥将破坏TLS的安全性，此项不应该用于除调试以外的其他任何用途。**
 
@@ -266,9 +269,11 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 - 你的证书失效，无法验证证书有效性
 
+- 你使用了无法保证密码学安全的可插拔传输层
+
 等等。
 
-由于使用的是AEAD，trojan-go启用了AEAD加密后依然可以正确判断是否遭到主动探测，并作出相应的响应。
+由于使用的是AEAD，trojan-go可以正确判断请求是否有效，是否遭到主动探测，并作出相应的响应。
 
 ```enabled```是否启用Shadowsocks AEAD加密Trojan协议层。
 
@@ -280,7 +285,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 - "AES-256-GCM"
 
-```password```用于生成主密钥的密码。必须确保客户端和服务端一致。
+```password```用于生成主密钥的密码。如果启用AEAD加密，必须确保客户端和服务端一致。
 
 ### ```transport_plugin```传输层插件选项
 

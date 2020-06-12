@@ -17,7 +17,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		return nil, err
 	}
 	return &Conn{
-		TCPConn: conn.(*net.TCPConn),
+		Conn: conn,
 	}, nil
 }
 

@@ -73,7 +73,7 @@ func (s *Server) packetDispatchLoop() {
 			s.Close()
 			return
 		}
-		log.Debug("udp packet from", src, "to", dst, "size", n)
+		log.Debug("udp packet from", src, "metadata", dst, "size", n)
 		s.mappingLock.Lock()
 		if conn, found := s.mapping[src.String()]; found {
 			conn.Input <- buf[:n]
@@ -131,6 +131,7 @@ func (s *Server) packetDispatchLoop() {
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	select {
 	case conn := <-s.packetChan:
+		log.Info("tproxy packet conn accpeted")
 		return conn, nil
 	case <-s.ctx.Done():
 		return nil, io.EOF

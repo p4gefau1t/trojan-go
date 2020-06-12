@@ -6,6 +6,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
+	"golang.org/x/net/proxy"
 	"net"
 	"net/url"
 	"strconv"
@@ -15,11 +16,15 @@ import (
 )
 
 type Client struct {
-	preferIPv4 bool
-	noDelay    bool
-	keepAlive  bool
-	dns        []string
-	ctx        context.Context
+	preferIPv4   bool
+	noDelay      bool
+	keepAlive    bool
+	dns          []string
+	ctx          context.Context
+	forwardProxy bool
+	proxyAddr    *tunnel.Address
+	username     string
+	password     string
 }
 
 func (c *Client) resolveIP(addr *tunnel.Address) ([]net.IPAddr, error) {
@@ -90,6 +95,29 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 	if c.preferIPv4 {
 		network = "tcp4"
 	}
+
+	// forward proxy
+	if c.forwardProxy {
+		var auth *proxy.Auth
+		if c.username != "" {
+			auth = &proxy.Auth{
+				User:     c.username,
+				Password: c.password,
+			}
+		}
+		dialer, err := proxy.SOCKS5(network, c.proxyAddr.String(), auth, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+		socksConn, err := dialer.Dial(network, addr.String())
+		if err != nil {
+			return nil, err
+		}
+		return &Conn{
+			Conn: socksConn,
+		}, nil
+	}
+
 	tcpConn, err := net.Dial(network, addr.String())
 	if err != nil {
 		return nil, err
@@ -98,7 +126,7 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 	tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
 	tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
 	return &Conn{
-		TCPConn: tcpConn.(*net.TCPConn),
+		Conn: tcpConn,
 	}, nil
 }
 
@@ -123,11 +151,14 @@ func (c *Client) Close() error {
 func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 	// TODO implement dns
 	cfg := config.FromContext(ctx, Name).(*Config)
+	addr := tunnel.NewAddressFromHostPort("tcp", cfg.ForwardProxy.ProxyHost, cfg.ForwardProxy.ProxyPort)
 	return &Client{
-		dns:        cfg.DNS,
-		noDelay:    cfg.TCP.NoDelay,
-		keepAlive:  cfg.TCP.KeepAlive,
-		preferIPv4: cfg.TCP.PreferIPV4,
+		dns:          cfg.DNS,
+		noDelay:      cfg.TCP.NoDelay,
+		keepAlive:    cfg.TCP.KeepAlive,
+		preferIPv4:   cfg.TCP.PreferIPV4,
+		forwardProxy: cfg.ForwardProxy.Enabled,
+		proxyAddr:    addr,
 	}, nil
 }
 

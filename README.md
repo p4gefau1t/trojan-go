@@ -127,6 +127,8 @@ Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，Shadow
 
 ## 特性
 
+一般情况下，Trojan-Go和Trojan-GFW版本是互相兼容的。但是一旦使用下面介绍的扩展特性（如多路复用，Websocket等），则无法与之兼容。
+
 ### 移植性
 
 运行Trojan-Go的可执行文件不依赖其他组件。
@@ -220,7 +222,7 @@ Trojan-Go支持多路复用(基于[smux](https://github.com/xtaci/smux))。通�
 
 启用多路复用并不会增加你测速得到的链路速度，但会降低延迟，提升大量并发请求时的网络体验，例如浏览含有大量图片的网页等。
 
-注意，这个特性和Trojan-GFW**不兼容**，出于兼容性考虑，这个特性是默认关闭的。你可以通过设置客户端的mux选项"enabled"字段启用它。如下
+你可以通过设置客户端的mux选项"enabled"字段启用它。如下
 
 ```json
 ...

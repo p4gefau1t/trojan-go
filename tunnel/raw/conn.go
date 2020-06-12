@@ -8,7 +8,7 @@ import (
 )
 
 type Conn struct {
-	*net.TCPConn
+	net.Conn
 }
 
 func (c *Conn) Metadata() *tunnel.Metadata {
