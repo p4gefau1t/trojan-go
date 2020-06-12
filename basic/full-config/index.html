@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6761">
+<meta itemprop="wordCount" content="6975">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -39,7 +39,7 @@
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 
- <span class="version">Version 0.7.0</span>
+ <span class="version">Version 0.7.2</span>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
 <p class="description">An unidentifiable mechanism that helps you bypass GFW. </p>
 
@@ -71,9 +71,10 @@
 <p><code>remote_port</code></p>
 </li>
 </ul>
-<p>对于服务器server，<code>key</code>和<code>cert</code>为必填。</p>
-<p>对于客户端client，反向代理隧道forward，以及透明代理nat，<code>password</code>必填</p>
+<p>对于服务器<code>server</code>，<code>key</code>和<code>cert</code>为必填。</p>
+<p>对于客户端<code>client</code>，反向代理隧道<code>forward</code>，以及透明代理<code>nat</code>，<code>password</code>必填</p>
 <p>其余未填的选项，用下面给出的值进行填充。</p>
+<p><em>Trojan-Go支持对人类更友好的YAML语法，配置文件的基本结构与JSON相同，效果等价。不过为了遵守YAML的命名习惯，你需要把下划线(&quot;_&quot;)转换为横杠(&quot;-&quot;)，如<code>remote_addr</code>在YAML文件中为<code>remote-addr</code></em></p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
   <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#960050;background-color:#1e0010">*required*</span>,
   <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#960050;background-color:#1e0010">*required*</span>,
@@ -103,6 +104,7 @@
     <span style="color:#f92672">&#34;session_ticket&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;reuse_session&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;plain_http_response&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+    <span style="color:#f92672">&#34;fallback_addr&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;fallback_port&#34;</span>: <span style="color:#ae81ff">0</span>,
     <span style="color:#f92672">&#34;fingerprint&#34;</span>: <span style="color:#e6db74">&#34;firefox&#34;</span>,
   },
@@ -123,8 +125,8 @@
     <span style="color:#f92672">&#34;block&#34;</span>: [],
     <span style="color:#f92672">&#34;default_policy&#34;</span>: <span style="color:#e6db74">&#34;proxy&#34;</span>,
     <span style="color:#f92672">&#34;domain_strategy&#34;</span>: <span style="color:#e6db74">&#34;as_is&#34;</span>,
-    <span style="color:#f92672">&#34;geoip&#34;</span>: <span style="color:#e6db74">&#34;geoip.dat&#34;</span>,
-    <span style="color:#f92672">&#34;geosite&#34;</span>: <span style="color:#e6db74">&#34;geosite.dat&#34;</span>
+    <span style="color:#f92672">&#34;geoip&#34;</span>: <span style="color:#e6db74">&#34;$PROGRAM_DIR$/geoip.dat&#34;</span>,
+    <span style="color:#f92672">&#34;geosite&#34;</span>: <span style="color:#e6db74">&#34;$PROGRAM_DIR$/geosite.dat&#34;</span>
   },
   <span style="color:#f92672">&#34;websocket&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
@@ -212,7 +214,7 @@
 <p><code>verify_hostname</code>表示服务端是否校验客户端提供的SNI与服务端设置的一致性。如果服务端SNI字段留空，认证将被强制关闭。</p>
 <p>服务端必须填入<code>cert</code>和<code>key</code>，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写<code>cert</code>。如果使用自签名或者自签发的证书，应当在的<code>cert</code>处填入服务器证书文件，否则可能导致校验失败。</p>
 <p><code>sni</code>指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let&rsquo;sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
-<p><code>alpn</code>为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。<strong>如果使用了CDN，错误的alpn字段可能导致与CDN协商错误的应用层协议</strong>。</p>
+<p><code>alpn</code>为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。<strong>如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议</strong>。</p>
 <p><code>prefer_server_cipher</code>客户端是否偏好选择服务端在协商中提供的密码学套件。</p>
 <p><code>cipher</code>和<code>cipher13</code>指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。</p>
 <p><code>curves</code>指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(&quot;:&quot;)分隔。</p>
@@ -233,7 +235,7 @@
 </ul>
 <p>一旦指纹的值被设置，<code>cipher</code>，<code>curves</code>，<code>alpn</code>，<code>session_ticket</code>等有可能影响指纹的字段将使用该指纹的特定设置覆写。</p>
 <p><code>plain_http_response</code>指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
-<p><code>fallback_port</code>指服务端TLS握手失败时，trojan-go将该连接代理的端口。这是trojan-go的特性，以便更好地隐蔽Trojan服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至remote_addr:fallback_port。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问<code>http://your-domain-name.com:443</code>进行验证。</p>
+<p><code>fallback_addr</code>和<code>fallback_port</code>指服务端TLS握手失败时，trojan-go将该连接重定向到该地址。这是trojan-go的特性，以便更好地隐蔽服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至fallback_addr:fallback_port。如果<code>fallback_addr</code>为空，则用<code>remote_addr</code>填充。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问<code>http://your-domain-name.com:443</code>进行验证。</p>
 <p><code>key_log</code>TLS密钥日志的文件路径。如果填写则开启密钥日志。<strong>记录密钥将破坏TLS的安全性，此项不应该用于除调试以外的其他任何用途。</strong></p>
 <h3 id="mux多路复用选项"><code>mux</code>多路复用选项</h3>
 <p>多路复用是trojan-go的特性。如果服务器和客户端都是trojan-go，可以开启mux多路复用以减少高并发情景下的延迟（只需要客户端开启此选项即可，服务端自动适配）。</p>
@@ -300,9 +302,12 @@
 <li>
 <p>你的证书失效，无法验证证书有效性</p>
 </li>
+<li>
+<p>你使用了无法保证密码学安全的可插拔传输层</p>
+</li>
 </ul>
 <p>等等。</p>
-<p>由于使用的是AEAD，trojan-go启用了AEAD加密后依然可以正确判断是否遭到主动探测，并作出相应的响应。</p>
+<p>由于使用的是AEAD，trojan-go可以正确判断请求是否有效，是否遭到主动探测，并作出相应的响应。</p>
 <p><code>enabled</code>是否启用Shadowsocks AEAD加密Trojan协议层。</p>
 <p><code>method</code>加密方式。合法的值有：</p>
 <ul>
@@ -316,7 +321,7 @@
 <p>&ldquo;AES-256-GCM&rdquo;</p>
 </li>
 </ul>
-<p><code>password</code>用于生成主密钥的密码。必须确保客户端和服务端一致。</p>
+<p><code>password</code>用于生成主密钥的密码。如果启用AEAD加密，必须确保客户端和服务端一致。</p>
 <h3 id="transport_plugin传输层插件选项"><code>transport_plugin</code>传输层插件选项</h3>
 <p><code>enabled</code>是否启用传输层插件替代TLS传输。一旦启用传输层插件支持，trojan-go将会把<strong>未经TLS加密的trojan协议流量明文传输给插件</strong>，以允许用户对流量进行自定义的混淆和加密。</p>
 <p><code>type</code>插件类型。目前支持的类型有</p>
