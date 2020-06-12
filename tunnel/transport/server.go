@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"io"
 	"io/ioutil"
+
 	"net"
 	"net/http"
 	"os"
@@ -15,25 +16,23 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
-
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/redirector"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport/fingerprint"
+	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 )
 
 // Server is a server of trasport layer
 type Server struct {
 	tcpListener        net.Listener
-	listenAddress      *tunnel.Address
 	fallbackAddress    *tunnel.Address
 	verifySNI          bool
 	sni                string
 	alpn               []string
 	PreferServerCipher bool
-	certPool           *x509.CertPool
 	keyPair            []tls.Certificate
 	httpResp           []byte
 	cipherSuite        []uint16
@@ -66,7 +65,6 @@ func (s *Server) acceptLoop() {
 		if err != nil {
 			select {
 			case <-s.ctx.Done():
-				return
 			default:
 				log.Fatal(common.NewError("transport accept error"))
 			}
@@ -267,17 +265,21 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	server := &Server{
-		fallbackAddress: fallbackAddress,
-		redir:           redirector.NewRedirector(ctx),
-		ctx:             ctx,
-		cancel:          cancel,
-		tcpListener:     tcpListener,
-		connChan:        make(chan tunnel.Conn, 32),
-		wsChan:          make(chan tunnel.Conn, 32),
-		sni:             cfg.TLS.SNI,
-		alpn:            cfg.TLS.ALPN,
-		verifySNI:       cfg.TLS.VerifyHostName,
+		tcpListener:        tcpListener,
+		fallbackAddress:    fallbackAddress,
+		verifySNI:          cfg.TLS.VerifyHostName,
+		sni:                cfg.TLS.SNI,
+		alpn:               cfg.TLS.ALPN,
+		PreferServerCipher: cfg.TLS.PreferServerCipher,
+		sessionTicket:      cfg.TLS.ReuseSession,
+		connChan:           make(chan tunnel.Conn, 32),
+		wsChan:             make(chan tunnel.Conn, 32),
+		plugin:             false,
+		redir:              redirector.NewRedirector(ctx),
+		ctx:                ctx,
+		cancel:             cancel,
 	}
 
 	if cfg.TLS.KeyLogPath != "" {
@@ -288,6 +290,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		}
 		server.keyLogger = file
 	}
+
 	if cfg.TLS.KeyPassword != "" {
 		keyFile, err := ioutil.ReadFile(cfg.TLS.KeyPath)
 		if err != nil {
@@ -329,6 +332,19 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 			server.keyPair = []tls.Certificate{keyPair}
 		}
 	}
+
+	if cfg.TLS.KeyLogPath != "" {
+		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_WRONLY, 0600)
+		if err != nil {
+			return nil, common.NewError("failed to open key log file")
+		}
+		server.keyLogger = file
+	}
+
+	if len(cfg.TLS.Cipher) != 0 {
+		server.cipherSuite = fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":"))
+	}
+
 	go server.acceptLoop()
 
 	log.Info("transport server is listening on tcp:", tcpListener.Addr().String())
