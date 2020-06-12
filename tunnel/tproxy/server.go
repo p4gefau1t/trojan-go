@@ -24,7 +24,7 @@ type Server struct {
 	packetChan  chan tunnel.PacketConn
 	timeout     time.Duration
 	mappingLock sync.Mutex
-	mapping     map[string]*PacketConn
+	mapping     map[string]*dokodemo.PacketConn
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
@@ -67,7 +67,7 @@ func (s *Server) packetDispatchLoop() {
 			select {
 			case <-s.ctx.Done():
 			default:
-				log.Fatal("tproxy failed to read from udp")
+				log.Fatal(common.NewError("tproxy failed to read from udp").Base(err))
 			}
 			s.Close()
 			return
@@ -80,18 +80,20 @@ func (s *Server) packetDispatchLoop() {
 			continue
 		}
 		log.Info("tproxy udp session, from", src, "to", dst)
+
+		address, err := tunnel.NewAddressFromAddr("udp", dst.String())
+		common.Must(err)
+
 		ctx, cancel := context.WithCancel(s.ctx)
-		conn := &PacketConn{
-			dokodemo.PacketConn{
-				Input:      make(chan []byte, 16),
-				Output:     make(chan []byte, 16),
-				Source:     src,
-				PacketConn: s.udpListener,
-				Ctx:        ctx,
-				Cancel:     cancel,
-				M: &tunnel.Metadata{
-					Address: &tunnel.Address{},
-				},
+		conn := &dokodemo.PacketConn{
+			Input:      make(chan []byte, 16),
+			Output:     make(chan []byte, 16),
+			Source:     src,
+			PacketConn: s.udpListener,
+			Ctx:        ctx,
+			Cancel:     cancel,
+			M: &tunnel.Metadata{
+				Address: address,
 			},
 		}
 		s.mapping[src.String()] = conn
@@ -100,7 +102,8 @@ func (s *Server) packetDispatchLoop() {
 		conn.Input <- buf[:n]
 		s.packetChan <- conn
 
-		go func(conn *PacketConn) {
+		go func(conn *dokodemo.PacketConn) {
+			defer conn.Close()
 			for {
 				select {
 				case payload := <-conn.Output:
@@ -110,13 +113,13 @@ func (s *Server) packetDispatchLoop() {
 						return
 					}
 				case <-s.ctx.Done():
+					log.Debug("exiting")
 					return
 				case <-time.After(s.timeout):
 					s.mappingLock.Lock()
 					delete(s.mapping, conn.Source.String())
 					s.mappingLock.Unlock()
-					conn.Close()
-					log.Debug("timeout packet session closed", conn.Source.String())
+					log.Debug("packet session timeout. closed", conn.Source.String())
 					return
 				}
 			}
@@ -163,8 +166,8 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		ctx:         ctx,
 		cancel:      cancel,
 		timeout:     time.Duration(cfg.UDPTimeout) * time.Second,
-		mapping:     make(map[string]*PacketConn),
-		packetChan:  make(chan tunnel.PacketConn),
+		mapping:     make(map[string]*dokodemo.PacketConn),
+		packetChan:  make(chan tunnel.PacketConn, 32),
 	}
 	go server.packetDispatchLoop()
 	return server, nil

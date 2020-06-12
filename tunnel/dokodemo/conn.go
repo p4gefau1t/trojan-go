@@ -34,7 +34,8 @@ type PacketConn struct {
 
 func (c *PacketConn) Close() error {
 	c.Cancel()
-	return c.PacketConn.Close()
+	// don't close the underlying udp socket
+	return nil
 }
 
 func (c *PacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
