@@ -265,11 +265,11 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		cancel:   cancel,
 	}
 	switch cfg.Router.DomainStrategy {
-	case "as_is":
+	case "as_is", "as-is":
 		client.domainStrategy = AsIs
-	case "ip_if_non_match":
+	case "ip_if_non_match", "ip-if-non-match":
 		client.domainStrategy = IPIfNonMatch
-	case "ip_on_demand":
+	case "ip_on_demand", "ip-on-demand":
 		client.domainStrategy = IPOnDemand
 	default:
 		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)

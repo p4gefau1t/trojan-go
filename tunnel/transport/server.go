@@ -71,71 +71,73 @@ func (s *Server) acceptLoop() {
 			return
 		}
 		go func(tcpConn net.Conn) {
+			var transportConn net.Conn
 			if s.plugin {
-				s.connChan <- &Conn{
-					Conn: tcpConn,
+				// plain text mode
+				transportConn = tcpConn
+			} else {
+				// default tls
+				sniVerified := true
+				tlsConfig := &tls.Config{
+					Certificates:             s.keyPair,
+					CipherSuites:             s.cipherSuite,
+					PreferServerCipherSuites: s.PreferServerCipher,
+					SessionTicketsDisabled:   !s.sessionTicket,
+					NextProtos:               s.alpn,
+					KeyLogWriter:             s.keyLogger,
+					GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+						if s.verifySNI && hello.ServerName != s.sni {
+							sniVerified = false
+							return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
+						}
+						return &s.keyPair[0], nil
+					},
 				}
-				return
-			}
-			sniVerified := true
-			tlsConfig := &tls.Config{
-				Certificates:             s.keyPair,
-				CipherSuites:             s.cipherSuite,
-				PreferServerCipherSuites: s.PreferServerCipher,
-				SessionTicketsDisabled:   !s.sessionTicket,
-				NextProtos:               s.alpn,
-				KeyLogWriter:             s.keyLogger,
-				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-					if s.verifySNI && hello.ServerName != s.sni {
-						sniVerified = false
-						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
-					}
-					return &s.keyPair[0], nil
-				},
-			}
 
-			// ------------------------ WAR ZONE ----------------------------
+				// ------------------------ WAR ZONE ----------------------------
 
-			rewindConn := common.NewRewindConn(tcpConn)
-			rewindConn.SetBufferSize(2048)
+				rewindConn := common.NewRewindConn(tcpConn)
+				rewindConn.SetBufferSize(2048)
 
-			tlsConn := tls.Server(rewindConn, tlsConfig)
-			err = tlsConn.Handshake()
-			rewindConn.StopBuffering()
+				tlsConn := tls.Server(rewindConn, tlsConfig)
+				err = tlsConn.Handshake()
+				rewindConn.StopBuffering()
 
-			if err != nil {
-				if !sniVerified {
-					// close tls conn immediately if the sni is invalid
-					tlsConn.Close()
-					log.Error(common.NewError("tls client hello with wrong sni").Base(err))
-				} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
-					// not a valid tls client hello
-					rewindConn.Rewind()
-					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
-					if s.fallbackAddress != nil {
-						s.redir.Redirect(&redirector.Redirection{
-							InboundConn: rewindConn,
-							RedirectTo:  s.fallbackAddress,
-						})
-					} else if s.httpResp != nil {
-						rewindConn.Write(s.httpResp)
-						rewindConn.Close()
+				if err != nil {
+					if !sniVerified {
+						// close tls conn immediately if the sni is invalid
+						tlsConn.Close()
+						log.Error(common.NewError("tls client hello with wrong sni").Base(err))
+					} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
+						// not a valid tls client hello
+						rewindConn.Rewind()
+						log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
+						if s.fallbackAddress != nil {
+							s.redir.Redirect(&redirector.Redirection{
+								InboundConn: rewindConn,
+								RedirectTo:  s.fallbackAddress,
+							})
+						} else if s.httpResp != nil {
+							rewindConn.Write(s.httpResp)
+							rewindConn.Close()
+						} else {
+							rewindConn.Close()
+						}
 					} else {
-						rewindConn.Close()
+						// other cases, simply close it
+						tlsConn.Close()
+						log.Error(common.NewError("tls handshake failed").Base(err))
 					}
-				} else {
-					// other cases, simply close it
-					tlsConn.Close()
-					log.Error(common.NewError("tls handshake failed").Base(err))
+					return
 				}
-				return
+
+				state := tlsConn.ConnectionState()
+				log.Trace("tls handshake", tls.CipherSuiteName(state.CipherSuite), state.DidResume, state.NegotiatedProtocol)
+				transportConn = tlsConn
 			}
 
-			state := tlsConn.ConnectionState()
-			log.Trace("tls handshake", tls.CipherSuiteName(state.CipherSuite), state.DidResume, state.NegotiatedProtocol)
-
-			// we use a real http header parser to mimic a real http server
-			tlsRewindConn := common.NewRewindConn(tlsConn)
+			// we use real http header parser to mimic a real http server
+			tlsRewindConn := common.NewRewindConn(transportConn)
 			tlsRewindConn.SetBufferSize(512)
 			defer tlsRewindConn.StopBuffering()
 			r := bufio.NewReader(tlsRewindConn)

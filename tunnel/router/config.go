@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"os"
 )
@@ -26,13 +27,13 @@ func init() {
 			Router: RouterConfig{
 				DefaultPolicy:   "proxy",
 				DomainStrategy:  "as_is",
-				GeoIPFilename:   "geoip.dat",
-				GeoSiteFilename: "geosite.dat",
+				GeoIPFilename:   common.GetProgramDir() + "/geoip.dat",
+				GeoSiteFilename: common.GetProgramDir() + "/geosite.dat",
 			},
 		}
 		if path := os.Getenv("TROJAN_GO_LOCATION_ASSET"); path != "" {
-			cfg.Router.GeoIPFilename = path + "geoip.dat"
-			cfg.Router.GeoSiteFilename = path + "geosite.dat"
+			cfg.Router.GeoIPFilename = path + "/geoip.dat"
+			cfg.Router.GeoSiteFilename = path + "/geosite.dat"
 		}
 		return cfg
 	})
