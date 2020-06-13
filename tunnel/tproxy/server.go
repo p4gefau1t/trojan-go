@@ -99,16 +99,28 @@ func (s *Server) packetDispatchLoop() {
 		}
 		s.mapping[src.String()] = conn
 		s.mappingLock.Unlock()
-
 		conn.Input <- buf[:n]
 		s.packetChan <- conn
 
 		go func(conn *dokodemo.PacketConn) {
 			defer conn.Close()
+			back, err := tproxy.DialUDP(
+				"udp",
+				&net.UDPAddr{
+					IP:   conn.M.IP,
+					Port: conn.M.Port,
+				},
+				conn.Source.(*net.UDPAddr),
+			)
+			if err != nil {
+				log.Error(common.NewError("failed to dial tproxy udp").Base(err))
+				return
+			}
+			defer back.Close()
 			for {
 				select {
 				case payload := <-conn.Output:
-					_, err := s.udpListener.WriteTo(payload, conn.Source)
+					_, err := back.Write(payload)
 					if err != nil {
 						log.Error(common.NewError("tproxy udp write error").Base(err))
 						return
