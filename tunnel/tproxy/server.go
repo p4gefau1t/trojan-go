@@ -172,7 +172,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		packetChan:  make(chan tunnel.PacketConn, 32),
 	}
 	go server.packetDispatchLoop()
-	log.Info("tproxy server listening on", tcpListener.Addr(), "(udp/tcp)")
+	log.Info("tproxy server listening on", tcpListener.Addr(), "(tcp)", udpListener.LocalAddr(), "(udp)")
 	log.Debug("tproxy server created")
 	return server, nil
 }

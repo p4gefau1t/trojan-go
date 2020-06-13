@@ -65,7 +65,7 @@ func TestTrojan(t *testing.T) {
 	c := &Client{
 		underlay: tcpClient,
 		ctx:      ctx,
-		auth:     &MockAuth{},
+		user:     &MockUser{},
 	}
 
 	conn1, err := c.DialConn(&tunnel.Address{

@@ -63,7 +63,7 @@ func (p *Proxy) relayConnLoop() {
 					defer inbound.Close()
 					outbound, err := p.sink.DialConn(inbound.Metadata().Address, nil)
 					if err != nil {
-						log.Error(err)
+						log.Error(common.NewError("proxy failed to dial connection").Base(err))
 						return
 					}
 					defer outbound.Close()
@@ -110,7 +110,7 @@ func (p *Proxy) relayPacketLoop() {
 					defer inbound.Close()
 					outbound, err := p.sink.DialPacket(nil)
 					if err != nil {
-						log.Error(err)
+						log.Error(common.NewError("proxy failed to dial packet").Base(err))
 						return
 					}
 					defer outbound.Close()

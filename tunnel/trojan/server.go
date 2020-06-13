@@ -94,7 +94,7 @@ func (c *InboundConn) Auth() error {
 // Server is a trojan tunnel server
 type Server struct {
 	auth       statistic.Authenticator
-	redir      redirector.Redirector
+	redir      *redirector.Redirector
 	redirAddr  *tunnel.Address
 	underlay   tunnel.Server
 	connChan   chan tunnel.Conn
@@ -214,6 +214,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 		packetChan: make(chan tunnel.PacketConn, 32),
 		ctx:        ctx,
 		cancel:     cancel,
+		redir:      redirector.NewRedirector(ctx),
 	}
 
 	if !cfg.DisableHTTPCheck {

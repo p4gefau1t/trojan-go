@@ -143,6 +143,10 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 			return nil, common.NewError("websocket path must start with \"/\"")
 		}
 	}
+	if cfg.Websocket.Hostname == "" {
+		cfg.Websocket.Hostname = cfg.RemoteHost
+		log.Warn("empty websocket hostname")
+	}
 	ctx, cancel := context.WithCancel(ctx)
 	log.Debug("websocket server created")
 	return &Server{

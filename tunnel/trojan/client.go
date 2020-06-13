@@ -29,7 +29,6 @@ type OutboundConn struct {
 	metadata      *tunnel.Metadata
 	sent          uint64
 	recv          uint64
-	auth          statistic.Authenticator
 	user          statistic.User
 	headerWritten bool
 	net.Conn
@@ -41,13 +40,7 @@ func (c *OutboundConn) Metadata() *tunnel.Metadata {
 
 func (c *OutboundConn) WriteHeader(payload []byte) error {
 	if !c.headerWritten {
-		users := c.auth.ListUsers()
-		if len(users) == 0 {
-			return common.NewError("no password found")
-		}
-		user := users[0]
-		hash := user.Hash()
-		c.user = user
+		hash := c.user.Hash()
 		buf := bytes.NewBuffer(make([]byte, 0, MaxPacketSize))
 		crlf := []byte{0x0d, 0x0a}
 		buf.Write([]byte(hash))
@@ -93,7 +86,7 @@ func (c *OutboundConn) Close() error {
 type Client struct {
 	underlay tunnel.Client
 	ctx      context.Context
-	auth     statistic.Authenticator
+	user     statistic.User
 }
 
 func (c *Client) Close() error {
@@ -107,7 +100,7 @@ func (c *Client) DialConn(addr *tunnel.Address, overlay tunnel.Tunnel) (tunnel.C
 	}
 	newConn := &OutboundConn{
 		Conn: conn,
-		auth: c.auth,
+		user: c.user,
 		metadata: &tunnel.Metadata{
 			Command: Connect,
 			Address: addr,
@@ -138,7 +131,7 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	return &PacketConn{
 		Conn: &OutboundConn{
 			Conn: conn,
-			auth: c.auth,
+			user: c.user,
 			metadata: &tunnel.Metadata{
 				Command: Associate,
 				Address: fakeAddr,
@@ -155,10 +148,19 @@ func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 
 	go api.RunService(ctx, Name+"_CLIENT", auth)
 
+	var user statistic.User
+	for _, u := range auth.ListUsers() {
+		user = u
+		break
+	}
+	if user == nil {
+		return nil, common.NewError("no valid user found")
+	}
+
 	log.Debug("trojan client created")
 	return &Client{
 		underlay: client,
 		ctx:      ctx,
-		auth:     auth,
+		user:     user,
 	}, nil
 }
