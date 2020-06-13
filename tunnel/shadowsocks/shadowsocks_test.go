@@ -6,8 +6,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/test/util"
-	"github.com/p4gefau1t/trojan-go/tunnel"
-	"github.com/p4gefau1t/trojan-go/tunnel/raw"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"net"
 	"strconv"
 	"strings"
@@ -18,6 +17,20 @@ import (
 func TestShadowsocks(t *testing.T) {
 	p, err := strconv.ParseInt(util.HTTPPort, 10, 32)
 	common.Must(err)
+
+	port := common.PickPort("tcp", "127.0.0.1")
+	transportConfig := &transport.Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  port,
+		RemoteHost: "127.0.0.1",
+		RemotePort: port,
+	}
+	ctx := config.WithConfig(context.Background(), transport.Name, transportConfig)
+	tcpClient, err := transport.NewClient(ctx, nil)
+	common.Must(err)
+	tcpServer, err := transport.NewServer(ctx, nil)
+	common.Must(err)
+
 	cfg := &Config{
 		RemoteHost: "127.0.0.1",
 		RemotePort: int(p),
@@ -27,18 +40,8 @@ func TestShadowsocks(t *testing.T) {
 			Password: "password",
 		},
 	}
-	ctx := config.WithConfig(context.Background(), Name, cfg)
-	port := common.PickPort("tcp", "127.0.0.1")
-	addr := &tunnel.Address{
-		AddressType: tunnel.IPv4,
-		IP:          net.ParseIP("127.0.0.1"),
-		Port:        port,
-	}
-	tcpServer, err := raw.NewServer(addr)
-	common.Must(err)
-	tcpClient := &raw.FixedClient{
-		FixedAddr: addr,
-	}
+	ctx = config.WithConfig(ctx, Name, cfg)
+
 	c, err := NewClient(ctx, tcpClient)
 	common.Must(err)
 	s, err := NewServer(ctx, tcpServer)
@@ -51,15 +54,15 @@ func TestShadowsocks(t *testing.T) {
 		var err error
 		conn1, err = c.DialConn(nil, nil)
 		common.Must(err)
-		conn1.Write([]byte("12345678"))
+		conn1.Write(util.GeneratePayload(1024))
 		wg.Done()
 	}()
 	go func() {
 		var err error
 		conn2, err = s.AcceptConn(nil)
-		buf := [8]byte{}
-		conn2.Read(buf[:])
 		common.Must(err)
+		buf := [1024]byte{}
+		conn2.Read(buf[:])
 		wg.Done()
 	}()
 	wg.Wait()
@@ -87,4 +90,8 @@ func TestShadowsocks(t *testing.T) {
 	if !strings.Contains(string(buf[:n]), "Bad Request") {
 		t.Fail()
 	}
+	conn1.Close()
+	conn3.Close()
+	c.Close()
+	s.Close()
 }

@@ -2,58 +2,56 @@ package mux
 
 import (
 	"context"
-	"fmt"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"testing"
-
-	"github.com/p4gefau1t/trojan-go/test/util"
-	"github.com/p4gefau1t/trojan-go/tunnel"
-
-	"github.com/p4gefau1t/trojan-go/tunnel/raw"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
-	"gopkg.in/yaml.v2"
+	"github.com/p4gefau1t/trojan-go/test/util"
 )
 
 func TestMux(t *testing.T) {
-	cfg := &Config{
+	muxCfg := &Config{
 		Mux: MuxConfig{
 			Enabled:     true,
 			Concurrency: 8,
 			Timeout:     10,
 		},
 	}
-
-	data, err := yaml.Marshal(cfg)
-	common.Must(err)
-	fmt.Println(string(data))
-
-	ctx, err := config.WithYAMLConfig(context.Background(), data)
-	common.Must(err)
+	ctx := config.WithConfig(context.Background(), Name, muxCfg)
 
 	port := common.PickPort("tcp", "127.0.0.1")
-	addr := tunnel.NewAddressFromHostPort("tcp", "127.0.0.1", port)
-
-	tcpClient := &raw.FixedClient{
-		FixedAddr: addr,
+	transportConfig := &transport.Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  port,
+		RemoteHost: "127.0.0.1",
+		RemotePort: port,
 	}
-	tcpServer, err := raw.NewServer(addr)
+	ctx = config.WithConfig(ctx, transport.Name, transportConfig)
+
+	tcpClient, err := transport.NewClient(ctx, nil)
+	common.Must(err)
+	tcpServer, err := transport.NewServer(ctx, nil)
+	common.Must(err)
+
 	common.Must(err)
 
 	muxTunnel := Tunnel{}
 	muxClient, _ := muxTunnel.NewClient(ctx, tcpClient)
 	muxServer, _ := muxTunnel.NewServer(ctx, tcpServer)
 
-	first := []byte("12345678")
-	conn1, err := muxClient.DialConn(addr, nil)
-	common.Must2(conn1.Write([]byte(first)))
+	conn1, err := muxClient.DialConn(nil, nil)
+	common.Must2(conn1.Write(util.GeneratePayload(1024)))
 	common.Must(err)
-	buf := [8]byte{}
+	buf := [1024]byte{}
 	conn2, err := muxServer.AcceptConn(nil)
 	common.Must(err)
 	common.Must2(conn2.Read(buf[:]))
-	fmt.Println(string(buf[:]))
 	if !util.CheckConn(conn1, conn2) {
 		t.Fail()
 	}
+	conn1.Close()
+	conn2.Close()
+	muxClient.Close()
+	muxServer.Close()
 }

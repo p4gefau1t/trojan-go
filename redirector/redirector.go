@@ -58,7 +58,10 @@ func (r *Redirector) worker() {
 				go copyConn(redirection.InboundConn, outboundConn)
 				select {
 				case err := <-errChan:
-					log.Info("redirection done:", err)
+					if err != nil {
+						log.Error(common.NewError("failed to redirect").Base(err))
+					}
+					log.Info("redirection done")
 				case <-r.ctx.Done():
 					log.Debug("exiting")
 					return

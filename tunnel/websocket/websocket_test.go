@@ -6,7 +6,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
-	"github.com/p4gefau1t/trojan-go/tunnel/raw"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"sync"
 	"testing"
 )
@@ -22,12 +22,21 @@ func TestWebsocket(t *testing.T) {
 
 	ctx := config.WithConfig(context.Background(), Name, cfg)
 
-	tcpClient := &raw.FixedClient{
-		FixedAddr: tunnel.NewAddressFromHostPort("tcp", "127.0.0.1", common.PickPort("tcp", "127.0.0.1")),
+	port := common.PickPort("tcp", "127.0.0.1")
+	transportConfig := &transport.Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  port,
+		RemoteHost: "127.0.0.1",
+		RemotePort: port,
 	}
-	tcpServer, err := raw.NewServer(tcpClient.FixedAddr)
+	ctx = config.WithConfig(ctx, transport.Name, transportConfig)
+	tcpClient, err := transport.NewClient(ctx, nil)
 	common.Must(err)
+	tcpServer, err := transport.NewServer(ctx, nil)
+	common.Must(err)
+
 	c, err := NewClient(ctx, tcpClient)
+	common.Must(err)
 	s, err := NewServer(ctx, tcpServer)
 	var conn2 tunnel.Conn
 	wg := sync.WaitGroup{}

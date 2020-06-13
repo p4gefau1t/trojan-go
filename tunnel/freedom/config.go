@@ -1,4 +1,4 @@
-package raw
+package freedom
 
 import "github.com/p4gefau1t/trojan-go/config"
 

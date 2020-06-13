@@ -10,6 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/shadowsocks"
 	"github.com/p4gefau1t/trojan-go/tunnel/simplesocks"
 	"github.com/p4gefau1t/trojan-go/tunnel/socks"
+	"github.com/p4gefau1t/trojan-go/tunnel/tls"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
 	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
@@ -18,8 +19,11 @@ import (
 const Name = "CLIENT"
 
 // GenerateClientTree generate general outbound protocol stack
-func GenerateClientTree(muxEnabled bool, wsEnabled bool, ssEnabled bool, routerEnabled bool) []string {
+func GenerateClientTree(transportPlugin bool, muxEnabled bool, wsEnabled bool, ssEnabled bool, routerEnabled bool) []string {
 	clientStack := []string{transport.Name}
+	if !transportPlugin {
+		clientStack = append(clientStack, tls.Name)
+	}
 	if wsEnabled {
 		clientStack = append(clientStack, websocket.Name)
 	}
@@ -40,7 +44,7 @@ func init() {
 	proxy.RegisterProxyCreator(Name, func(ctx context.Context) (*proxy.Proxy, error) {
 		cfg := config.FromContext(ctx, Name).(*Config)
 		serverStack := []string{socks.Name}
-		clientStack := GenerateClientTree(cfg.Mux.Enabled, cfg.Websocket.Enabled, cfg.Shadowsocks.Enabled, cfg.Router.Enabled)
+		clientStack := GenerateClientTree(cfg.TransportPlugin.Enabled, cfg.Mux.Enabled, cfg.Websocket.Enabled, cfg.Shadowsocks.Enabled, cfg.Router.Enabled)
 		c, err := proxy.CreateClientStack(ctx, clientStack)
 		if err != nil {
 			return nil, err

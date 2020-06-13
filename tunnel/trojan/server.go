@@ -113,7 +113,7 @@ func (s *Server) acceptLoop() {
 	for {
 		conn, err := s.underlay.AcceptConn(&Tunnel{})
 		if err != nil { // Closing
-			log.Error(err)
+			log.Error(common.NewError("trojan failed to accept conn").Base(err))
 			select {
 			case <-s.ctx.Done():
 				return

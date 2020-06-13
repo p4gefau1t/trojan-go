@@ -1,10 +1,7 @@
-package raw
+package freedom
 
 import (
 	"context"
-	"net"
-
-	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
@@ -21,17 +18,7 @@ func (*Tunnel) NewClient(ctx context.Context, client tunnel.Client) (tunnel.Clie
 }
 
 func (*Tunnel) NewServer(ctx context.Context, client tunnel.Server) (tunnel.Server, error) {
-	serverConfig := config.FromContext(ctx, Name).(*Config)
-	addr := tunnel.NewAddressFromHostPort("tcp", serverConfig.LocalHost, serverConfig.LocalPort)
-
-	l, err := net.Listen("tcp", addr.String())
-	if err != nil {
-		return nil, err
-	}
-	return &Server{
-		addr:        addr,
-		tcpListener: l,
-	}, nil
+	panic("not supported")
 }
 
 func init() {

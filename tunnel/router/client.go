@@ -7,7 +7,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
-	"github.com/p4gefau1t/trojan-go/tunnel/raw"
+	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"io/ioutil"
 	"net"
@@ -123,7 +123,7 @@ type Client struct {
 	defaultPolicy  int
 	domainStrategy int
 	underlay       tunnel.Client
-	direct         *raw.Client
+	direct         *freedom.Client
 	ctx            context.Context
 	cancel         context.CancelFunc
 }
@@ -252,7 +252,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 
-	direct, err := raw.NewClient(ctx, nil)
+	direct, err := freedom.NewClient(ctx, nil)
 	if err != nil {
 		return nil, common.NewError("failed to initialize raw client").Base(err)
 	}

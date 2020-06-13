@@ -49,6 +49,7 @@ func runHelloHTTPServer() {
 }
 
 var EchoAddr string
+var EchoPort int
 
 func runTCPEchoServer() {
 	listener, err := net.Listen("tcp", EchoAddr)
@@ -106,7 +107,8 @@ var wg = sync.WaitGroup{}
 func init() {
 	wg.Add(3)
 	runHelloHTTPServer()
-	EchoAddr = GetTestAddr()
+	EchoPort = common.PickPort("tcp", "127.0.0.1")
+	EchoAddr = fmt.Sprintf("127.0.0.1:%d", EchoPort)
 	runTCPEchoServer()
 	runUDPEchoServer()
 	wg.Wait()

@@ -291,7 +291,7 @@ transport-plugin:
     enabled: true
     type: plaintext
 shadowsocks:
-    enabled: true
+    enabled: false
     method: AEAD_CHACHA20_POLY1305
     password: 12345678
 mux:
@@ -314,7 +314,7 @@ transport-plugin:
     enabled: true
     type: plaintext
 shadowsocks:
-    enabled: true
+    enabled: false
     method: AEAD_CHACHA20_POLY1305
     password: 12345678
 websocket:

@@ -1,4 +1,4 @@
-package raw
+package freedom
 
 import (
 	"context"
@@ -160,14 +160,4 @@ func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 		forwardProxy: cfg.ForwardProxy.Enabled,
 		proxyAddr:    addr,
 	}, nil
-}
-
-// FixedClient will always dial to the FixedAddr
-type FixedClient struct {
-	FixedAddr *tunnel.Address
-	Client
-}
-
-func (c *FixedClient) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, error) {
-	return c.Client.DialConn(c.FixedAddr, t)
 }

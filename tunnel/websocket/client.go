@@ -49,6 +49,10 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	if !strings.HasPrefix(cfg.Websocket.Path, "/") {
 		return nil, common.NewError("websocket path must start with \"/\"")
 	}
+	if cfg.Websocket.Hostname == "" {
+		cfg.Websocket.Hostname = cfg.RemoteHost
+		log.Warn("empty websocket hostname")
+	}
 	log.Debug("websocket client created")
 	return &Client{
 		hostname: cfg.Websocket.Hostname,
