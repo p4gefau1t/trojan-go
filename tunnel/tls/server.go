@@ -126,10 +126,10 @@ func (s *Server) acceptLoop() {
 			// we use real http header parser to mimic a real http server
 			rewindConn := common.NewRewindConn(tlsConn)
 			rewindConn.SetBufferSize(512)
-			defer rewindConn.StopBuffering()
 			r := bufio.NewReader(rewindConn)
 			httpReq, err := http.ReadRequest(r)
 			rewindConn.Rewind()
+			rewindConn.StopBuffering()
 			if err != nil {
 				// this is not a http request, pass it to trojan protocol layer for further inspection
 				s.connChan <- &transport.Conn{

@@ -67,6 +67,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 
 	if err != nil {
 		rewindConn.Rewind()
+		rewindConn.StopBuffering()
 		s.redir.Redirect(&redirector.Redirection{
 			InboundConn: rewindConn,
 			RedirectTo:  s.redirAddr,
@@ -75,6 +76,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	}
 	if strings.ToLower(req.Header.Get("Upgrade")) != "websocket" || req.URL.Path != s.path {
 		rewindConn.Rewind()
+		rewindConn.StopBuffering()
 		s.redir.Redirect(&redirector.Redirection{
 			InboundConn: rewindConn,
 			RedirectTo:  s.redirAddr,

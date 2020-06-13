@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
+	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/redirector"
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/test/util"
@@ -83,7 +84,7 @@ func TestTrojan(t *testing.T) {
 		DomainName:  "example.com",
 		AddressType: tunnel.DomainName,
 	}, nil)
-	common.Must2(conn1.Write([]byte("12345678")))
+	common.Must2(conn1.Write([]byte("87654321")))
 	conn2, err := s.AcceptConn(nil)
 	buf := [8]byte{}
 	conn2.Read(buf[:])
@@ -112,11 +113,6 @@ func TestTrojan(t *testing.T) {
 		t.Fail()
 	}
 
-	conn1.Close()
-	conn2.Close()
-	packet1.Close()
-	packet2.Close()
-
 	//redirecting
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	common.Must(err)
@@ -124,9 +120,15 @@ func TestTrojan(t *testing.T) {
 	recvBuf := [1024]byte{}
 	common.Must2(conn.Write(sendBuf))
 	common.Must2(conn.Read(recvBuf[:]))
-	if bytes.Equal(sendBuf, recvBuf[:]) {
+	if !bytes.Equal(sendBuf, recvBuf[:]) {
+		fmt.Println(sendBuf)
+		fmt.Println(recvBuf[:])
 		t.Fail()
 	}
+	conn1.Close()
+	conn2.Close()
+	packet1.Close()
+	packet2.Close()
 	conn.Close()
 	c.Close()
 	s.Close()

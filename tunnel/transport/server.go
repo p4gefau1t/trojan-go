@@ -49,18 +49,19 @@ func (s *Server) acceptLoop() {
 			// we use real http header parser to mimic a real http server
 			rewindConn := common.NewRewindConn(tcpConn)
 			rewindConn.SetBufferSize(512)
-			defer rewindConn.StopBuffering()
 			r := bufio.NewReader(rewindConn)
 			httpReq, err := http.ReadRequest(r)
 			rewindConn.Rewind()
 			if err != nil {
 				// this is not a http request, pass it to trojan protocol layer for further inspection
+				rewindConn.StopBuffering()
 				s.connChan <- &Conn{
 					Conn: rewindConn,
 				}
 			} else {
 				// this is a http request, pass it to websocket protocol layer
 				log.Debug("plaintext http request: ", httpReq)
+				rewindConn.StopBuffering()
 				s.wsChan <- &Conn{
 					Conn: rewindConn,
 				}
