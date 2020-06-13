@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"github.com/p4gefau1t/trojan-go/log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -235,6 +236,7 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 		hash := common.SHA224String(password)
 		u.AddUser(hash)
 	}
+	log.Debug("memory authenticator created")
 	return u, nil
 }
 

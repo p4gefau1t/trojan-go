@@ -8,11 +8,16 @@ type Config struct {
 	RemoteHost       string      `json:"remote_addr" yaml:"remote-addr"`
 	RemotePort       int         `json:"remote_port" yaml:"remote-port"`
 	DisableHTTPCheck bool        `json:"disable_http_check" yaml:"disable-http-check"`
-	MySQL            MySQLConfig `json:"mysql" yaml:"mysql"`
+	MySQL            MySQLConfig `json,yaml:"mysql"`
+	API              APIConfig   `json,yaml:"api"`
 }
 
 type MySQLConfig struct {
-	Enabled bool `json:"enabled" yaml:"enabled"`
+	Enabled bool `json,yaml:"enabled"`
+}
+
+type APIConfig struct {
+	Enabled bool `json,yaml:"enabled"`
 }
 
 func init() {

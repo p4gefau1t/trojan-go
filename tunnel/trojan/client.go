@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/p4gefau1t/trojan-go/api"
+	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 	"net"
@@ -146,7 +147,10 @@ func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 		return nil, err
 	}
 
-	go api.RunService(ctx, Name+"_CLIENT", auth)
+	cfg := config.FromContext(ctx, Name).(*Config)
+	if cfg.API.Enabled {
+		go api.RunService(ctx, Name+"_CLIENT", auth)
+	}
 
 	var user statistic.User
 	for _, u := range auth.ListUsers() {

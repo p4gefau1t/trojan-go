@@ -190,19 +190,27 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	}
 }
 
-func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, error) {
+func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
 	// TODO replace this dirty code
-	auth, err := statistic.NewAuthenticator(ctx, memory.Name)
+	var auth statistic.Authenticator
+	var err error
 	if cfg.MySQL.Enabled {
+		log.Debug("mysql enabled")
 		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+	} else {
+		log.Debug("auth by config file")
+		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
 	}
-	go api.RunService(ctx, Name+"_SERVER", auth)
-
 	if err != nil {
-		return nil, common.NewError("failed to create authenticator").Base(err)
+		return nil, common.NewError("trojan failed to create authenticator")
 	}
+
+	if cfg.API.Enabled {
+		go api.RunService(ctx, Name+"_SERVER", auth)
+	}
+
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
 	ctx, cancel := context.WithCancel(ctx)
 	s := &Server{

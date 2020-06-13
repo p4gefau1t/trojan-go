@@ -31,11 +31,19 @@ wget https://github.com/v2ray/geoip/raw/release/geoip.dat -O geoip.dat
 SCRIPT_NAME=`basename "$0"`
 FAILURES=""
 
+PACKAGE_NAME="github.com/p4gefau1t/trojan-go"
+VERSION=`git describe`
+COMMIT=`git rev-parse HEAD`
+
+VAR_SETTING=""
+VAR_SETTING="$VAR_SETTING -X $PACKAGE_NAME/constant.Version=$VERSION"
+VAR_SETTING="$VAR_SETTING -X $PACKAGE_NAME/constant.Commit=$COMMIT"
+
 for PLATFORM in $PLATFORMS; do
   GOOS=${PLATFORM%/*}
   GOARCH=${PLATFORM#*/}
   ZIP_FILENAME="trojan-go-${GOOS}-${GOARCH}.zip"
-  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags=\"-s -w\""
+  CMD="CGO_ENABLE=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags=\"-s -w ${VAR_SETTING}\""
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
   zip -j release/$ZIP_FILENAME temp/* ./*.dat
@@ -51,7 +59,7 @@ for GOOS in $PLATFORMS_ARM; do
   GOARCH="arm"
   for GOARM in 7 6 5; do
     ZIP_FILENAME="trojan-go-${GOOS}-${GOARCH}v${GOARM}.zip"
-    CMD="CGO_ENABLE=0 GOARM=${GOARM} GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags \"-s -w\""
+    CMD="CGO_ENABLE=0 GOARM=${GOARM} GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags \"-s -w ${VAR_SETTING}\""
     echo "${CMD}"
     eval "${CMD}" || FAILURES="${FAILURES} ${GOOS}/${GOARCH}v${GOARM}" 
     zip -j release/$ZIP_FILENAME temp/* ./*.dat

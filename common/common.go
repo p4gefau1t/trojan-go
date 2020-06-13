@@ -1,29 +1,16 @@
 package common
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
 )
 
-const (
-	Version = "v0.7.2"
-)
-
 type Runnable interface {
 	Run() error
 	Close() error
-}
-
-func NewBufioReadWriter(rw io.ReadWriter) *bufio.ReadWriter {
-	if bufrw, ok := rw.(*bufio.ReadWriter); ok {
-		return bufrw
-	}
-	return bufio.NewReadWriter(bufio.NewReader(rw), bufio.NewWriter(rw))
 }
 
 func SHA224String(password string) string {

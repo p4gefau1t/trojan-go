@@ -2,6 +2,7 @@ package statistic
 
 import (
 	"context"
+	"github.com/p4gefau1t/trojan-go/log"
 	"io"
 	"strings"
 
@@ -53,6 +54,7 @@ func RegisterAuthenticatorCreator(name string, creator Creator) {
 func NewAuthenticator(ctx context.Context, name string) (Authenticator, error) {
 	// one authenticator for each context
 	if auth, found := createdAuth[ctx]; found {
+		log.Debug("authenticator has been created:", name)
 		return auth, nil
 	}
 	creator, found := authCreators[strings.ToUpper(name)]
