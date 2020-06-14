@@ -12,6 +12,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
+	"io"
 	"net"
 	"testing"
 )
@@ -119,7 +120,7 @@ func TestTrojan(t *testing.T) {
 	sendBuf := util.GeneratePayload(1024)
 	recvBuf := [1024]byte{}
 	common.Must2(conn.Write(sendBuf))
-	common.Must2(conn.Read(recvBuf[:]))
+	common.Must2(io.ReadFull(conn, recvBuf[:]))
 	if !bytes.Equal(sendBuf, recvBuf[:]) {
 		fmt.Println(sendBuf)
 		fmt.Println(recvBuf[:])

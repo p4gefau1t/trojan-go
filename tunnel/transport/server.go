@@ -52,16 +52,15 @@ func (s *Server) acceptLoop() {
 			r := bufio.NewReader(rewindConn)
 			httpReq, err := http.ReadRequest(r)
 			rewindConn.Rewind()
+			rewindConn.StopBuffering()
 			if err != nil {
 				// this is not a http request, pass it to trojan protocol layer for further inspection
-				rewindConn.StopBuffering()
 				s.connChan <- &Conn{
 					Conn: rewindConn,
 				}
 			} else {
 				// this is a http request, pass it to websocket protocol layer
 				log.Debug("plaintext http request: ", httpReq)
-				rewindConn.StopBuffering()
 				s.wsChan <- &Conn{
 					Conn: rewindConn,
 				}
