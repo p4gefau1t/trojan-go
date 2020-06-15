@@ -81,6 +81,7 @@ func (o *easy) Handle() error {
         "%s"
     ],
     "ssl": {
+        "verify_hostname": false,
         "cert": "%s",
         "key": "%s"
     }

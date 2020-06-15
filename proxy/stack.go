@@ -14,6 +14,16 @@ type Node struct {
 	tunnel.Server
 }
 
+func NewNode(name string, isEndpoint bool, context context.Context, server tunnel.Server) *Node {
+	return &Node{
+		Name:       name,
+		IsEndpoint: isEndpoint,
+		Context:    context,
+		Server:     server,
+		Next:       make(map[string]*Node),
+	}
+}
+
 func (n *Node) BuildNext(name string) *Node {
 	if next, found := n.Next[name]; found {
 		return next

@@ -55,14 +55,14 @@ func (c *OutboundConn) WriteHeader(payload []byte) error {
 		c.headerWritten = true
 		return err
 	}
-	return common.NewError("header is already written")
+	return common.NewError("trojan header has been written")
 }
 
 func (c *OutboundConn) Write(p []byte) (int, error) {
 	if !c.headerWritten {
 		err := c.WriteHeader(p)
 		if err != nil {
-			return 0, err
+			return 0, common.NewError("trojan failed to flush header with payload").Base(err)
 		}
 		return len(p), nil
 	}

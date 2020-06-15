@@ -6,13 +6,12 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/tunnel"
 	"golang.org/x/net/proxy"
 	"net"
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
 type Client struct {
@@ -137,7 +136,7 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	}
 	udpConn, err := net.ListenPacket(network, "")
 	if err != nil {
-		return nil, err
+		return nil, common.NewError("freedom failed to listen udp socket").Base(err)
 	}
 	return &PacketConn{
 		UDPConn: udpConn.(*net.UDPConn),
@@ -150,6 +149,7 @@ func (c *Client) Close() error {
 
 func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 	// TODO implement dns
+	// TODO socks5 udp
 	cfg := config.FromContext(ctx, Name).(*Config)
 	addr := tunnel.NewAddressFromHostPort("tcp", cfg.ForwardProxy.ProxyHost, cfg.ForwardProxy.ProxyPort)
 	return &Client{

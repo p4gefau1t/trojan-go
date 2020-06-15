@@ -7,6 +7,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"golang.org/x/net/websocket"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -102,14 +103,59 @@ func GeneratePayload(length int) []byte {
 	return buf
 }
 
+var BlackHoleAddr string
+var BlackHolePort int
+
+func runTCPBlackHoleServer() {
+	listener, err := net.Listen("tcp", BlackHoleAddr)
+	common.Must(err)
+	wg.Done()
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			go func(conn net.Conn) {
+				io.Copy(ioutil.Discard, conn)
+				conn.Close()
+			}(conn)
+		}
+	}()
+}
+
+func runUDPBlackHoleServer() {
+	conn, err := net.ListenPacket("udp", BlackHoleAddr)
+	common.Must(err)
+	wg.Done()
+	go func() {
+		buf := make([]byte, 1024*8)
+		for {
+			_, _, err := conn.ReadFrom(buf[:])
+			if err != nil {
+				return
+			}
+		}
+	}()
+}
+
 var wg = sync.WaitGroup{}
 
 func init() {
-	wg.Add(3)
+	wg.Add(5)
 	runHelloHTTPServer()
+
 	EchoPort = common.PickPort("tcp", "127.0.0.1")
 	EchoAddr = fmt.Sprintf("127.0.0.1:%d", EchoPort)
+
+	BlackHolePort = common.PickPort("tcp", "127.0.0.1")
+	BlackHoleAddr = fmt.Sprintf("127.0.0.1:%d", BlackHolePort)
+
 	runTCPEchoServer()
 	runUDPEchoServer()
+
+	runTCPBlackHoleServer()
+	runUDPBlackHoleServer()
+
 	wg.Wait()
 }

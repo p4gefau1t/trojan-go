@@ -20,6 +20,7 @@ type Server struct {
 	cmd         *exec.Cmd
 	connChan    chan tunnel.Conn
 	wsChan      chan tunnel.Conn
+	nextHTTP    bool
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
@@ -46,23 +47,31 @@ func (s *Server) acceptLoop() {
 
 		go func(tcpConn net.Conn) {
 			log.Info("tcp connection from", tcpConn.RemoteAddr())
-			// we use real http header parser to mimic a real http server
-			rewindConn := common.NewRewindConn(tcpConn)
-			rewindConn.SetBufferSize(512)
-			r := bufio.NewReader(rewindConn)
-			httpReq, err := http.ReadRequest(r)
-			rewindConn.Rewind()
-			rewindConn.StopBuffering()
-			if err != nil {
-				// this is not a http request, pass it to trojan protocol layer for further inspection
-				s.connChan <- &Conn{
-					Conn: rewindConn,
+			if s.nextHTTP { // plaintext mode enabled
+				// we use real http header parser to mimic a real http server
+				rewindConn := common.NewRewindConn(tcpConn)
+				rewindConn.SetBufferSize(512)
+				defer rewindConn.StopBuffering()
+
+				r := bufio.NewReader(rewindConn)
+				httpReq, err := http.ReadRequest(r)
+				rewindConn.Rewind()
+				rewindConn.StopBuffering()
+				if err != nil {
+					// this is not a http request, pass it to trojan protocol layer for further inspection
+					s.connChan <- &Conn{
+						Conn: rewindConn,
+					}
+				} else {
+					// this is a http request, pass it to websocket protocol layer
+					log.Debug("plaintext http request: ", httpReq)
+					s.wsChan <- &Conn{
+						Conn: rewindConn,
+					}
 				}
 			} else {
-				// this is a http request, pass it to websocket protocol layer
-				log.Debug("plaintext http request: ", httpReq)
-				s.wsChan <- &Conn{
-					Conn: rewindConn,
+				s.connChan <- &Conn{
+					Conn: tcpConn,
 				}
 			}
 		}(tcpConn)
@@ -72,6 +81,7 @@ func (s *Server) acceptLoop() {
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	// TODO fix import cycle
 	if overlay != nil && overlay.Name() == "WEBSOCKET" {
+		s.nextHTTP = true
 		select {
 		case conn := <-s.wsChan:
 			return conn, nil

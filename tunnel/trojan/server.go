@@ -124,6 +124,7 @@ func (s *Server) acceptLoop() {
 		go func(conn tunnel.Conn) {
 			rewindConn := common.NewRewindConn(conn)
 			rewindConn.SetBufferSize(128)
+			defer rewindConn.StopBuffering()
 
 			inboundConn := &InboundConn{
 				Conn: rewindConn,

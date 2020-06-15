@@ -205,7 +205,7 @@ func (a *Authenticator) DelUser(hash string) error {
 	defer a.Unlock()
 	meter, found := a.users[hash]
 	if !found {
-		return common.NewError("Hash " + hash + "is not exist")
+		return common.NewError("hash " + hash + " not found")
 	}
 	meter.Close()
 	delete(a.users, hash)

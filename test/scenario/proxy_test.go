@@ -6,6 +6,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
 	netproxy "golang.org/x/net/proxy"
+	_ "net/http/pprof"
 )
 
 var cert = `
@@ -326,7 +328,6 @@ websocket:
 	if !CheckClientServer(clientData, serverData, socksPort) {
 		t.Fail()
 	}
-
 }
 
 func TestForward(t *testing.T) {
@@ -419,4 +420,80 @@ shadowsocks:
 	if !bytes.Equal(payload, buf[:]) {
 		t.Fail()
 	}
+}
+
+func SingleThreadBenchmark(clientData, serverData string, socksPort int) {
+	server, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
+	common.Must(err)
+	go server.Run()
+
+	client, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
+	common.Must(err)
+	go client.Run()
+
+	time.Sleep(time.Second * 2)
+	dialer, err := netproxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, netproxy.Direct)
+
+	const num = 100
+	wg := sync.WaitGroup{}
+	wg.Add(num)
+	const payloadSize = 1024 * 1024 * 1024
+	payload := util.GeneratePayload(payloadSize)
+
+	for i := 0; i < 100; i++ {
+		conn, err := dialer.Dial("tcp", util.BlackHoleAddr)
+		common.Must(err)
+
+		t1 := time.Now()
+		common.Must2(conn.Write(payload))
+		t2 := time.Now()
+
+		speed := float64(payloadSize) / (float64(t2.Sub(t1).Nanoseconds()) / float64(time.Second))
+		fmt.Printf("speed: %f Gbps\n", speed/1024/1024/1024)
+
+		conn.Close()
+	}
+	client.Close()
+	server.Close()
+	return
+}
+
+func BenchmarkClientServer(b *testing.B) {
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+	clientData := fmt.Sprintf(`
+run-type: client
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
+log-level: 0
+password:
+    - password
+ssl:
+    verify: false
+    fingerprint: firefox
+    sni: localhost
+`, socksPort, serverPort)
+	serverData := fmt.Sprintf(`
+run-type: server
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %s
+log-level: 0
+disable-http-check: true
+password:
+    - password
+ssl:
+    verify-hostname: false
+    key: server.key
+    cert: server.crt
+    sni: localhost
+`, serverPort, util.HTTPPort)
+
+	SingleThreadBenchmark(clientData, serverData, socksPort)
 }

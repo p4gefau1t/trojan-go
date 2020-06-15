@@ -43,6 +43,7 @@ type Server struct {
 	ctx                context.Context
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
+	nextHTTP           bool
 }
 
 func (s *Server) Close() error {
@@ -125,7 +126,7 @@ func (s *Server) acceptLoop() {
 
 			// we use real http header parser to mimic a real http server
 			rewindConn := common.NewRewindConn(tlsConn)
-			rewindConn.SetBufferSize(512)
+			rewindConn.SetBufferSize(1024)
 			r := bufio.NewReader(rewindConn)
 			httpReq, err := http.ReadRequest(r)
 			rewindConn.Rewind()
@@ -136,6 +137,14 @@ func (s *Server) acceptLoop() {
 					Conn: rewindConn,
 				}
 			} else {
+				if !s.nextHTTP {
+					// there is no websocket layer waiting for connections, redirect it
+					s.redir.Redirect(&redirector.Redirection{
+						InboundConn: rewindConn,
+						RedirectTo:  s.fallbackAddress,
+					})
+					return
+				}
 				// this is a http request, pass it to websocket protocol layer
 				log.Debug("http req: ", httpReq)
 				s.wsChan <- &transport.Conn{
@@ -148,6 +157,8 @@ func (s *Server) acceptLoop() {
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	if _, ok := overlay.(*websocket.Tunnel); ok {
+		s.nextHTTP = true
+		log.Debug("next proto http")
 		// websocket overlay
 		select {
 		case conn := <-s.wsChan:
@@ -173,22 +184,23 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
-	fallbackAddress := tunnel.NewAddressFromHostPort("tcp", cfg.TLS.FallbackHost, cfg.TLS.FallbackPort)
 
-	if cfg.TLS.FallbackHost == "" {
-		cfg.TLS.FallbackHost = cfg.RemoteHost
-		log.Warn("empty fallback address")
-	}
-	if cfg.TLS.FallbackPort == 0 {
-		cfg.TLS.FallbackPort = cfg.RemotePort
-		log.Warn("empty fallback port")
-	} else {
+	var fallbackAddress *tunnel.Address
+	if cfg.TLS.FallbackPort != 0 {
+		if cfg.TLS.FallbackHost == "" {
+			cfg.TLS.FallbackHost = cfg.RemoteHost
+			log.Warn("empty tls fallback address")
+		}
+		fallbackAddress = tunnel.NewAddressFromHostPort("tcp", cfg.TLS.FallbackHost, cfg.TLS.FallbackPort)
 		fallbackConn, err := net.Dial("tcp", fallbackAddress.String())
 		if err != nil {
 			return nil, common.NewError("invalid fallback address").Base(err)
 		}
 		fallbackConn.Close()
+	} else {
+		log.Warn("empty tls fallback port")
 	}
+
 	if cfg.TLS.SNI == "" && cfg.TLS.VerifyHostName {
 		return nil, common.NewError("cannot verify hostname without sni")
 	}
