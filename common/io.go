@@ -11,19 +11,19 @@ type RewindReader struct {
 	rawReader  io.Reader
 	buf        []byte
 	bufReadIdx int
-	rewinded   bool
+	rewound   bool
 	buffering  bool
 	bufferSize int
 }
 
 func (r *RewindReader) Read(p []byte) (int, error) {
-	if r.rewinded {
+	if r.rewound {
 		if len(r.buf) > r.bufReadIdx {
 			n := copy(p, r.buf[r.bufReadIdx:])
 			r.bufReadIdx += n
 			return n, nil
 		}
-		r.rewinded = false //all buffering content has been read
+		r.rewound = false //all buffering content has been read
 	}
 	n, err := r.rawReader.Read(p)
 	if r.buffering {
