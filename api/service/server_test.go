@@ -105,6 +105,10 @@ func TestServerAPI(t *testing.T) {
 			DownloadSpeed: 5000,
 			UploadSpeed:   3000,
 		},
+		TrafficTotal: &Traffic{
+			DownloadTraffic: 1,
+			UploadTraffic: 1,
+		},
 	})
 	go func() {
 		for {
