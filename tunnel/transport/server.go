@@ -80,7 +80,7 @@ func (s *Server) acceptLoop() {
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	// TODO fix import cycle
-	if overlay != nil && overlay.Name() == "WEBSOCKET" {
+	if overlay != nil && (overlay.Name() == "WEBSOCKET" || overlay.Name() == "HTTP") {
 		s.nextHTTP = true
 		select {
 		case conn := <-s.wsChan:

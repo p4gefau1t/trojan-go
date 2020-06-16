@@ -26,13 +26,13 @@ const (
 
 // Server is a socks5 server
 type Server struct {
-	connChan    chan tunnel.Conn
-	packetChan  chan tunnel.PacketConn
-	tcpListener net.Listener
-	localHost   string
-	timeout     time.Duration
-	ctx         context.Context
-	cancel      context.CancelFunc
+	connChan   chan tunnel.Conn
+	packetChan chan tunnel.PacketConn
+	underlay   tunnel.Server
+	localHost  string
+	timeout    time.Duration
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
@@ -55,7 +55,7 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 func (s *Server) Close() error {
 	s.cancel()
-	return s.tcpListener.Close()
+	return s.underlay.Close()
 }
 
 func (s *Server) handshake(conn net.Conn) (*Conn, error) {
@@ -110,7 +110,7 @@ func (s *Server) associate(conn net.Conn, addr *tunnel.Address) error {
 
 func (s *Server) acceptLoop() {
 	for {
-		conn, err := s.tcpListener.Accept()
+		conn, err := s.underlay.AcceptConn(&Tunnel{})
 		if err != nil {
 			log.Error(common.NewError("socks5 accept err").Base(err))
 			return
@@ -134,6 +134,7 @@ func (s *Server) acceptLoop() {
 			case Associate:
 				defer newConn.Close()
 				port := common.PickPort("udp", s.localHost)
+				// TODO use underlying server
 				associateAddr := tunnel.NewAddressFromHostPort("udp", s.localHost, port)
 				l, err := net.ListenPacket("udp", associateAddr.String())
 				if err != nil {
@@ -160,22 +161,16 @@ func (s *Server) acceptLoop() {
 // NewServer create a socks server
 func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
-	listenAddr := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
-	l, err := net.Listen("tcp", listenAddr.String())
-	if err != nil {
-		return nil, common.NewError("socks5 failed to listen").Base(err)
-	}
 	ctx, cancel := context.WithCancel(ctx)
 	server := &Server{
-		tcpListener: l,
-		ctx:         ctx,
-		cancel:      cancel,
-		connChan:    make(chan tunnel.Conn, 32),
-		packetChan:  make(chan tunnel.PacketConn, 32),
-		timeout:     time.Duration(cfg.UDPTimeout) * time.Second,
+		underlay:   underlay,
+		ctx:        ctx,
+		cancel:     cancel,
+		connChan:   make(chan tunnel.Conn, 32),
+		packetChan: make(chan tunnel.PacketConn, 32),
+		timeout:    time.Duration(cfg.UDPTimeout) * time.Second,
 	}
 	go server.acceptLoop()
-	log.Info("socks5 server is listening on tcp:", l.Addr().String())
 	log.Debug("socks server created")
 	return server, nil
 }

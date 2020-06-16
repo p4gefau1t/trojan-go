@@ -15,7 +15,7 @@ type Client struct {
 }
 
 func (c *Client) DialConn(address *tunnel.Address, tunnel tunnel.Tunnel) (tunnel.Conn, error) {
-	conn, err := c.underlay.DialConn(address, tunnel)
+	conn, err := c.underlay.DialConn(address, &Tunnel{})
 	if err != nil {
 		return nil, err
 	}

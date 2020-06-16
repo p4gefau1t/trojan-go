@@ -21,7 +21,7 @@ const Name = "SERVER"
 func init() {
 	proxy.RegisterProxyCreator(Name, func(ctx context.Context) (*proxy.Proxy, error) {
 		cfg := config.FromContext(ctx, Name).(*client.Config)
-		s, err := transport.NewServer(ctx, nil)
+		transportServer, err := transport.NewServer(ctx, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -35,7 +35,7 @@ func init() {
 			Next:       make(map[string]*proxy.Node),
 			IsEndpoint: false,
 			Context:    ctx,
-			Server:     s,
+			Server:     transportServer,
 		}
 
 		if !cfg.TransportPlugin.Enabled {

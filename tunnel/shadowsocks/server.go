@@ -19,7 +19,7 @@ type Server struct {
 }
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
-	conn, err := s.underlay.AcceptConn(overlay)
+	conn, err := s.underlay.AcceptConn(&Tunnel{})
 	if err != nil {
 		return nil, common.NewError("shadowsocks failed to accept connection from underlying tunnel")
 	}
