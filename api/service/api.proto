@@ -67,6 +67,7 @@ message SetUsersRequest {
     Operation operation = 2;
     Speed speed_limit = 3;
     int32 ip_limit = 4;
+    Traffic traffic_total = 5;
 }
 
 message SetUsersResponse {
