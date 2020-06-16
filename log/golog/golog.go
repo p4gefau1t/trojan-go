@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/log"
+	_ "github.com/p4gefau1t/trojan-go/log/tz"
 	"github.com/p4gefau1t/trojan-go/log/golog/colorful"
 	"golang.org/x/crypto/ssh/terminal"
 )

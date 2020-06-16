@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/p4gefau1t/trojan-go/log"
+	_ "github.com/p4gefau1t/trojan-go/log/tz"
 )
 
 func init() {
