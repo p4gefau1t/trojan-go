@@ -116,7 +116,7 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 				if req.IpLimit > 0 {
 					user.SetIPLimit(int(req.IpLimit))
 				}
-				if req.TrafficTotal.DownloadTraffic >= 0 || req.TrafficTotal.UploadTraffic >= 0 {
+				if req.TrafficTotal.DownloadTraffic > 0 || req.TrafficTotal.UploadTraffic > 0 {
 					user.SetTrafficTotal(req.TrafficTotal.DownloadTraffic, req.TrafficTotal.UploadTraffic)
 				}
 			}
