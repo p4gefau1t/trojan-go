@@ -108,11 +108,6 @@ func (u *User) SetSpeedLimit(send, recv int) {
 	}
 }
 
-func (u *User) SetTrafficTotal(send, recv uint64) {
-	atomic.StoreUint64(&u.sent, send)
-	atomic.StoreUint64(&u.recv, recv)
-}
-
 func (u *User) GetSpeedLimit() (send, recv int) {
 	sendLimit := 0
 	recvLimit := 0
