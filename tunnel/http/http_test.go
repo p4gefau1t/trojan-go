@@ -49,11 +49,13 @@ func TestHTTP(t *testing.T) {
 		conn.Close()
 	}
 
-	req, err := http.NewRequest("CONNECT", "https://google.com:443", nil)
+	req, err := http.NewRequest(http.MethodConnect, "https://google.com:443", nil)
 	common.Must(err)
 	conn1, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	common.Must(err)
-	req.Write(conn1)
+	go func() {
+		common.Must(req.Write(conn1))
+	}()
 
 	conn2, err := s.AcceptConn(nil)
 	common.Must(err)
@@ -64,7 +66,8 @@ func TestHTTP(t *testing.T) {
 
 	connResp := "HTTP/1.1 200 Connection established\r\n\r\n"
 	buf := make([]byte, len(connResp))
-	conn1.Read(buf)
+	_, err = conn1.Read(buf)
+	common.Must(err)
 	if string(buf) != connResp {
 		t.Fail()
 	}
