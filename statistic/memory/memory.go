@@ -124,6 +124,11 @@ func (u *User) Hash() string {
 	return u.hash
 }
 
+func (u *User) SetTrafficTotal(send, recv uint64) {
+	atomic.StoreUint64(&u.sent, send)
+	atomic.StoreUint64(&u.recv, recv)
+}
+
 func (u *User) GetTraffic() (uint64, uint64) {
 	return atomic.LoadUint64(&u.sent), atomic.LoadUint64(&u.recv)
 }
