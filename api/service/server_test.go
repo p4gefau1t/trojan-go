@@ -107,7 +107,7 @@ func TestServerAPI(t *testing.T) {
 		},
 		TrafficTotal: &Traffic{
 			DownloadTraffic: 1,
-			UploadTraffic: 1,
+			UploadTraffic:   1,
 		},
 	})
 	go func() {

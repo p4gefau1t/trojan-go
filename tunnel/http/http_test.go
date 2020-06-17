@@ -37,19 +37,9 @@ func TestHTTP(t *testing.T) {
 		fmt.Println(req)
 		ioutil.ReadAll(req.Body)
 		req.Body.Close()
-		resp := `HTTP/1.1 200 OK
-Date: Mon, 19 Jul 2004 16:18:20 GMT
-Server: Apache
-Last-Modified: Sat, 10 Jul 2004 17:29:19 GMT
-ETag: "1d0325-2470-40f0276f"
-Accept-Ranges: bytes
-Content-Length: 4
-Connection: close
-Content-Type: text/html
-
-1234
-`
-		_, err = conn.Write([]byte(resp))
+		resp, err := http.Get("http://127.0.0.1:" + util.HTTPPort)
+		common.Must(err)
+		err = resp.Write(conn)
 		common.Must(err)
 		buf := [100]byte{}
 		_, err = conn.Read(buf[:])

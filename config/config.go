@@ -15,7 +15,7 @@ var creators = make(map[KeyType]Creator)
 // Creator creates default config struct for a module
 type Creator func() interface{}
 
-// RegisterConfigCreator registers a config structs for parsing
+// RegisterConfigCreator registers a config struct for parsing
 func RegisterConfigCreator(name KeyType, creator Creator) {
 	name += "_CONFIG"
 	creators[name] = creator
