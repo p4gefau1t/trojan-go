@@ -79,7 +79,7 @@ for PLATFORM in $PLATFORMS; do
   CGO=0
   [ "x${GOOS}" = "xandroid" ] && PREPARE_NDK "${GOARCH}" && CGO=1
 
-  CMD="env -v CGO_ENABLED=${CGO} ${GOARM:+GOARM=${GOARM}} GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags=\"-s -w ${VAR_SETTING}\""
+  CMD="env CGO_ENABLED=${CGO} ${GOARM:+GOARM=${GOARM}} GOOS=${GOOS} GOARCH=${GOARCH} go build -tags \"full\" -o temp -ldflags=\"-s -w ${VAR_SETTING}\""
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
   zip -j release/$ZIP_FILENAME temp/* ./*.dat
   zip release/$ZIP_FILENAME example/*
