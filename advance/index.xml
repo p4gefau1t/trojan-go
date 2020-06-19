@@ -61,7 +61,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/api/</guid>
-      <description>Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接数统计 Trojan-Go本身集成</description>
+      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度</description>
     </item>
     
     <item>
@@ -71,6 +71,15 @@
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/plugin/</guid>
       <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软</description>
+    </item>
+    
+    <item>
+      <title>自定义协议栈</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/</guid>
+      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控制，</description>
     </item>
     
   </channel>

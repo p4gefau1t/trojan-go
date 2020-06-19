@@ -30,7 +30,7 @@
 <meta itemprop="name" content="基本介绍">
 <meta itemprop="description" content="Trojan-Go的核心部分有 tunnel 各个协议具体实现 proxy 代理核心 config 配置注册和解析模块 redirector 主动检测欺骗模块 statistics 用户认证和统计模块 可以在对应文件夹中找到相">
 
-<meta itemprop="wordCount" content="1214">
+<meta itemprop="wordCount" content="1735">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -84,7 +84,7 @@
 </code></pre></div><p>最底层的隧道为传输层，即不从其他隧道获取或者创建流和包的隧道，充当上图中隧道A或者C的角色。</p>
 <ul>
 <li>
-<p>transport，TLS和可插拔传输层</p>
+<p>transport，可插拔传输层</p>
 </li>
 <li>
 <p>socks，socks5代理，仅隧道服务端</p>
@@ -96,7 +96,7 @@
 <p>dokodemo，反向代理，仅隧道服务端</p>
 </li>
 <li>
-<p>raw，原始TCP/UDP</p>
+<p>freedom，自由出站，仅隧道客户端</p>
 </li>
 </ul>
 <p>这几个隧道直接从TCP/UDP Socket创建流和包，不接受为其底层添加的任何隧道。</p>
@@ -115,15 +115,100 @@
 <p>simplesocks</p>
 </li>
 <li>
+<p>tls</p>
+</li>
+<li>
 <p>router，路由功能，仅隧道客户端</p>
 </li>
 </ul>
 <p>他们都不关心其下层隧道实现。但可以根据到来的流和包，将其分发给上层隧道。</p>
+<p>例如，在这张图中，是一个典型的Trojan-Go客户端和服务端，各个隧道自下往上堆叠的顺序是：</p>
+<ul>
+<li>
+<p>隧道A: transport-&gt;socks</p>
+</li>
+<li>
+<p>隧道B: transport-&gt;tls-&gt;trojan</p>
+</li>
+<li>
+<p>隧道C: freedom</p>
+</li>
+</ul>
+<p>实际上的隧道堆叠的情况会比这个更复杂一些。通常的入站的隧道是一棵树（或有向无环图）的形式，而非一条链。具体解释参考下文。</p>
 <h2 id="proxyproxy代理核心">proxy.Proxy代理核心</h2>
-<p>代理核心的作用，是监听上述隧道进行组合堆叠并形成的协议栈，将所有的入站协议栈（多个隧道Server）中抽取的流和包，以及对应元信息，转送给出站协议栈（一个隧道Client）。</p>
+<p>代理核心的作用，是监听上述隧道进行组合堆叠并形成的协议栈，将所有的入站协议栈（多个隧道Server的终端节点，见下）中抽取的流和包，以及对应元信息，转送给出站协议栈（一个隧道Client）。</p>
 <p>注意，这里的入站协议栈可以有多个，如客户端可以同时从Socks5和HTTP协议栈中抽取流和包，服务端可以同时从Websocket承载的Trojan协议，和TLS承载的Trojan协议中抽取流和包等。但是出站协议栈只能有一个，如只使用TLS承载的Trojan协议出站。</p>
-<p>为了描述入站协议栈（隧道服务端）的组合和堆叠方式，使用一棵多叉树对所有协议栈进行描述。你可以在client/forward/nat/server中看到构建树的过程。</p>
+<p>为了描述入站协议栈（隧道服务端）的组合和堆叠方式，使用一棵多叉树对所有协议栈进行描述。你可以在proxy文件夹中各组件，看到构建树的过程。</p>
 <p>而出站协议栈则比较简单，使用一个简单列表即可描述。</p>
+<p>所以实际上，对于一个典型的开启了Websocket和Mux的客户端/服务端，上图的隧道堆叠模型为：</p>
+<p>客户端</p>
+<ul>
+<li>
+<p>入站（树）</p>
+<ul>
+<li>transport (根)
+<ul>
+<li>adapter 能够识别HTTP和Socks流量并分发给上层协议
+<ul>
+<li>http （终端节点）</li>
+<li>socks（终端节点）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>出站(列表)</p>
+<ul>
+<li>transport (根)</li>
+<li>tls</li>
+<li>websocket</li>
+<li>trojan</li>
+<li>mux</li>
+<li>simplesocks</li>
+</ul>
+</li>
+</ul>
+<p>服务端</p>
+<ul>
+<li>
+<p>入站（树）</p>
+<ul>
+<li>transport (根)
+<ul>
+<li>tls 能够识别HTTP和非HTTP流量并分发
+<ul>
+<li>websocket
+<ul>
+<li>trojan（终端节点）
+<ul>
+<li>mux</li>
+<li>simplesocks （终端节点）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>trojan 能够识别mux和普通trojan流量并分发（终端节点）
+<ul>
+<li>mux</li>
+<li>simplesocks （终端节点）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>出站（列表）</p>
+<ul>
+<li>freedom</li>
+</ul>
+</li>
+</ul>
+<p>注意，代理核心只从隧道构成的树的终端节点抽取流和包，并转送到唯一的出站上。多个终端节点的设计的目的，是使Trojan-Go同时兼容Websocket和Trojan协议入站连接，开启/未开启Mux的入站连接，以及HTTP/Socks5自动识别的功能。每个拥有多个儿子的树上节点，具有精确识别和分发流和包给不同的儿子节点的能力。这符合我们假定每个协议了解其上层承载协议的假设。</p>
 <div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/overview.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 实现细节和开发指南</a>
@@ -156,6 +241,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/plugin/">使用Shadowsocks插件/可插拔传输层</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
 </ul>
   
 </li>
