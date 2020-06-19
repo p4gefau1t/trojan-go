@@ -30,7 +30,7 @@
 <meta itemprop="name" content="自定义协议栈">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控制，">
 
-<meta itemprop="wordCount" content="1181">
+<meta itemprop="wordCount" content="1091">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -279,74 +279,11 @@
       - tls
       - trojan1
     <span style="color:#e6db74">-
-</span><span style="color:#e6db74">      - transport客户端 client.yaml</span>
-
-```yaml
-<span style="color:#66d9ef">run-type</span>: custom
-
-<span style="color:#66d9ef">inbound</span>:
-  <span style="color:#66d9ef">node</span>:
-    - <span style="color:#66d9ef">protocol</span>: transport
-      <span style="color:#66d9ef">tag</span>: transport
-      <span style="color:#66d9ef">config</span>:
-        <span style="color:#66d9ef">local-addr</span>: <span style="color:#ae81ff">127.0.0.1</span>
-        <span style="color:#66d9ef">local-port</span>: <span style="color:#ae81ff">1080</span>
-    - <span style="color:#66d9ef">protocol</span>: socks
-      <span style="color:#66d9ef">tag</span>: socks
-  <span style="color:#66d9ef">path</span>:
-    <span style="color:#e6db74">-
 </span><span style="color:#e6db74">      - transport</span>
-      - socks
-
-<span style="color:#66d9ef">outbound</span>:
-  <span style="color:#66d9ef">node</span>:
-    - <span style="color:#66d9ef">protocol</span>: transport
-      <span style="color:#66d9ef">tag</span>: transport
-      <span style="color:#66d9ef">config</span>:
-        <span style="color:#66d9ef">remote-addr</span>: you_server
-        <span style="color:#66d9ef">remote-port</span>: <span style="color:#ae81ff">443</span>
-
-    - <span style="color:#66d9ef">protocol</span>: tls
-      <span style="color:#66d9ef">tag</span>: tls
-      <span style="color:#66d9ef">config</span>:
-        <span style="color:#66d9ef">ssl</span>:
-          <span style="color:#66d9ef">sni</span>: localhost
-          <span style="color:#66d9ef">key</span>: server.key
-          <span style="color:#66d9ef">cert</span>: server.crt
-
-    - <span style="color:#66d9ef">protocol</span>: trojan
-      <span style="color:#66d9ef">tag</span>: trojan
-      <span style="color:#66d9ef">config</span>:
-        <span style="color:#66d9ef">password</span>:
-          - <span style="color:#ae81ff">12345678</span>
-
-  <span style="color:#66d9ef">path</span>:
-    - 
-      - transport
       - tls
-      - trojan
-
-</code></pre></div><pre><code>  - tls
-  - websocket
-  - trojan2
-</code></pre>
-<p>outbound:
-node:
-- protocol: freedom
-tag: freedom</p>
-<table>
-<thead>
-<tr>
-<th>path:</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>- freedom</td>
-</tr>
-</tbody>
-</table>
-<pre><code></code></pre><div class="edit-meta">
+      - ws
+      - trojan2
+</code></pre></div><div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/customize-protocol-stack.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/plugin/" title="使用Shadowsocks插件/可插拔传输层"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用Shadowsocks插件/可插拔传输层</a>
 <a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南">Next - 实现细节和开发指南 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
