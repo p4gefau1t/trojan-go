@@ -4,6 +4,8 @@ draft: false
 weight: 7
 ---
 
+### 注意，Trojan-GFW版本不支持这个特性
+
 Trojan-Go使用gRPC提供了一组API，API支持以下功能：
 
 - 用户信息增删改查
