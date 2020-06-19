@@ -7,9 +7,15 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 )
 
-type TestStruct struct {
+type Foo struct {
 	Field1 string `json,yaml:"field1"`
 	Field2 bool   `json:"field2" yaml:"field2"`
+}
+
+type TestStruct struct {
+	Field1 string `json,yaml:"field1"`
+	Field2 bool   `json,yaml:"field2"`
+	Field3 []Foo  `json,yaml:"field3"`
 }
 
 func creator() interface{} {
@@ -20,8 +26,14 @@ func TestJSONConfig(t *testing.T) {
 	RegisterConfigCreator("test", creator)
 	data := []byte(`
 	{
-		"Field1": "test1",
-		"Field2": true
+		"field1": "test1",
+		"field2": true,
+		"field3": [
+			{
+				"field1": "aaaa",
+				"field2": true
+			}
+		]
 	}
 	`)
 	ctx, err := WithJSONConfig(context.Background(), data)
@@ -37,11 +49,14 @@ func TestYAMLConfig(t *testing.T) {
 	data := []byte(`
 field1: 012345678
 field2: true
+field3:
+  - field1: test
+    field2: true
 `)
 	ctx, err := WithYAMLConfig(context.Background(), data)
 	common.Must(err)
 	c := FromContext(ctx, "test").(*TestStruct)
-	if c.Field1 != "012345678" || c.Field2 != true {
+	if c.Field1 != "012345678" || c.Field2 != true || c.Field3[0].Field1 != "test" {
 		t.Fail()
 	}
 }

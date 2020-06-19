@@ -4,15 +4,15 @@ import "github.com/p4gefau1t/trojan-go/config"
 
 const Name = "CUSTOM"
 
-type Node struct {
-	Protocol string
-	Tag      string
-	Config   interface{}
+type NodeConfig struct {
+	Protocol string      `json,yaml:"protocol"`
+	Tag      string      `json,yaml:"tag"`
+	Config   interface{} `json,yaml:"config"`
 }
 
 type StackConfig struct {
-	NodeList []Node     `json,yaml:"node"`
-	Path     [][]string `json,yaml:"path"`
+	Path [][]string   `json,yaml:"path"`
+	Node []NodeConfig `json,yaml:"node"`
 }
 
 type Config struct {

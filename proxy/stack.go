@@ -12,16 +12,7 @@ type Node struct {
 	IsEndpoint bool
 	context.Context
 	tunnel.Server
-}
-
-func NewNode(name string, isEndpoint bool, context context.Context, server tunnel.Server) *Node {
-	return &Node{
-		Name:       name,
-		IsEndpoint: isEndpoint,
-		Context:    context,
-		Server:     server,
-		Next:       make(map[string]*Node),
-	}
+	tunnel.Client
 }
 
 func (n *Node) BuildNext(name string) *Node {
@@ -46,6 +37,23 @@ func (n *Node) BuildNext(name string) *Node {
 	return newNode
 }
 
+func (n *Node) LinkNextNode(next *Node) *Node {
+	if next, found := n.Next[next.Name]; found {
+		return next
+	}
+	n.Next[next.Name] = next
+	t, err := tunnel.GetTunnel(next.Name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	s, err := t.NewServer(next.Context, n.Server) // context of the child nodes have been initialized
+	if err != nil {
+		log.Fatal(err)
+	}
+	next.Server = s
+	return next
+}
+
 func FindAllEndpoints(root *Node) []tunnel.Server {
 	list := make([]tunnel.Server, 0)
 	if root.IsEndpoint || len(root.Next) == 0 {
@@ -55,34 +63,6 @@ func FindAllEndpoints(root *Node) []tunnel.Server {
 		list = append(list, FindAllEndpoints(next)...)
 	}
 	return list
-}
-
-func buildServerStacksTree(ctx context.Context, current *Node, parent *Node) ([]tunnel.Server, error) {
-	t, err := tunnel.GetTunnel(current.Name)
-	if err != nil {
-		return nil, err
-	}
-	current.Server, err = t.NewServer(ctx, parent)
-	if err != nil {
-		return nil, err
-	}
-	leaves := make([]tunnel.Server, 0)
-	for _, child := range current.Next {
-		subTreeLeaves, err := buildServerStacksTree(ctx, child, current)
-		if err != nil {
-			return nil, err
-		}
-		leaves = append(leaves, subTreeLeaves...)
-	}
-	// current node is a leave node
-	if len(leaves) == 0 || current.IsEndpoint {
-		leaves = append(leaves, current)
-	}
-	return leaves, nil
-}
-
-func CreateServersStacksTree(ctx context.Context, root *Node) ([]tunnel.Server, error) {
-	return buildServerStacksTree(ctx, root, nil)
 }
 
 // CreateClientStack create client tunnel stacks from lists
