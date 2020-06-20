@@ -16,9 +16,12 @@ import (
 type Client struct {
 	serverAddress *tunnel.Address
 	cmd           *exec.Cmd
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 func (c *Client) Close() error {
+	c.cancel()
 	if c.cmd != nil {
 		c.cmd.Process.Kill()
 	}
@@ -31,7 +34,8 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 // DialConn implements tunnel.Client. It will ignore the params and directly dial to the remote server
 func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
-	conn, err := net.Dial("tcp", c.serverAddress.String())
+	dialer := new(net.Dialer)
+	conn, err := dialer.DialContext(c.ctx, "tcp", c.serverAddress.String())
 	if err != nil {
 		return nil, common.NewError("transport failed to connect to remote server")
 	}
@@ -41,8 +45,10 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 }
 
 // NewClient creates a transport layer client
-func NewClient(ctx context.Context, c tunnel.Client) (*Client, error) {
+func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
+
+	ctx, cancel := context.WithCancel(ctx)
 
 	var cmd *exec.Cmd
 	serverAddress := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
@@ -87,6 +93,8 @@ func NewClient(ctx context.Context, c tunnel.Client) (*Client, error) {
 	client := &Client{
 		serverAddress: serverAddress,
 		cmd:           cmd,
+		ctx:           ctx,
+		cancel:        cancel,
 	}
 	return client, nil
 }

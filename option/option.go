@@ -22,7 +22,7 @@ func PopOptionHandler() (Handler, error) {
 		}
 	}
 	if maxHandler == nil {
-		return nil, common.NewError("No option left")
+		return nil, common.NewError("no option left")
 	}
 	delete(handlers, maxHandler.Name())
 	return maxHandler, nil

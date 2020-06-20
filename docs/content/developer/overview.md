@@ -114,10 +114,10 @@ Trojan-Go将所有协议（包括路由功能等）抽象为隧道(tunnel.Tunnel
       - websocket
         - trojan（终端节点）
           - mux
-          - simplesocks （终端节点）
+            - simplesocks （终端节点）
       - trojan 能够识别mux和普通trojan流量并分发（终端节点）
         - mux
-        - simplesocks （终端节点）
+          - simplesocks （终端节点）
 
 - 出站（列表）
   - freedom

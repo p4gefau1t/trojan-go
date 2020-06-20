@@ -2,6 +2,7 @@ package freedom
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/p4gefau1t/trojan-go/test/util"
@@ -11,7 +12,11 @@ import (
 )
 
 func TestConn(t *testing.T) {
-	client := &Client{}
+	ctx, cancel := context.WithCancel(context.Background())
+	client := &Client{
+		ctx:    ctx,
+		cancel: cancel,
+	}
 	addr, err := tunnel.NewAddressFromAddr("tcp", util.EchoAddr)
 	common.Must(err)
 	conn1, err := client.DialConn(addr, nil)
@@ -26,10 +31,15 @@ func TestConn(t *testing.T) {
 	if !bytes.Equal(sendBuf, recvBuf[:]) {
 		t.Fail()
 	}
+	client.Close()
 }
 
 func TestPacket(t *testing.T) {
-	client := &Client{}
+	ctx, cancel := context.WithCancel(context.Background())
+	client := &Client{
+		ctx:    ctx,
+		cancel: cancel,
+	}
 	addr, err := tunnel.NewAddressFromAddr("udp", util.EchoAddr)
 	common.Must(err)
 	conn1, err := client.DialPacket(nil)

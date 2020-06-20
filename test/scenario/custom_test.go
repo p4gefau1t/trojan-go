@@ -85,11 +85,24 @@ inbound:
         password:
           - 12345678
 
+    - protocol: mux
+      tag: mux
+
+    - protocol: simplesocks
+      tag: simplesocks
+     
+
   path:
     - 
       - transport
       - tls
       - trojan
+    - 
+      - transport
+      - tls
+      - trojan
+      - mux
+      - simplesocks
 
 outbound:
   node:

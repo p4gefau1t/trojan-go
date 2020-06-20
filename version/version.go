@@ -15,7 +15,7 @@ type versionOption struct {
 }
 
 func (*versionOption) Name() string {
-	return "help"
+	return "version"
 }
 
 func (*versionOption) Priority() int {

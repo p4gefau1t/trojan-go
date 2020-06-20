@@ -8,4 +8,4 @@ VAR_SETTING=""
 VAR_SETTING="$VAR_SETTING -X $PACKAGE_NAME/constant.Version=$VERSION"
 VAR_SETTING="$VAR_SETTING -X $PACKAGE_NAME/constant.Commit=$COMMIT"
 
-CGO_ENABLE=0 go build -tags "full" -ldflags="-s -w $VAR_SETTING"
+CGO_ENABLED=0 go build -tags "full" -ldflags="-s -w $VAR_SETTING"

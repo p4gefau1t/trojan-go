@@ -45,26 +45,27 @@ func init() {
 		var root *proxy.Node
 		// build server tree
 		for _, path := range cfg.Inbound.Path {
-			lastNode := root
+			var lastNode *proxy.Node
 			for _, tag := range path {
 				if _, found := nodes[tag]; !found {
 					return nil, common.NewError("invalid node tag: " + tag)
 				}
 				if lastNode == nil {
-					if root != nil {
-						panic("root != nil")
+					if root == nil {
+						lastNode = nodes[tag]
+						root = lastNode
+						t, err := tunnel.GetTunnel(root.Name)
+						if err != nil {
+							return nil, common.NewError("failed to find root tunnel").Base(err)
+						}
+						s, err := t.NewServer(root.Context, nil)
+						if err != nil {
+							return nil, common.NewError("failed to init root server").Base(err)
+						}
+						root.Server = s
+					} else {
+						lastNode = root
 					}
-					lastNode = nodes[tag]
-					root = lastNode
-					t, err := tunnel.GetTunnel(root.Name)
-					if err != nil {
-						return nil, common.NewError("failed to find root tunnel").Base(err)
-					}
-					s, err := t.NewServer(root.Context, nil)
-					if err != nil {
-						return nil, common.NewError("failed to init root server").Base(err)
-					}
-					root.Server = s
 				} else {
 					lastNode = lastNode.LinkNextNode(nodes[tag])
 				}
