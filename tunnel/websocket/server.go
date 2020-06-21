@@ -66,6 +66,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	req, err := http.ReadRequest(rw.Reader)
 
 	if err != nil {
+		log.Debug("invalid http request")
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
 		s.redir.Redirect(&redirector.Redirection{
@@ -75,6 +76,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		return nil, common.NewError("not a valid http request: " + conn.RemoteAddr().String()).Base(err)
 	}
 	if strings.ToLower(req.Header.Get("Upgrade")) != "websocket" || req.URL.Path != s.path {
+		log.Debug("invalid http websocket handshake request")
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
 		s.redir.Redirect(&redirector.Redirection{
@@ -144,6 +146,14 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		if !strings.HasPrefix(cfg.Websocket.Path, "/") {
 			return nil, common.NewError("websocket path must start with \"/\"")
 		}
+	}
+	if cfg.RemoteHost == "" {
+		log.Warn("empty websocket redirection hostname")
+		cfg.RemoteHost = cfg.Websocket.Hostname
+	}
+	if cfg.RemotePort == 0 {
+		log.Warn("empty websocket redirection port")
+		cfg.RemotePort = 80
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	log.Debug("websocket server created")

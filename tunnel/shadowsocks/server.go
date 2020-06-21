@@ -32,6 +32,7 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	testConn := s.Cipher.StreamConn(rewindConn)
 	if _, err := testConn.Read(buf[:]); err != nil {
 		// we are under attack
+		log.Error(common.NewError("shadowsocks failed to decrypt").Base(err))
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
 		s.Redirect(&redirector.Redirection{
@@ -62,6 +63,12 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cipher, err := core.PickCipher(cfg.Shadowsocks.Method, nil, cfg.Shadowsocks.Password)
 	if err != nil {
 		return nil, common.NewError("invalid shadowsocks cipher").Base(err)
+	}
+	if cfg.RemoteHost == "" {
+		return nil, common.NewError("invalid shadowsocks redirection address")
+	}
+	if cfg.RemotePort == 0 {
+		return nil, common.NewError("invalid shadowsocks redirection port")
 	}
 	log.Debug("shadowsocks client created")
 	return &Server{

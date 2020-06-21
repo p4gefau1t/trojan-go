@@ -2,13 +2,30 @@ package custom
 
 import (
 	"context"
+	"strings"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"gopkg.in/yaml.v2"
-	"strings"
 )
+
+func convert(i interface{}) interface{} {
+	switch x := i.(type) {
+	case map[interface{}]interface{}:
+		m2 := map[string]interface{}{}
+		for k, v := range x {
+			m2[k.(string)] = convert(v)
+		}
+		return m2
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convert(v)
+		}
+	}
+	return i
+}
 
 func buildNodes(ctx context.Context, nodeConfigList []NodeConfig) (map[string]*proxy.Node, error) {
 	nodes := make(map[string]*proxy.Node)
@@ -18,10 +35,11 @@ func buildNodes(ctx context.Context, nodeConfigList []NodeConfig) (map[string]*p
 			return nil, common.NewError("invalid protocol name:" + nodeCfg.Protocol)
 		}
 		data, err := yaml.Marshal(nodeCfg.Config)
+		common.Must(err)
+		nodeContext, err := config.WithYAMLConfig(ctx, data)
 		if err != nil {
 			return nil, common.NewError("failed to parse config data for " + nodeCfg.Tag + " with protocol" + nodeCfg.Protocol).Base(err)
 		}
-		nodeContext, err := config.WithYAMLConfig(ctx, data)
 		node := &proxy.Node{
 			Name:    nodeCfg.Protocol,
 			Next:    make(map[string]*proxy.Node),

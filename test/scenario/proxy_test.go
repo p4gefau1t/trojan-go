@@ -85,11 +85,11 @@ func init() {
 }
 
 func CheckClientServer(clientData, serverData string, socksPort int) (ok bool) {
-	server, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
+	server, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
 	common.Must(err)
 	go server.Run()
 
-	client, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
+	client, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
 	common.Must(err)
 	go client.Run()
 

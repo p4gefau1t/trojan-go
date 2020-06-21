@@ -6,10 +6,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
-	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"io"
 	"io/ioutil"
+
+	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 
 	"net"
 	"net/http"
@@ -139,6 +140,7 @@ func (s *Server) acceptLoop() {
 			} else {
 				if !s.nextHTTP {
 					// there is no websocket layer waiting for connections, redirect it
+					log.Error("incoming http request, but no websocket server is listening")
 					s.redir.Redirect(&redirector.Redirection{
 						InboundConn: rewindConn,
 						RedirectTo:  s.fallbackAddress,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"reflect"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -42,7 +43,7 @@ func (r *Redirector) worker() {
 				if redirection.Dial == nil {
 					redirection.Dial = defaultDial
 				}
-				if redirection.RedirectTo == nil {
+				if reflect.ValueOf(redirection.RedirectTo).IsNil() {
 					log.Error("nil redirection addr")
 					return
 				}
