@@ -37,7 +37,7 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 	dialer := new(net.Dialer)
 	conn, err := dialer.DialContext(c.ctx, "tcp", c.serverAddress.String())
 	if err != nil {
-		return nil, common.NewError("transport failed to connect to remote server")
+		return nil, common.NewError("transport failed to connect to remote server").Base(err)
 	}
 	return &Conn{
 		Conn: conn,

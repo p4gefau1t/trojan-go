@@ -42,6 +42,10 @@ func (r *Redirector) worker() {
 				if redirection.Dial == nil {
 					redirection.Dial = defaultDial
 				}
+				if redirection.RedirectTo == nil {
+					log.Error("nil redirection addr")
+					return
+				}
 				log.Warn("redirecting connection from", redirection.InboundConn.RemoteAddr(), "to", redirection.RedirectTo.String())
 				outboundConn, err := redirection.Dial(redirection.RedirectTo)
 				if err != nil {
