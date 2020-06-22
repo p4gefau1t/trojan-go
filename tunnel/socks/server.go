@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -121,7 +122,13 @@ func (s *Server) acceptLoop() {
 				log.Error(common.NewError("socks5 failed to handshake with client").Base(err))
 				return
 			}
-			log.Info("socks5 connection from", conn.RemoteAddr(), "metadata", newConn.metadata.String())
+
+			metadata := newConn.metadata.String()
+			log.Info("socks5 connection from", conn.RemoteAddr(), "metadata", metadata)
+			if strings.HasPrefix(metadata, "0.") {
+				return
+			}
+
 			switch newConn.metadata.Command {
 			case Connect:
 				if err := s.connect(newConn); err != nil {
