@@ -27,15 +27,19 @@
   </url>
   
   <url>
-    <loc>https://p4gefau1t.github.io/trojan-go/advance/api/</loc>
-  </url>
-  
-  <url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/plugin/</loc>
   </url>
   
   <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/advance/aead/</loc>
+  </url>
+  
+  <url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/</loc>
+  </url>
+  
+  <url>
+    <loc>https://p4gefau1t.github.io/trojan-go/advance/api/</loc>
   </url>
   
   <url>

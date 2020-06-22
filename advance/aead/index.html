@@ -3,11 +3,11 @@
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>基本配置 - Trojan-Go Docs</title>
+<title>使用Shadowsocks AEAD进行二次加密 - Trojan-Go Docs</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW.">
 <meta name="generator" content="Hugo 0.69.2" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
-<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/aead/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
 <script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
@@ -16,19 +16,26 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="基本配置" />
-<meta property="og:description" content="An unidentifiable mechanism that helps you bypass GFW." />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/basic/" />
+<meta property="og:title" content="使用Shadowsocks AEAD进行二次加密" />
+<meta property="og:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/aead/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 <meta property="og:site_name" content="Trojan-Go Docs" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="基本配置"/>
-<meta name="twitter:description" content="An unidentifiable mechanism that helps you bypass GFW."/>
-<meta itemprop="name" content="基本配置">
-<meta itemprop="description" content="An unidentifiable mechanism that helps you bypass GFW."></head>
+<meta name="twitter:title" content="使用Shadowsocks AEAD进行二次加密"/>
+<meta name="twitter:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要"/>
+<meta itemprop="name" content="使用Shadowsocks AEAD进行二次加密">
+<meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要">
+
+<meta itemprop="wordCount" content="411">
+<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+
+
+
+<meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
 <a href="https://github.com/p4gefau1t/trojan-go" class="github"><i class="fab fa-github"></i></a>
@@ -43,11 +50,37 @@
 </nav>
 </div>
 <div class="content-container">
-<main><h1>基本配置</h1><p>这一部分内容将介绍如何配置基本的Trojan-Go代理服务器和客户端。</p>
+<main><h1>使用Shadowsocks AEAD进行二次加密</h1>
+<h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
+<p>Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要再次加密Trojan流量。但是，某些场景下，你可能无法保证TLS隧道的安全性：</p>
+<ul>
+<li>
+<p>你使用了Websocket，经过不可信的CDN进行中转（如国内CDN）</p>
+</li>
+<li>
+<p>你与服务器的连接遭到了GFW针对TLS的中间人攻击</p>
+</li>
+<li>
+<p>你的证书失效，无法验证证书有效性</p>
+</li>
+<li>
+<p>你使用了无法保证密码学安全的可插拔传输层</p>
+</li>
+</ul>
+<p>等等。</p>
+<p>Trojan-Go支持使用Shadowsocks AEAD对Trojan-Go进行加密。其本质是在Trojan协议下方加上一层Shadowsocks AEAD加密。服务端和客户端必须同时开启，且密码和加密方式必须一致，否则无法进行通讯。</p>
+<p>要开启AEAD加密，只需添加一个<code>shadowsocks</code>选项：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#960050;background-color:#1e0010">...</span>
+<span style="color:#e6db74">&#34;shadowsocks&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+    <span style="color:#f92672">&#34;method&#34;</span>: <span style="color:#e6db74">&#34;AES-128-GCM&#34;</span>,
+    <span style="color:#f92672">&#34;password&#34;</span>: <span style="color:#e6db74">&#34;1234567890&#34;</span>
+}
+</code></pre></div><p><code>method</code>如果省略，则默认使用AES-128-GCM。更多信息，参见“完整的配置文件”一节。</p>
 <div class="edit-meta">
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/basic/_index.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/" title="简介"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 简介</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/basic/trojan/" title="Trojan基本原理">Next - Trojan基本原理 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/aead.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/plugin/" title="使用Shadowsocks插件/可插拔传输层"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用Shadowsocks插件/可插拔传输层</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/" title="自定义协议栈">Next - 自定义协议栈 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -56,7 +89,7 @@
 <ul>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go">Home</a></li>
 
-<li class="parent active"><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/">基本配置</a>
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/basic/trojan/">Trojan基本原理</a></li>
@@ -66,7 +99,7 @@
   
 </li>
 
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升网络并发性能</a></li>
@@ -75,7 +108,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/plugin/">使用Shadowsocks插件/可插拔传输层</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 </ul>

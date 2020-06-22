@@ -30,7 +30,7 @@
 <meta itemprop="name" content="自定义协议栈">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go允许高级用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控">
 
-<meta itemprop="wordCount" content="1216">
+<meta itemprop="wordCount" content="1249">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -58,7 +58,7 @@
 <p>在一层TLS上再建立一层或更多层TLS加密</p>
 </li>
 <li>
-<p>使用TLS传输Websocket流量，在Websocket层上再建立一层TLS，在第二层TLS上再使用AEAD进行传输</p>
+<p>使用TLS传输Websocket流量，在Websocket层上再建立一层TLS，在第二层TLS上再使用Shadowsocks AEAD进行加密传输</p>
 </li>
 <li>
 <p>在TCP连接上，使用Shadowsocks的AEAD加密传输Trojan协议</p>
@@ -225,9 +225,9 @@
 </ul>
 <p>出站，只能有一条路径</p>
 <ul>
-<li>freedom</li>
+<li>router-&gt;freedom</li>
 </ul>
-<p>对于入站，你可以描述一条链，一棵树或者一个有向无环图(DAG)，对于出站，你只能描述一个链。<strong>注意，每条路径，必须以不需要下层提供流或包的隧道开始(transport/tproxy/dokodemo等)，必须以能向上层提供包和流的隧道终止(trojan/simplesocks/freedom)，且必须确认对应隧道是否可作为出站/入站</strong></p>
+<p>对于入站，从根开始描述多条路径，组成一棵<strong>多叉树</strong>（也可以退化为一条链），不满足树性质的图将导致未定义的行为；对于出站，必须描述一条链。<strong>注意，每条路径，必须以不需要下层提供流或包的隧道开始(transport/tproxy/dokodemo等)，必须以能向上层提供包和流的隧道终止(trojan/simplesocks/freedom)，且必须确认对应隧道是否可作为出站/入站</strong></p>
 <p>要启用自定义协议栈，将<code>run_type</code>指定为custom，此时除<code>inbound</code>和<code>outbound</code>之外的其他选项将被忽略。</p>
 <p>下面是一个例子，你可以在此基础上插入或减少协议节点。配置文件为简明起见，使用YAML进行配置，你也可以使用JSON来配置，除格式不同之外，效果是等价的。</p>
 <p>客户端 client.yaml</p>
@@ -338,8 +338,8 @@
 
 </code></pre></div><div class="edit-meta">
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/customize-protocol-stack.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/plugin/" title="使用Shadowsocks插件/可插拔传输层"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用Shadowsocks插件/可插拔传输层</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南">Next - 实现细节和开发指南 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/customize-protocol-stack.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/aead/" title="使用Shadowsocks AEAD进行二次加密"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用Shadowsocks AEAD进行二次加密</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/api/" title="使用API动态管理用户">Next - 使用API动态管理用户 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -361,14 +361,15 @@
 <li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升网络并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/plugin/">使用Shadowsocks插件/可插拔传输层</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 </ul>
   
 </li>

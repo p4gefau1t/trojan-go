@@ -30,7 +30,7 @@
 <meta itemprop="name" content="使用Websocket进行CDN转发和抵抗中间人攻击">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量">
 
-<meta itemprop="wordCount" content="1779">
+<meta itemprop="wordCount" content="712">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -52,38 +52,17 @@
 <div class="content-container">
 <main><h1>使用Websocket进行CDN转发和抵抗中间人攻击</h1>
 <h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
-<p>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。这个特性的设计考虑了将来GFW部署大规模HTTPS中间人攻击的情景。开启Websocket后，因为Trojan-Go支持使用多重TLS，即使遭受GFW的HTTPS中间人攻击，<strong>在正确的配置下</strong>，连接的安全性依然能得到保证。</p>
-<p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>hostname</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项</p>
+<p>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。</p>
+<p>Trojan协议本身不带加密，安全性依赖外层的TLS。但流量一旦经过CDN，TLS对CDN是透明的。其服务提供者可以对TLS的明文内容进行审查。<strong>如果你使用的是不可信任的CDN（任何在中国大陆注册备案的CDN服务均应被视为不可信任），请务必开启Shadowsocks AEAD对Webosocket流量进行加密，以避免遭到识别和审查。</strong></p>
+<p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>hostname</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;websocket&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/imaurlpath&#34;</span>,
-    <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>,
-    <span style="color:#f92672">&#34;obfuscation_password&#34;</span>: <span style="color:#e6db74">&#34;another_password&#34;</span>,
-    <span style="color:#f92672">&#34;double_tls&#34;</span>: <span style="color:#66d9ef">true</span>,
-    <span style="color:#f92672">&#34;ssl&#34;</span>: {
-      <span style="color:#f92672">&#34;verify&#34;</span>: <span style="color:#66d9ef">true</span>,
-      <span style="color:#f92672">&#34;verify_hostname&#34;</span>: <span style="color:#66d9ef">true</span>,
-      <span style="color:#f92672">&#34;cert&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-      <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-      <span style="color:#f92672">&#34;key_password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-      <span style="color:#f92672">&#34;prefer_server_cipher&#34;</span>: <span style="color:#66d9ef">false</span>,
-      <span style="color:#f92672">&#34;sni&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-      <span style="color:#f92672">&#34;session_ticket&#34;</span>: <span style="color:#66d9ef">true</span>,
-      <span style="color:#f92672">&#34;reuse_session&#34;</span>: <span style="color:#66d9ef">true</span>,
-      <span style="color:#f92672">&#34;plain_http_response&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-    }
+    <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>
 }
 </code></pre></div><p><code>hostname</code>是主机名，一般填写域名。客户端<code>hostname</code>是可选的，填写你的域名。如果留空，将会使用<code>remote_addr</code>填充，服务端必须填写<code>hostname</code>，Trojan-Go可以以此转发Websocket请求，以抵抗针对Websocket的主动检测。</p>
 <p><code>path</code>指的是websocket所在的URL路径，必须以斜杠(&quot;/&quot;)开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的<code>path</code>一致。<code>path</code>应当选择较长的字符串，以避免遭到GFW直接的主动探测。</p>
-<p><code>double_tls</code>表示是否开启双重TLS，如果省略，默认设置为true。因为Trojan-Go与CDN进行了TLS握手，对于CDN而言，TLS流量内容是明文。为了保证安全性，Trojan-Go默认将在Websocket连接上再建立一次TLS连接（双重TLS）。此时传输实际上经过了两次TLS握手。</p>
-<p><code>ssl</code>第二层TLS的配置。如果未填写，使用全局的<code>ssl</code>选项填充</p>
-<p><code>obfuscation_password</code>为Websocket流量混淆密码。如果你使用了国内的CDN，建议设置<code>obfuscation_password</code>字段进行流量混淆。Trojan-Go将对Websocket承载的流量再进行一次加密(AES-128-CTR)。注意这个字段的主要目的仅仅是<strong>混淆</strong>上层流量的特征(TLS/Trojan)，防止被国内的CDN识别和封锁，<strong>它无法确保传输数据安全性</strong>。安全性应该由第二层TLS隧道保证。</p>
-<p>服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。</p>
-<p>由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的服务端仍然可以兼容原版Trojan客户端，但是如果要使用Websocket承载流量进行CDN中转等，请确保双方都使用Trojan-Go。</p>
-<p>如果你想提高传输的性能和吞吐量，可以将<code>double_tls</code>设为false或者将<code>obfuscation_password</code>设为空，此时websocket将会直接承载Trojan协议。但是出于安全性考虑，还是建议至少开启混淆和双重TLS中的至少一项。</p>
-<p><strong>如果你使用的是国内的CDN，务必保证两者均开启。最坏情况下也应当保持混淆和双重TLS之一是打开的。</strong></p>
-<p>CDN转发的场景，和GFW在2020年3月29日进行的对包括github pages等站点进行的HTTPS流量劫持和中间人攻击,是类似的。它们的共同点是，第一层TLS承载的流量明文均可以被第三者窃听（CDN或GFW）。<strong>如果你使用了Websocket模式</strong>，你可以将客户端全局<code>ssl</code>选项中<code>verify</code>字段填写为false。并指定<code>websocket</code>选项的<code>ssl</code>选项并且打开证书校验。在这样的设置下，即使第一层TLS传输的明文遭到审查或攻击，由于第二层TLS的保护，传输的内容依旧安全。</p>
-<p>Trojan-Go同样具有针对Websocket的主动探测的欺骗能力。当一个合法的Webosocket握手完成，但密码不匹配或内容不合法时，将会尝试与<code>http://remote_addr:remote_port/path</code>的HTTP服务器进行Websocket握手，并将连入的Websocket连接代理给它。如果连接失败，Websocket会被直接关闭。</p>
+<p>客户端的<code>hostname</code>将发送给CDN服务器，必须有效；服务端和客户端<code>path</code>必须一致，否则Websocket握手无法进行。</p>
 <p>下面是一个客户端配置文件的例子</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
     <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;client&#34;</span>,
@@ -97,15 +76,16 @@
     <span style="color:#f92672">&#34;websocket&#34;</span>: {
         <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
         <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/imaurlpath&#34;</span>,
-        <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>,
-        <span style="color:#f92672">&#34;obfuscation_password&#34;</span>: <span style="color:#e6db74">&#34;another_password&#34;</span>,
-        <span style="color:#f92672">&#34;double_tls&#34;</span>: <span style="color:#66d9ef">true</span>
+        <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>
+    },
+    <span style="color:#f92672">&#34;shadowsocks&#34;</span>: {
+        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+        <span style="color:#f92672">&#34;password&#34;</span>: <span style="color:#e6db74">&#34;12345678&#34;</span>
     }
 }
-
 </code></pre></div><div class="edit-meta">
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/websocket.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/mux/" title="启用多路复用提升并发性能"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 启用多路复用提升并发性能</a>
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/websocket.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/mux/" title="启用多路复用提升网络并发性能"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 启用多路复用提升网络并发性能</a>
 <a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/router/" title="国内直连和广告屏蔽">Next - 国内直连和广告屏蔽 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
@@ -128,14 +108,15 @@
 <li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升网络并发性能</a></li>
 <li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/plugin/">使用Shadowsocks插件/可插拔传输层</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 </ul>
   
 </li>

@@ -63,10 +63,10 @@
 <p>服务端配置：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#960050;background-color:#1e0010">...（省略）</span>
 <span style="color:#e6db74">&#34;transport_plugin&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
-        <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
-        <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;shadowsocks&#34;</span>,
-        <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;./v2ray-plugin&#34;</span>,
-        <span style="color:#f92672">&#34;arg&#34;</span>: [<span style="color:#e6db74">&#34;-server&#34;</span>, <span style="color:#e6db74">&#34;-host&#34;</span>, <span style="color:#e6db74">&#34;www.baidu.com&#34;</span>]
+    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
+    <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;shadowsocks&#34;</span>,
+    <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;./v2ray-plugin&#34;</span>,
+    <span style="color:#f92672">&#34;arg&#34;</span>: [<span style="color:#e6db74">&#34;-server&#34;</span>, <span style="color:#e6db74">&#34;-host&#34;</span>, <span style="color:#e6db74">&#34;www.baidu.com&#34;</span>]
 }
 </code></pre></div><p>客户端配置：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#960050;background-color:#1e0010">...（省略）</span>
@@ -81,8 +81,8 @@
 <p>非SIP003标准的插件可能需要不同的配置，你可以指定<code>type</code>为&quot;other&rdquo;，并自行指定插件地址，插件启动参数、环境变量。</p>
 <div class="edit-meta">
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/plugin.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/api/" title="使用API动态管理用户"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用API动态管理用户</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/" title="自定义协议栈">Next - 自定义协议栈 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/plugin.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/" title="一种基于SNI代理的多路径分流中继方案"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 一种基于SNI代理的多路径分流中继方案</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/advance/aead/" title="使用Shadowsocks AEAD进行二次加密">Next - 使用Shadowsocks AEAD进行二次加密 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -104,14 +104,15 @@
 <li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升并发性能</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升网络并发性能</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/websocket/">使用Websocket进行CDN转发和抵抗中间人攻击</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/router/">国内直连和广告屏蔽</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/forward/">隧道和反向代理</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/">一种基于SNI代理的多路径分流中继方案</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 <li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/plugin/">使用Shadowsocks插件/可插拔传输层</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
 </ul>
   
 </li>
