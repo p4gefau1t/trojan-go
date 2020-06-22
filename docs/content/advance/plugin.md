@@ -27,10 +27,10 @@ Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何�
 ```json
 ...（省略）
 "transport_plugin": {
-        "enabled": true,
-        "type": "shadowsocks",
-        "command": "./v2ray-plugin",
-        "arg": ["-server", "-host", "www.baidu.com"]
+    "enabled": true,
+    "type": "shadowsocks",
+    "command": "./v2ray-plugin",
+    "arg": ["-server", "-host", "www.baidu.com"]
 }
 ```
 

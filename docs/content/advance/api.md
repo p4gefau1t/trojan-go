@@ -1,7 +1,7 @@
 ---
 title: "使用API动态管理用户"
 draft: false
-weight: 7
+weight: 10
 ---
 
 ### 注意，Trojan-GFW版本不支持这个特性

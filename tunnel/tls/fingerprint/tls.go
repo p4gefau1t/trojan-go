@@ -9,6 +9,7 @@ import (
 )
 
 func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
+	// TODO fix websocket
 	var spec *ClientHelloSpec
 	switch name {
 	case "chrome":

@@ -144,7 +144,7 @@ func (s *Server) packetDispatchLoop() {
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	select {
 	case conn := <-s.packetChan:
-		log.Info("tproxy packet conn accpeted")
+		log.Info("tproxy packet conn accepted")
 		return conn, nil
 	case <-s.ctx.Done():
 		return nil, io.EOF
