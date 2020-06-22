@@ -3,22 +3,23 @@ package websocket
 import (
 	"bufio"
 	"context"
+	"math/rand"
+	"net"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/redirector"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"golang.org/x/net/websocket"
-	"math/rand"
-	"net"
-	"net/http"
-	"strings"
-	"time"
 )
 
 // Fake response writer
 // Websocket ServeHTTP method uses Hijack method to get the ReadWriter
-type fakeHttpResponseWriter struct {
+type fakeHTTPResponseWriter struct {
 	http.Hijacker
 	http.ResponseWriter
 
@@ -26,7 +27,7 @@ type fakeHttpResponseWriter struct {
 	Conn       net.Conn
 }
 
-func (w *fakeHttpResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (w *fakeHTTPResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return w.Conn, w.ReadWriter, nil
 }
 
@@ -111,7 +112,7 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		},
 	}
 
-	respWriter := &fakeHttpResponseWriter{
+	respWriter := &fakeHTTPResponseWriter{
 		Conn:       conn,
 		ReadWriter: rw,
 	}

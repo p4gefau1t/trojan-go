@@ -2,8 +2,9 @@ package mux
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"testing"
+
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -15,7 +16,7 @@ func TestMux(t *testing.T) {
 		Mux: MuxConfig{
 			Enabled:     true,
 			Concurrency: 8,
-			Timeout:     10,
+			IdleTimeout: 60,
 		},
 	}
 	ctx := config.WithConfig(context.Background(), Name, muxCfg)

@@ -2,11 +2,12 @@ package proxy
 
 import (
 	"flag"
+	"io/ioutil"
+	"strings"
+
 	"github.com/p4gefau1t/trojan-go/constant"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/option"
-	"io/ioutil"
-	"strings"
 )
 
 type Option struct {

@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"testing"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
@@ -12,9 +16,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-	"io"
-	"net"
-	"testing"
 )
 
 type MockUser struct {

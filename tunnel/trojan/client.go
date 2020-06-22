@@ -3,12 +3,13 @@ package trojan
 import (
 	"bytes"
 	"context"
+	"net"
+	"time"
+
 	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
-	"net"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"

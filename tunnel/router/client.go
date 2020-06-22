@@ -2,6 +2,12 @@ package router
 
 import (
 	"context"
+	"io/ioutil"
+	"net"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -9,11 +15,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-	"io/ioutil"
-	"net"
-	"regexp"
-	"strconv"
-	"strings"
 	v2router "v2ray.com/core/app/router"
 )
 

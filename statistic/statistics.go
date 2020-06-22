@@ -2,10 +2,11 @@ package statistic
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/log"
 	"io"
 	"strings"
 	"sync"
+
+	"github.com/p4gefau1t/trojan-go/log"
 
 	"github.com/p4gefau1t/trojan-go/common"
 )

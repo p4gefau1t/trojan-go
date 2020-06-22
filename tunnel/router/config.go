@@ -1,10 +1,11 @@
 package router
 
 import (
+	"os"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
-	"os"
 )
 
 type Config struct {

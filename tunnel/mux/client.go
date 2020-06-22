@@ -171,7 +171,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	client := &Client{
 		underlay:    underlay,
 		concurrency: clientConfig.Mux.Concurrency,
-		timeout:     time.Duration(clientConfig.Mux.Timeout) * time.Second,
+		timeout:     time.Duration(clientConfig.Mux.IdleTimeout) * time.Second,
 		ctx:         ctx,
 		cancel:      cancel,
 		clientPool:  make(map[muxID]*smuxClientInfo),

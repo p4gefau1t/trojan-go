@@ -3,13 +3,16 @@ package scenario
 import (
 	"bytes"
 	"fmt"
-	"github.com/p4gefau1t/trojan-go/test/util"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/p4gefau1t/trojan-go/test/util"
+
+	_ "net/http/pprof"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
@@ -20,7 +23,6 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
 	netproxy "golang.org/x/net/proxy"
-	_ "net/http/pprof"
 )
 
 // test key and cert

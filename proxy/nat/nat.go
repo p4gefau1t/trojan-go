@@ -4,6 +4,7 @@ package nat
 
 import (
 	"context"
+
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/proxy/client"

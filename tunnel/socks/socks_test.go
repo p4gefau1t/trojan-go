@@ -3,16 +3,17 @@ package socks
 import (
 	"context"
 	"fmt"
+	"net"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"golang.org/x/net/proxy"
-	"net"
-	"sync"
-	"testing"
-	"time"
 )
 
 func TestSocks(t *testing.T) {

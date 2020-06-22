@@ -22,7 +22,7 @@ weight: 30
 
 其余未填的选项，用下面给出的值进行填充。
 
-*Trojan-Go支持对人类更友好的YAML语法，配置文件的基本结构与JSON相同，效果等价。不过为了遵守YAML的命名习惯，你需要把下划线("_")转换为横杠("-")，如```remote_addr```在YAML文件中为```remote-addr```*
+*Trojan-Go支持对人类更友好的YAML语法，配置文件的基本结构与JSON相同，效果等价。但是为了遵守YAML的命名习惯，你需要把下划线("_")转换为横杠("-")，如```remote_addr```在YAML文件中为```remote-addr```*
 
 ```json
 {
@@ -44,7 +44,6 @@ weight: 30
     "key": *required*,
     "key_password": "",
     "cipher": "",
-    "cipher_tls13": "",
     "curves": "",
     "prefer_server_cipher": false,
     "sni": "",
@@ -56,12 +55,12 @@ weight: 30
     "plain_http_response": "",
     "fallback_addr": "",
     "fallback_port": 0,
-    "fingerprint": "firefox",
+    "fingerprint": "firefox"
   },
   "tcp": {
     "no_delay": true,
     "keep_alive": true,
-    "prefer_ipv4": false,
+    "prefer_ipv4": false
   },
   "mux": {
     "enabled": false,
@@ -141,7 +140,19 @@ weight: 30
 
 对于server，```local_xxxx```对应trojan服务器监听地址（强烈建议使用443端口），```remote_xxxx```填写识别到非trojan流量时代理到的HTTP服务地址，通常填写本地80端口。
 
-```log_level```指定日志等级。等级越高，输出的信息越少，0输出Debug以上日志（所有日志），1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。
+```log_level```指定日志等级。等级越高，输出的信息越少。合法的值有
+
+- 0输出Debug以上日志（所有日志）
+
+- 1输出Info及以上日志
+
+- 2输出Warning及以上日志
+
+- 3输出Error及以上日志
+
+- 4输出Fatal及以上日志
+
+- 5完全不输出日志
 
 ```log_file```指定日志输出文件路径。如果未指定则使用标准输出。
 
@@ -179,9 +190,9 @@ weight: 30
 
 ```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
 
-```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
+```cipher```TLS使用的密码学套件。```cipher13``字段与此字段合并。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔，按优先顺序排列。Go的TLS库中弃用了TLS1.2中部分不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
 
-```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔。
+```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔，按优先顺序排列。
 
 ```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
 
@@ -321,11 +332,11 @@ trojan-go兼容trojan-gfw的基于mysql的用户管理方式，但更推荐的�
 
 ```enabled```表示是否启用mysql数据库进行用户验证。
 
-```check_rate```是trojan-go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。
+```check_rate```是trojan-go从MySQL获取用户数据并更新缓存的间隔时间，单位为秒。
 
 其他选项可以顾名思义，不再赘述。
 
-users表结构和trojan-gfw定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
+users表结构和trojan-gfw版本定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
 
 ```mysql
 CREATE TABLE users (

@@ -5,6 +5,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"io"
+	"io/ioutil"
+	"strings"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -13,9 +17,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 	utls "github.com/refraction-networking/utls"
-	"io"
-	"io/ioutil"
-	"strings"
 )
 
 // Client is a tls client

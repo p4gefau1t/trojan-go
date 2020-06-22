@@ -3,9 +3,10 @@ package simplesocks
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-	"testing"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/test/util"

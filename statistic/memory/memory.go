@@ -2,10 +2,11 @@ package memory
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/log"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/p4gefau1t/trojan-go/log"
 
 	"github.com/p4gefau1t/trojan-go/config"
 

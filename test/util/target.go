@@ -3,15 +3,16 @@ package util
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/log"
-	"golang.org/x/net/websocket"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/log"
+	"golang.org/x/net/websocket"
 )
 
 var HTTPAddr string

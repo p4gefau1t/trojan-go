@@ -4,7 +4,7 @@ import "github.com/p4gefau1t/trojan-go/config"
 
 type MuxConfig struct {
 	Enabled     bool `json,yaml:"enabled"`
-	Timeout     int  `json,yaml:"timeout"`
+	IdleTimeout int  `json:"idle_timeout" yaml:"idle-timeout"`
 	Concurrency int  `json,yaml:"concurrency"`
 }
 
@@ -17,7 +17,7 @@ func init() {
 		return &Config{
 			Mux: MuxConfig{
 				Enabled:     false,
-				Timeout:     30,
+				IdleTimeout: 30,
 				Concurrency: 8,
 			},
 		}

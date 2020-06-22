@@ -10,7 +10,7 @@ Trojan-Go允许高级用户自定义协议栈。在自定义模式下，Trojan-G
 
 - 在一层TLS上再建立一层或更多层TLS加密
 
-- 使用TLS传输Websocket流量，在Websocket层上再建立一层TLS，在第二层TLS上再使用AEAD进行传输
+- 使用TLS传输Websocket流量，在Websocket层上再建立一层TLS，在第二层TLS上再使用Shadowsocks AEAD进行加密传输
 
 - 在TCP连接上，使用Shadowsocks的AEAD加密传输Trojan协议
 

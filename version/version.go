@@ -3,9 +3,10 @@ package version
 import (
 	"flag"
 	"fmt"
+	"runtime"
+
 	"github.com/p4gefau1t/trojan-go/constant"
 	"github.com/p4gefau1t/trojan-go/option"
-	"runtime"
 
 	"github.com/p4gefau1t/trojan-go/common"
 )

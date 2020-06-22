@@ -1,8 +1,9 @@
 package shadowsocks
 
 import (
-	"github.com/p4gefau1t/trojan-go/tunnel"
 	"net"
+
+	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
 type Conn struct {

@@ -2,8 +2,9 @@ package dokodemo
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/common"
 	"net"
+
+	"github.com/p4gefau1t/trojan-go/common"
 
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )

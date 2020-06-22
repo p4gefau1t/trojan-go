@@ -3,15 +3,16 @@ package freedom
 import (
 	"context"
 	"crypto/tls"
+	"net"
+	"net/url"
+	"strconv"
+	"time"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"golang.org/x/net/proxy"
-	"net"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 type Client struct {

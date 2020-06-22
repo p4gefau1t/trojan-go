@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"google.golang.org/grpc"
-	"testing"
-	"time"
 )
 
 func TestClientAPI(t *testing.T) {
