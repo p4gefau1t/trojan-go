@@ -1,4 +1,4 @@
-// +build linux,!386
+// +build linux
 
 package tproxy
 
@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/LiamHaworth/go-tproxy"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -46,13 +45,13 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		}
 		return nil, common.NewError("tproxy failed to accept conn")
 	}
-	addr, err := getOriginalTCPDest(conn.(*tproxy.Conn).TCPConn)
+	dst, err := getOriginalTCPDest(conn.(*net.TCPConn))
 	if err != nil {
 		return nil, common.NewError("tproxy failed to obtain original address of tcp socket").Base(err)
 	}
-	address, err := tunnel.NewAddressFromAddr("tcp", addr.String())
+	address, err := tunnel.NewAddressFromAddr("tcp", dst.String())
 	common.Must(err)
-	log.Info("tproxy connection from", conn.RemoteAddr().String(), "metadata", addr.String())
+	log.Info("tproxy connection from", conn.RemoteAddr().String(), "metadata", dst.String())
 	return &Conn{
 		metadata: &tunnel.Metadata{
 			Address: address,
@@ -72,7 +71,7 @@ func (s *Server) packetDispatchLoop() {
 	go func() {
 		for {
 			buf := make([]byte, MaxPacketSize)
-			n, src, dst, err := tproxy.ReadFromUDP(s.udpListener, buf)
+			n, src, dst, err := ReadFromUDP(s.udpListener, buf)
 			if err != nil {
 				select {
 				case <-s.ctx.Done():
@@ -129,7 +128,7 @@ func (s *Server) packetDispatchLoop() {
 
 			go func(conn *dokodemo.PacketConn) {
 				defer conn.Close()
-				back, err := tproxy.DialUDP(
+				back, err := DialUDP(
 					"udp",
 					&net.UDPAddr{
 						IP:   conn.M.IP,
@@ -194,7 +193,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	if err != nil {
 		return nil, common.NewError("invalid tproxy local address").Base(err)
 	}
-	tcpListener, err := tproxy.ListenTCP("tcp", &net.TCPAddr{
+	tcpListener, err := ListenTCP("tcp", &net.TCPAddr{
 		IP:   ip,
 		Port: cfg.LocalPort,
 	})
@@ -202,7 +201,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		return nil, common.NewError("tproxy failed to listen tcp").Base(err)
 	}
 
-	udpListener, err := tproxy.ListenUDP("udp", &net.UDPAddr{
+	udpListener, err := ListenUDP("udp", &net.UDPAddr{
 		IP:   ip,
 		Port: cfg.LocalPort,
 	})

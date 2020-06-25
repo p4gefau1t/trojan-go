@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/api"
@@ -13,6 +16,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type ServerAPI struct {
@@ -177,14 +181,51 @@ func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_
 	return nil
 }
 
+func newAPIServer(cfg *Config) (*grpc.Server, error) {
+	var server *grpc.Server
+	if cfg.API.SSL.Enabled {
+		log.Info("api tls enabled")
+		keyPair, err := tls.LoadX509KeyPair(cfg.API.SSL.CertPath, cfg.API.SSL.KeyPath)
+		if err != nil {
+			return nil, common.NewError("failed to load key pair").Base(err)
+		}
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{keyPair},
+		}
+		if cfg.API.SSL.VerifyClient {
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+			tlsConfig.ClientCAs = x509.NewCertPool()
+			for _, path := range cfg.API.SSL.ClientCertPath {
+				log.Debug("loading client cert: " + path)
+				certBytes, err := ioutil.ReadFile(path)
+				if err != nil {
+					return nil, common.NewError("failed to load cert file").Base(err)
+				}
+				ok := tlsConfig.ClientCAs.AppendCertsFromPEM(certBytes)
+				if !ok {
+					return nil, common.NewError("fnvalid client cert")
+				}
+			}
+		}
+		creds := credentials.NewTLS(tlsConfig)
+		server = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		server = grpc.NewServer()
+	}
+	return server, nil
+}
+
 func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	if !cfg.API.Enabled {
 		return nil
 	}
-	server := grpc.NewServer()
 	service := &ServerAPI{
 		auth: auth,
+	}
+	server, err := newAPIServer(cfg)
+	if err != nil {
+		return err
 	}
 	RegisterTrojanServerServiceServer(server, service)
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.API.APIHost, cfg.API.APIPort))

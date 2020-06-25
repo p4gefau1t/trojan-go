@@ -8,7 +8,7 @@ type SSLConfig struct {
 	Enabled        bool     `json,yaml:"enabled"`
 	CertPath       string   `json:"cert" yaml:"cert"`
 	KeyPath        string   `json:"key" yaml:"key"`
-	ClientAuth     bool     `json:"client_auth" yaml:"client-auth"`
+	VerifyClient   bool     `json:"verify_client" yaml:"verify-client"`
 	ClientCertPath []string `json:"client_cert" yaml:"client-cert"`
 }
 
