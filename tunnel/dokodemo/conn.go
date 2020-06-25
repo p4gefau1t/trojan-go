@@ -25,12 +25,12 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 // TODO implement net.PacketConn
 type PacketConn struct {
 	net.PacketConn
-	M      *tunnel.Metadata
-	Input  chan []byte
-	Output chan []byte
-	Source net.Addr
-	Ctx    context.Context
-	Cancel context.CancelFunc
+	M       *tunnel.Metadata
+	Input   chan []byte
+	Output  chan []byte
+	Source  net.Addr
+	Context context.Context
+	Cancel  context.CancelFunc
 }
 
 func (c *PacketConn) Close() error {
@@ -58,7 +58,7 @@ func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 	case payload := <-c.Input:
 		n := copy(p, payload)
 		return n, c.M, nil
-	case <-c.Ctx.Done():
+	case <-c.Context.Done():
 		return 0, nil, common.NewError("dokodemo packet conn closed")
 	}
 }
@@ -67,7 +67,7 @@ func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error
 	select {
 	case c.Output <- p:
 		return len(p), nil
-	case <-c.Ctx.Done():
+	case <-c.Context.Done():
 		return 0, common.NewError("dokodemo packet conn failed to write")
 	}
 }

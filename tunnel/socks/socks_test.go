@@ -22,9 +22,6 @@ func TestSocks(t *testing.T) {
 		LocalHost: "127.0.0.1",
 		LocalPort: port,
 	})
-	ctx = config.WithConfig(ctx, Name, &Config{
-		UDPTimeout: 30,
-	})
 	tcpServer, err := transport.NewServer(ctx, nil)
 	common.Must(err)
 	addr := tunnel.NewAddressFromHostPort("tcp", "127.0.0.1", port)

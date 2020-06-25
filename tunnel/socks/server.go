@@ -7,10 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
@@ -30,7 +28,6 @@ type Server struct {
 	packetChan chan tunnel.PacketConn
 	underlay   tunnel.Server
 	localHost  string
-	timeout    time.Duration
 	ctx        context.Context
 	cancel     context.CancelFunc
 }
@@ -141,14 +138,18 @@ func (s *Server) acceptLoop() {
 					log.Error(common.NewError("socks5 failed to bind udp").Base(err))
 					return
 				}
-				s.packetChan <- NewPacketConn(l, s.timeout)
+				packetConn := &PacketConn{
+					PacketConn: l,
+				}
+				s.packetChan <- packetConn
 				log.Info("socks5 udp session")
 				if err := s.associate(newConn, associateAddr); err != nil {
 					log.Error(common.NewError("socks5 failed to respond to associate request").Base(err))
 					return
 				}
-				buf := [1]byte{}
+				buf := [16]byte{}
 				newConn.Read(buf[:])
+				packetConn.Close()
 				log.Debug("socks5 udp session ends")
 			default:
 				log.Error(common.NewError(fmt.Sprintf("unknown socks5 command %d", newConn.metadata.Command)))
@@ -160,7 +161,6 @@ func (s *Server) acceptLoop() {
 
 // NewServer create a socks server
 func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, error) {
-	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 	server := &Server{
 		underlay:   underlay,
@@ -168,8 +168,9 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (tunnel.Server, erro
 		cancel:     cancel,
 		connChan:   make(chan tunnel.Conn, 32),
 		packetChan: make(chan tunnel.PacketConn, 32),
-		timeout:    time.Duration(cfg.UDPTimeout) * time.Second,
+		localHost:  "",
 	}
+	// TODO localhost
 	go server.acceptLoop()
 	log.Debug("socks server created")
 	return server, nil

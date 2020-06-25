@@ -3,7 +3,6 @@ package socks
 import (
 	"bytes"
 	"net"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -22,7 +21,6 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 type PacketConn struct {
 	net.PacketConn
 	srcAddr net.Addr
-	timeout time.Duration
 }
 
 func (c *PacketConn) Close() error {
@@ -68,12 +66,4 @@ func (c *PacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, er
 	return length, &tunnel.Metadata{
 		Address: addr,
 	}, nil
-}
-
-func NewPacketConn(packet net.PacketConn, timeout time.Duration) *PacketConn {
-	conn := &PacketConn{
-		PacketConn: packet,
-		timeout:    timeout,
-	}
-	return conn
 }
