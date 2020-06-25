@@ -97,6 +97,7 @@ func (s *Server) packetDispatchLoop() {
 		case info = <-packetQueue:
 		case <-s.ctx.Done():
 			log.Debug("exiting")
+			return
 		}
 
 		s.mappingLock.RLock()
@@ -104,6 +105,8 @@ func (s *Server) packetDispatchLoop() {
 		s.mappingLock.RUnlock()
 
 		if !found {
+			address, err := tunnel.NewAddressFromAddr("udp", info.dst.String())
+			common.Must(err)
 			ctx, cancel := context.WithCancel(s.ctx)
 			conn = &dokodemo.PacketConn{
 				Input:      make(chan []byte, 128),
@@ -113,7 +116,7 @@ func (s *Server) packetDispatchLoop() {
 				Cancel:     cancel,
 				Source:     info.src,
 				M: &tunnel.Metadata{
-					Address: tunnel.NewAddressFromHostPort("udp", info.dst.IP.String(), info.dst.Port),
+					Address: address,
 				},
 			}
 
@@ -121,7 +124,8 @@ func (s *Server) packetDispatchLoop() {
 			s.mapping[info.src.String()+"|"+info.dst.String()] = conn
 			s.mappingLock.Unlock()
 
-			log.Info("new tproxy udp session, from", info.src, "metadata", info.dst)
+			log.Info("new tproxy udp session from", info.src.String(), "metadata", info.dst.String())
+			s.packetChan <- conn
 
 			go func(conn *dokodemo.PacketConn) {
 				defer conn.Close()
@@ -138,6 +142,7 @@ func (s *Server) packetDispatchLoop() {
 					return
 				}
 				defer back.Close()
+				log.Debug("udp packet daemon", conn.Source.String(), conn.M.String())
 				for {
 					select {
 					case payload := <-conn.Output:

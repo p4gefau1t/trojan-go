@@ -130,7 +130,8 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 
 	return &InboundConn{
 		OutboundConn: OutboundConn{
-			Conn: wsConn,
+			tcpConn: conn,
+			Conn:    wsConn,
 		},
 		ctx:    ctx,
 		cancel: cancel,

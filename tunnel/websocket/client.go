@@ -33,7 +33,8 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 		return nil, common.NewError("websocket failed to handshake with server").Base(err)
 	}
 	return &OutboundConn{
-		Conn: wsConn,
+		Conn:    wsConn,
+		tcpConn: conn,
 	}, nil
 }
 
