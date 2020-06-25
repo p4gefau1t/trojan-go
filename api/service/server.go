@@ -40,7 +40,7 @@ func (s *ServerAPI) GetUsers(stream TrojanServerService_GetUsersServer) error {
 		if !valid {
 			stream.Send(&GetUsersResponse{
 				Success: false,
-				Info:    "Invalid user: " + req.User.Hash,
+				Info:    "invalid user: " + req.User.Hash,
 			})
 			continue
 		}
@@ -85,38 +85,46 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 		if err != nil {
 			return err
 		}
-		if req.User == nil {
-			return common.NewError("User is unspecified")
+		if req.Status == nil {
+			return common.NewError("status is unspecified")
 		}
-		if req.User.Hash == "" {
-			req.User.Hash = common.SHA224String(req.User.Password)
+		if req.Status.User.Hash == "" {
+			req.Status.User.Hash = common.SHA224String(req.Status.User.Password)
 		}
 		switch req.Operation {
 		case SetUsersRequest_Add:
-			err = s.auth.AddUser(req.User.Hash)
-			if req.SpeedLimit != nil {
-				valid, user := s.auth.AuthUser(req.User.Hash)
+			if err = s.auth.AddUser(req.Status.User.Hash); err != nil {
+				err = common.NewError("failed to add new user").Base(err)
+				break
+			}
+			if req.Status.SpeedLimit != nil {
+				valid, user := s.auth.AuthUser(req.Status.User.Hash)
 				if !valid {
-					return common.NewError("failed to add new user")
+					err = common.NewError("failed to auth new user").Base(err)
+					continue
 				}
-				user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				if req.Status.SpeedLimit != nil {
+					user.SetSpeedLimit(int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
+				}
+				if req.Status.TrafficTotal != nil {
+					user.SetTraffic(req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
+				}
+				user.SetIPLimit(int(req.Status.IpLimit))
 			}
 		case SetUsersRequest_Delete:
-			err = s.auth.DelUser(req.User.Hash)
+			err = s.auth.DelUser(req.Status.User.Hash)
 		case SetUsersRequest_Modify:
-			valid, user := s.auth.AuthUser(req.User.Hash)
+			valid, user := s.auth.AuthUser(req.Status.User.Hash)
 			if !valid {
-				err = common.NewError("invalid user " + req.User.Hash)
+				err = common.NewError("invalid user " + req.Status.User.Hash)
 			} else {
-				if req.SpeedLimit.DownloadSpeed > 0 || req.SpeedLimit.UploadSpeed > 0 {
-					user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				if req.Status.SpeedLimit != nil {
+					user.SetSpeedLimit(int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
 				}
-				if req.IpLimit > 0 {
-					user.SetIPLimit(int(req.IpLimit))
+				if req.Status.TrafficTotal != nil {
+					user.SetTraffic(req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
 				}
-				if req.TrafficTotal.DownloadTraffic > 0 || req.TrafficTotal.UploadTraffic > 0 {
-					user.SetTraffic(req.TrafficTotal.DownloadTraffic, req.TrafficTotal.UploadTraffic)
-				}
+				user.SetIPLimit(int(req.Status.IpLimit))
 			}
 		}
 		if err != nil {
@@ -142,10 +150,10 @@ func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_
 		ipLimit := user.GetIPLimit()
 		ipCurrent := user.GetIP()
 		err := stream.Send(&ListUsersResponse{
-			User: &User{
-				Hash: user.Hash(),
-			},
 			Status: &UserStatus{
+				User: &User{
+					Hash: user.Hash(),
+				},
 				TrafficTotal: &Traffic{
 					DownloadTraffic: downloadTraffic,
 					UploadTraffic:   uploadTraffic,

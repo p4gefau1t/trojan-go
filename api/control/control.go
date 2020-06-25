@@ -92,14 +92,16 @@ func (o *apiController) setUsers(apiClient service.TrojanServerServiceClient) er
 	defer stream.CloseSend()
 
 	req := &service.SetUsersRequest{
-		User: &service.User{
-			Password: *o.password,
-			Hash:     *o.hash,
-		},
-		IpLimit: int32(*o.ipLimit),
-		SpeedLimit: &service.Speed{
-			UploadSpeed:   uint64(*o.uploadSpeedLimit),
-			DownloadSpeed: uint64(*o.downloadSpeedLimit),
+		Status: &service.UserStatus{
+			User: &service.User{
+				Password: *o.password,
+				Hash:     *o.hash,
+			},
+			IpLimit: int32(*o.ipLimit),
+			SpeedLimit: &service.Speed{
+				UploadSpeed:   uint64(*o.uploadSpeedLimit),
+				DownloadSpeed: uint64(*o.downloadSpeedLimit),
+			},
 		},
 	}
 	if *o.add {

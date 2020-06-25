@@ -42,8 +42,8 @@ func TestServerAPI(t *testing.T) {
 		if err != nil {
 			break
 		}
-		fmt.Println(resp.User.Hash)
-		if resp.User.Hash != "hash1234" {
+		fmt.Println(resp.Status.User.Hash)
+		if resp.Status.User.Hash != "hash1234" {
 			t.Fail()
 		}
 		fmt.Println(resp.Status.SpeedCurrent)
@@ -70,8 +70,10 @@ func TestServerAPI(t *testing.T) {
 
 	stream3, err := server.SetUsers(ctx)
 	stream3.Send(&SetUsersRequest{
-		User: &User{
-			Hash: "hash1234",
+		Status: &UserStatus{
+			User: &User{
+				Hash: "hash1234",
+			},
 		},
 		Operation: SetUsersRequest_Delete,
 	})
@@ -84,8 +86,10 @@ func TestServerAPI(t *testing.T) {
 		t.Fail()
 	}
 	stream3.Send(&SetUsersRequest{
-		User: &User{
-			Hash: "newhash",
+		Status: &UserStatus{
+			User: &User{
+				Hash: "newhash",
+			},
 		},
 		Operation: SetUsersRequest_Add,
 	})
@@ -98,18 +102,20 @@ func TestServerAPI(t *testing.T) {
 		t.Fail()
 	}
 	stream3.Send(&SetUsersRequest{
-		User: &User{
-			Hash: "newhash",
+		Status: &UserStatus{
+			User: &User{
+				Hash: "newhash",
+			},
+			SpeedLimit: &Speed{
+				DownloadSpeed: 5000,
+				UploadSpeed:   3000,
+			},
+			TrafficTotal: &Traffic{
+				DownloadTraffic: 1,
+				UploadTraffic:   1,
+			},
 		},
 		Operation: SetUsersRequest_Modify,
-		SpeedLimit: &Speed{
-			DownloadSpeed: 5000,
-			UploadSpeed:   3000,
-		},
-		TrafficTotal: &Traffic{
-			DownloadTraffic: 1,
-			UploadTraffic:   1,
-		},
 	})
 	go func() {
 		for {

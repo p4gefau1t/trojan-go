@@ -14,7 +14,7 @@ message Speed {
 
 message User {
     string password = 1;
-    string hash = 2; //optional
+    string hash = 2;
 }
 
 message UserStatus {
@@ -42,8 +42,7 @@ message ListUsersRequest {
 }
 
 message ListUsersResponse {
-    User user = 1;
-    UserStatus status = 2;
+    UserStatus status = 1;
 }
 
 message GetUsersRequest {
@@ -53,21 +52,17 @@ message GetUsersRequest {
 message GetUsersResponse {
     bool success = 1;
     string info = 2;
-    User user = 3;
-    UserStatus status = 4;
+    UserStatus status = 3;
 }
 
 message SetUsersRequest {
-    User user = 1;
     enum Operation {
         Add = 0;
         Delete = 1;
         Modify = 2;
     }
+    UserStatus status = 1;
     Operation operation = 2;
-    Speed speed_limit = 3;
-    int32 ip_limit = 4;
-    Traffic traffic_total = 5;
 }
 
 message SetUsersResponse {
@@ -84,6 +79,6 @@ service TrojanServerService {
     rpc ListUsers(ListUsersRequest) returns(stream ListUsersResponse){}
     // obtain specified user's info
     rpc GetUsers(stream GetUsersRequest) returns(stream GetUsersResponse){}
-    // setup exsisting users' config
+    // setup existing users' config
     rpc SetUsers(stream SetUsersRequest) returns(stream SetUsersResponse){}
 }
