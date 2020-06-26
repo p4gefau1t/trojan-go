@@ -30,7 +30,7 @@
 <meta itemprop="name" content="API开发">
 <meta itemprop="description" content="Trojan-Go基于gRPC实现了API，使用protobuf交换数据。客户端可获取流量和速度信息；服务端可获取各用户流量，速度，在线情况">
 
-<meta itemprop="wordCount" content="185">
+<meta itemprop="wordCount" content="206">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -51,16 +51,17 @@
 </div>
 <div class="content-container">
 <main><h1>API开发</h1>
-<p>Trojan-Go基于gRPC实现了API，使用protobuf交换数据。客户端可获取流量和速度信息；服务端可获取各用户流量，速度，在线情况，并动态增删用户和限制速度。可以通过在配置文件中添加<code>api</code>选项激活API模块。下面是一个例子</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;api&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+<p>Trojan-Go基于gRPC实现了API，使用protobuf交换数据。客户端可获取流量和速度信息；服务端可获取各用户流量，速度，在线情况，并动态增删用户和限制速度。可以通过在配置文件中添加<code>api</code>选项激活API模块。下面是一个例子，各字段含义参见“完整的配置文件”一节。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#960050;background-color:#1e0010">...</span>
+<span style="color:#e6db74">&#34;api&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;api_addr&#34;</span>: <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>,
     <span style="color:#f92672">&#34;api_port&#34;</span>: <span style="color:#ae81ff">10000</span>,
-    <span style="color:#f92672">&#34;api_tls&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;ssl&#34;</span>: {
+      <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
       <span style="color:#f92672">&#34;cert&#34;</span>: <span style="color:#e6db74">&#34;api_cert.crt&#34;</span>,
-      <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;api_key.crt&#34;</span>,
-      <span style="color:#f92672">&#34;key_password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+      <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;api_key.key&#34;</span>,
+      <span style="color:#f92672">&#34;verify_client&#34;</span>: <span style="color:#66d9ef">true</span>,
       <span style="color:#f92672">&#34;client_cert&#34;</span>: [
           <span style="color:#e6db74">&#34;api_client_cert1.crt&#34;</span>,
           <span style="color:#e6db74">&#34;api_client_cert2.crt&#34;</span>

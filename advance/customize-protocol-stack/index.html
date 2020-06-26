@@ -30,7 +30,7 @@
 <meta itemprop="name" content="自定义协议栈">
 <meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go允许高级用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控">
 
-<meta itemprop="wordCount" content="1249">
+<meta itemprop="wordCount" content="1285">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -178,7 +178,7 @@
 <tr>
 <td>socks</td>
 <td>y</td>
-<td>n</td>
+<td>y</td>
 <td>y</td>
 <td>y</td>
 <td>y</td>
@@ -204,10 +204,10 @@
 </tr>
 <tr>
 <td>adapter</td>
-<td>y</td>
+<td>n</td>
 <td>n</td>
 <td>y</td>
-<td>n</td>
+<td>y</td>
 <td>y</td>
 <td>n</td>
 </tr>
@@ -227,7 +227,19 @@
 <ul>
 <li>router-&gt;freedom</li>
 </ul>
-<p>对于入站，从根开始描述多条路径，组成一棵<strong>多叉树</strong>（也可以退化为一条链），不满足树性质的图将导致未定义的行为；对于出站，必须描述一条链。<strong>注意，每条路径，必须以不需要下层提供流或包的隧道开始(transport/tproxy/dokodemo等)，必须以能向上层提供包和流的隧道终止(trojan/simplesocks/freedom)，且必须确认对应隧道是否可作为出站/入站</strong></p>
+<p>对于入站，从根开始描述多条路径，组成一棵<strong>多叉树</strong>（也可以退化为一条链），不满足树性质的图将导致未定义的行为；对于出站，必须描述一条<strong>链</strong>。</p>
+<p>每条路径必须满足这样的条件：</p>
+<ol>
+<li>
+<p>必须以<strong>不需要下层提供流或包</strong>的隧道开始(transport/adapter/tproxy/dokodemo等)</p>
+</li>
+<li>
+<p>必须以<strong>能向上层提供包和流</strong>的隧道终止(trojan/simplesocks/freedom等)</p>
+</li>
+<li>
+<p>出站单链上，隧道必须都可作为出站。入站的所有路径上，隧道必须都可作为入站。</p>
+</li>
+</ol>
 <p>要启用自定义协议栈，将<code>run_type</code>指定为custom，此时除<code>inbound</code>和<code>outbound</code>之外的其他选项将被忽略。</p>
 <p>下面是一个例子，你可以在此基础上插入或减少协议节点。配置文件为简明起见，使用YAML进行配置，你也可以使用JSON来配置，除格式不同之外，效果是等价的。</p>
 <p>客户端 client.yaml</p>
@@ -235,16 +247,19 @@
 
 <span style="color:#66d9ef">inbound</span>:
   <span style="color:#66d9ef">node</span>:
-    - <span style="color:#66d9ef">protocol</span>: transport
-      <span style="color:#66d9ef">tag</span>: transport
+    - <span style="color:#66d9ef">protocol</span>: adapter
+      <span style="color:#66d9ef">tag</span>: adapter
       <span style="color:#66d9ef">config</span>:
         <span style="color:#66d9ef">local-addr</span>: <span style="color:#ae81ff">127.0.0.1</span>
         <span style="color:#66d9ef">local-port</span>: <span style="color:#ae81ff">1080</span>
     - <span style="color:#66d9ef">protocol</span>: socks
       <span style="color:#66d9ef">tag</span>: socks
+      <span style="color:#66d9ef">config</span>:
+        <span style="color:#66d9ef">local-addr</span>: <span style="color:#ae81ff">127.0.0.1</span>
+        <span style="color:#66d9ef">local-port</span>: <span style="color:#ae81ff">1080</span>
   <span style="color:#66d9ef">path</span>:
     <span style="color:#e6db74">-
-</span><span style="color:#e6db74">      - transport</span>
+</span><span style="color:#e6db74">      - adapter</span>
       - socks
 
 <span style="color:#66d9ef">outbound</span>:
@@ -270,8 +285,8 @@
           - <span style="color:#ae81ff">12345678</span>
 
   <span style="color:#66d9ef">path</span>:
-    - 
-      - transport
+    <span style="color:#e6db74">-
+</span><span style="color:#e6db74">      - transport</span>
       - tls
       - trojan
 
@@ -317,8 +332,8 @@
           - <span style="color:#ae81ff">87654321</span>
 
   <span style="color:#66d9ef">path</span>:
-    - 
-      - transport
+    <span style="color:#e6db74">-
+</span><span style="color:#e6db74">      - transport</span>
       - tls
       - trojan1
     <span style="color:#e6db74">-
@@ -333,9 +348,8 @@
       <span style="color:#66d9ef">tag</span>: freedom
 
   <span style="color:#66d9ef">path</span>:
-    - 
-      - freedom
-
+    <span style="color:#e6db74">-
+</span><span style="color:#e6db74">      - freedom</span>
 </code></pre></div><div class="edit-meta">
 
 <br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/customize-protocol-stack.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/aead/" title="使用Shadowsocks AEAD进行二次加密"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用Shadowsocks AEAD进行二次加密</a>
