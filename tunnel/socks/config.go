@@ -1,6 +1,4 @@
-// +build linux
-
-package tproxy
+package socks
 
 import "github.com/p4gefau1t/trojan-go/config"
 

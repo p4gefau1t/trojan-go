@@ -22,7 +22,7 @@ type Server struct {
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	conn, err := s.underlay.AcceptConn(&Tunnel{})
 	if err != nil {
-		return nil, common.NewError("shadowsocks failed to accept connection from underlying tunnel")
+		return nil, common.NewError("shadowsocks failed to accept connection from underlying tunnel").Base(err)
 	}
 	rewindConn := common.NewRewindConn(conn)
 	rewindConn.SetBufferSize(1024)

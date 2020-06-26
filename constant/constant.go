@@ -1,6 +1,6 @@
 package constant
 
 var (
-	Version = "VERSION"
-	Commit  = "COMMIT"
+	Version = "Custom Version"
+	Commit  = "Unknown Git Commit ID"
 )

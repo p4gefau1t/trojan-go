@@ -3,15 +3,15 @@ package websocket
 import "github.com/p4gefau1t/trojan-go/config"
 
 type WebsocketConfig struct {
-	Enabled  bool   `json,yaml:"enabled""`
-	Hostname string `json,yaml:"hostname"`
-	Path     string `json,yaml:"path"`
+	Enabled  bool   `json:"enabled" yaml:"enabled"`
+	Hostname string `json:"hostname" yaml:"hostname"`
+	Path     string `json:"path" yaml:"path"`
 }
 
 type Config struct {
 	RemoteHost string          `json:"remote_addr" yaml:"remote-addr"`
 	RemotePort int             `json:"remote_port" yaml:"remote-port"`
-	Websocket  WebsocketConfig `json,yaml:"websocket"`
+	Websocket  WebsocketConfig `json:"websocket" yaml:"websocket"`
 }
 
 func init() {
