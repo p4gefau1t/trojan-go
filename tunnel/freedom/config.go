@@ -17,11 +17,11 @@ type TCPConfig struct {
 }
 
 type ForwardProxyConfig struct {
-	Enabled   bool   `json,yaml:"enabled"`
+	Enabled   bool   `json:"enabled" yaml:"enabled"`
 	ProxyHost string `json:"proxy_addr" yaml:"proxy-addr"`
 	ProxyPort int    `json:"proxy_port" yaml:"proxy-port"`
-	Username  string `json,yaml:"username"`
-	Password  string `json,yaml:"password"`
+	Username  string `json:"username" yaml:"username"`
+	Password  string `json:"password" yaml:"password"`
 }
 
 func init() {

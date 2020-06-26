@@ -11,7 +11,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
-	"google.golang.org/grpc"
 )
 
 type ClientAPI struct {
@@ -58,7 +57,10 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 	if !cfg.API.Enabled {
 		return nil
 	}
-	server := grpc.NewServer()
+	server, err := newAPIServer(cfg)
+	if err != nil {
+		return err
+	}
 	service := &ClientAPI{
 		ctx:  ctx,
 		auth: auth,

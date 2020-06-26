@@ -2,27 +2,30 @@ package adapter
 
 import (
 	"context"
+	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 	"github.com/p4gefau1t/trojan-go/tunnel/http"
 	"github.com/p4gefau1t/trojan-go/tunnel/socks"
-	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 )
 
 type Server struct {
-	underlay  tunnel.Server
-	socksConn chan tunnel.Conn
-	httpConn  chan tunnel.Conn
-	nextSocks bool
-	ctx       context.Context
-	cancel    context.CancelFunc
+	tcpListener net.Listener
+	udpListener net.PacketConn
+	socksConn   chan tunnel.Conn
+	httpConn    chan tunnel.Conn
+	nextSocks   bool
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 func (s *Server) acceptConnLoop() {
 	for {
-		conn, err := s.underlay.AcceptConn(&Tunnel{})
+		conn, err := s.tcpListener.Accept()
 		if err != nil {
 			select {
 			case <-s.ctx.Done():
@@ -44,12 +47,12 @@ func (s *Server) acceptConnLoop() {
 		}
 		if buf[0] == 5 && s.nextSocks {
 			log.Debug("socks5 connection")
-			s.socksConn <- &transport.Conn{
+			s.socksConn <- &freedom.Conn{
 				Conn: rewindConn,
 			}
 		} else {
 			log.Debug("http connection")
-			s.httpConn <- &transport.Conn{
+			s.httpConn <- &freedom.Conn{
 				Conn: rewindConn,
 			}
 		}
@@ -78,25 +81,38 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 }
 
 func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
-	// no packet conn available, but it's ok to stuck here
-	<-s.ctx.Done()
-	return nil, common.NewError("adapter server closed")
+	return &freedom.PacketConn{
+		UDPConn: s.udpListener.(*net.UDPConn),
+	}, nil
 }
 
 func (s *Server) Close() error {
 	s.cancel()
-	return s.underlay.Close()
+	s.tcpListener.Close()
+	return s.udpListener.Close()
 }
 
-func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
+func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
+	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
-	server := &Server{
-		underlay:  underlay,
-		socksConn: make(chan tunnel.Conn, 32),
-		httpConn:  make(chan tunnel.Conn, 32),
-		ctx:       ctx,
-		cancel:    cancel,
+	addr := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
+	tcpListener, err := net.Listen("tcp", addr.String())
+	if err != nil {
+		return nil, common.NewError("adapter failed to create tcp listener").Base(err)
 	}
+	udpListener, err := net.ListenPacket("udp", addr.String())
+	if err != nil {
+		return nil, common.NewError("adapter failed to create tcp listener").Base(err)
+	}
+	server := &Server{
+		tcpListener: tcpListener,
+		udpListener: udpListener,
+		socksConn:   make(chan tunnel.Conn, 32),
+		httpConn:    make(chan tunnel.Conn, 32),
+		ctx:         ctx,
+		cancel:      cancel,
+	}
+	log.Info("adapter listening on tcp/udp:", addr)
 	go server.acceptConnLoop()
 	return server, nil
 }

@@ -17,16 +17,19 @@ run-type: custom
 
 inbound:
   node:
-    - protocol: transport
-      tag: transport
+    - protocol: adapter
+      tag: adapter
       config:
         local-addr: 127.0.0.1
         local-port: %d
     - protocol: socks
       tag: socks
+      config:
+        local-addr: 127.0.0.1
+        local-port: %d
   path:
     -
-      - transport
+      - adapter
       - socks
 
 outbound:
@@ -57,7 +60,7 @@ outbound:
       - tls
       - trojan
 
-`, socksPort, serverPort)
+`, socksPort, socksPort, serverPort)
 	serverData := fmt.Sprintf(`
 run-type: custom
 
@@ -130,16 +133,19 @@ log-level: 0
 
 inbound:
   node:
-    - protocol: transport
-      tag: transport
+    - protocol: adapter
+      tag: adapter
       config:
         local-addr: 127.0.0.1
         local-port: %d
     - protocol: socks
       tag: socks
+      config:
+        local-addr: 127.0.0.1
+        local-port: %d
   path:
     -
-      - transport
+      - adapter
       - socks
 
 outbound:
@@ -188,7 +194,7 @@ outbound:
       - shadowsocks 
       - trojan
 
-`, socksPort, serverPort)
+`, socksPort, socksPort, serverPort)
 	serverData := fmt.Sprintf(`
 run-type: custom
 log-level: 0

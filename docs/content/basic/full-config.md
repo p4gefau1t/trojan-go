@@ -37,6 +37,7 @@ weight: 30
   "buffer_size": 32,
   "dns": [],
   "disable_http_check": false,
+  "udp_timeout": 10,
   "ssl": {
     "verify": true,
     "verify_hostname": true,
@@ -121,11 +122,11 @@ weight: 30
     "enabled": false,
     "api_addr": "",
     "api_port": 0,
-    "api_tls": false,
     "ssl": {
-      "cert": "",
+      "enabled": false,
       "key": "",
-      "key_password": "",
+      "cert": "",
+      "verify_client": false,
       "client_cert": []
     }
   }
@@ -176,6 +177,8 @@ weight: 30
 
 ```disable_http_check```是否禁用HTTP可用性检查。
 
+```udp_timeout``` UDP会话超时时间。
+
 ### ```ssl```选项
 
 ```verify```表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启```verify```会导致校验失败。这种情况下，应当保持```verify```开启，然后在```cert```中填写服务端的证书，即可正常连接。
@@ -222,7 +225,7 @@ weight: 30
 
 ```concurrency```指单个TLS隧道可以承载的最大连接数，默认为8。这个数值越大，多连接并发时TLS由于握手产生的延迟就越低，但网络吞吐量可能会有所降低，填入负数或者0表示所有连接只使用一个TLS隧道承载。
 
-```idle_timeout```指TLS隧道在空闲多久之后关闭，单位为秒。如果数值为负值或0，则一旦TLS隧道空闲，则立即关闭。
+```idle_timeout```空闲超时时间。指TLS隧道在空闲多长时间之后关闭，单位为秒。如果数值为负值或0，则一旦TLS隧道空闲，则立即关闭。
 
 ### ```router```路由选项
 
@@ -256,7 +259,7 @@ weight: 30
 
 - "ip_on_demand"，域名均解析为IP，在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
 
-```geoip```和```geosite```字段指geoip和geosite数据库文件路径，默认使用当前目录的geoip.dat和geosite.dat。
+```geoip```和```geosite```字段指geoip和geosite数据库文件路径，默认使用程序所在目录的geoip.dat和geosite.dat。也可以通过指定环境变量TROJAN_GO_LOCATION_ASSET指定工作目录。
 
 ### ```websocket```选项
 
@@ -266,7 +269,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```path```指的是Websocket使用的URL路径，必须以斜杠("/")开头，如"/longlongwebsocketpath"，并且服务器和客户端必须一致。
 
-```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
+```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。不正确的```hostname```可能导致CDN无法转发请求。
 
 ### ``shadowsocks`` AEAD加密选项
 
@@ -373,8 +376,14 @@ trojan-go基于gRPC提供了API，以支持服务端和客户端的管理和统�
 
 ```api_port```gRPC监听的端口。
 
-```api_tls```gRPC是否启用TLS传输（双向认证）。
+```ssl``` TLS相关设置。
 
-```ssl``` TLS相关设置，如果开启TLS传输和双向认证，所有选项为必填。其中```key```, ```cert```为API服务器使用的密钥和证书文件，```client_cert```为客户端使用的证书文件路径，用于客户端认证。
+- ```enabled```是否使用TLS传输gRPC流量。
+
+- ```key```，```cert```服务器私钥和证书。
+
+- ```verify_client```是否认证客户端证书。
+
+- ```client_cert```如果开启客户端认证，此处填入认证的客户端证书列表。
 
 警告：**不要将未开启TLS双向认证的API服务直接暴露在互联网上，否则可能导致各类安全问题。**

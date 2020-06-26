@@ -28,6 +28,7 @@ type InboundConn struct {
 	user     statistic.User
 	hash     string
 	metadata *tunnel.Metadata
+	ip       string
 }
 
 func (c *InboundConn) Metadata() *tunnel.Metadata {
@@ -50,7 +51,7 @@ func (c *InboundConn) Read(p []byte) (int, error) {
 
 func (c *InboundConn) Close() error {
 	log.Info("user", c.hash, "from", c.Conn.RemoteAddr(), "tunneling to", c.metadata.Address, "closed", "sent:", common.HumanFriendlyTraffic(c.sent), "recv:", common.HumanFriendlyTraffic(c.recv))
-	c.user.DelIP(c.Conn.RemoteAddr().String())
+	c.user.DelIP(c.ip)
 	return c.Conn.Close()
 }
 
@@ -68,7 +69,13 @@ func (c *InboundConn) Auth() error {
 	c.hash = string(userHash[:])
 	c.user = user
 
-	ok := user.AddIP(c.Conn.RemoteAddr().String())
+	ip, _, err := net.SplitHostPort(c.Conn.RemoteAddr().String())
+	if err != nil {
+		return common.NewError("failed to parse host:" + c.Conn.RemoteAddr().String()).Base(err)
+	}
+
+	c.ip = ip
+	ok := user.AddIP(ip)
 	if !ok {
 		return common.NewError("ip limit reached")
 	}

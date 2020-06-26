@@ -54,7 +54,7 @@ func (s *Server) dispatchLoop() {
 			M:          fixedMetadata,
 			Source:     addr,
 			PacketConn: s.udpListener,
-			Ctx:        ctx,
+			Context:    ctx,
 			Cancel:     cancel,
 		}
 		s.mapping[addr.String()] = conn

@@ -46,21 +46,21 @@ func init() {
 	proxy.RegisterProxyCreator(Name, func(ctx context.Context) (*proxy.Proxy, error) {
 		cfg := config.FromContext(ctx, Name).(*Config)
 
-		transportServer, err := transport.NewServer(ctx, nil)
+		adapterServer, err := adapter.NewServer(ctx, nil)
 		if err != nil {
 			return nil, err
 		}
 
 		root := &proxy.Node{
-			Name:       transport.Name,
+			Name:       adapter.Name,
 			Next:       make(map[string]*proxy.Node),
 			IsEndpoint: false,
 			Context:    ctx,
-			Server:     transportServer,
+			Server:     adapterServer,
 		}
 
-		root.BuildNext(adapter.Name).BuildNext(http.Name).IsEndpoint = true
-		root.BuildNext(adapter.Name).BuildNext(socks.Name).IsEndpoint = true
+		root.BuildNext(http.Name).IsEndpoint = true
+		root.BuildNext(socks.Name).IsEndpoint = true
 
 		clientStack := GenerateClientTree(cfg.TransportPlugin.Enabled, cfg.Mux.Enabled, cfg.Websocket.Enabled, cfg.Shadowsocks.Enabled, cfg.Router.Enabled)
 		c, err := proxy.CreateClientStack(ctx, clientStack)
