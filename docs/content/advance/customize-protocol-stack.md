@@ -38,10 +38,10 @@ Trojan-Go将所有协议抽象为隧道，每个隧道可能提供客户端，�
 |shadowsocks        |      y       |      n      |     y       |     n      |     y      |     y      |
 |websocket          |      y       |      n      |     y       |     n      |     y      |     y      |
 |freedom            |      n       |      n      |     y       |     y      |     n      |     y      |
-|socks              |      y       |      n      |     y       |     y      |     y      |     n      |
+|socks              |      y       |      y      |     y       |     y      |     y      |     n      |
 |http               |      y       |      n      |     y       |     n      |     y      |     n      |
 |router             |      y       |      y      |     y       |     y      |     n      |     y      |
-|adapter            |      y       |      n      |     y       |     n      |     y      |     n      |
+|adapter            |      n       |      n      |     y       |     y      |     y      |     n      |
 
 自定义协议栈的工作方式是，定义树/链上节点并分别它们起名（tag）并添加配置，然后使用tag组成的有向路径，描述这棵树/链。例如，对于一个典型的Trojan-Go服务器，可以如此描述：
 
@@ -55,7 +55,15 @@ Trojan-Go将所有协议抽象为隧道，每个隧道可能提供客户端，�
 
 - router->freedom
 
-对于入站，从根开始描述多条路径，组成一棵**多叉树**（也可以退化为一条链），不满足树性质的图将导致未定义的行为；对于出站，必须描述一条链。**注意，每条路径，必须以不需要下层提供流或包的隧道开始(transport/tproxy/dokodemo等)，必须以能向上层提供包和流的隧道终止(trojan/simplesocks/freedom)，且必须确认对应隧道是否可作为出站/入站**
+对于入站，从根开始描述多条路径，组成一棵**多叉树**（也可以退化为一条链），不满足树性质的图将导致未定义的行为；对于出站，必须描述一条**链**。
+
+每条路径必须满足这样的条件：
+
+1. 必须以**不需要下层提供流或包**的隧道开始(transport/adapter/tproxy/dokodemo等)
+
+2. 必须以**能向上层提供包和流**的隧道终止(trojan/simplesocks/freedom等)
+
+3. 出站单链上，隧道必须都可作为出站。入站的所有路径上，隧道必须都可作为入站。
 
 要启用自定义协议栈，将```run_type```指定为custom，此时除```inbound```和```outbound```之外的其他选项将被忽略。
 
@@ -68,16 +76,19 @@ run-type: custom
 
 inbound:
   node:
-    - protocol: transport
-      tag: transport
+    - protocol: adapter
+      tag: adapter
       config:
         local-addr: 127.0.0.1
         local-port: 1080
     - protocol: socks
       tag: socks
+      config:
+        local-addr: 127.0.0.1
+        local-port: 1080
   path:
     -
-      - transport
+      - adapter
       - socks
 
 outbound:
@@ -103,7 +114,7 @@ outbound:
           - 12345678
 
   path:
-    - 
+    -
       - transport
       - tls
       - trojan
@@ -154,7 +165,7 @@ inbound:
           - 87654321
 
   path:
-    - 
+    -
       - transport
       - tls
       - trojan1
@@ -170,7 +181,6 @@ outbound:
       tag: freedom
 
   path:
-    - 
+    -
       - freedom
-
 ```

@@ -188,6 +188,20 @@ client.json
 }
 ```
 
+可以使用更简明易读的YAML语法进行配置，下面是一个客户端的例子，与上面的client.json等价
+
+client.yaml
+
+```yaml
+run-type: client
+local-addr: 127.0.0.1
+local-port: 1080
+remote-addr: www.your_awesome_domain_name.com
+remote-port: 443
+password:
+  - your_awesome_password
+```
+
 <a name="WebSocket"></a>
 
 ### WebSocket
