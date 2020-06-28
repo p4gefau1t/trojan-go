@@ -21,7 +21,7 @@ jobs:
         git checkout $tag_name
     - name: Build
       run: |
-        ./build-all.sh
+        ./release.sh
         set -x
         assets=()
         for asset in ./release/*; do

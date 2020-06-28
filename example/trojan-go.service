@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
+User=nobody
 ExecStart=/usr/bin/trojan-go -config /etc/trojan-go/config.json
 Restart=on-failure
 RestartSec=10

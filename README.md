@@ -340,9 +340,18 @@ Trojan-Go支持可插拔的传输层插件，并支持Shadowsocks [SIP003](https
 
 确保你的Go版本 >= 1.14，推荐使用snap安装Go保持与上游同步。
 
+下面的命令使用```make```进行编译
+
 ```shell
 git clone https://github.com/p4gefau1t/trojan-go.git
 cd trojan-go
+make
+make install #安装systemd服务等，可选
+```
+
+你也可以使用Go自行编译和安装
+
+```shell
 go build -tags "full"
 ```
 

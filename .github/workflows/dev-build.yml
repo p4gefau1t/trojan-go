@@ -23,9 +23,9 @@ jobs:
     - name: Test
       run: go test ./...
     - name: Build
-      run: mkdir dist && go build -tags "full" -o dist
+      run: make
     - name: Upload Binary
       uses: actions/upload-artifact@v1
       with:
-        name: dist-${{ matrix.platform }}
-        path: ./dist/
+        name: bin-${{ matrix.platform }}
+        path: ./bin/
