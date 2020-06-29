@@ -4,7 +4,7 @@ draft: false
 weight: 1
 ---
 
-### 注意，Trojan-GFW版本不支持这个特性
+### 注意，Trojan不支持这个特性
 
 Trojan-Go支持使用多路复用提升网络并发性能。
 

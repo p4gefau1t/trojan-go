@@ -278,6 +278,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		if err != nil {
 			return nil, common.NewError("failed to open key log file")
 		}
+		log.Warn("tls key logging enabled")
 		server.keyLogger = file
 	}
 

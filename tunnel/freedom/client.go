@@ -2,15 +2,10 @@ package freedom
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
-	"net/url"
-	"strconv"
-	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
-	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"golang.org/x/net/proxy"
 )
@@ -19,76 +14,12 @@ type Client struct {
 	preferIPv4   bool
 	noDelay      bool
 	keepAlive    bool
-	dns          []string
 	ctx          context.Context
 	cancel       context.CancelFunc
 	forwardProxy bool
 	proxyAddr    *tunnel.Address
 	username     string
 	password     string
-}
-
-func (c *Client) resolveIP(addr *tunnel.Address) ([]net.IPAddr, error) {
-	for _, s := range c.dns {
-		var dnsAddr string
-		var dnsHost, dnsType string
-		var err error
-
-		dnsURL, err := url.Parse(s)
-		if err != nil || dnsURL.Scheme == "" {
-			dnsType = "udp"
-			dnsAddr = s
-		} else {
-			dnsType = dnsURL.Scheme
-			dnsAddr = dnsURL.Host
-		}
-
-		dnsHost, tmp, err := net.SplitHostPort(dnsAddr)
-		dnsPort, err := strconv.ParseInt(tmp, 10, 32)
-		common.Must(err)
-
-		if err != nil {
-			dnsHost = dnsAddr
-			switch dnsType {
-			case "dot":
-				dnsPort = 853
-			case "tcp", "udp":
-				dnsPort = 53
-			}
-		}
-
-		resolver := &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				dnsAddress := tunnel.NewAddressFromHostPort("tcp", dnsHost, int(dnsPort))
-				switch dnsType {
-				case "udp", "tcp":
-					d := net.Dialer{
-						Timeout: time.Second * 5,
-					}
-					conn, err := d.DialContext(ctx, dnsType, dnsAddress.String())
-					if err != nil {
-						return nil, err
-					}
-					return conn, nil
-				case "dot":
-					tlsConn, err := tls.Dial("tcp", dnsAddress.String(), nil)
-					if err != nil {
-						return nil, err
-					}
-					return tlsConn, nil
-				}
-				return nil, common.NewError("invalid dns type:" + dnsType)
-			},
-		}
-		ip, err := resolver.LookupIPAddr(c.ctx, addr.String())
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		return ip, nil
-	}
-	return nil, common.NewError("address not found")
 }
 
 func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, error) {
@@ -159,7 +90,6 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 	return &Client{
 		ctx:          ctx,
 		cancel:       cancel,
-		dns:          cfg.DNS,
 		noDelay:      cfg.TCP.NoDelay,
 		keepAlive:    cfg.TCP.KeepAlive,
 		preferIPv4:   cfg.TCP.PreferIPV4,

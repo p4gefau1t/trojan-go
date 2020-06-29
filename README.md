@@ -12,7 +12,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/p4gefau1t/trojan-go)](https://goreportcard.com/report/github.com/p4gefau1t/trojan-go)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/p4gefau1t/trojan-go/pulls)
 
-使用Go实现的完整Trojan代理，与Trojan协议以及Trojan-GFW版本的配置文件格式兼容。安全，高效，轻巧，易用。
+使用Go实现的完整Trojan代理，与Trojan协议以及Trojan版本的配置文件格式兼容。安全，高效，轻巧，易用。
 
 支持使用[多路复用](#多路复用)提升并发性能，使用[路由模块](#路由模块)实现国内直连。
 
@@ -28,7 +28,7 @@
 
 ## **下面的说明为简单介绍，完整配置教程和配置介绍参见[Trojan-Go文档](https://p4gefau1t.github.io/trojan-go)。**
 
-Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于：
+Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限于：
 
 - TLS/SSL隧道传输
 
@@ -70,7 +70,7 @@ Trojan-Go支持并且兼容Trojan-GFW的绝大多数功能，包括但不限于�
 
 ## 图形界面客户端
 
-Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，ShadowRocket等。
+Trojan-Go服务端可以兼容所有原Trojan客户端，如Igniter，ShadowRocket等。
 
 下面是支持Trojan-Go扩展特性（Websocket/Mux等）的客户端。
 
@@ -122,12 +122,12 @@ Trojan-Go服务端可以兼容所有Trojan-GFW的客户端，如Igniter，Shadow
         p4gefau1t/trojan-go \
         /path/in/container/config.json
     ```
-    
+
     镜像的latest标签对应master分支，nightly标签对应dev分支。
 
 ## 特性
 
-一般情况下，Trojan-Go和Trojan-GFW版本是互相兼容的。但是一旦使用下面介绍的扩展特性（如多路复用，Websocket等），则无法与之兼容。
+一般情况下，Trojan-Go和Trojan是互相兼容的。但是一旦使用下面介绍的扩展特性（如多路复用，Websocket等），则无法与之兼容。
 
 ### 移植性
 
@@ -147,7 +147,7 @@ CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client" -ldflags "-s -w"
 
 ### 易用
 
-配置文件格式与Trojan-GFW兼容，但做了大幅简化，未指定的字段会被赋给一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
+配置文件格式与Trojan兼容，但做了大幅简化，未指定的字段会被赋给一个默认值。你可以更方便地部署你的服务器和客户端。下面是一个简单的例子，完整的配置文件可以参见[这里](https://p4gefau1t.github.io/trojan-go)。
 
 服务器配置文件
 
@@ -166,7 +166,7 @@ server.json
     "ssl": {
         "cert": "your_cert.crt",
         "key": "your_key.key",
-        "sni": "www.your_awesome_domain_name.com"
+        "sni": "www.your-awesome-domain-name.com"
     }
 }
 ```
@@ -180,7 +180,7 @@ client.json
     "run_type": "client",
     "local_addr": "127.0.0.1",
     "local_port": 1080,
-    "remote_addr": "www.your_awesome_domain_name.com",
+    "remote_addr": "www.your-awesome-domain-name.com",
     "remote_port": 443,
     "password": [
         "your_awesome_password"
@@ -196,7 +196,7 @@ client.yaml
 run-type: client
 local-addr: 127.0.0.1
 local-port: 1080
-remote-addr: www.your_awesome_domain_name.com
+remote-addr: www.your-awesome-domain_name.com
 remote-port: 443
 password:
   - your_awesome_password
@@ -214,8 +214,8 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 ...
 "websocket": {
     "enabled": true,
-    "path": "/im_a_url_path",
-    "hostname": "www.your_awesome_domain_name.com"
+    "path": "/your-websocket-path",
+    "hostname": "www.your-awesome-domain_name.com"
 }
 ```
 
@@ -223,12 +223,11 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 可以省略```hostname```, 但是服务器和客户端的```path```必须一致。服务器开启Websocket支持后可以同时支持Websocket和一般Trojan流量，未配置Websocket选项的客户端依然可以正常使用。
 
-由于Trojan-GFW版本并不支持Websocket，因此，虽然开启了Websocket支持的Trojan-Go服务端可以兼容所有客户端，但是如果要使用Websocket承载流量，请确保双方都使用Trojan-Go。
+由于Trojan并不支持Websocket，因此，虽然开启了Websocket支持的Trojan-Go服务端可以兼容所有客户端，但是如果要使用Websocket承载流量，请确保双方都使用Trojan-Go。
 
 <a name="多路复用"></a>
 
 ### 多路复用
-
 
 在很差的网络条件下，一次TLS握手可能会花费很多时间。
 
@@ -296,7 +295,7 @@ Trojan-Go允许对Trojan协议基于Shadowsocks AEAD进行加密，以保证Webs
 ...
 "shadowsocks": {
     "enabled": true,
-    "password": "my_password"
+    "password": "my-password"
 }
 ```
 
@@ -374,8 +373,6 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full"
 [v2ray](https://github.com/v2ray/)
 
 [smux](https://github.com/xtaci/smux)
-
-[lego](https://github.com/go-acme/lego)
 
 [go-tproxy](https://github.com/LiamHaworth/go-tproxy)
 

@@ -34,8 +34,6 @@ weight: 30
   "log_level": 1,
   "log_file": "",
   "password": [],
-  "buffer_size": 32,
-  "dns": [],
   "disable_http_check": false,
   "udp_timeout": 10,
   "ssl": {
@@ -143,17 +141,17 @@ weight: 30
 
 ```log_level```指定日志等级。等级越高，输出的信息越少。合法的值有
 
-- 0输出Debug以上日志（所有日志）
+- 0 输出Debug以上日志（所有日志）
 
-- 1输出Info及以上日志
+- 1 输出Info及以上日志
 
-- 2输出Warning及以上日志
+- 2 输出Warning及以上日志
 
-- 3输出Error及以上日志
+- 3 输出Error及以上日志
 
-- 4输出Fatal及以上日志
+- 4 输出Fatal及以上日志
 
-- 5完全不输出日志
+- 5 完全不输出日志
 
 ```log_file```指定日志输出文件路径。如果未指定则使用标准输出。
 
@@ -161,21 +159,7 @@ weight: 30
 
 ```buffer_size```为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。
 
-```dns```指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOT类型的DNS，查询结果会被缓存五分钟。使用URL格式描述服务器，例如
-
-- "udp://1.1.1.1"，基于UDP的DNS服务器，默认53端口
-
-- "udp://1.1.1.1:53"，与上一项等价
-
-- "1.1.1.1"，与上一项等价
-
-- "tcp://1.1.1.1"，基于TCP的DNS服务器，默认53端口
-
-- "dot://1.1.1.1"，基于DOT(DNS Over TLS)的DNS服务器，默认853端口
-
-使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。
-
-```disable_http_check```是否禁用HTTP可用性检查。
+```disable_http_check```是否禁用HTTP伪装服务器可用性检查。
 
 ```udp_timeout``` UDP会话超时时间。
 
@@ -189,15 +173,7 @@ weight: 30
 
 ```sni```指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let'sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
 
-```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议**。
-
-```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
-
-```cipher```TLS使用的密码学套件。```cipher13``字段与此字段合并。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔，按优先顺序排列。Go的TLS库中弃用了TLS1.2中部分不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
-
-```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔，按优先顺序排列。
-
-```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
+```fingerprint```用于指定客户端TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
 
 - ""，不使用指纹伪造
 
@@ -207,7 +183,14 @@ weight: 30
 
 - "ios"，伪造iOS指纹
 
-一旦指纹的值被设置，```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。
+一旦指纹的值被设置，客户端的```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。
+```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议**。
+
+```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
+
+```cipher```TLS使用的密码学套件。```cipher13``字段与此字段合并。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔，按优先顺序排列。Go的TLS库中弃用了TLS1.2中部分不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
+
+```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔，按优先顺序排列。
 
 ```plain_http_response```指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 

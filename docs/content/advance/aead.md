@@ -4,7 +4,7 @@ draft: false
 weight: 8
 ---
 
-### 注意，Trojan-GFW版本不支持这个特性
+### 注意，Trojan不支持这个特性
 
 Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要再次加密Trojan流量。但是，某些场景下，你可能无法保证TLS隧道的安全性：
 

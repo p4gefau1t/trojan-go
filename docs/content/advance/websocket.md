@@ -4,7 +4,7 @@ draft: false
 weight: 2
 ---
 
-### 注意，Trojan-GFW版本不支持这个特性
+### 注意，Trojan不支持这个特性
 
 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。
 
@@ -40,7 +40,7 @@ Trojan协议本身不带加密，安全性依赖外层的TLS。但流量一旦�
     ],
     "websocket": {
         "enabled": true,
-        "path": "/imaurlpath",
+        "path": "/your-websocket-path",
         "hostname": "www.your_awesome_domain_name.com"
     },
     "shadowsocks": {
