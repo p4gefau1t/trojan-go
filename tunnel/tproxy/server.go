@@ -13,7 +13,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
-	"github.com/p4gefau1t/trojan-go/tunnel/dokodemo"
 )
 
 const MaxPacketSize = 1024 * 8
@@ -24,7 +23,7 @@ type Server struct {
 	packetChan  chan tunnel.PacketConn
 	timeout     time.Duration
 	mappingLock sync.RWMutex
-	mapping     map[string]*dokodemo.PacketConn
+	mapping     map[string]*PacketConn
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
@@ -100,74 +99,81 @@ func (s *Server) packetDispatchLoop() {
 		}
 
 		s.mappingLock.RLock()
-		conn, found := s.mapping[info.src.String()+"|"+info.dst.String()]
+		conn, found := s.mapping[info.src.String()]
 		s.mappingLock.RUnlock()
 
 		if !found {
-			address, err := tunnel.NewAddressFromAddr("udp", info.dst.String())
-			common.Must(err)
 			ctx, cancel := context.WithCancel(s.ctx)
-			conn = &dokodemo.PacketConn{
-				Input:      make(chan []byte, 128),
-				Output:     make(chan []byte, 128),
+			conn = &PacketConn{
+				input:      make(chan *packetInfo, 128),
+				output:     make(chan *packetInfo, 128),
 				PacketConn: s.udpListener,
-				Context:    ctx,
-				Cancel:     cancel,
-				Source:     info.src,
-				M: &tunnel.Metadata{
-					Address: address,
-				},
+				ctx:        ctx,
+				cancel:     cancel,
+				src:        info.src,
 			}
 
 			s.mappingLock.Lock()
-			s.mapping[info.src.String()+"|"+info.dst.String()] = conn
+			s.mapping[info.src.String()] = conn
 			s.mappingLock.Unlock()
 
 			log.Info("new tproxy udp session from", info.src.String(), "metadata", info.dst.String())
 			s.packetChan <- conn
 
-			go func(conn *dokodemo.PacketConn) {
+			go func(conn *PacketConn) {
 				defer conn.Close()
-				back, err := DialUDP(
-					"udp",
-					&net.UDPAddr{
-						IP:   conn.M.IP,
-						Port: conn.M.Port,
-					},
-					conn.Source.(*net.UDPAddr),
-				)
-				if err != nil {
-					log.Error(common.NewError("failed to dial tproxy udp").Base(err))
-					return
-				}
-				defer back.Close()
-				log.Debug("udp packet daemon", conn.Source.String(), conn.M.String())
+				log.Debug("udp packet daemon for", conn.src.String())
 				for {
 					select {
-					case payload := <-conn.Output:
-						n, err := back.Write(payload)
+					case info := <-conn.output:
+						if info.metadata.AddressType != tunnel.IPv4 &&
+							info.metadata.AddressType != tunnel.IPv6 {
+							log.Error("tproxy invalid response metadata address", info.metadata)
+							continue
+						}
+						back, err := DialUDP(
+							"udp",
+							&net.UDPAddr{
+								IP:   info.metadata.IP,
+								Port: info.metadata.Port,
+							},
+							conn.src.(*net.UDPAddr),
+						)
+						if err != nil {
+							log.Error(common.NewError("failed to dial tproxy udp").Base(err))
+							return
+						}
+						n, err := back.Write(info.payload)
 						if err != nil {
 							log.Error(common.NewError("tproxy udp write error").Base(err))
 							return
 						}
-						log.Debug("recv packet send back to", conn.Source.String(), "payload", len(payload), "sent", n)
+						log.Debug("recv packet, send back to", conn.src, "payload", len(info.payload), "sent", n)
+						back.Close()
 					case <-s.ctx.Done():
 						log.Debug("exiting")
 						return
 					case <-time.After(s.timeout):
 						s.mappingLock.Lock()
-						delete(s.mapping, conn.Source.String()+"|"+conn.M.String())
+						delete(s.mapping, conn.src.String())
 						s.mappingLock.Unlock()
-						log.Debug("packet session timeout. closed", conn.Source.String())
+						log.Debug("packet session ", conn.src.String(), "timeout")
 						return
 					}
 				}
 			}(conn)
 		}
 
+		newInfo := &packetInfo{
+			metadata: &tunnel.Metadata{
+				Address: tunnel.NewAddressFromHostPort("udp", info.dst.IP.String(), info.dst.Port),
+			},
+			payload: info.payload,
+		}
+
 		select {
-		case conn.Input <- info.payload:
-			log.Debug("sending tproxy packet payload to", info.dst.String(), "size", len(info.payload))
+		case conn.input <- newInfo:
+			log.Debug("tproxy packet sent with metadata", newInfo.metadata, "size", len(info.payload))
 		default:
 			// if we got too many packets, simply drop it
 			log.Warn("tproxy udp relay queue full!")
@@ -215,7 +221,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		ctx:         ctx,
 		cancel:      cancel,
 		timeout:     time.Duration(cfg.UDPTimeout) * time.Second,
-		mapping:     make(map[string]*dokodemo.PacketConn),
+		mapping:     make(map[string]*PacketConn),
 		packetChan:  make(chan tunnel.PacketConn, 32),
 	}
 	go server.packetDispatchLoop()

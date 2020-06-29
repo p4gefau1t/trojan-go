@@ -43,32 +43,32 @@ func (s *Server) dispatchLoop() {
 		log.Debug("udp packet from", addr)
 		s.mappingLock.Lock()
 		if conn, found := s.mapping[addr.String()]; found {
-			conn.Input <- buf[:n]
+			conn.input <- buf[:n]
 			s.mappingLock.Unlock()
 			continue
 		}
 		ctx, cancel := context.WithCancel(s.ctx)
 		conn := &PacketConn{
-			Input:      make(chan []byte, 16),
-			Output:     make(chan []byte, 16),
-			M:          fixedMetadata,
-			Source:     addr,
+			input:      make(chan []byte, 16),
+			output:     make(chan []byte, 16),
+			metadata:   fixedMetadata,
+			src:        addr,
 			PacketConn: s.udpListener,
-			Context:    ctx,
-			Cancel:     cancel,
+			ctx:        ctx,
+			cancel:     cancel,
 		}
 		s.mapping[addr.String()] = conn
 		s.mappingLock.Unlock()
 
-		conn.Input <- buf[:n]
+		conn.input <- buf[:n]
 		s.packetChan <- conn
 
 		go func(conn *PacketConn) {
 			for {
 				select {
-				case payload := <-conn.Output:
+				case payload := <-conn.output:
 					// "Multiple goroutines may invoke methods on a Conn simultaneously."
-					_, err := s.udpListener.WriteTo(payload, conn.Source)
+					_, err := s.udpListener.WriteTo(payload, conn.src)
 					if err != nil {
 						log.Error(common.NewError("dokodemo udp write error").Base(err))
 						return
@@ -77,7 +77,7 @@ func (s *Server) dispatchLoop() {
 					return
 				case <-time.After(s.timeout):
 					s.mappingLock.Lock()
-					delete(s.mapping, conn.Source.String())
+					delete(s.mapping, conn.src.String())
 					s.mappingLock.Unlock()
 					conn.Close()
 					log.Debug("closing timeout packetConn")
