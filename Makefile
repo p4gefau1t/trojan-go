@@ -24,16 +24,18 @@ install: $(BIN_DIR)/$(NAME) geoip.dat geosite.dat
 	mkdir -p /usr/share/$(NAME)
 	cp example/*.json /etc/$(NAME)
 	cp $(BIN_DIR)/$(NAME) /usr/bin/$(NAME)
-	cp example/$(NAME).service /etc/systemd/system
-	cp example/$(NAME)@.service /etc/systemd/system
+	cp example/$(NAME).service /usr/lib/systemd/system/
+	cp example/$(NAME)@.service /usr/lib/systemd/system/
+	systemctl daemon-reload
 	cp geosite.dat /usr/share/$(NAME)/geosite.dat
 	cp geoip.dat /usr/share/$(NAME)/geoip.dat
 	ln -fs /usr/share/$(NAME)/geoip.dat /usr/bin/
 	ln -fs /usr/share/$(NAME)/geosite.dat /usr/bin/
 
 uninstall:
-	rm /etc/systemd/system/$(NAME).service
-	rm /etc/systemd/system/$(NAME)@.service
+	rm /usr/lib/systemd/system/$(NAME).service
+	rm /usr/lib/systemd/system/$(NAME)@.service
+	systemctl daemon-reload
 	rm /usr/bin/$(NAME)
 	rm -rd /etc/$(NAME)
 	rm -rd /usr/share/$(NAME)

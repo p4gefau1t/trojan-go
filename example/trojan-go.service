@@ -9,7 +9,7 @@ Type=simple
 User=nobody
 ExecStart=/usr/bin/trojan-go -config /etc/trojan-go/config.json
 Restart=on-failure
-RestartSec=10
+RestartSec=10s
 
 [Install]
 WantedBy=multi-user.target
