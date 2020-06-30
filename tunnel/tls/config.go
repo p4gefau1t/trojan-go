@@ -32,8 +32,7 @@ type TLSConfig struct {
 	Curves               string   `json:"curves" yaml:"curves"`
 	Fingerprint          string   `json:"fingerprint" yaml:"fingerprint"`
 	KeyLogPath           string   `json:"key_log" yaml:"key-log"`
-	KeyBytes             []byte   `json:"key_bytes" yaml:"key-bytes"`
-	CertBytes            []byte   `json:"cert_bytes" yaml:"cert-bytes"`
+	CertCheckRate        int      `json:"cert_check_rate" yaml:"cert-check-rate"`
 }
 
 func init() {

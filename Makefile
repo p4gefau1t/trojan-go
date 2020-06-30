@@ -11,7 +11,7 @@ normal: clean
 	$(GOBUILD)
 
 clean:
-	-rm -frd $(BIN_DIR)
+	-rm -rf $(BIN_DIR)
 
 geoip.dat:
 	wget https://github.com/v2ray/geoip/raw/release/geoip.dat

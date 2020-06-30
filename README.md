@@ -50,6 +50,8 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 
 - Socks5/HTTP代理自动适配
 
+- 基于tproxy的透明代理(TCP/UDP)
+
 - 多平台和多操作系统支持，无特殊依赖
 
 - 基于多路复用(smux)降低延迟，提升并发性能
@@ -62,9 +64,9 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 
 - TLS指纹伪造，绕过GFW针对TLS Client Hello的特征识别
 
-- 基于gRPC的API支持，支持动态用户管理和流量速度限制
+- 基于gRPC的API支持，支持动态用户管理和流量速度限制等
 
-- 可插拔传输层，可将TLS替换为其他协议或明文传输。同时有完整的Shadowsocks混淆插件支持。
+- 可插拔传输层，可将TLS替换为其他协议或明文传输。同时有完整的Shadowsocks混淆插件支持
 
 - 支持对人类更友好的YAML配置文件格式
 
@@ -215,7 +217,7 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 "websocket": {
     "enabled": true,
     "path": "/your-websocket-path",
-    "hostname": "www.your-awesome-domain_name.com"
+    "hostname": "www.your-awesome-domain-name.com"
 }
 ```
 

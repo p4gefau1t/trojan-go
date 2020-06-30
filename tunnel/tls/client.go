@@ -146,16 +146,9 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			}
 			log.Trace("issuer:", cert.Issuer, "subject:", cert.Subject)
 		}
-	} else if len(cfg.TLS.CertBytes) != 0 {
-		client.ca = x509.NewCertPool()
-		ok := client.ca.AppendCertsFromPEM(cfg.TLS.CertBytes)
-		if !ok {
-			log.Warn("invalid cert list")
-		}
-		log.Info("using custom cert (data)")
 	}
 
-	if cfg.TLS.CertPath == "" && len(cfg.TLS.CertBytes) == 0 {
+	if cfg.TLS.CertPath == "" {
 		log.Info("cert is unspecified, using default ca list")
 	}
 

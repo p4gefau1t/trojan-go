@@ -219,7 +219,7 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 		}
 	}
 	if spec == nil {
-		return nil, common.NewError("Invalid fingerprint:" + name)
+		return nil, common.NewError("invalid fingerprint:" + name)
 	}
 	if websocket {
 		for i := range spec.Extensions {

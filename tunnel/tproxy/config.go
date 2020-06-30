@@ -13,7 +13,7 @@ type Config struct {
 func init() {
 	config.RegisterConfigCreator(Name, func() interface{} {
 		return &Config{
-			UDPTimeout: 10,
+			UDPTimeout: 60,
 		}
 	})
 }

@@ -6,9 +6,13 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.2
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/refraction-networking/utls v0.0.0-20200601200209-ada0bb9b38a0
 	github.com/shadowsocks/go-shadowsocks2 v0.1.0
 	github.com/smartystreets/goconvey v1.6.4
+	github.com/txthinking/runnergroup v0.0.0-20200327135940-540a793bb997 // indirect
+	github.com/txthinking/socks5 v0.0.0-20200531111549-252709fcb919
+	github.com/txthinking/x v0.0.0-20200330144832-5ad2416896a9 // indirect
 	github.com/xtaci/smux v1.5.14
 	go.starlark.net v0.0.0-20200619143648-50ca820fafb9 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9

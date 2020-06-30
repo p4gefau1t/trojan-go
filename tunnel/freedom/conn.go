@@ -1,18 +1,31 @@
 package freedom
 
 import (
+	"bytes"
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/txthinking/socks5"
 )
 
+const MaxPacketSize = 1024 * 8
+
 type Conn struct {
+	socksClient *socks5.Client
 	net.Conn
 }
 
 func (c *Conn) Metadata() *tunnel.Metadata {
 	return nil
+}
+
+func (c *Conn) Close() error {
+	if c.socksClient != nil {
+		c.socksClient.Close()
+	}
+	return c.Conn.Close()
 }
 
 type PacketConn struct {
@@ -49,4 +62,43 @@ func (c *PacketConn) WriteTo(p []byte, addr net.Addr) (int, error) {
 		Port: addr.(*tunnel.Address).Port,
 	}
 	return c.WriteToUDP(p, udpAddr)
+}
+
+type SocksPacketConn struct {
+	net.PacketConn
+	socksAddr *net.UDPAddr
+}
+
+func (c *SocksPacketConn) WriteWithMetadata(payload []byte, metadata *tunnel.Metadata) (int, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxPacketSize))
+	buf.Write([]byte{0, 0, 0}) //RSV, FRAG
+	common.Must(metadata.Address.WriteTo(buf))
+	buf.Write(payload)
+	_, err := c.PacketConn.WriteTo(buf.Bytes(), c.socksAddr)
+	if err != nil {
+		return 0, err
+	}
+	log.Debug("sent udp packet to " + c.socksAddr.String() + " with metadata " + metadata.String())
+	return len(payload), nil
+}
+
+func (c *SocksPacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, error) {
+	buf := make([]byte, MaxPacketSize)
+	n, from, err := c.PacketConn.ReadFrom(buf)
+	if err != nil {
+		return 0, nil, err
+	}
+	log.Debug("recv udp packet from " + from.String())
+	addr := new(tunnel.Address)
+	r := bytes.NewBuffer(buf[3:n])
+	if err := addr.ReadFrom(r); err != nil {
+		return 0, nil, common.NewError("socks5 failed to parse addr in the packet").Base(err)
+	}
+	length, err := r.Read(payload)
+	if err != nil {
+		return 0, nil, err
+	}
+	return length, &tunnel.Metadata{
+		Address: addr,
+	}, nil
 }
