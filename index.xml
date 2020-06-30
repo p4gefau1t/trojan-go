@@ -16,7 +16,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/mux/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用多路复用提升网络并发性能。 Trojan协议基于TLS。在一个TLS安全</description>
+      <description>注意，Trojan不支持这个特性 Trojan-Go支持使用多路复用提升网络并发性能。 Trojan协议基于TLS。在一个TLS安全连接建立之前</description>
     </item>
     
     <item>
@@ -34,7 +34,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/websocket/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量</description>
+      <description>注意，Trojan不支持这个特性 Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/router/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go内建的路由模块可以帮助你实现国内直连，即客户端对于国内网站不经过代理，直接连接</description>
+      <description>注意，Trojan不支持这个特性 Trojan-Go内建的路由模块可以帮助你实现国内直连，即客户端对于国内网站不经过代理，直接连接。 路由模块在</description>
     </item>
     
     <item>
@@ -70,7 +70,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/plugin/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软</description>
+      <description>注意，Trojan不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软件作为传输层</description>
     </item>
     
     <item>
@@ -79,7 +79,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/aead/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要</description>
+      <description>注意，Trojan不支持这个特性 Trojan协议本身无加密，其安全性依赖于下层的TLS。在一般情况下，TLS安全性很好，并不需要再次加密Tr</description>
     </item>
     
     <item>
@@ -88,7 +88,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go允许高级用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控</description>
+      <description>注意，Trojan不支持这个特性 Trojan-Go允许高级用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控制，允许用户</description>
     </item>
     
     <item>
@@ -97,7 +97,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://p4gefau1t.github.io/trojan-go/advance/api/</guid>
-      <description>注意，Trojan-GFW版本不支持这个特性 Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度</description>
+      <description>注意，Trojan不支持这个特性 Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接</description>
     </item>
     
     <item>
@@ -107,6 +107,15 @@
       
       <guid>https://p4gefau1t.github.io/trojan-go/developer/build/</guid>
       <description>编译需要Go版本号高于1.14.x，请在编译前确认你的编译器版本。推荐使用snap安装和更新go。 编译方式非常简单，可以使用Makefile</description>
+    </item>
+    
+    <item>
+      <title>透明代理</title>
+      <link>https://p4gefau1t.github.io/trojan-go/advance/nat/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/advance/nat/</guid>
+      <description>注意，Trojan不完全支持这个特性（UDP） Trojan-Go支持基于tproxy的透明TCP/UDP代理。 要开启透明代理模式，将一份正确</description>
     </item>
     
     <item>

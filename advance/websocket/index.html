@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="使用Websocket进行CDN转发和抵抗中间人攻击" />
-<meta property="og:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量" />
+<meta property="og:description" content="注意，Trojan不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/websocket/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="使用Websocket进行CDN转发和抵抗中间人攻击"/>
-<meta name="twitter:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量"/>
+<meta name="twitter:description" content="注意，Trojan不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能"/>
 <meta itemprop="name" content="使用Websocket进行CDN转发和抵抗中间人攻击">
-<meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量">
+<meta itemprop="description" content="注意，Trojan不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能">
 
-<meta itemprop="wordCount" content="712">
+<meta itemprop="wordCount" content="706">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -51,7 +51,7 @@
 </div>
 <div class="content-container">
 <main><h1>使用Websocket进行CDN转发和抵抗中间人攻击</h1>
-<h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
+<h3 id="注意trojan不支持这个特性">注意，Trojan不支持这个特性</h3>
 <p>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。</p>
 <p>Trojan协议本身不带加密，安全性依赖外层的TLS。但流量一旦经过CDN，TLS对CDN是透明的。其服务提供者可以对TLS的明文内容进行审查。<strong>如果你使用的是不可信任的CDN（任何在中国大陆注册备案的CDN服务均应被视为不可信任），请务必开启Shadowsocks AEAD对Webosocket流量进行加密，以避免遭到识别和审查。</strong></p>
 <p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>hostname</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项:</p>
@@ -75,7 +75,7 @@
     ],
     <span style="color:#f92672">&#34;websocket&#34;</span>: {
         <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
-        <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/imaurlpath&#34;</span>,
+        <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/your-websocket-path&#34;</span>,
         <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>
     },
     <span style="color:#f92672">&#34;shadowsocks&#34;</span>: {
@@ -117,6 +117,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nat/">透明代理</a></li>
 </ul>
   
 </li>

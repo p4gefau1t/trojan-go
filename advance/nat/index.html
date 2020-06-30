@@ -3,11 +3,11 @@
 <head><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>SimpleSocks协议 - Trojan-Go Docs</title>
+<title>透明代理 - Trojan-Go Docs</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW.">
 <meta name="generator" content="Hugo 0.69.2" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
-<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">
+<link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/advance/nat/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
 <script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/chroma.min.css">
@@ -16,21 +16,21 @@
 <script src="https://p4gefau1t.github.io/trojan-go/js/bundle.js"></script><style>
 :root {}
 </style>
-<meta property="og:title" content="SimpleSocks协议" />
-<meta property="og:description" content="SimpleSocks协议是无鉴权机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove" />
+<meta property="og:title" content="透明代理" />
+<meta property="og:description" content="注意，Trojan不完全支持这个特性（UDP） Trojan-Go支持基于tproxy的透明TCP/UDP代理。 要开启透明代理模式，将一份正确" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/" />
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/nat/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 <meta property="og:site_name" content="Trojan-Go Docs" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
-<meta name="twitter:title" content="SimpleSocks协议"/>
-<meta name="twitter:description" content="SimpleSocks协议是无鉴权机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove"/>
-<meta itemprop="name" content="SimpleSocks协议">
-<meta itemprop="description" content="SimpleSocks协议是无鉴权机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的ove">
+<meta name="twitter:title" content="透明代理"/>
+<meta name="twitter:description" content="注意，Trojan不完全支持这个特性（UDP） Trojan-Go支持基于tproxy的透明TCP/UDP代理。 要开启透明代理模式，将一份正确"/>
+<meta itemprop="name" content="透明代理">
+<meta itemprop="description" content="注意，Trojan不完全支持这个特性（UDP） Trojan-Go支持基于tproxy的透明TCP/UDP代理。 要开启透明代理模式，将一份正确">
 
-<meta itemprop="wordCount" content="204">
+<meta itemprop="wordCount" content="581">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -50,20 +50,44 @@
 </nav>
 </div>
 <div class="content-container">
-<main><h1>SimpleSocks协议</h1>
-<p>SimpleSocks协议是无鉴权机制的简单代理协议，本质上是去除了sha224的Trojan协议。使用该协议的目的是减少多路复用时的overhead。</p>
-<p>只有启用多路复用之后，被复用的连接才会使用这个协议。也即SimpleSocks总是被SMux承载。</p>
-<p>SimpleSocks甚至比Socks5更简单，下面是头部结构。</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">+-----+------+----------+----------+-----------+
-| CMD | ATYP | DST.ADDR | DST.PORT |  Payload  |
-+-----+------+----------+----------+-----------+
-|  1  |  1   | Variable |    2     |  Variable |
-+-----+------+----------+----------+-----------+
-</code></pre></div><p>各字段定义与Trojan协议相同，不再赘述。</p>
-<div class="edit-meta">
+<main><h1>透明代理</h1>
+<h3 id="注意trojan不完全支持这个特性udp">注意，Trojan不完全支持这个特性（UDP）</h3>
+<p>Trojan-Go支持基于tproxy的透明TCP/UDP代理。</p>
+<p>要开启透明代理模式，将一份正确的客户端配置（配置方式参见基本配置部分）其中的<code>run_type</code>修改为<code>nat</code>，并按照需求修改本地监听端口即可。</p>
+<p>之后需要添加iptables规则。这里假定你的网关具有两个网卡，下面这份配置将其中一个网卡（局域网）的入站包转交给Trojan-Go，由Trojan-Go通过隧道，通过另一个网卡（互联网）发送到远端Trojan-Go服务器。你需要将下面的<code>$SERVER_IP</code>，<code>$TROJAN_GO_PORT</code>，<code>$INTERFACE</code>替换为自己的配置。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#75715e"># 新建TROJAN_GO链</span>
+iptables -t mangle -N TROJAN_GO
 
-<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/developer/simplesocks.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/developer/websocket/" title="Websocket"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - Websocket</a>
-<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/api/" title="API开发">Next - API开发 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+<span style="color:#75715e"># 绕过Trojan-Go服务器地址</span>
+iptables -t mangle -A TROJAN_GO -d $SERVER_IP -j RETURN
+
+<span style="color:#75715e"># 绕过私有地址</span>
+iptables -t mangle -A TROJAN_GO -d 0.0.0.0/8 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 10.0.0.0/8 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 127.0.0.0/8 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 169.254.0.0/16 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 172.16.0.0/12 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 192.168.0.0/16 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 224.0.0.0/4 -j RETURN
+iptables -t mangle -A TROJAN_GO -d 240.0.0.0/4 -j RETURN
+
+<span style="color:#75715e"># 未命中上文的规则的包，打上标记</span>
+iptables -t mangle -A TROJAN_GO -j TPROXY -p tcp --on-port $TROJAN_GO_PORT --tproxy-mark 0x01/0x01
+iptables -t mangle -A TROJAN_GO -j TPROXY -p udp --on-port $TROJAN_GO_PORT --tproxy-mark 0x01/0x01
+
+<span style="color:#75715e"># 从$INTERFACE网卡流入的所有TCP/UDP包，跳转TROJAN_GO链</span>
+iptables -t mangle -A PREROUTING -p tcp -i $INTERFACE -j TROJAN_GO
+iptables -t mangle -A PREROUTING -p udp -i $INTERFACE -j TROJAN_GO
+
+<span style="color:#75715e"># 添加路由，打上标记的包重新进入本地回环</span>
+ip route add local default dev lo table <span style="color:#ae81ff">100</span>
+ip rule add fwmark <span style="color:#ae81ff">1</span> lookup <span style="color:#ae81ff">100</span>
+</code></pre></div><p>配置完成后以root权限启动Trojan-Go客户端：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">sudo trojan-go
+</code></pre></div><div class="edit-meta">
+
+<br><a href="https://github.com/p4gefau1t/trojan-go/docs/edit/master/content/advance/nat.md" class="edit-page"><i class="fas fa-pen-square"></i> Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://p4gefau1t.github.io/trojan-go/advance/api/" title="使用API动态管理用户"><i class="fas fa-arrow-left" aria-hidden="true"></i> Prev - 使用API动态管理用户</a>
+<a class="nav nav-next" href="https://p4gefau1t.github.io/trojan-go/developer/" title="实现细节和开发指南">Next - 实现细节和开发指南 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
 </nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
 </footer>
 </main><div class="sidebar">
@@ -82,7 +106,7 @@
   
 </li>
 
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
+<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/advance/">高级配置</a>
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/mux/">启用多路复用提升网络并发性能</a></li>
@@ -94,12 +118,12 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
-<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nat/">透明代理</a></li>
+<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/advance/nat/">透明代理</a></li>
 </ul>
   
 </li>
 
-<li class="parent"><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/">实现细节和开发指南</a>
   
 <ul class="sub-menu">
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/overview/">基本介绍</a></li>
@@ -107,7 +131,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/trojan/">Trojan协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/mux/">多路复用</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/websocket/">Websocket</a></li>
-<li class="active"><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
 </ul>

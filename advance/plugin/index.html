@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="使用Shadowsocks插件/可插拔传输层" />
-<meta property="og:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软" />
+<meta property="og:description" content="注意，Trojan不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软件作为传输层" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/advance/plugin/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="使用Shadowsocks插件/可插拔传输层"/>
-<meta name="twitter:description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软"/>
+<meta name="twitter:description" content="注意，Trojan不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软件作为传输层"/>
 <meta itemprop="name" content="使用Shadowsocks插件/可插拔传输层">
-<meta itemprop="description" content="注意，Trojan-GFW版本不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软">
+<meta itemprop="description" content="注意，Trojan不支持这个特性 Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软件作为传输层">
 
-<meta itemprop="wordCount" content="906">
+<meta itemprop="wordCount" content="900">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -51,7 +51,7 @@
 </div>
 <div class="content-container">
 <main><h1>使用Shadowsocks插件/可插拔传输层</h1>
-<h3 id="注意trojan-gfw版本不支持这个特性">注意，Trojan-GFW版本不支持这个特性</h3>
+<h3 id="注意trojan不支持这个特性">注意，Trojan不支持这个特性</h3>
 <p>Trojan-Go支持可插拔的传输层。原则上，Trojan-Go可以使用任何有TCP隧道功能的软件作为传输层，如v2ray、shadowsocks、kcp等。同时，Trojan-Go也兼容Shadowsocks的SIP003插件标准，如GoQuiet，v2ray-plugin等。也可以使用Tor的传输层插件，如obfs4，meek等。</p>
 <p>你可以使用这些插件，替换Trojan-Go的TLS传输层。</p>
 <p>开启可插拔传输层插件后，Trojan-Go客户端将会把<strong>流量明文</strong>直接传输给客户端本地的插件处理。由客户端插件负责进行加密和混淆，并将流量传输给服务端的插件。服务端的插件接收到流量，进行解密和解析，将<strong>流量明文</strong>传输给服务端本地的Trojan-Go服务端。</p>
@@ -113,6 +113,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nat/">透明代理</a></li>
 </ul>
   
 </li>

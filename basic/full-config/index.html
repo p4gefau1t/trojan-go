@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="7084">
+<meta itemprop="wordCount" content="6706">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -82,8 +82,6 @@
   <span style="color:#f92672">&#34;log_level&#34;</span>: <span style="color:#ae81ff">1</span>,
   <span style="color:#f92672">&#34;log_file&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
   <span style="color:#f92672">&#34;password&#34;</span>: [],
-  <span style="color:#f92672">&#34;buffer_size&#34;</span>: <span style="color:#ae81ff">32</span>,
-  <span style="color:#f92672">&#34;dns&#34;</span>: [],
   <span style="color:#f92672">&#34;disable_http_check&#34;</span>: <span style="color:#66d9ef">false</span>,
   <span style="color:#f92672">&#34;udp_timeout&#34;</span>: <span style="color:#ae81ff">10</span>,
   <span style="color:#f92672">&#34;ssl&#34;</span>: {
@@ -186,58 +184,35 @@
 <p><code>log_level</code>指定日志等级。等级越高，输出的信息越少。合法的值有</p>
 <ul>
 <li>
-<p>0输出Debug以上日志（所有日志）</p>
+<p>0 输出Debug以上日志（所有日志）</p>
 </li>
 <li>
-<p>1输出Info及以上日志</p>
+<p>1 输出Info及以上日志</p>
 </li>
 <li>
-<p>2输出Warning及以上日志</p>
+<p>2 输出Warning及以上日志</p>
 </li>
 <li>
-<p>3输出Error及以上日志</p>
+<p>3 输出Error及以上日志</p>
 </li>
 <li>
-<p>4输出Fatal及以上日志</p>
+<p>4 输出Fatal及以上日志</p>
 </li>
 <li>
-<p>5完全不输出日志</p>
+<p>5 完全不输出日志</p>
 </li>
 </ul>
 <p><code>log_file</code>指定日志输出文件路径。如果未指定则使用标准输出。</p>
 <p><code>password</code>可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。</p>
 <p><code>buffer_size</code>为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。</p>
-<p><code>dns</code>指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOT类型的DNS，查询结果会被缓存五分钟。使用URL格式描述服务器，例如</p>
-<ul>
-<li>
-<p>&ldquo;udp://1.1.1.1&rdquo;，基于UDP的DNS服务器，默认53端口</p>
-</li>
-<li>
-<p>&ldquo;udp://1.1.1.1:53&rdquo;，与上一项等价</p>
-</li>
-<li>
-<p>&ldquo;1.1.1.1&rdquo;，与上一项等价</p>
-</li>
-<li>
-<p>&ldquo;tcp://1.1.1.1&rdquo;，基于TCP的DNS服务器，默认53端口</p>
-</li>
-<li>
-<p>&ldquo;dot://1.1.1.1&rdquo;，基于DOT(DNS Over TLS)的DNS服务器，默认853端口</p>
-</li>
-</ul>
-<p>使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。</p>
-<p><code>disable_http_check</code>是否禁用HTTP可用性检查。</p>
+<p><code>disable_http_check</code>是否禁用HTTP伪装服务器可用性检查。</p>
 <p><code>udp_timeout</code> UDP会话超时时间。</p>
 <h3 id="ssl选项"><code>ssl</code>选项</h3>
 <p><code>verify</code>表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
 <p><code>verify_hostname</code>表示服务端是否校验客户端提供的SNI与服务端设置的一致性。如果服务端SNI字段留空，认证将被强制关闭。</p>
 <p>服务端必须填入<code>cert</code>和<code>key</code>，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写<code>cert</code>。如果使用自签名或者自签发的证书，应当在的<code>cert</code>处填入服务器证书文件，否则可能导致校验失败。</p>
 <p><code>sni</code>指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let&rsquo;sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
-<p><code>alpn</code>为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。<strong>如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议</strong>。</p>
-<p><code>prefer_server_cipher</code>客户端是否偏好选择服务端在协商中提供的密码学套件。</p>
-<p><code>cipher</code>TLS使用的密码学套件。```cipher13``字段与此字段合并。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔，按优先顺序排列。Go的TLS库中弃用了TLS1.2中部分不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。</p>
-<p><code>curves</code>指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(&quot;:&quot;)分隔，按优先顺序排列。</p>
-<p><code>fingerprint</code>用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用<a href="https://github.com/refraction-networking/utls">utls</a>进行指纹伪造，默认伪造Firefox的指纹。合法的值有</p>
+<p><code>fingerprint</code>用于指定客户端TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用<a href="https://github.com/refraction-networking/utls">utls</a>进行指纹伪造，默认伪造Firefox的指纹。合法的值有</p>
 <ul>
 <li>
 <p>&ldquo;&quot;，不使用指纹伪造</p>
@@ -252,7 +227,11 @@
 <p>&ldquo;ios&rdquo;，伪造iOS指纹</p>
 </li>
 </ul>
-<p>一旦指纹的值被设置，<code>cipher</code>，<code>curves</code>，<code>alpn</code>，<code>session_ticket</code>等有可能影响指纹的字段将使用该指纹的特定设置覆写。</p>
+<p>一旦指纹的值被设置，客户端的<code>cipher</code>，<code>curves</code>，<code>alpn</code>，<code>session_ticket</code>等有可能影响指纹的字段将使用该指纹的特定设置覆写。
+<code>alpn</code>为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。<strong>如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议</strong>。</p>
+<p><code>prefer_server_cipher</code>客户端是否偏好选择服务端在协商中提供的密码学套件。</p>
+<p><code>cipher</code>TLS使用的密码学套件。```cipher13``字段与此字段合并。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。<strong>正常情况下，你应该将其留空或者不填</strong>，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(&quot;:&quot;)分隔，按优先顺序排列。Go的TLS库中弃用了TLS1.2中部分不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。</p>
+<p><code>curves</code>指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(&quot;:&quot;)分隔，按优先顺序排列。</p>
 <p><code>plain_http_response</code>指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用<code>fallback_port</code>而不是该字段。</p>
 <p><code>fallback_addr</code>和<code>fallback_port</code>指服务端TLS握手失败时，trojan-go将该连接重定向到该地址。这是trojan-go的特性，以便更好地隐蔽服务器，抵抗GFW的主动检测，使得服务器的443端口在遭遇非TLS协议的探测时，行为与正常服务器完全一致。当服务器接受了一个连接但无法进行TLS握手时，如果<code>fallback_port</code>不为空，则流量将会被代理至fallback_addr:fallback_port。如果<code>fallback_addr</code>为空，则用<code>remote_addr</code>填充。例如，你可以在本地使用nginx开启一个https服务，当你的服务器443端口被非TLS协议请求时（比如http请求），trojan-go将代理至本地https服务器，nginx将使用http协议明文返回一个400 Bad Request页面。你可以通过使用浏览器访问<code>http://your-domain-name.com:443</code>进行验证。</p>
 <p><code>key_log</code>TLS密钥日志的文件路径。如果填写则开启密钥日志。<strong>记录密钥将破坏TLS的安全性，此项不应该用于除调试以外的其他任何用途。</strong></p>
@@ -440,6 +419,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/aead/">使用Shadowsocks AEAD进行二次加密</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/">自定义协议栈</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/api/">使用API动态管理用户</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/advance/nat/">透明代理</a></li>
 </ul>
   
 </li>
