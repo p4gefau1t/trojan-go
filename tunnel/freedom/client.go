@@ -75,8 +75,9 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 			return nil, common.NewError("freedom recv invalid socks bind addr").Base(err)
 		}
 		return &SocksPacketConn{
-			PacketConn: packetConn,
-			socksAddr:  socksAddr,
+			PacketConn:  packetConn,
+			socksAddr:   socksAddr,
+			socksClient: socksClient,
 		}, nil
 	}
 	network := "udp"

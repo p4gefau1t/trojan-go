@@ -13,19 +13,11 @@ import (
 const MaxPacketSize = 1024 * 8
 
 type Conn struct {
-	socksClient *socks5.Client
 	net.Conn
 }
 
 func (c *Conn) Metadata() *tunnel.Metadata {
 	return nil
-}
-
-func (c *Conn) Close() error {
-	if c.socksClient != nil {
-		c.socksClient.Close()
-	}
-	return c.Conn.Close()
 }
 
 type PacketConn struct {
@@ -66,7 +58,8 @@ func (c *PacketConn) WriteTo(p []byte, addr net.Addr) (int, error) {
 
 type SocksPacketConn struct {
 	net.PacketConn
-	socksAddr *net.UDPAddr
+	socksAddr   *net.UDPAddr
+	socksClient *socks5.Client
 }
 
 func (c *SocksPacketConn) WriteWithMetadata(payload []byte, metadata *tunnel.Metadata) (int, error) {
@@ -101,4 +94,9 @@ func (c *SocksPacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadat
 	return length, &tunnel.Metadata{
 		Address: addr,
 	}, nil
+}
+
+func (c *SocksPacketConn) Close() error {
+	c.socksClient.Close()
+	return c.PacketConn.Close()
 }
