@@ -39,11 +39,15 @@ func (r *Redirector) worker() {
 		select {
 		case redirection := <-r.redirectionChan:
 			handle := func(redirection *Redirection) {
+				if redirection.InboundConn == nil || reflect.ValueOf(redirection.InboundConn).IsNil() {
+					log.Error("nil inbound conn")
+					return
+				}
 				defer redirection.InboundConn.Close()
 				if redirection.Dial == nil {
 					redirection.Dial = defaultDial
 				}
-				if reflect.ValueOf(redirection.RedirectTo).IsNil() {
+				if redirection.RedirectTo == nil || reflect.ValueOf(redirection.RedirectTo).IsNil() {
 					log.Error("nil redirection addr")
 					return
 				}

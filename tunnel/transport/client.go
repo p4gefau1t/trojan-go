@@ -23,7 +23,7 @@ type Client struct {
 
 func (c *Client) Close() error {
 	c.cancel()
-	if c.cmd != nil {
+	if c.cmd != nil && c.cmd.Process != nil {
 		c.cmd.Process.Kill()
 	}
 	return nil

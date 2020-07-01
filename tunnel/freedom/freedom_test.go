@@ -106,4 +106,5 @@ func TestSocks(t *testing.T) {
 
 	fmt.Println(m)
 	packet.Close()
+	client.Close()
 }

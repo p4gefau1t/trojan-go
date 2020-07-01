@@ -16,6 +16,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/adapter"
 	"github.com/p4gefau1t/trojan-go/tunnel/socks"
+	"github.com/txthinking/socks5"
 	"golang.org/x/net/proxy"
 )
 
@@ -117,7 +118,27 @@ func TestSocks(t *testing.T) {
 	if bytes.Equal(recvBuf, payload) {
 		t.Fail()
 	}
-
 	packet.Close()
 	udpConn.Close()
+
+	c, _ := socks5.NewClient(fmt.Sprintf("127.0.0.1:%d", port), "", "", 0, 0, 0)
+
+	conn, err := c.Dial("udp", util.EchoAddr)
+	common.Must(err)
+
+	payload = util.GeneratePayload(4096)
+	recvBuf = make([]byte, 4096)
+
+	conn.Write(payload)
+
+	newPacket, err := s.AcceptPacket(nil)
+	common.Must(err)
+
+	_, m, err = newPacket.ReadWithMetadata(recvBuf)
+	common.Must(err)
+	if m.String() != util.EchoAddr || !bytes.Equal(recvBuf, payload) {
+		t.Fail()
+	}
+
+	s.Close()
 }

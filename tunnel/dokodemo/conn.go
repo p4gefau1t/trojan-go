@@ -22,7 +22,6 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 }
 
 // PacketConn receive packet info from the packet dispatcher
-// TODO implement net.PacketConn
 type PacketConn struct {
 	net.PacketConn
 	metadata *tunnel.Metadata

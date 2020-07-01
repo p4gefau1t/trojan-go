@@ -190,7 +190,7 @@ func (s *Server) packetDispatchLoop() {
 			payload: payload[:length],
 		}:
 		default:
-			log.Warn("socks udp WrappedPacketConn full")
+			log.Warn("socks udp queue full")
 		}
 	}
 }

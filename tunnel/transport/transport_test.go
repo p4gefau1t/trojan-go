@@ -54,3 +54,45 @@ func TestTransport(t *testing.T) {
 	s.Close()
 	c.Close()
 }
+
+func TestClientPlugin(t *testing.T) {
+	clientCfg := &Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  common.PickPort("tcp", "127.0.0.1"),
+		RemoteHost: "127.0.0.1",
+		RemotePort: 12345,
+		TransportPlugin: TransportPluginConfig{
+			Enabled:      true,
+			Type:         "shadowsocks",
+			Command:      "echo $SS_REMOTE_PORT",
+			PluginOption: "",
+			Arg:          nil,
+			Env:          nil,
+		},
+	}
+	ctx := config.WithConfig(context.Background(), Name, clientCfg)
+	c, err := NewClient(ctx, nil)
+	common.Must(err)
+	c.Close()
+}
+
+func TestServerPlugin(t *testing.T) {
+	cfg := &Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  common.PickPort("tcp", "127.0.0.1"),
+		RemoteHost: "127.0.0.1",
+		RemotePort: 12345,
+		TransportPlugin: TransportPluginConfig{
+			Enabled:      true,
+			Type:         "shadowsocks",
+			Command:      "echo $SS_REMOTE_PORT",
+			PluginOption: "",
+			Arg:          nil,
+			Env:          nil,
+		},
+	}
+	ctx := config.WithConfig(context.Background(), Name, cfg)
+	s, err := NewServer(ctx, nil)
+	common.Must(err)
+	s.Close()
+}
