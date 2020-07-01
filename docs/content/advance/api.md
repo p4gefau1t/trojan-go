@@ -94,7 +94,7 @@ Trojan-Go本身集成了API控制功能，也即可以使用一个Trojan-Go实�
 3. 添加一个用户信息
 
     ```shell
-    ./trojan-go -api-addr 127.0.0.1:10000 -api list -add-profile -target-password password
+    ./trojan-go -api-addr 127.0.0.1:10000 -api set -add-profile -target-password password
     ```
 
 4. 删除一个用户信息

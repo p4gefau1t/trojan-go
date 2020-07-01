@@ -38,12 +38,14 @@ func TestRedirector(t *testing.T) {
 		RedirectTo:  tunnel.NewAddressFromHostPort("tcp", util.EchoAddr, util.EchoPort),
 		InboundConn: conn2,
 	})
-	payload := util.GeneratePayload(1024)
-	conn1.Write(payload)
-	buf := make([]byte, 1024)
+	payload := util.GeneratePayload(512)
+	common.Must2(conn1.Write(payload))
+	buf := make([]byte, 512)
 	io.ReadFull(conn2, buf)
 	if !bytes.Equal(buf, payload) {
-		t.Fail()
+		t.Fatal("redir???")
 	}
 	cancel()
+	conn1.Close()
+	conn2.Close()
 }

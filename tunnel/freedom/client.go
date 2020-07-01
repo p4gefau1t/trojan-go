@@ -35,11 +35,11 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 		}
 		dialer, err := proxy.SOCKS5("tcp", c.proxyAddr.String(), auth, proxy.Direct)
 		if err != nil {
-			return nil, common.NewError("freedom failed to init socks5 dialer")
+			return nil, common.NewError("freedom failed to init socks dialer")
 		}
 		conn, err := dialer.Dial("tcp", addr.String())
 		if err != nil {
-			return nil, err
+			return nil, common.NewError("freedom failed to dial target address via socks proxy").Base(err)
 		}
 		return &Conn{
 			Conn: conn,
@@ -69,7 +69,7 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 		if err := socksClient.Negotiate(); err != nil {
 			return nil, common.NewError("freedom failed to negotiate socks").Base(err)
 		}
-		a, addr, port, err := socks5.ParseAddress("0.0.0.0:0")
+		a, addr, port, err := socks5.ParseAddress("1.1.1.1:53") // useless address
 		common.Must(err)
 		resp, err := socksClient.Request(socks5.NewRequest(socks5.CmdUDP, a, addr, port))
 		if err != nil {
