@@ -23,11 +23,11 @@ type Client struct {
 	password     string
 }
 
-func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, error) {
+func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, error) {
 	// forward proxy
 	if c.forwardProxy {
 		var auth *proxy.Auth
-		if c.username != "" && c.password != "" {
+		if c.username != "" {
 			auth = &proxy.Auth{
 				User:     c.username,
 				Password: c.password,
@@ -39,7 +39,7 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 		}
 		conn, err := dialer.Dial("tcp", addr.String())
 		if err != nil {
-			return nil, common.NewError("freedom failed to dial target address via socks proxy").Base(err)
+			return nil, common.NewError("freedom failed to dial target address via socks proxy " + addr.String()).Base(err)
 		}
 		return &Conn{
 			Conn: conn,
@@ -52,7 +52,7 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 	dialer := new(net.Dialer)
 	tcpConn, err := dialer.DialContext(c.ctx, network, addr.String())
 	if err != nil {
-		return nil, err
+		return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
 	}
 
 	tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
