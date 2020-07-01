@@ -12,7 +12,7 @@ type Config struct {
 }
 
 type WebsocketConfig struct {
-	Enabled bool `json:"enabled" yaml:"enabled"'`
+	Enabled bool `json:"enabled" yaml:"enabled"`
 }
 
 type TLSConfig struct {

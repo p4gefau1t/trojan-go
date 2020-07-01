@@ -8,6 +8,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/txthinking/socks5"
+	"golang.org/x/net/proxy"
 )
 
 type Client struct {
@@ -25,9 +26,18 @@ type Client struct {
 func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, error) {
 	// forward proxy
 	if c.forwardProxy {
-		socksClient, err := socks5.NewClient(c.proxyAddr.String(), c.username, c.password, 0, 0, 0)
-		common.Must(err)
-		conn, err := socksClient.Dial("tcp", addr.String())
+		var auth *proxy.Auth
+		if c.username != "" && c.password != "" {
+			auth = &proxy.Auth{
+				User:     c.username,
+				Password: c.password,
+			}
+		}
+		dialer, err := proxy.SOCKS5("tcp", c.proxyAddr.String(), auth, proxy.Direct)
+		if err != nil {
+			return nil, common.NewError("freedom failed to init socks5 dialer")
+		}
+		conn, err := dialer.Dial("tcp", addr.String())
 		if err != nil {
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package redirector
 import (
 	"bytes"
 	"context"
+	"io"
 	"net"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestRedirector(t *testing.T) {
 	payload := util.GeneratePayload(1024)
 	conn1.Write(payload)
 	buf := make([]byte, 1024)
-	conn2.Read(buf)
+	io.ReadFull(conn2, buf)
 	if !bytes.Equal(buf, payload) {
 		t.Fail()
 	}
