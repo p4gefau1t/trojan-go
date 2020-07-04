@@ -47,6 +47,7 @@ type Server struct {
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
 	nextHTTP           bool
+	portOverrider      map[string]int
 }
 
 func (s *Server) Close() error {

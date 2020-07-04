@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -203,7 +202,7 @@ func newAPIServer(cfg *Config) (*grpc.Server, error) {
 				}
 				ok := tlsConfig.ClientCAs.AppendCertsFromPEM(certBytes)
 				if !ok {
-					return nil, common.NewError("fnvalid client cert")
+					return nil, common.NewError("invalid client cert")
 				}
 			}
 		}
@@ -228,9 +227,17 @@ func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 		return err
 	}
 	RegisterTrojanServerServiceServer(server, service)
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.API.APIHost, cfg.API.APIPort))
+	addr, err := net.ResolveIPAddr("ip", cfg.API.APIHost)
 	if err != nil {
-		return err
+		return common.NewError("api found invalid addr").Base(err)
+	}
+	listener, err := net.Listen("tcp", (&net.TCPAddr{
+		IP:   addr.IP,
+		Port: cfg.API.APIPort,
+		Zone: addr.Zone,
+	}).String())
+	if err != nil {
+		return common.NewError("server api failed to listen").Base(err)
 	}
 	log.Info("server-side api service is listening on", listener.Addr().String())
 	errChan := make(chan error, 1)
