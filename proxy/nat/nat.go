@@ -1,4 +1,4 @@
-// +build linux,!386
+// +build linux
 
 package nat
 

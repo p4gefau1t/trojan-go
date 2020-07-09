@@ -35,7 +35,7 @@ for PLATFORM in $PLATFORMS; do
 	fi
 
 	ZIP_FILENAME=trojan-go-$PLATFORM.zip
-	zip -j release/$ZIP_FILENAME bin/trojan-go
+	zip -j release/$ZIP_FILENAME bin/*
 	zip release/$ZIP_FILENAME example/*
 	zip -j release/$ZIP_FILENAME temp/*
 done
