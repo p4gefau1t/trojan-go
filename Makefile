@@ -88,7 +88,7 @@ freebsd-amd64:
 	GOARCH=amd64 GOOS=freebsd $(GOBUILD)
 
 windows-386:
-	GOARCH=386 GOOS=windows $(GOBUILD)
+	GOARCH=386 GOOS=windows $(GOBUILD).exe
 
 windows-amd64:
-	GOARCH=amd64 GOOS=windows $(GOBUILD)
+	GOARCH=amd64 GOOS=windows $(GOBUILD).exe
