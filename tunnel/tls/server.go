@@ -58,6 +58,15 @@ func (s *Server) Close() error {
 	return s.underlay.Close()
 }
 
+func isDomainNameMatched(pattern string, domainName string) bool {
+	if strings.HasPrefix(pattern, "*.") {
+		suffix := pattern[2:]
+		domainPrefixLen := len(domainName) - len(suffix) - 1
+		return strings.HasSuffix(domainName, suffix) && domainPrefixLen > 0 && !strings.Contains(domainName[:domainPrefixLen], ".")
+	}
+	return pattern == domainName
+}
+
 func (s *Server) acceptLoop() {
 	for {
 		conn, err := s.underlay.AcceptConn(&Tunnel{})
@@ -70,17 +79,20 @@ func (s *Server) acceptLoop() {
 			return
 		}
 		go func(conn net.Conn) {
-			sniVerified := true
+
 			tlsConfig := &tls.Config{
-				Certificates:             s.keyPair,
 				CipherSuites:             s.cipherSuite,
 				PreferServerCipherSuites: s.PreferServerCipher,
 				SessionTicketsDisabled:   !s.sessionTicket,
 				NextProtos:               s.alpn,
 				KeyLogWriter:             s.keyLogger,
 				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-					if s.verifySNI && hello.ServerName != s.sni {
-						sniVerified = false
+					sni := s.keyPair[0].Leaf.Subject.CommonName
+					//s.keyPair[0].Leaf.DNSNames
+					if s.sni != "" {
+						sni = s.sni
+					}
+					if s.verifySNI && !isDomainNameMatched(sni, hello.ServerName) {
 						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
 					}
 					return &s.keyPair[0], nil
@@ -97,11 +109,7 @@ func (s *Server) acceptLoop() {
 			handshakeRewindConn.StopBuffering()
 
 			if err != nil {
-				if !sniVerified {
-					// close tls conn immediately if the sni is invalid
-					tlsConn.Close()
-					log.Error(common.NewError("tls client hello with wrong sni from" + conn.RemoteAddr().String()).Base(err))
-				} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
+				if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
 					// not a valid tls client hello
 					handshakeRewindConn.Rewind()
 					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
@@ -253,6 +261,10 @@ func loadKeyPair(keyPath string, certPath string, password string) (*tls.Certifi
 	if err != nil {
 		return nil, common.NewError("failed to load key pair").Base(err)
 	}
+	keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
+	if err != nil {
+		return nil, common.NewError("failed to parse leaf certificate").Base(err)
+	}
 	return &keyPair, nil
 }
 
@@ -274,10 +286,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		fallbackConn.Close()
 	} else {
 		log.Warn("empty tls fallback port")
-	}
-
-	if cfg.TLS.SNI == "" && cfg.TLS.VerifyHostName {
-		return nil, common.NewError("tls cannot verify hostname without sni")
 	}
 
 	keyPair, err := loadKeyPair(cfg.TLS.KeyPath, cfg.TLS.CertPath, cfg.TLS.KeyPassword)

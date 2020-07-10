@@ -1,6 +1,6 @@
 NAME=trojan-go
 PACKAGE_NAME=github.com/p4gefau1t/trojan-go
-VERSION=`git describe`
+VERSION=`git describe --dirty`
 COMMIT=`git rev-parse HEAD`
 
 BIN_DIR=bin

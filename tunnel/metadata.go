@@ -140,7 +140,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := io.ReadFull(r, byteBuf[:])
 	if err != nil {
-		return common.NewError("unable to read ATYPE").Base(err)
+		return common.NewError("unable to read ATYP").Base(err)
 	}
 	a.AddressType = AddressType(byteBuf[0])
 	switch a.AddressType {
@@ -185,7 +185,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		}
 		a.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
-		return common.NewError("invalid ATYPE " + strconv.FormatInt(int64(a.AddressType), 10))
+		return common.NewError("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	return nil
 }
@@ -201,7 +201,7 @@ func (a *Address) WriteTo(w io.Writer) error {
 	case IPv6:
 		_, err = w.Write(a.IP.To16())
 	default:
-		return common.NewError("Invalid ATYPE " + strconv.FormatInt(int64(a.AddressType), 10))
+		return common.NewError("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	if err != nil {
 		return err

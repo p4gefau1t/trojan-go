@@ -72,9 +72,10 @@ func TestDefaultTLS(t *testing.T) {
 	ioutil.WriteFile("server.key", []byte(key), 0777)
 	serverCfg := &Config{
 		TLS: TLSConfig{
-			CertCheckRate: 1,
-			KeyPath:       "server.key",
-			CertPath:      "server.crt",
+			VerifyHostName: true,
+			CertCheckRate:  1,
+			KeyPath:        "server.key",
+			CertPath:       "server.crt",
 		},
 	}
 	clientCfg := &Config{
@@ -193,5 +194,19 @@ func TestUTLS(t *testing.T) {
 		conn2.Close()
 		s.Close()
 		c.Close()
+	}
+}
+
+func TestMatch(t *testing.T) {
+	if !isDomainNameMatched("*.google.com", "www.google.com") {
+		t.Fail()
+	}
+
+	if isDomainNameMatched("*.google.com", "google.com") {
+		t.Fail()
+	}
+
+	if !isDomainNameMatched("localhost", "localhost") {
+		t.Fail()
 	}
 }
