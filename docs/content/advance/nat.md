@@ -42,7 +42,7 @@ ip route add local default dev lo table 100
 ip rule add fwmark 1 lookup 100
 ```
 
-配置完成后以root权限启动Trojan-Go客户端：
+配置完成后**以root权限启动**Trojan-Go客户端：
 
 ```shell
 sudo trojan-go

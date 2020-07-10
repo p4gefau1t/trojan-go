@@ -14,7 +14,7 @@ weight: 22
 
 - Trojan-Go，可以从release页面下载
 
-- 证书密钥对，可以从letsencrpyt等机构免费申请签发
+- 证书和密钥，可以从letsencrpyt等机构免费申请签发
 
 ### 服务端配置
 
@@ -39,7 +39,6 @@ weight: 22
     "ssl": {
         "cert": "server.crt",
         "key": "server.key",
-        "sni": "your-domain-name.com",
         "fallback_port": 1234
     }
 }
@@ -53,7 +52,7 @@ weight: 22
 
 - 如果TLS握手成功，并且被确认是Trojan协议头部，并且其中的密码正确，那么服务器将解析来自客户端的请求并进行代理，否则和上一步的处理方法相同。
 
-- 如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务，返回一个展示400 Bad Reqeust的HTTP页面。```fallback_port```是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。
+- 如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务（或者HTTP服务），返回一个展示400 Bad Reqeust的HTTP页面。```fallback_port```是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。
 
 你可以通过使用浏览器访问你的域名```https://your-domain-name.com```来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用```http://your-domain-name.com:443```验证```fallback_port```工作是否正常。
 
