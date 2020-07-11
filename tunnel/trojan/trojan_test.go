@@ -75,9 +75,11 @@ func TestTrojan(t *testing.T) {
 		redir:      redirector.NewRedirector(ctx),
 	}
 	go s.acceptLoop()
+	ctx, cancel = context.WithCancel(ctx)
 	c := &Client{
 		underlay: tcpClient,
 		ctx:      ctx,
+		cancel:   cancel,
 		user:     &MockUser{},
 	}
 
