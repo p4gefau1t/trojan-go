@@ -110,12 +110,6 @@ weight: 30
     "password": "",
     "check_rate": 60
   },
-  "redis": {
-    "enabled": false,
-    "server_addr": "localhost",
-    "server_port": 6379,
-    "password": ""
-  },
   "api": {
     "enabled": false,
     "api_addr": "",

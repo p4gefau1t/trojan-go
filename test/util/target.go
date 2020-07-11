@@ -68,7 +68,9 @@ func runTCPEchoServer() {
 				defer conn.Close()
 				for {
 					buf := make([]byte, 2048)
+					conn.SetDeadline(time.Now().Add(time.Second * 5))
 					n, err := conn.Read(buf)
+					conn.SetDeadline(time.Time{})
 					if err != nil {
 						return
 					}
