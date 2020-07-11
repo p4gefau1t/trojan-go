@@ -10,8 +10,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 )
 
-const Name = "REDIRECTOR"
-
 type Dial func(net.Addr) (net.Conn, error)
 
 func defaultDial(addr net.Addr) (net.Conn, error) {
