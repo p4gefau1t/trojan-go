@@ -87,11 +87,13 @@ func (c *OutboundConn) Close() error {
 
 type Client struct {
 	underlay tunnel.Client
-	ctx      context.Context
 	user     statistic.User
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 func (c *Client) Close() error {
+	c.cancel()
 	return c.underlay.Close()
 }
 
@@ -143,8 +145,10 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 }
 
 func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
+	ctx, cancel := context.WithCancel(ctx)
 	auth, err := statistic.NewAuthenticator(ctx, memory.Name)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
@@ -159,6 +163,7 @@ func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 		break
 	}
 	if user == nil {
+		cancel()
 		return nil, common.NewError("no valid user found")
 	}
 
@@ -167,5 +172,6 @@ func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 		underlay: client,
 		ctx:      ctx,
 		user:     user,
+		cancel:   cancel,
 	}, nil
 }

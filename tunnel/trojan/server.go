@@ -199,6 +199,7 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
+	ctx, cancel := context.WithCancel(ctx)
 
 	// TODO replace this dirty code
 	var auth statistic.Authenticator
@@ -211,6 +212,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
 	}
 	if err != nil {
+		cancel()
 		return nil, common.NewError("trojan failed to create authenticator")
 	}
 
@@ -219,7 +221,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	}
 
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
-	ctx, cancel := context.WithCancel(ctx)
 	s := &Server{
 		underlay:   underlay,
 		auth:       auth,
