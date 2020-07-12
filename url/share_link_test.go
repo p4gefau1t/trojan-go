@@ -148,7 +148,7 @@ func TestNewShareInfoFromURL_Type_Empty(t *testing.T) {
 func TestNewShareInfoFromURL_Type_Default(t *testing.T) {
 	info, e := NewShareInfoFromURL("trojan-go://a@b.c")
 	assert.Nil(t, e)
-	assert.Equal(t, ShareInfoTypePlain, info.Type, "default type should be plain")
+	assert.Equal(t, ShareInfoTypeOriginal, info.Type, "default type should be original")
 }
 
 func TestNewShareInfoFromURL_Type_Invalid(t *testing.T) {
@@ -204,8 +204,8 @@ func TestNewShareInfoFromURL_Path_WS_Invalid(t *testing.T) {
 }
 
 func TestNewShareInfoFromURL_Path_Plain_Empty(t *testing.T) {
-	_, e := NewShareInfoFromURL("trojan-go://a@b.c?type=plain&path=")
-	assert.Nil(t, e, "empty path should be ignored in plain")
+	_, e := NewShareInfoFromURL("trojan-go://a@b.c?type=original&path=")
+	assert.Nil(t, e, "empty path should be ignored in original mode")
 }
 
 func TestNewShareInfoFromURL_Encryption_Empty(t *testing.T) {

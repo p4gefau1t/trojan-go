@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	ShareInfoTypePlain     = "plain"
+	ShareInfoTypeOriginal     = "original"
 	ShareInfoTypeWebSocket = "ws"
 )
 
 var validTypes = map[string]struct{}{
-	ShareInfoTypePlain: {},
+	ShareInfoTypeOriginal: {},
 	ShareInfoTypeWebSocket: {},
 }
 
@@ -93,7 +93,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 
 	// type
 	if types, ok := query["type"]; !ok {
-		info.Type = ShareInfoTypePlain
+		info.Type = ShareInfoTypeOriginal
 	} else if len(types) > 1 {
 		e = errors.New("multiple transport types")
 		return
