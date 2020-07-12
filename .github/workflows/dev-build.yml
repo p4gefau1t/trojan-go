@@ -20,6 +20,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Show Bugdows KB4074588 Reserved Ports
+      if: matrix.platform == 'windows-latest'
+      run: netsh interface ipv4 show excludedportrange protocol=tcp
+      shell: powershell
     - name: Test
       run: go test ./...
     - name: Build
