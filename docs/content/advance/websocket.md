@@ -10,21 +10,21 @@ Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流�
 
 Trojan协议本身不带加密，安全性依赖外层的TLS。但流量一旦经过CDN，TLS对CDN是透明的。其服务提供者可以对TLS的明文内容进行审查。**如果你使用的是不可信任的CDN（任何在中国大陆注册备案的CDN服务均应被视为不可信任），请务必开启Shadowsocks AEAD对Webosocket流量进行加密，以避免遭到识别和审查。**
 
-服务器和客户端配置文件中同时添加websocket选项，并将其```enabled```字段设置为true，并填写```path```字段和```hostname```字段即可启用Websocket支持。下面是一个完整的Websocket选项:
+服务器和客户端配置文件中同时添加websocket选项，并将其```enabled```字段设置为true，并填写```path```字段和```host```字段即可启用Websocket支持。下面是一个完整的Websocket选项:
 
 ```json
 "websocket": {
     "enabled": true,
-    "path": "/imaurlpath",
-    "hostname": "www.your_awesome_domain_name.com"
+    "path": "/your-websocket-path",
+    "host": "example.com"
 }
 ```
 
-```hostname```是主机名，一般填写域名。客户端```hostname```是可选的，填写你的域名。如果留空，将会使用```remote_addr```填充，服务端必须填写```hostname```，Trojan-Go可以以此转发Websocket请求，以抵抗针对Websocket的主动检测。
+```host```是主机名，一般填写域名。客户端```host```是可选的，填写你的域名。如果留空，将会使用```remote_addr```填充。
 
 ```path```指的是websocket所在的URL路径，必须以斜杠("/")开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的```path```一致。```path```应当选择较长的字符串，以避免遭到GFW直接的主动探测。
 
-客户端的```hostname```将发送给CDN服务器，必须有效；服务端和客户端```path```必须一致，否则Websocket握手无法进行。
+客户端的```host```将包含在Websocket的握手HTTP请求中，发送给CDN服务器，必须有效；服务端和客户端```path```必须一致，否则Websocket握手无法进行。
 
 下面是一个客户端配置文件的例子
 
@@ -41,7 +41,7 @@ Trojan协议本身不带加密，安全性依赖外层的TLS。但流量一旦�
     "websocket": {
         "enabled": true,
         "path": "/your-websocket-path",
-        "hostname": "www.your_awesome_domain_name.com"
+        "host": "example.com"
     },
     "shadowsocks": {
         "enabled": true,

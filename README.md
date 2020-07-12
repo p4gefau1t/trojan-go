@@ -102,7 +102,13 @@ Trojan-Go服务端可以兼容所有原Trojan客户端，如Igniter，ShadowRock
     ./trojan-go -config config.json
     ```
 
-3. 使用Docker部署
+3. 使用URL启动客户端（格式参见文档）
+
+    ```shell
+    ./trojan-go -url 'trojan-go://password@cloudflare.com/?type=ws&path=%2Fpath&host=your-site.com'
+    ````
+
+4. 使用Docker部署
 
     ```shell
     docker run \

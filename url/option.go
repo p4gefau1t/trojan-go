@@ -1,6 +1,7 @@
 package url
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"strconv"
@@ -122,5 +123,8 @@ func (u *url) Priority() int {
 }
 
 func init() {
-	option.RegisterHandler(&url{})
+	option.RegisterHandler(&url{
+		url:    flag.String("url", "", "Setup trojan-go client with a url link"),
+		option: flag.String("url-option", "mux=true;listen=127.0.0.1:1080", "URL mode options"),
+	})
 }

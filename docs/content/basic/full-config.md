@@ -35,7 +35,7 @@ weight: 30
   "log_file": "",
   "password": [],
   "disable_http_check": false,
-  "udp_timeout": 10,
+  "udp_timeout": 60,
   "ssl": {
     "verify": true,
     "verify_hostname": true,
