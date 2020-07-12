@@ -10,6 +10,7 @@ require (
 	github.com/refraction-networking/utls v0.0.0-20200601200209-ada0bb9b38a0
 	github.com/shadowsocks/go-shadowsocks2 v0.1.0
 	github.com/smartystreets/goconvey v1.6.4
+	github.com/stretchr/testify v1.6.1
 	github.com/txthinking/runnergroup v0.0.0-20200327135940-540a793bb997 // indirect
 	github.com/txthinking/socks5 v0.0.0-20200531111549-252709fcb919
 	github.com/txthinking/x v0.0.0-20200330144832-5ad2416896a9 // indirect
