@@ -19,9 +19,9 @@ import (
 func TestWebsocket(t *testing.T) {
 	cfg := &Config{
 		Websocket: WebsocketConfig{
-			Enabled:  true,
-			Hostname: "localhost",
-			Path:     "/ws",
+			Enabled: true,
+			Host:    "localhost",
+			Path:    "/ws",
 		},
 	}
 
@@ -75,9 +75,9 @@ func TestRedirect(t *testing.T) {
 	cfg := &Config{
 		RemoteHost: "127.0.0.1",
 		Websocket: WebsocketConfig{
-			Enabled:  true,
-			Hostname: "localhost",
-			Path:     "/ws",
+			Enabled: true,
+			Host:    "localhost",
+			Path:    "/ws",
 		},
 	}
 	fmt.Sscanf(util.HTTPPort, "%d", &cfg.RemotePort)

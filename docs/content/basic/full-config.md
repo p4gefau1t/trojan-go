@@ -79,7 +79,7 @@ weight: 30
   "websocket": {
     "enabled": false,
     "path": "",
-    "hostname": ""
+    "host": ""
   },
   "shadowsocks": {
     "enabled": false,
@@ -246,7 +246,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```path```指的是Websocket使用的URL路径，必须以斜杠("/")开头，如"/longlongwebsocketpath"，并且服务器和客户端必须一致。
 
-```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。不正确的```hostname```可能导致CDN无法转发请求。
+```host```Websocket握手时，HTTP请求中使用的主机名。客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。不正确的```host```可能导致CDN无法转发请求。
 
 ### ``shadowsocks`` AEAD加密选项
 

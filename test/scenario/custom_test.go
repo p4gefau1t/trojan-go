@@ -183,7 +183,7 @@ outbound:
       tag: websocket
       config:
         websocket:
-          hostname: localhost
+          host: localhost
           path: /ws
 
   path:
@@ -236,7 +236,7 @@ inbound:
       config:
         websocket:
           enabled: true
-          hostname: localhost
+          host: localhost
           path: /ws
 
     - protocol: mux

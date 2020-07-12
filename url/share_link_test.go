@@ -3,10 +3,11 @@ package url
 import (
 	crand "crypto/rand"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHandleTrojanPort_Default(t *testing.T) {

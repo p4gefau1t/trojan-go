@@ -88,7 +88,6 @@ func (s *Server) acceptLoop() {
 				KeyLogWriter:             s.keyLogger,
 				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 					sni := s.keyPair[0].Leaf.Subject.CommonName
-					//s.keyPair[0].Leaf.DNSNames
 					if s.sni != "" {
 						sni = s.sni
 					}

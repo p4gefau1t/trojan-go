@@ -3,24 +3,24 @@ package url
 import (
 	"errors"
 	"fmt"
-	"net/url"
+	neturl "net/url"
 	"strconv"
 	"strings"
 )
 
 const (
-	ShareInfoTypeOriginal     = "original"
+	ShareInfoTypeOriginal  = "original"
 	ShareInfoTypeWebSocket = "ws"
 )
 
 var validTypes = map[string]struct{}{
-	ShareInfoTypeOriginal: {},
+	ShareInfoTypeOriginal:  {},
 	ShareInfoTypeWebSocket: {},
 }
 
 var validSSEncryptionMap = map[string]struct{}{
-	"aes-128-gcm": {},
-	"aes-256-gcm": {},
+	"aes-128-gcm":            {},
+	"aes-256-gcm":            {},
 	"chacha20-ietf-poly1305": {},
 }
 
@@ -42,7 +42,7 @@ type ShareInfo struct {
 
 func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 	// share link must be valid url
-	parse, e := url.Parse(shareLink)
+	parse, e := neturl.Parse(shareLink)
 	if e != nil {
 		e = errors.New(fmt.Sprintf("invalid url: %s", e.Error()))
 		return
@@ -75,7 +75,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 	}
 
 	// strictly parse the query
-	query, e := url.ParseQuery(parse.RawQuery)
+	query, e := neturl.ParseQuery(parse.RawQuery)
 	if e != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 	} else if len(SNIs) > 1 {
 		e = errors.New("multiple SNIs")
 		return
-	} else if info.SNI = SNIs[0]; info.SNI == ""{
+	} else if info.SNI = SNIs[0]; info.SNI == "" {
 		e = errors.New("empty SNI")
 		return
 	}
@@ -111,7 +111,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 	} else if len(hosts) > 1 {
 		e = errors.New("multiple hosts")
 		return
-	} else if info.Host = hosts[0]; info.Host == ""{
+	} else if info.Host = hosts[0]; info.Host == "" {
 		e = errors.New("empty host")
 		return
 	}

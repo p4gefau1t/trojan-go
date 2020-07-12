@@ -145,7 +145,7 @@ ssl:
 websocket:
     enabled: true
     path: /ws
-    hostname: somedomainname.com
+    host: somedomainname.com
 shadowsocks:
     enabled: true
     method: AEAD_CHACHA20_POLY1305
@@ -174,7 +174,7 @@ shadowsocks:
 websocket:
     enabled: true
     path: /ws
-    hostname: 127.0.0.1
+    host: 127.0.0.1
 `, serverPort, util.HTTPPort)
 
 	if !CheckClientServer(clientData, serverData, socksPort) {

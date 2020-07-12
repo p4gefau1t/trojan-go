@@ -151,7 +151,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	}
 	if cfg.RemoteHost == "" {
 		log.Warn("empty websocket redirection hostname")
-		cfg.RemoteHost = cfg.Websocket.Hostname
+		cfg.RemoteHost = cfg.Websocket.Host
 	}
 	if cfg.RemotePort == 0 {
 		log.Warn("empty websocket redirection port")
@@ -161,7 +161,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	log.Debug("websocket server created")
 	return &Server{
 		enabled:   cfg.Websocket.Enabled,
-		hostname:  cfg.Websocket.Hostname,
+		hostname:  cfg.Websocket.Host,
 		path:      cfg.Websocket.Path,
 		ctx:       ctx,
 		cancel:    cancel,
