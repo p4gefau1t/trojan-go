@@ -3,24 +3,13 @@ PACKAGE_NAME := github.com/p4gefau1t/trojan-go
 VERSION := `git describe --dirty`
 COMMIT := `git rev-parse HEAD`
 
-MAKEDEPEND = $(GO_DIR)go
-GO_MINIMUM := go1.14
-GO_VERSION != $(GO_DIR)go version | cut -d' ' -f3
-
 PLATFORM := linux
 BUILD_DIR := build
 VAR_SETTING := -X $(PACKAGE_NAME)/constant.Version=$(VERSION) -X $(PACKAGE_NAME)/constant.Commit=$(COMMIT)
 GOBUILD = env CGO_ENABLED=0 $(GO_DIR)go build -tags "full" -ldflags="-s -w $(VAR_SETTING)" -o $(BUILD_DIR)
 
-.PHONY: depends trojan-go release
+.PHONY: trojan-go release
 normal: clean trojan-go
-
-depends:
-	$(info GO_DIR: $(GO_DIR))
-	$(info Current Go Version: $(GO_VERSION))
-ifneq ($(GO_VERSION), $(lastword $(sort $(GO_MINIMUM) $(GO_VERSION))))
-	$(error Requires $(GO_MINIMUM))
-endif
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -33,10 +22,10 @@ geoip.dat:
 geosite.dat:
 	wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosite.dat
 
-test: depends
+test:
 	@$(GO_DIR)go test ./...
 
-trojan-go: depends
+trojan-go:
 	mkdir -p $(BUILD_DIR)
 	$(GOBUILD)
 
@@ -69,7 +58,7 @@ uninstall:
 	@-zip -du $(NAME)-$@ *.dat
 	@echo "<<< ---- $(NAME)-$@"
 
-release: depends geosite.dat geoip.dat darwin-amd64.zip linux-386.zip linux-amd64.zip \
+release: geosite.dat geoip.dat darwin-amd64.zip linux-386.zip linux-amd64.zip \
 	linux-arm.zip linux-armv5.zip linux-armv6.zip linux-armv7.zip linux-armv8.zip \
 	linux-mips-softfloat.zip linux-mips-hardfloat.zip linux-mipsle-softfloat.zip linux-mipsle-hardfloat.zip \
 	linux-mips64.zip linux-mips64le.zip freebsd-386.zip freebsd-amd64.zip \

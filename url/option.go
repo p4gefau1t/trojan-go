@@ -1,8 +1,8 @@
 package url
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -14,6 +14,39 @@ import (
 )
 
 const Name = "URL"
+
+type Websocket struct {
+	Enabled bool
+	Host    string
+	Path    string
+}
+
+type TLS struct {
+	SNI string
+}
+
+type Shadowsocks struct {
+	Enabled  bool
+	Method   string
+	Password string
+}
+
+type Mux struct {
+	Enabled bool
+}
+
+type UrlConfig struct {
+	RunType     string   `json:"run_type"`
+	LocalAddr   string   `json:"local_addr"`
+	LocalPort   int      `json:"local_port"`
+	RemoteAddr  string   `json:"remote_addr"`
+	RemotePort  int      `json:"remote_port"`
+	Password    []string `json:"password"`
+	Websocket   `json:"websocket"`
+	Shadowsocks `json:"shadowsocks"`
+	TLS         `json:"ssl"`
+	Mux         `json:"mux"`
+}
 
 type url struct {
 	url    *string
@@ -32,33 +65,6 @@ func (u *url) Handle() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	clientConfigFormat := `
-{
-	"run_type": "client",
-	"local_addr": "%s",
-	"local_port": %d,
-	"remote_addr": "%s",
-	"remote_port": %d,
-	"password": [
-		"%s"
-	],
-	"tls": {
-		"sni": "%s"
-	},
-	"websocket": {
-		"enabled": %t,
-		"host": "%s",
-		"path": "%s"
-	},
-	"shadowsocks": {
-		"enabled": %t,
-		"method": "%s",
-		"password": "%s"
-	},
-	"mux": {
-		"enabled": %t
-	}
-}`
 	wsEnabled := false
 	if info.Type == ShareInfoTypeWebSocket {
 		wsEnabled = true
@@ -109,9 +115,36 @@ func (u *url) Handle() error {
 			log.Fatal("invalid option", o)
 		}
 	}
-	clientConfig := fmt.Sprintf(clientConfigFormat, listenHost, listenPort, info.TrojanHost, info.Port, info.TrojanPassword, info.SNI, wsEnabled, info.Host, info.Path, ssEnabled, ssMethod, ssPassword, muxEnabled)
-	log.Debug(clientConfig)
-	client, err := proxy.NewProxyFromConfigData([]byte(clientConfig), true)
+	config := UrlConfig{
+		RunType:    "client",
+		LocalAddr:  listenHost,
+		LocalPort:  listenPort,
+		RemoteAddr: info.TrojanHost,
+		RemotePort: int(info.Port),
+		Password:   []string{info.TrojanPassword},
+		TLS: TLS{
+			SNI: info.SNI,
+		},
+		Websocket: Websocket{
+			Enabled: wsEnabled,
+			Path:    info.Path,
+			Host:    info.Host,
+		},
+		Mux: Mux{
+			Enabled: muxEnabled,
+		},
+		Shadowsocks: Shadowsocks{
+			Enabled:  ssEnabled,
+			Password: ssPassword,
+			Method:   ssMethod,
+		},
+	}
+	data, err := json.Marshal(&config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Debug(string(data))
+	client, err := proxy.NewProxyFromConfigData([]byte(data), true)
 	if err != nil {
 		log.Fatal(err)
 	}
