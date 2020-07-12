@@ -21,10 +21,11 @@ jobs:
         git checkout $tag_name
     - name: Build
       run: |
-        ./release.sh
+        make geosite.dat geoip.dat
+        make release -j$(nproc)
         set -x
         assets=()
-        for asset in ./release/*; do
+        for asset in ./*.zip; do
           assets+=("-a" "$asset")
         done
         tag_name="${GITHUB_REF##*/}"
@@ -35,4 +36,4 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: dist-release
-        path: ./release
+        path: ./bin

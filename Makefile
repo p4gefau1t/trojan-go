@@ -1,23 +1,59 @@
-NAME=trojan-go
-PACKAGE_NAME=github.com/p4gefau1t/trojan-go
-VERSION=`git describe --dirty`
-COMMIT=`git rev-parse HEAD`
+NAME := trojan-go
+PACKAGE_NAME := github.com/p4gefau1t/trojan-go
+VERSION := `echo git describe --dirty`
+COMMIT := `echo git rev-parse HEAD`
 
-BIN_DIR=bin
-VAR_SETTING=-X $(PACKAGE_NAME)/constant.Version=$(VERSION) -X $(PACKAGE_NAME)/constant.Commit=$(COMMIT)
-GOBUILD=CGO_ENABLED=0 go build -tags "full" -ldflags="-s -w $(VAR_SETTING)" -o $(BIN_DIR)/$(NAME)
+GOPATH ?=
+ifneq ($(strip $(GOPATH)), )
+	GO_DIR := $(GOPATH)/bin/
+endif
 
-normal: clean
-	$(GOBUILD)
+MAKEDEPEND = $(GODIR)go
+GO_MINIMUM := go1.14
+GO_VERSION != $(GO_DIR)go version | cut -d' ' -f3
+GOMETALINTER := $(GO_DIR)gometalinter
+
+PLATFORM := linux
+BIN_DIR := bin
+VAR_SETTING := -X $(PACKAGE_NAME)/constant.Version=$(VERSION) -X $(PACKAGE_NAME)/constant.Commit=$(COMMIT)
+GOBUILD = env CGO_ENABLED=0 $(GO_DIR)go build -tags "full" -ldflags="-s -w $(VAR_SETTING)" -o $(BIN_DIR)
+
+.PHONY: depends trojan-go release
+normal: clean trojan-go
+
+depends: geosite.dat geoip.dat
+	$(info GO_DIR: $(GO_DIR))
+	$(info Current Go Verison: $(GO_VERSION))
+ifneq ($(GO_VERSION), $(lastword $(sort $(GO_MINIMUM) $(GO_VERSION))))
+	$(error Requires $(GO_MINIMUM) for module fingerprint/tls)
+endif
+
+realclean: distclean
+	rm -f *.dat
+
+distclean: clean
+	rm -f *.zip
 
 clean:
-	-rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR)
 
 geoip.dat:
 	wget https://github.com/v2ray/geoip/raw/release/geoip.dat
 
 geosite.dat:
 	wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosite.dat
+
+lint:
+	$(GO_DIR)go get -u github.com/alecthomas/gometalinter
+	$(GOMETALINTER) --install &> /dev/null
+	$(GOMETALINTER) ./... --vendor
+
+test: depends
+	@$(GO_DIR)go test ./...
+
+trojan-go: depends
+	mkdir -p $(BIN_DIR)
+	$(GOBUILD)
 
 install: $(BIN_DIR)/$(NAME) geoip.dat geosite.dat
 	mkdir -p /etc/$(NAME)
@@ -42,53 +78,86 @@ uninstall:
 	rm /usr/bin/geoip.dat
 	rm /usr/bin/geosite.dat
 
+%.zip: % geosite.dat geoip.dat
+	@zip -du $(NAME)-$@ -j $(BIN_DIR)/$</*
+	@zip -du $(NAME)-$@ example/*
+	@-zip -du $(NAME)-$@ *.dat
+	@echo "<<< ---- $(NAME)-$@"
+
+release: depends darwin-amd64.zip linux-386.zip linux-amd64.zip \
+	linux-arm.zip linux-armv5.zip linux-armv6.zip linux-armv7.zip linux-armv8.zip \
+	linux-mips-softfloat.zip linux-mips-hardfloat.zip linux-mipsle-softfloat.zip linux-mipsle-hardfloat.zip \
+	linux-mips64.zip linux-mips64le.zip freebsd-386.zip freebsd-amd64.zip \
+	windows-386.zip windows-amd64.zip
+
 darwin-amd64:
-	GOARCH=amd64 GOOS=darwin $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=amd64 GOOS=darwin $(GOBUILD)/$@
 
 linux-386:
-	GOARCH=386 GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=386 GOOS=linux $(GOBUILD)/$@
 
 linux-amd64:
-	GOARCH=amd64 GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=amd64 GOOS=linux $(GOBUILD)/$@
+
+linux-arm:
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=arm GOOS=linux $(GOBUILD)/$@
 
 linux-armv5:
-	GOARCH=arm GOOS=linux GOARM=5 $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=arm GOOS=linux GOARM=5 $(GOBUILD)/$@
 
 linux-armv6:
-	GOARCH=arm GOOS=linux GOARM=6 $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=arm GOOS=linux GOARM=6 $(GOBUILD)/$@
 
 linux-armv7:
-	GOARCH=arm GOOS=linux GOARM=7 $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=arm GOOS=linux GOARM=7 $(GOBUILD)/$@
 
 linux-armv8:
-	GOARCH=arm64 GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=arm64 GOOS=linux $(GOBUILD)/$@
 
 linux-mips-softfloat:
-	GOARCH=mips GOMIPS=softfloat GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=mips GOMIPS=softfloat GOOS=linux $(GOBUILD)/$@
 
 linux-mips-hardfloat:
-	GOARCH=mips GOMIPS=hardfloat GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=mips GOMIPS=hardfloat GOOS=linux $(GOBUILD)/$@
 
 linux-mipsle-softfloat:
-	GOARCH=mipsle GOMIPS=softfloat GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=mipsle GOMIPS=softfloat GOOS=linux $(GOBUILD)/$@
 
 linux-mipsle-hardfloat:
-	GOARCH=mipsle GOMIPS=hardfloat GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=mipsle GOMIPS=hardfloat GOOS=linux $(GOBUILD)/$@
 
 linux-mips64:
-	GOARCH=mips64 GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=mips64 GOOS=linux $(GOBUILD)/$@
 
 linux-mips64le:
-	GOARCH=mips64le GOOS=linux $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=mips64le GOOS=linux $(GOBUILD)/$@
 
 freebsd-386:
-	GOARCH=386 GOOS=freebsd $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=386 GOOS=freebsd $(GOBUILD)/$@
 
 freebsd-amd64:
-	GOARCH=amd64 GOOS=freebsd $(GOBUILD)
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=amd64 GOOS=freebsd $(GOBUILD)/$@
 
 windows-386:
-	GOARCH=386 GOOS=windows $(GOBUILD).exe
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=386 GOOS=windows $(GOBUILD)/$@
 
 windows-amd64:
-	GOARCH=amd64 GOOS=windows $(GOBUILD).exe
+	mkdir -p $(BIN_DIR)/$@
+	GOARCH=amd64 GOOS=windows $(GOBUILD)/$@
