@@ -30,7 +30,7 @@
 <meta itemprop="name" content="使用API动态管理用户">
 <meta itemprop="description" content="注意，Trojan不支持这个特性 Trojan-Go使用gRPC提供了一组API，API支持以下功能： 用户信息增删改查 流量统计 速度统计 IP连接">
 
-<meta itemprop="wordCount" content="738">
+<meta itemprop="wordCount" content="721">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -115,7 +115,7 @@
 </code></pre></div></li>
 <li>
 <p>添加一个用户信息</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api list -add-profile -target-password password
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">./trojan-go -api-addr 127.0.0.1:10000 -api set -add-profile -target-password password
 </code></pre></div></li>
 <li>
 <p>删除一个用户信息</p>
@@ -127,7 +127,7 @@
 </span><span style="color:#ae81ff"></span>    -ip-limit <span style="color:#ae81ff">3</span> <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>    -upload-speed-limit <span style="color:#ae81ff">5242880</span> <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>    -download-speed-limit <span style="color:#ae81ff">5242880</span>
-</code></pre></div><p>这个命令将密码为password的用户上传和下载速度限制为5MiB/s，同时连接的IP数量限制为3个，注意这里5242880的单位是字节。如果不填写这些限制或填写0，则维持原状。如果填写负数，则表示不进行限制。</p>
+</code></pre></div><p>这个命令将密码为password的用户上传和下载速度限制为5MiB/s，同时连接的IP数量限制为3个，注意这里5242880的单位是字节。如果填写0或者负数，则表示不进行限制。</p>
 </li>
 </ol>
 <div class="edit-meta">
@@ -180,6 +180,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/url/">URL方案（草案）</a></li>
 </ul>
   
 </li>

@@ -30,7 +30,7 @@
 <meta itemprop="name" content="使用Websocket进行CDN转发和抵抗中间人攻击">
 <meta itemprop="description" content="注意，Trojan不支持这个特性 Trojan-Go支持使用TLS&#43;Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能">
 
-<meta itemprop="wordCount" content="706">
+<meta itemprop="wordCount" content="650">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -54,15 +54,15 @@
 <h3 id="注意trojan不支持这个特性">注意，Trojan不支持这个特性</h3>
 <p>Trojan-Go支持使用TLS+Websocket承载Trojan协议，使得利用CDN进行流量中转成为可能。</p>
 <p>Trojan协议本身不带加密，安全性依赖外层的TLS。但流量一旦经过CDN，TLS对CDN是透明的。其服务提供者可以对TLS的明文内容进行审查。<strong>如果你使用的是不可信任的CDN（任何在中国大陆注册备案的CDN服务均应被视为不可信任），请务必开启Shadowsocks AEAD对Webosocket流量进行加密，以避免遭到识别和审查。</strong></p>
-<p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>hostname</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项:</p>
+<p>服务器和客户端配置文件中同时添加websocket选项，并将其<code>enabled</code>字段设置为true，并填写<code>path</code>字段和<code>host</code>字段即可启用Websocket支持。下面是一个完整的Websocket选项:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;websocket&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
-    <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/imaurlpath&#34;</span>,
-    <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>
+    <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/your-websocket-path&#34;</span>,
+    <span style="color:#f92672">&#34;host&#34;</span>: <span style="color:#e6db74">&#34;example.com&#34;</span>
 }
-</code></pre></div><p><code>hostname</code>是主机名，一般填写域名。客户端<code>hostname</code>是可选的，填写你的域名。如果留空，将会使用<code>remote_addr</code>填充，服务端必须填写<code>hostname</code>，Trojan-Go可以以此转发Websocket请求，以抵抗针对Websocket的主动检测。</p>
+</code></pre></div><p><code>host</code>是主机名，一般填写域名。客户端<code>host</code>是可选的，填写你的域名。如果留空，将会使用<code>remote_addr</code>填充。</p>
 <p><code>path</code>指的是websocket所在的URL路径，必须以斜杠(&quot;/&quot;)开始。路径并无特别要求，满足URL基本格式即可，但要保证客户端和服务端的<code>path</code>一致。<code>path</code>应当选择较长的字符串，以避免遭到GFW直接的主动探测。</p>
-<p>客户端的<code>hostname</code>将发送给CDN服务器，必须有效；服务端和客户端<code>path</code>必须一致，否则Websocket握手无法进行。</p>
+<p>客户端的<code>host</code>将包含在Websocket的握手HTTP请求中，发送给CDN服务器，必须有效；服务端和客户端<code>path</code>必须一致，否则Websocket握手无法进行。</p>
 <p>下面是一个客户端配置文件的例子</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
     <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;client&#34;</span>,
@@ -76,7 +76,7 @@
     <span style="color:#f92672">&#34;websocket&#34;</span>: {
         <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
         <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;/your-websocket-path&#34;</span>,
-        <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;www.your_awesome_domain_name.com&#34;</span>
+        <span style="color:#f92672">&#34;host&#34;</span>: <span style="color:#e6db74">&#34;example.com&#34;</span>
     },
     <span style="color:#f92672">&#34;shadowsocks&#34;</span>: {
         <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">true</span>,
@@ -133,6 +133,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/url/">URL方案（草案）</a></li>
 </ul>
   
 </li>

@@ -30,7 +30,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6706">
+<meta itemprop="wordCount" content="6755">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -83,7 +83,7 @@
   <span style="color:#f92672">&#34;log_file&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
   <span style="color:#f92672">&#34;password&#34;</span>: [],
   <span style="color:#f92672">&#34;disable_http_check&#34;</span>: <span style="color:#66d9ef">false</span>,
-  <span style="color:#f92672">&#34;udp_timeout&#34;</span>: <span style="color:#ae81ff">10</span>,
+  <span style="color:#f92672">&#34;udp_timeout&#34;</span>: <span style="color:#ae81ff">60</span>,
   <span style="color:#f92672">&#34;ssl&#34;</span>: {
     <span style="color:#f92672">&#34;verify&#34;</span>: <span style="color:#66d9ef">true</span>,
     <span style="color:#f92672">&#34;verify_hostname&#34;</span>: <span style="color:#66d9ef">true</span>,
@@ -127,7 +127,7 @@
   <span style="color:#f92672">&#34;websocket&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
     <span style="color:#f92672">&#34;path&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
-    <span style="color:#f92672">&#34;hostname&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+    <span style="color:#f92672">&#34;host&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
   },
   <span style="color:#f92672">&#34;shadowsocks&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
@@ -157,12 +157,6 @@
     <span style="color:#f92672">&#34;username&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;check_rate&#34;</span>: <span style="color:#ae81ff">60</span>
-  },
-  <span style="color:#f92672">&#34;redis&#34;</span>: {
-    <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
-    <span style="color:#f92672">&#34;server_addr&#34;</span>: <span style="color:#e6db74">&#34;localhost&#34;</span>,
-    <span style="color:#f92672">&#34;server_port&#34;</span>: <span style="color:#ae81ff">6379</span>,
-    <span style="color:#f92672">&#34;password&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
   },
   <span style="color:#f92672">&#34;api&#34;</span>: {
     <span style="color:#f92672">&#34;enabled&#34;</span>: <span style="color:#66d9ef">false</span>,
@@ -211,7 +205,7 @@
 <p><code>verify</code>表示客户端(client/nat/forward)是否校验服务端提供的证书合法性，默认开启。出于安全性考虑，这个选项不应该在实际场景中选择false，否则可能遭受中间人攻击。如果使用自签名或者自签发的证书，开启<code>verify</code>会导致校验失败。这种情况下，应当保持<code>verify</code>开启，然后在<code>cert</code>中填写服务端的证书，即可正常连接。</p>
 <p><code>verify_hostname</code>表示服务端是否校验客户端提供的SNI与服务端设置的一致性。如果服务端SNI字段留空，认证将被强制关闭。</p>
 <p>服务端必须填入<code>cert</code>和<code>key</code>，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写<code>cert</code>。如果使用自签名或者自签发的证书，应当在的<code>cert</code>处填入服务器证书文件，否则可能导致校验失败。</p>
-<p><code>sni</code>指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let&rsquo;sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。</p>
+<p><code>sni</code>指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let&rsquo;sencrypt等机构签发的证书，这里填入你的域名。对于客户端，如果这一项未填，将使用<code>remote_addr</code>填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接；对于服务端，若此项不填，则使用证书中Common Name作为SNI校验依据，支持通配符如*.example.com。</p>
 <p><code>fingerprint</code>用于指定客户端TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用<a href="https://github.com/refraction-networking/utls">utls</a>进行指纹伪造，默认伪造Firefox的指纹。合法的值有</p>
 <ul>
 <li>
@@ -286,9 +280,9 @@
 <p>Websocket传输是trojan-go的特性。在<strong>正常的直接连接代理节点</strong>的情况下，开启这个选项不会改善你的链路速度（甚至有可能下降），也不会提升你的连接安全性。你只应该在需要利用CDN进行中转，或利用nginx等服务器根据路径分发的情况下，使用websocket。</p>
 <p><code>enabled</code>表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。</p>
 <p><code>path</code>指的是Websocket使用的URL路径，必须以斜杠(&quot;/&quot;)开头，如&rdquo;/longlongwebsocketpath&rdquo;，并且服务器和客户端必须一致。</p>
-<p><code>hostname</code>Websocket握手时使用的主机名，客户端如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。不正确的<code>hostname</code>可能导致CDN无法转发请求。</p>
+<p><code>host</code>Websocket握手时，HTTP请求中使用的主机名。客户端如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。不正确的<code>host</code>可能导致CDN无法转发请求。</p>
 <h3 id="shadowsocks-aead加密选项"><code>shadowsocks</code> AEAD加密选项</h3>
-<p>此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。</p>
+<p>此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD方法进行加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。</p>
 <p>注意，开启这个选项将有可能降低传输性能，你只应该在不信任承载Trojan协议的传输信道的情况下，启用这个选项。例如：</p>
 <ul>
 <li>
@@ -343,11 +337,11 @@
 <p><code>keep_alive</code>是否启用TCP心跳存活检测。</p>
 <p><code>prefer_ipv4</code>是否优先使用IPv4地址。</p>
 <h3 id="mysql数据库选项"><code>mysql</code>数据库选项</h3>
-<p>trojan-go兼容trojan-gfw的基于mysql的用户管理方式，但更推荐的方式是使用API。</p>
+<p>trojan-go兼容trojan的基于mysql的用户管理方式，但更推荐的方式是使用API。</p>
 <p><code>enabled</code>表示是否启用mysql数据库进行用户验证。</p>
 <p><code>check_rate</code>是trojan-go从MySQL获取用户数据并更新缓存的间隔时间，单位为秒。</p>
 <p>其他选项可以顾名思义，不再赘述。</p>
-<p>users表结构和trojan-gfw版本定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload&gt;quota，trojan-go服务器将拒绝该用户的连接。</p>
+<p>users表结构和trojan版本定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload&gt;quota，trojan-go服务器将拒绝该用户的连接。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-mysql" data-lang="mysql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> <span style="color:#a6e22e">users</span> (
     id <span style="color:#66d9ef">INT</span> <span style="color:#66d9ef">UNSIGNED</span> <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">AUTO_INCREMENT</span>,
     username <span style="color:#66d9ef">VARCHAR</span>(<span style="color:#ae81ff">64</span>) <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
@@ -435,6 +429,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/url/">URL方案（草案）</a></li>
 </ul>
   
 </li>

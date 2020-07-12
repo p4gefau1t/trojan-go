@@ -82,5 +82,14 @@
       <description>Trojan-Go鼓励开发传输层插件，以丰富协议类型，增加与GFW对抗的战略纵深。 传输层插件的作用，是替代tansport隧道的TLS进行传</description>
     </item>
     
+    <item>
+      <title>URL方案（草案）</title>
+      <link>https://p4gefau1t.github.io/trojan-go/developer/url/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://p4gefau1t.github.io/trojan-go/developer/url/</guid>
+      <description>概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位服务器资源。原则</description>
+    </item>
+    
   </channel>
 </rss>

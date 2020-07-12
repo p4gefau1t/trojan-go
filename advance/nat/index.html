@@ -82,7 +82,7 @@ iptables -t mangle -A PREROUTING -p udp -i $INTERFACE -j TROJAN_GO
 <span style="color:#75715e"># 添加路由，打上标记的包重新进入本地回环</span>
 ip route add local default dev lo table <span style="color:#ae81ff">100</span>
 ip rule add fwmark <span style="color:#ae81ff">1</span> lookup <span style="color:#ae81ff">100</span>
-</code></pre></div><p>配置完成后以root权限启动Trojan-Go客户端：</p>
+</code></pre></div><p>配置完成后<strong>以root权限启动</strong>Trojan-Go客户端：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">sudo trojan-go
 </code></pre></div><div class="edit-meta">
 
@@ -134,6 +134,7 @@ ip rule add fwmark <span style="color:#ae81ff">1</span> lookup <span style="colo
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/url/">URL方案（草案）</a></li>
 </ul>
   
 </li>

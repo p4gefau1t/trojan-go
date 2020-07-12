@@ -30,7 +30,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域">
 
-<meta itemprop="wordCount" content="2021">
+<meta itemprop="wordCount" content="2029">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -64,7 +64,7 @@
 <p>Trojan-Go，可以从release页面下载</p>
 </li>
 <li>
-<p>证书密钥对，可以从letsencrpyt等机构免费申请签发</p>
+<p>证书和密钥，可以从letsencrpyt等机构免费申请签发</p>
 </li>
 </ul>
 <h3 id="服务端配置">服务端配置</h3>
@@ -84,7 +84,6 @@
     <span style="color:#f92672">&#34;ssl&#34;</span>: {
         <span style="color:#f92672">&#34;cert&#34;</span>: <span style="color:#e6db74">&#34;server.crt&#34;</span>,
         <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;server.key&#34;</span>,
-        <span style="color:#f92672">&#34;sni&#34;</span>: <span style="color:#e6db74">&#34;your-domain-name.com&#34;</span>,
         <span style="color:#f92672">&#34;fallback_port&#34;</span>: <span style="color:#ae81ff">1234</span>
     }
 }
@@ -98,7 +97,7 @@
 <p>如果TLS握手成功，并且被确认是Trojan协议头部，并且其中的密码正确，那么服务器将解析来自客户端的请求并进行代理，否则和上一步的处理方法相同。</p>
 </li>
 <li>
-<p>如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务，返回一个展示400 Bad Reqeust的HTTP页面。<code>fallback_port</code>是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。</p>
+<p>如果TLS握手失败，说明对方使用的不是TLS协议进行连接。此时Trojan-Go将这个TCP连接代理到本地127.0.0.1:1234上运行的HTTPS服务（或者HTTP服务），返回一个展示400 Bad Reqeust的HTTP页面。<code>fallback_port</code>是一个可选选项，如果没有填写，Trojan-Go会直接终止连接。虽然是可选的，但是还是强烈建议填写。</p>
 </li>
 </ul>
 <p>你可以通过使用浏览器访问你的域名<code>https://your-domain-name.com</code>来验证。如果工作正常，你的浏览器会显示一个正常的HTTPS保护的Web页面，页面内容与服务器本机80端口上的页面一致。你还可以使用<code>http://your-domain-name.com:443</code>验证<code>fallback_port</code>工作是否正常。</p>
@@ -177,6 +176,7 @@
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/simplesocks/">SimpleSocks协议</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/api/">API开发</a></li>
 <li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/plugin/">可插拔传输层插件开发</a></li>
+<li class=""><a href="https://p4gefau1t.github.io/trojan-go/developer/url/">URL方案（草案）</a></li>
 </ul>
   
 </li>
