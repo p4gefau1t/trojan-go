@@ -28,7 +28,7 @@ func HumanFriendlyTraffic(bytes uint64) string {
 func PickPort(network string, host string) int {
 	switch network {
 	case "tcp":
-		for retry := 0; retry < 50; retry++ {
+		for retry := 0; retry < 16; retry++ {
 			l, err := net.Listen("tcp", host+":0")
 			if err != nil {
 				continue
@@ -41,7 +41,7 @@ func PickPort(network string, host string) int {
 			return int(p)
 		}
 	case "udp":
-		for retry := 0; retry < 50; retry++ {
+		for retry := 0; retry < 16; retry++ {
 			conn, err := net.ListenPacket("udp", host+":0")
 			if err != nil {
 				continue

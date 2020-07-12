@@ -9,9 +9,10 @@ import (
 
 func TestUrl_Handle(t *testing.T) {
 	urlCases := []string{
-		"trojan-go://password@server.com/?type=ws&host=baidu.com&path=%2fwspath&encryption=ss%3Baes-256-gcm%3Bfuckgfw",
 		"trojan-go://password@server.com",
 		"trojan-go://password@server.com/?type=ws&host=baidu.com&path=%2fwspath",
+		"trojan-go://password@server.com/?encryption=ss%3Baes-256-gcm%3Bfuckgfw",
+		"trojan-go://password@server.com/?type=ws&host=baidu.com&path=%2fwspath&encryption=ss%3Baes-256-gcm%3Bfuckgfw",
 	}
 	optionCases := []string{
 		"mux=true;listen=127.0.0.1:0",
@@ -23,6 +24,8 @@ func TestUrl_Handle(t *testing.T) {
 				url:    &s,
 				option: &option,
 			}
+			u.Name()
+			u.Priority()
 			errChan := make(chan error, 1)
 			go func() {
 				errChan <- u.Handle()
@@ -30,7 +33,7 @@ func TestUrl_Handle(t *testing.T) {
 			select {
 			case err := <-errChan:
 				t.Fatal(err)
-			case <-time.After(time.Second * 2):
+			case <-time.After(time.Second * 1):
 			}
 		}
 	}
