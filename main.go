@@ -5,7 +5,7 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/option"
 
-	_ "github.com/p4gefau1t/trojan-go/build"
+	_ "github.com/p4gefau1t/trojan-go/component"
 	"github.com/p4gefau1t/trojan-go/log"
 )
 

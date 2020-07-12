@@ -32,8 +32,3 @@ jobs:
         hub release create -p -d "${assets[@]}" -m "$tag_name" "$tag_name"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload binary
-      uses: actions/upload-artifact@v1
-      with:
-        name: dist-release
-        path: ./bin
