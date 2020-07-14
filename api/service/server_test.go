@@ -55,7 +55,7 @@ func TestServerAPI(t *testing.T) {
 	}
 	stream1.CloseSend()
 	user.AddTraffic(1234, 5678)
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Second * 1)
 	stream2, err := server.GetUsers(ctx)
 	common.Must(err)
 	stream2.Send(&GetUsersRequest{
@@ -67,9 +67,6 @@ func TestServerAPI(t *testing.T) {
 	common.Must(err)
 	if resp2.Status.TrafficTotal.DownloadTraffic != 1234 || resp2.Status.TrafficTotal.UploadTraffic != 5678 {
 		t.Fatal("wrong traffic")
-	}
-	if resp2.Status.SpeedCurrent.DownloadSpeed != 1234 || resp2.Status.TrafficTotal.UploadTraffic != 5678 {
-		t.Fatal("wrong speed")
 	}
 
 	stream3, err := server.SetUsers(ctx)
