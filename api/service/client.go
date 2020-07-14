@@ -74,6 +74,9 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 		Port: cfg.API.APIPort,
 		Zone: addr.Zone,
 	}).String())
+	if err != nil {
+		return common.NewError("client api failed to listen").Base(err)
+	}
 	log.Info("client-side api service is listening on", listener.Addr().String())
 	errChan := make(chan error, 1)
 	go func() {
