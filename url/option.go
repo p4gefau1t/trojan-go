@@ -124,6 +124,7 @@ func (u *url) Handle() error {
 			}
 			listenPort = int(lp)
 		case "api":
+			apiEnabled = true
 			h, p, err := net.SplitHostPort(val)
 			if err != nil {
 				log.Fatal(err)
