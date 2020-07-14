@@ -66,10 +66,10 @@ func TestServerAPI(t *testing.T) {
 	resp2, err := stream2.Recv()
 	common.Must(err)
 	if resp2.Status.TrafficTotal.DownloadTraffic != 1234 || resp2.Status.TrafficTotal.UploadTraffic != 5678 {
-		t.Fail()
+		t.Fatal("wrong traffic")
 	}
 	if resp2.Status.SpeedCurrent.DownloadSpeed != 1234 || resp2.Status.TrafficTotal.UploadTraffic != 5678 {
-		t.Fail()
+		t.Fatal("wrong speed")
 	}
 
 	stream3, err := server.SetUsers(ctx)
@@ -83,11 +83,11 @@ func TestServerAPI(t *testing.T) {
 	})
 	resp3, err := stream3.Recv()
 	if err != nil || !resp3.Success {
-		t.Fail()
+		t.Fatal("user not exists")
 	}
 	valid, _ := auth.AuthUser("hash1234")
 	if valid {
-		t.Fail()
+		t.Fatal("failed to auth")
 	}
 	stream3.Send(&SetUsersRequest{
 		Status: &UserStatus{
@@ -99,11 +99,11 @@ func TestServerAPI(t *testing.T) {
 	})
 	resp3, err = stream3.Recv()
 	if err != nil || !resp3.Success {
-		t.Fail()
+		t.Fatal("failed to read")
 	}
 	valid, user = auth.AuthUser("newhash")
 	if !valid {
-		t.Fail()
+		t.Fatal("failed to auth 2")
 	}
 	stream3.Send(&SetUsersRequest{
 		Status: &UserStatus{
@@ -123,11 +123,21 @@ func TestServerAPI(t *testing.T) {
 	})
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 			user.AddTraffic(200, 0)
 		}
 	}()
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 			user.AddTraffic(0, 300)
 		}
 	}()

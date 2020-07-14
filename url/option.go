@@ -35,6 +35,12 @@ type Mux struct {
 	Enabled bool
 }
 
+type API struct {
+	Enabled bool   `json:"enabled"`
+	APIHost string `json:"api_addr"`
+	APIPort int    `json:"api_port"`
+}
+
 type UrlConfig struct {
 	RunType     string   `json:"run_type"`
 	LocalAddr   string   `json:"local_addr"`
@@ -46,6 +52,7 @@ type UrlConfig struct {
 	Shadowsocks `json:"shadowsocks"`
 	TLS         `json:"ssl"`
 	Mux         `json:"mux"`
+	API         `json:"api"`
 }
 
 type url struct {
@@ -84,6 +91,11 @@ func (u *url) Handle() error {
 	muxEnabled := false
 	listenHost := "127.0.0.1"
 	listenPort := 1080
+
+	apiEnabled := false
+	apiHost := "127.0.0.1"
+	apiPort := 10000
+
 	options := strings.Split(*u.option, ";")
 	for _, o := range options {
 		key := ""
@@ -106,11 +118,22 @@ func (u *url) Handle() error {
 				log.Fatal(err)
 			}
 			listenHost = h
-			lp, err := strconv.ParseUint(p, 10, 16)
+			lp, err := strconv.Atoi(p)
 			if err != nil {
 				log.Fatal(err)
 			}
 			listenPort = int(lp)
+		case "api":
+			h, p, err := net.SplitHostPort(val)
+			if err != nil {
+				log.Fatal(err)
+			}
+			apiHost = h
+			lp, err := strconv.Atoi(p)
+			if err != nil {
+				log.Fatal(err)
+			}
+			apiPort = int(lp)
 		default:
 			log.Fatal("invalid option", o)
 		}
@@ -137,6 +160,11 @@ func (u *url) Handle() error {
 			Enabled:  ssEnabled,
 			Password: ssPassword,
 			Method:   ssMethod,
+		},
+		API: API{
+			Enabled: apiEnabled,
+			APIHost: apiHost,
+			APIPort: apiPort,
 		},
 	}
 	data, err := json.Marshal(&config)

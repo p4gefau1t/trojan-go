@@ -17,6 +17,7 @@ func TestUrl_Handle(t *testing.T) {
 	optionCases := []string{
 		"mux=true;listen=127.0.0.1:0",
 		"mux=false;listen=127.0.0.1:0",
+		"mux=false;listen=127.0.0.1:0;api=127.0.0.1:0",
 	}
 	for _, s := range urlCases {
 		for _, option := range optionCases {
