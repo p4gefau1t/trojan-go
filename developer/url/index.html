@@ -17,7 +17,7 @@
 :root {}
 </style>
 <meta property="og:title" content="URL方案（草案）" />
-<meta property="og:description" content="概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位服务器资源。原则" />
+<meta property="og:description" content="Changelog encrpytion 格式修改为 ss;method:password 概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/developer/url/" />
 <meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
@@ -26,11 +26,11 @@
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 <meta name="twitter:title" content="URL方案（草案）"/>
-<meta name="twitter:description" content="概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位服务器资源。原则"/>
+<meta name="twitter:description" content="Changelog encrpytion 格式修改为 ss;method:password 概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位"/>
 <meta itemprop="name" content="URL方案（草案）">
-<meta itemprop="description" content="概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位服务器资源。原则">
+<meta itemprop="description" content="Changelog encrpytion 格式修改为 ss;method:password 概述 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。目前 URL 方案为草案，需要更多的实践和讨论。 Trojan-Go客户端可以接受URL，以定位">
 
-<meta itemprop="wordCount" content="1276">
+<meta itemprop="wordCount" content="1278">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -51,6 +51,10 @@
 </div>
 <div class="content-container">
 <main><h1>URL方案（草案）</h1>
+<h2 id="changelog">Changelog</h2>
+<ul>
+<li>encrpytion 格式修改为 ss;method:password</li>
+</ul>
 <h2 id="概述">概述</h2>
 <p>感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。<strong>目前 URL 方案为草案，需要更多的实践和讨论。</strong></p>
 <p>Trojan-Go<strong>客户端</strong>可以接受URL，以定位服务器资源。原则如下:</p>
@@ -65,7 +69,7 @@
 <p>URL 的作用，是定位 Trojan-Go 节点资源，方便资源分享</p>
 </li>
 </ul>
-<p>需要注意，基于人类可读性的考虑，禁止将 base64 等编码数据嵌入 URL 中。首先， base64 编码不能保证传输安全，其意义在于在 ASCII 信道传输非 ASCII 数据。其次，如果需要保证分享URL时的传输安全，请对明文URL进行加密，而不是修改URL格式。</p>
+<p>需要注意，基于人类可读性的考虑，禁止将 base64 等编码数据嵌入 URL 中。首先， base64 编码不能保证传输安全，其意义在于在 ASCII 信道传输非 ASCII 数据。其次，如果需要保证分享 URL 时的传输安全，请对明文 URL 进行加密，而不是修改 URL 格式。</p>
 <h2 id="格式">格式</h2>
 <p>基本格式如下，<code>$()</code> 代表此处需要 <code>encodeURIComponent</code>。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">trojan-go://
@@ -83,7 +87,7 @@
     plugin=$(...)
 #$(descriptive-text)
 </code></pre></div><p>例如</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">trojan-go://password1234@google.com/?sni=microsoft.com&amp;type=ws&amp;host=youtube.com&amp;path=%2Fgo&amp;encryption=ss%3Baes-256-gcm%3Bfuckgfw
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">trojan-go://password1234@google.com/?sni=microsoft.com&amp;type=ws&amp;host=youtube.com&amp;path=%2Fgo&amp;encryption=ss%3Baes-256-gcm%3Afuckgfw
 </code></pre></div><p>由于 Trojan-Go 兼容 Trojan，所以对于 Trojan 的 URL 方案</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">trojan://password@remote_host:remote_port
 </code></pre></div><p>可以兼容接受。它等价于</p>
@@ -140,7 +144,7 @@ TLS 认证必须开启。无法使用根CA校验服务器身份的节点，不�
 不可以为空字符串。</p>
 <p>必须使用 encodeURIComponent 编码。</p>
 <p>使用 Shadowsocks 算法进行流量加密时，其格式为：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">ss;method;password
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">ss;method:password
 </code></pre></div><p>其中 ss 是固定内容，method 是加密方法，必须为下列之一：</p>
 <ul>
 <li><code>aes-128-gcm</code></li>
