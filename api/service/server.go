@@ -226,6 +226,7 @@ func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	if err != nil {
 		return err
 	}
+	defer server.Stop()
 	RegisterTrojanServerServiceServer(server, service)
 	addr, err := net.ResolveIPAddr("ip", cfg.API.APIHost)
 	if err != nil {
@@ -239,6 +240,7 @@ func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	if err != nil {
 		return common.NewError("server api failed to listen").Base(err)
 	}
+	defer listener.Close()
 	log.Info("server-side api service is listening on", listener.Addr().String())
 	errChan := make(chan error, 1)
 	go func() {
@@ -248,7 +250,6 @@ func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		server.Stop()
 		return nil
 	}
 }

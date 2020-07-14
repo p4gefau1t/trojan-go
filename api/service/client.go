@@ -60,6 +60,7 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 	if err != nil {
 		return err
 	}
+	defer server.Stop()
 	service := &ClientAPI{
 		ctx:  ctx,
 		auth: auth,
@@ -77,6 +78,7 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 	if err != nil {
 		return common.NewError("client api failed to listen").Base(err)
 	}
+	defer listener.Close()
 	log.Info("client-side api service is listening on", listener.Addr().String())
 	errChan := make(chan error, 1)
 	go func() {
@@ -86,7 +88,6 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		server.Stop()
 		return nil
 	}
 }
