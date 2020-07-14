@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -51,6 +52,7 @@ func TestWebsocket(t *testing.T) {
 		common.Must(err)
 		wg.Done()
 	}()
+	time.Sleep(time.Second)
 	conn1, err := c.DialConn(nil, nil)
 	common.Must(err)
 	wg.Wait()
@@ -101,6 +103,7 @@ func TestRedirect(t *testing.T) {
 			t.Fail()
 		}
 	}()
+	time.Sleep(time.Second)
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	common.Must(err)
 	url := "wss://localhost/wrong-path"

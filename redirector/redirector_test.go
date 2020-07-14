@@ -2,10 +2,15 @@ package redirector
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/test/util"
 )
 
 func TestRedirector(t *testing.T) {
@@ -39,25 +44,23 @@ func TestRedirector(t *testing.T) {
 	common.Must(err)
 	conn2, err := l.Accept()
 	common.Must(err)
-	// TODO fix timeout
-	/*
-		redirAddr, err := net.ResolveTCPAddr("tcp", util.HTTPAddr)
-		common.Must(err)
-		redir.Redirect(&Redirection{
-			Dial:        nil,
-			RedirectTo:  redirAddr,
-			InboundConn: conn2,
-		})
-		req, err := http.NewRequest("GET", "http://localhost/", nil)
-		common.Must(err)
-		req.Write(conn1)
-		buf := make([]byte, 1024)
-		conn1.Read(buf)
-		fmt.Println(string(buf))
-		if !strings.HasPrefix(string(buf), "HTTP/1.1 200 OK") {
-			t.Fail()
-		}
-	*/
+	redirAddr, err := net.ResolveTCPAddr("tcp", util.HTTPAddr)
+	common.Must(err)
+	redir.Redirect(&Redirection{
+		Dial:        nil,
+		RedirectTo:  redirAddr,
+		InboundConn: conn2,
+	})
+	time.Sleep(time.Second)
+	req, err := http.NewRequest("GET", "http://localhost/", nil)
+	common.Must(err)
+	req.Write(conn1)
+	buf := make([]byte, 1024)
+	conn1.Read(buf)
+	fmt.Println(string(buf))
+	if !strings.HasPrefix(string(buf), "HTTP/1.1 200 OK") {
+		t.Fail()
+	}
 	cancel()
 	conn1.Close()
 	conn2.Close()
