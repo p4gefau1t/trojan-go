@@ -49,7 +49,7 @@ func (o *Option) Handle() error {
 }
 
 func (o *Option) Priority() int {
-	return -1
+	return 1
 }
 
 func init() {

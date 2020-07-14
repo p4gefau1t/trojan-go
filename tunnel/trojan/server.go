@@ -236,6 +236,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	if !cfg.DisableHTTPCheck {
 		redirConn, err := net.Dial("tcp", redirAddr.String())
 		if err != nil {
+			cancel()
 			return nil, common.NewError("invalid redirect address. check your http server: " + redirAddr.String()).Base(err)
 		}
 		redirConn.Close()
