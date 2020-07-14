@@ -57,7 +57,7 @@ func init() {
 		path: flag.String("config", "config.json", "Trojan-Go config filename (.yaml/.yml/.json)"),
 	})
 	option.RegisterHandler(&StdinOption{
-		format:       flag.String("stdin-format", "yaml", "Read from standard input (yaml/json)"),
+		format:       flag.String("stdin-format", "disabled", "Read from standard input (yaml/json)"),
 		suppressHint: flag.Bool("stdin-suppress-hint", false, "Suppress hint text"),
 	})
 }
@@ -110,6 +110,9 @@ func (o *StdinOption) Priority() int {
 func (o *StdinOption) isFormatJson() (isJson bool, e error) {
 	if o.format == nil {
 		return false, common.NewError("format specifier is nil")
+	}
+	if *o.format == "disabled" {
+		return false, common.NewError("reading from stdin is disabled")
 	}
 	return strings.ToLower(*o.format) == "json", nil
 }
