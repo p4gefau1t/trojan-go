@@ -11,8 +11,8 @@ func TestUrl_Handle(t *testing.T) {
 	urlCases := []string{
 		"trojan-go://password@server.com",
 		"trojan-go://password@server.com/?type=ws&host=baidu.com&path=%2fwspath",
-		"trojan-go://password@server.com/?encryption=ss%3Baes-256-gcm%3Bfuckgfw",
-		"trojan-go://password@server.com/?type=ws&host=baidu.com&path=%2fwspath&encryption=ss%3Baes-256-gcm%3Bfuckgfw",
+		"trojan-go://password@server.com/?encryption=ss%3baes-256-gcm%3afuckgfw",
+		"trojan-go://password@server.com/?type=ws&host=baidu.com&path=%2fwspath&encryption=ss%3Baes-256-gcm%3Afuckgfw",
 	}
 	optionCases := []string{
 		"mux=true;listen=127.0.0.1:0",

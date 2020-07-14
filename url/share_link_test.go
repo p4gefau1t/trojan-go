@@ -222,13 +222,13 @@ func TestNewShareInfoFromURL_Encryption_Unknown(t *testing.T) {
 func TestNewShareInfoFromURL_Encryption_SS_NotSupportedMethods(t *testing.T) {
 	invalidMethods := []string{"rc4-md5", "rc4", "des-cfb", "table", "salsa20-ctr"}
 	for _, invalidMethod := range invalidMethods {
-		_, e := NewShareInfoFromURL(fmt.Sprintf("trojan-go://a@b.c?encryption=ss%%3B%s%%3Bshabi", invalidMethod))
+		_, e := NewShareInfoFromURL(fmt.Sprintf("trojan-go://a@b.c?encryption=ss%%3B%s%%3Ashabi", invalidMethod))
 		assert.Error(t, e, "encryption %s should not be supported by ss", invalidMethod)
 	}
 }
 
 func TestNewShareInfoFromURL_Encryption_SS_NoPassword(t *testing.T) {
-	_, e := NewShareInfoFromURL("trojan-go://a@b.c?encryption=ss%3Baes-256-gcm%3B")
+	_, e := NewShareInfoFromURL("trojan-go://a@b.c?encryption=ss%3Baes-256-gcm%3A")
 	assert.Error(t, e, "empty ss password should not be allowed")
 }
 

@@ -4,6 +4,10 @@ draft: false
 weight: 200
 ---
 
+## Changelog
+
+- encrpytion 格式修改为 ss;method:password
+
 ## 概述
 
 感谢 @DuckSoft @StudentMain @phlinhng 对 Trojan-Go URL 方案的讨论和贡献。**目前 URL 方案为草案，需要更多的实践和讨论。**
@@ -16,7 +20,7 @@ Trojan-Go**客户端**可以接受URL，以定位服务器资源。原则如下:
 
 - URL 的作用，是定位 Trojan-Go 节点资源，方便资源分享
 
-需要注意，基于人类可读性的考虑，禁止将 base64 等编码数据嵌入 URL 中。首先， base64 编码不能保证传输安全，其意义在于在 ASCII 信道传输非 ASCII 数据。其次，如果需要保证分享URL时的传输安全，请对明文URL进行加密，而不是修改URL格式。
+需要注意，基于人类可读性的考虑，禁止将 base64 等编码数据嵌入 URL 中。首先， base64 编码不能保证传输安全，其意义在于在 ASCII 信道传输非 ASCII 数据。其次，如果需要保证分享 URL 时的传输安全，请对明文 URL 进行加密，而不是修改 URL 格式。
 
 ## 格式
 
@@ -42,7 +46,7 @@ trojan-go://
 例如
 
 ```text
-trojan-go://password1234@google.com/?sni=microsoft.com&type=ws&host=youtube.com&path=%2Fgo&encryption=ss%3Baes-256-gcm%3Bfuckgfw
+trojan-go://password1234@google.com/?sni=microsoft.com&type=ws&host=youtube.com&path=%2Fgo&encryption=ss%3Baes-256-gcm%3Afuckgfw
 ```
 
 由于 Trojan-Go 兼容 Trojan，所以对于 Trojan 的 URL 方案
@@ -140,7 +144,7 @@ TLS 认证必须开启。无法使用根CA校验服务器身份的节点，不�
 使用 Shadowsocks 算法进行流量加密时，其格式为：
 
 ```text
-ss;method;password
+ss;method:password
 ```
 
 其中 ss 是固定内容，method 是加密方法，必须为下列之一：

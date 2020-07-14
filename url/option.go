@@ -74,12 +74,12 @@ func (u *url) Handle() error {
 	ssMethod := ""
 	if strings.HasPrefix(info.Encryption, "ss;") {
 		ssEnabled = true
-		ssConfig := strings.Split(info.Encryption, ";")
-		if len(ssConfig) != 3 {
+		ssConfig := strings.Split(info.Encryption[3:], ":")
+		if len(ssConfig) != 2 {
 			log.Fatalf("invalid shadowsocks config: %s", info.Encryption)
 		}
-		ssMethod = ssConfig[1]
-		ssPassword = ssConfig[2]
+		ssMethod = ssConfig[0]
+		ssPassword = ssConfig[1]
 	}
 	muxEnabled := false
 	listenHost := "127.0.0.1"

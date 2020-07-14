@@ -18,6 +18,10 @@ var validTypes = map[string]struct{}{
 	ShareInfoTypeWebSocket: {},
 }
 
+var validEncryptionProviders = map[string]struct{}{
+	"ss": {},
+}
+
 var validSSEncryptionMap = map[string]struct{}{
 	"aes-128-gcm":            {},
 	"aes-256-gcm":            {},
@@ -145,19 +149,37 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 		e = errors.New("empty encryption")
 		return
 	} else {
-		if strings.HasPrefix(info.Encryption, "ss;") {
-			if parts := strings.SplitN(info.Encryption, ";", 3); len(parts) != 3 {
-				e = errors.New("expected 3 ss encryption params")
+		encryptionParts := strings.SplitN(info.Encryption, ";", 2)
+		encryptionProviderName := encryptionParts[0]
+
+		if _, ok := validEncryptionProviders[encryptionProviderName]; !ok {
+			e = errors.New(fmt.Sprintf("unsupported encryption provider name: %s", encryptionProviderName))
+			return
+		}
+
+		var encryptionParams string
+		if len(encryptionParts) >= 2 {
+			encryptionParams = encryptionParts[1]
+		}
+
+		if encryptionProviderName == "ss" {
+			ssParams := strings.SplitN(encryptionParams, ":", 2)
+			if len(ssParams) < 2 {
+				e = errors.New("missing ss password")
 				return
-			} else if _, ok := validSSEncryptionMap[parts[1]]; !ok {
-				e = errors.New(fmt.Sprintf("unsupported ss encryption method: %s", parts[1]))
+			}
+
+			ssMethod, ssPassword := ssParams[0], ssParams[1]
+			if _, ok := validSSEncryptionMap[ssMethod]; !ok {
+				e = errors.New(fmt.Sprintf("unsupported ss method: %s", ssMethod))
 				return
-			} else if parts[2] == "" {
-				e = errors.New("empty ss encryption key")
+			}
+
+			if ssPassword == "" {
+				e = errors.New("ss password cannot be empty")
 				return
 			}
 		} else {
-			// add more encryption support here
 			e = errors.New(fmt.Sprintf("encryption param %s is not supported", info.Encryption))
 			return
 		}
