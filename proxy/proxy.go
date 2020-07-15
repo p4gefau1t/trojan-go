@@ -151,8 +151,7 @@ func (p *Proxy) relayPacketLoop() {
 	}
 }
 
-func NewProxy(ctx context.Context, sources []tunnel.Server, sink tunnel.Client) *Proxy {
-	ctx, cancel := context.WithCancel(ctx)
+func NewProxy(ctx context.Context, cancel context.CancelFunc, sources []tunnel.Server, sink tunnel.Client) *Proxy {
 	return &Proxy{
 		sources: sources,
 		sink:    sink,

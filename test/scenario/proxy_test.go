@@ -14,6 +14,8 @@ import (
 
 	_ "net/http/pprof"
 
+	_ "github.com/p4gefau1t/trojan-go/api"
+	_ "github.com/p4gefau1t/trojan-go/api/service"
 	"github.com/p4gefau1t/trojan-go/common"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/proxy"
@@ -424,6 +426,41 @@ shadowsocks:
 	if !bytes.Equal(payload, buf[:]) {
 		t.Fail()
 	}
+}
+
+func TestLeak(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+	clientData := fmt.Sprintf(`
+run-type: client
+local-addr: 127.0.0.1
+local-port: %d
+remote-addr: 127.0.0.1
+remote-port: %d
+log-level: 0
+password:
+    - password
+ssl:
+    verify: false
+    fingerprint: firefox
+    sni: localhost
+shadowsocks:
+    enabled: true
+    method: AEAD_CHACHA20_POLY1305
+    password: 12345678
+mux:
+    enabled: true
+api:
+    enabled: true
+    api-port: 0
+`, socksPort, serverPort)
+	client, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
+	common.Must(err)
+	go client.Run()
+	time.Sleep(time.Second * 3)
+	client.Close()
+	time.Sleep(time.Second * 3)
+	//http.ListenAndServe("localhost:6060", nil)
 }
 
 func SingleThreadBenchmark(clientData, serverData string, socksPort int) {

@@ -250,6 +250,7 @@ func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
+		log.Debug("closed")
 		return nil
 	}
 }
