@@ -200,14 +200,16 @@ func (c *Client) DialPacket(overlay tunnel.Tunnel) (tunnel.PacketConn, error) {
 		return nil, common.NewError("router failed to dial udp (proxy)").Base(err)
 	}
 	ctx, cancel := context.WithCancel(c.ctx)
-	return &PacketConn{
+	conn := &PacketConn{
 		Client:     c,
 		PacketConn: directConn,
 		proxy:      proxy,
 		cancel:     cancel,
 		ctx:        ctx,
 		packetChan: make(chan *packetInfo, 16),
-	}, nil
+	}
+	go conn.packetLoop()
+	return conn, nil
 }
 
 func (c *Client) Close() error {
