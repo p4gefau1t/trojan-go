@@ -23,9 +23,13 @@ var validEncryptionProviders = map[string]struct{}{
 }
 
 var validSSEncryptionMap = map[string]struct{}{
-	"aes-128-gcm":            {},
-	"aes-256-gcm":            {},
-	"chacha20-ietf-poly1305": {},
+	"AES-128-GCM":            {},
+	"AES-256-GCM":            {},
+	"CHACHA20-IETF-POLY1305": {},
+	"DUMMY":                  {},
+	"AEAD_AES_128_GCM":       {},
+	"AEAD_AES_256_GCM":       {},
+	"AEAD_CHACHA20_POLY1305": {},
 }
 
 type ShareInfo struct {
@@ -170,7 +174,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 			}
 
 			ssMethod, ssPassword := ssParams[0], ssParams[1]
-			if _, ok := validSSEncryptionMap[ssMethod]; !ok {
+			if _, ok := validSSEncryptionMap[strings.ToUpper(ssMethod)]; !ok {
 				e = errors.New(fmt.Sprintf("unsupported ss method: %s", ssMethod))
 				return
 			}
