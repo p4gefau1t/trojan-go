@@ -76,7 +76,9 @@ Trojan-Go服务端可以兼容所有原Trojan客户端，如Igniter，ShadowRock
 
 下面是支持Trojan-Go扩展特性（Websocket/Mux等）的客户端。
 
-[Trojan-Qt5](https://github.com/Trojan-Qt5/Trojan-Qt5/)，跨平台客户端，支持Windows/MacOS/Linux，使用Trojan-Go核心，支持所有Trojan-Go扩展特性。
+[Trojan-Qt5](https://github.com/Trojan-Qt5/Trojan-Qt5/)，跨平台客户端，支持Windows/macOS/Linux，使用Trojan-Go核心，支持所有Trojan-Go扩展特性。
+
+[Qv2ray](https://github.com/Qv2ray/Qv2ray)，跨平台客户端，支持Windows/macOS/Linux，使用Trojan-Go核心，支持所有Trojan-Go扩展特性。
 
 [Igniter-Go](https://github.com/p4gefau1t/trojan-go-android)，安卓客户端，Fork自Igniter，将Igniter核心替换为Trojan-Go并做了一定修改，支持所有Trojan-Go扩展特性。
 
