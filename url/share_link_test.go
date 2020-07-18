@@ -219,6 +219,11 @@ func TestNewShareInfoFromURL_Encryption_Unknown(t *testing.T) {
 	assert.Error(t, e, "unknown encryption should not be supported")
 }
 
+func TestNewShareInfoFromURL_Encryption_None(t *testing.T) {
+	_, e := NewShareInfoFromURL("trojan-go://what@ever.me?encryption=none")
+	assert.Nil(t, e, "should support none encryption")
+}
+
 func TestNewShareInfoFromURL_Encryption_SS_NotSupportedMethods(t *testing.T) {
 	invalidMethods := []string{"rc4-md5", "rc4", "des-cfb", "table", "salsa20-ctr"}
 	for _, invalidMethod := range invalidMethods {

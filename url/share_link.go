@@ -19,7 +19,8 @@ var validTypes = map[string]struct{}{
 }
 
 var validEncryptionProviders = map[string]struct{}{
-	"ss": {},
+	"ss":   {},
+	"none": {},
 }
 
 var validSSEncryptionMap = map[string]struct{}{
@@ -179,9 +180,8 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 				e = errors.New("ss password cannot be empty")
 				return
 			}
-		} else {
-			e = errors.New(fmt.Sprintf("encryption param %s is not supported", info.Encryption))
-			return
+		} else if encryptionProviderName == "none" {
+			// no encryption. do nothing.
 		}
 	}
 
