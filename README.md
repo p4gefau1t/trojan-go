@@ -388,6 +388,8 @@ CGO_ENABLE=0 GOOS=linux GOARCH=arm go build -tags "full"
 
 [utls](https://github.com/refraction-networking/utls)
 
+[go-shadowsocks2](https://github.com/shadowsocks/go-shadowsocks2)
+
 ## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/p4gefau1t/trojan-go.svg)](https://starchart.cc/p4gefau1t/trojan-go)

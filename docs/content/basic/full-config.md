@@ -83,7 +83,7 @@ weight: 30
   },
   "shadowsocks": {
     "enabled": false,
-    "method": "AES-128-GCM",
+    "method": "aes-128-gcm",
     "password": ""
   },
   "transport_plugin": {
@@ -268,11 +268,11 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```method```加密方式。合法的值有：
 
-- "CHACHA20-IETF-POLY1305"
+- "chacha20-ietf-poly1305"
 
-- "AES-128-GCM" (默认)
+- "aes-128-gcm" (默认)
 
-- "AES-256-GCM"
+- "aes-256-gcm"
 
 ```password```用于生成主密钥的密码。如果启用AEAD加密，必须确保客户端和服务端一致。
 
@@ -294,7 +294,7 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```env```传输层插件环境变量。这是一个列表，例如```["VAR1=foo", "VAR2=bar"]```。
 
-```option```传输层插件配置（SIP003)。例如```"obfs=http;obfs-host=www.baidu.com"```。
+```plugin_option```传输层插件配置（SIP003)。例如```"obfs=http;obfs-host=www.baidu.com"```。
 
 ### ```tcp```选项
 
