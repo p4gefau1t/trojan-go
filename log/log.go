@@ -45,7 +45,6 @@ func (l *EmptyLogger) Fatal(v ...interface{}) { os.Exit(1) }
 
 func (l *EmptyLogger) Fatalf(format string, v ...interface{}) { os.Exit(1) }
 
-// Error print error message to output
 func (l *EmptyLogger) Error(v ...interface{}) {}
 
 func (l *EmptyLogger) Errorf(format string, v ...interface{}) {}

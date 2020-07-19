@@ -6,7 +6,7 @@ weight: 200
 
 ## Changelog
 
-- encrpytion 格式修改为 ss;method:password
+- encryption 格式修改为 ss;method:password
 
 ## 概述
 

@@ -8,8 +8,7 @@ import (
 
 const Name = "ROUTER"
 
-type Tunnel struct {
-}
+type Tunnel struct{}
 
 func (t *Tunnel) Name() string {
 	return Name

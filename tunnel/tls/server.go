@@ -9,21 +9,19 @@ import (
 	"encoding/pem"
 	"io"
 	"io/ioutil"
-	"time"
-
-	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
-	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-
 	"net"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/redirector"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 )
 
@@ -88,10 +86,18 @@ func (s *Server) acceptLoop() {
 				KeyLogWriter:             s.keyLogger,
 				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 					sni := s.keyPair[0].Leaf.Subject.CommonName
+					dnsNames := s.keyPair[0].Leaf.DNSNames
 					if s.sni != "" {
 						sni = s.sni
 					}
-					if s.verifySNI && !isDomainNameMatched(sni, hello.ServerName) {
+					matched := isDomainNameMatched(sni, hello.ServerName)
+					for _, name := range dnsNames {
+						if isDomainNameMatched(name, hello.ServerName) {
+							matched = true
+							break
+						}
+					}
+					if s.verifySNI && !matched {
 						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
 					}
 					return &s.keyPair[0], nil
@@ -124,7 +130,7 @@ func (s *Server) acceptLoop() {
 						handshakeRewindConn.Close()
 					}
 				} else {
-					// other cases, simply close it
+					// in other cases, simply close it
 					tlsConn.Close()
 					log.Error(common.NewError("tls handshake failed").Base(err))
 				}
@@ -135,7 +141,7 @@ func (s *Server) acceptLoop() {
 			state := tlsConn.ConnectionState()
 			log.Trace("tls handshake", tls.CipherSuiteName(state.CipherSuite), state.DidResume, state.NegotiatedProtocol)
 
-			// we use real http header parser to mimic a real http server
+			// we use a real http header parser to mimic a real http server
 			rewindConn := common.NewRewindConn(tlsConn)
 			rewindConn.SetBufferSize(1024)
 			r := bufio.NewReader(rewindConn)
@@ -143,7 +149,7 @@ func (s *Server) acceptLoop() {
 			rewindConn.Rewind()
 			rewindConn.StopBuffering()
 			if err != nil {
-				// this is not a http request, pass it to trojan protocol layer for further inspection
+				// this is not a http request. pass it to trojan protocol layer for further inspection
 				s.connChan <- &transport.Conn{
 					Conn: rewindConn,
 				}
