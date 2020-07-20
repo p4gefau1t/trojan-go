@@ -134,14 +134,7 @@ func (u *User) GetTraffic() (uint64, uint64) {
 	return atomic.LoadUint64(&u.sent), atomic.LoadUint64(&u.recv)
 }
 
-func (u *User) ResetTraffic() {
-	atomic.StoreUint64(&u.sent, 0)
-	atomic.StoreUint64(&u.recv, 0)
-	atomic.StoreUint64(&u.lastSent, 0)
-	atomic.StoreUint64(&u.lastRecv, 0)
-}
-
-func (u *User) GetAndResetTraffic() (uint64, uint64) {
+func (u *User) ResetTraffic() (uint64, uint64) {
 	sent := atomic.SwapUint64(&u.sent, 0)
 	recv := atomic.SwapUint64(&u.recv, 0)
 	atomic.StoreUint64(&u.lastSent, 0)

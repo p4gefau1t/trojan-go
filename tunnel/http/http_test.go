@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -31,6 +32,7 @@ func TestHTTP(t *testing.T) {
 		go func() {
 			http.Get(fmt.Sprintf("http://127.0.0.1:%d", port))
 		}()
+		time.Sleep(time.Microsecond * 10)
 		conn, err := s.AcceptConn(nil)
 		common.Must(err)
 		bufReader := bufio.NewReader(bufio.NewReader(conn))

@@ -88,4 +88,5 @@ func TestDokodemo(t *testing.T) {
 		wg.Done()
 	}()
 	wg.Wait()
+	s.Close()
 }

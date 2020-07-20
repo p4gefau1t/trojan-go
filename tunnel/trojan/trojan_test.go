@@ -10,44 +10,12 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
-	"github.com/p4gefau1t/trojan-go/redirector"
-	"github.com/p4gefau1t/trojan-go/statistic"
+	"github.com/p4gefau1t/trojan-go/statistic/memory"
+	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 )
-
-type MockUser struct {
-	statistic.User
-}
-
-func (*MockUser) AddIP(string) bool {
-	return true
-}
-func (*MockUser) DelIP(string) bool {
-	return true
-}
-
-func (*MockUser) Hash() string {
-	return common.SHA224String("user")
-}
-
-func (*MockUser) AddTraffic(sent, recv int) {}
-
-type MockAuth struct {
-	statistic.Authenticator
-}
-
-func (*MockAuth) AuthUser(hash string) (bool, statistic.User) {
-	if hash == common.SHA224String("user") {
-		return true, &MockUser{}
-	}
-	return false, nil
-}
-
-func (*MockAuth) ListUsers() []statistic.User {
-	return []statistic.User{&MockUser{}}
-}
 
 func TestTrojan(t *testing.T) {
 	port := common.PickPort("tcp", "127.0.0.1")
@@ -57,31 +25,32 @@ func TestTrojan(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: port,
 	}
-	ctx := config.WithConfig(context.Background(), transport.Name, transportConfig)
+	ctx, cancel := context.WithCancel(context.Background())
+	ctx = config.WithConfig(ctx, transport.Name, transportConfig)
 	tcpClient, err := transport.NewClient(ctx, nil)
 	common.Must(err)
 	tcpServer, err := transport.NewServer(ctx, nil)
 	common.Must(err)
-	ctx, cancel := context.WithCancel(ctx)
-	s := &Server{
-		underlay:   tcpServer,
-		auth:       &MockAuth{},
-		redirAddr:  tunnel.NewAddressFromHostPort("tcp", "127.0.0.1", util.EchoPort),
-		connChan:   make(chan tunnel.Conn, 32),
-		muxChan:    make(chan tunnel.Conn, 32),
-		packetChan: make(chan tunnel.PacketConn, 32),
-		ctx:        ctx,
-		cancel:     cancel,
-		redir:      redirector.NewRedirector(ctx),
+
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	authConfig := &memory.Config{Passwords: []string{"password"}}
+	clientConfig := &Config{
+		RemoteHost: "127.0.0.1",
+		RemotePort: serverPort,
 	}
-	go s.acceptLoop()
-	ctx, cancel = context.WithCancel(ctx)
-	c := &Client{
-		underlay: tcpClient,
-		ctx:      ctx,
-		cancel:   cancel,
-		user:     &MockUser{},
+	serverConfig := &Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  serverPort,
+		RemoteHost: "127.0.0.1",
+		RemotePort: util.EchoPort,
 	}
+
+	ctx = config.WithConfig(ctx, memory.Name, authConfig)
+	clientCtx := config.WithConfig(ctx, Name, clientConfig)
+	serverCtx := config.WithConfig(ctx, Name, serverConfig)
+	c, err := NewClient(clientCtx, tcpClient)
+	common.Must(err)
+	s, err := NewServer(serverCtx, tcpServer)
 
 	conn1, err := c.DialConn(&tunnel.Address{
 		DomainName:  "example.com",
@@ -135,4 +104,5 @@ func TestTrojan(t *testing.T) {
 	conn.Close()
 	c.Close()
 	s.Close()
+	cancel()
 }

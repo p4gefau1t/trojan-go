@@ -16,8 +16,7 @@ type TrafficMeter interface {
 	Hash() string
 	AddTraffic(sent, recv int)
 	GetTraffic() (sent, recv uint64)
-	ResetTraffic()
-	GetAndResetTraffic() (sent, recv uint64)
+	ResetTraffic() (sent, recv uint64)
 	GetSpeed() (sent, recv uint64)
 	SetSpeedLimit(sent, recv int)
 	GetSpeedLimit() (sent, recv int)

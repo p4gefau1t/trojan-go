@@ -32,7 +32,7 @@ func (a *Authenticator) updater() {
 		for _, user := range a.ListUsers() {
 			//swap upload and download for users
 			hash := user.Hash()
-			sent, recv := user.GetAndResetTraffic()
+			sent, recv := user.ResetTraffic()
 
 			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `password`=?;", recv, sent, hash)
 			if err != nil {
