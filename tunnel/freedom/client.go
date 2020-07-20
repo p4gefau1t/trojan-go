@@ -120,5 +120,7 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 		preferIPv4:   cfg.TCP.PreferIPV4,
 		forwardProxy: cfg.ForwardProxy.Enabled,
 		proxyAddr:    addr,
+		username:     cfg.ForwardProxy.Username,
+		password:     cfg.ForwardProxy.Password,
 	}, nil
 }
