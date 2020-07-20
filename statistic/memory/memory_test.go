@@ -83,13 +83,13 @@ func TestMemoryAuth(t *testing.T) {
 		}
 	}()
 	time.Sleep(time.Second * 4)
-	if sent, recv := user.GetSpeed(); sent > 200 || sent < 180 || recv > 100 || recv < 90 {
+	if sent, recv := user.GetSpeed(); sent > 300 || sent < 100 || recv > 150 || recv < 50 {
 		t.Fatal("GetSpeed", sent, recv)
 	}
 
 	user.SetSpeedLimit(30, 20)
 	time.Sleep(time.Second * 4)
-	if sent, recv := user.GetSpeed(); sent > 30 || recv > 20 {
+	if sent, recv := user.GetSpeed(); sent > 45 || recv > 30 {
 		t.Fatal("SetSpeedLimit", sent, recv)
 	}
 

@@ -49,8 +49,6 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
-	ctx, cancel := context.WithCancel(ctx)
-
 	var cmd *exec.Cmd
 	serverAddress := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
 
@@ -66,7 +64,7 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 				"SS_LOCAL_PORT="+strconv.FormatInt(int64(pluginPort), 10),
 				"SS_REMOTE_HOST="+cfg.RemoteHost,
 				"SS_REMOTE_PORT="+strconv.FormatInt(int64(cfg.RemotePort), 10),
-				"SS_PLUGIN_OPTIONS="+cfg.TransportPlugin.PluginOption,
+				"SS_PLUGIN_OPTIONS="+cfg.TransportPlugin.Option,
 			)
 			cfg.RemoteHost = pluginHost
 			cfg.RemotePort = pluginPort
@@ -91,6 +89,8 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 			return nil, common.NewError("invalid plugin type: " + cfg.TransportPlugin.Type)
 		}
 	}
+
+	ctx, cancel := context.WithCancel(ctx)
 	client := &Client{
 		serverAddress: serverAddress,
 		cmd:           cmd,

@@ -90,7 +90,7 @@ weight: 30
     "enabled": false,
     "type": "",
     "command": "",
-    "plugin_option": "",
+    "option": "",
     "arg": [],
     "env": []
   },

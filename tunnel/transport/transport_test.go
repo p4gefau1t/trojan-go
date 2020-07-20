@@ -62,12 +62,12 @@ func TestClientPlugin(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: 12345,
 		TransportPlugin: TransportPluginConfig{
-			Enabled:      true,
-			Type:         "shadowsocks",
-			Command:      "echo $SS_REMOTE_PORT",
-			PluginOption: "",
-			Arg:          nil,
-			Env:          nil,
+			Enabled: true,
+			Type:    "shadowsocks",
+			Command: "echo $SS_REMOTE_PORT",
+			Option:  "",
+			Arg:     nil,
+			Env:     nil,
 		},
 	}
 	ctx := config.WithConfig(context.Background(), Name, clientCfg)
@@ -83,12 +83,12 @@ func TestServerPlugin(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: 12345,
 		TransportPlugin: TransportPluginConfig{
-			Enabled:      true,
-			Type:         "shadowsocks",
-			Command:      "echo $SS_REMOTE_PORT",
-			PluginOption: "",
-			Arg:          nil,
-			Env:          nil,
+			Enabled: true,
+			Type:    "shadowsocks",
+			Command: "echo $SS_REMOTE_PORT",
+			Option:  "",
+			Arg:     nil,
+			Env:     nil,
 		},
 	}
 	ctx := config.WithConfig(context.Background(), Name, cfg)

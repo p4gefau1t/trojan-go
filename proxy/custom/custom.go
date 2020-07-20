@@ -55,6 +55,12 @@ func init() {
 		cfg := config.FromContext(ctx, Name).(*Config)
 
 		ctx, cancel := context.WithCancel(ctx)
+		success := false
+		defer func() {
+			if !success {
+				cancel()
+			}
+		}()
 		// inbound
 		nodes, err := buildNodes(ctx, cfg.Inbound.Node)
 		if err != nil {
@@ -119,6 +125,8 @@ func init() {
 				return nil, common.NewError("failed to create client").Base(err)
 			}
 		}
+
+		success = true
 		return proxy.NewProxy(ctx, cancel, servers, client), nil
 	})
 }
