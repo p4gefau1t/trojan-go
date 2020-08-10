@@ -48,7 +48,11 @@ Trojan-Go内建的路由模块可以帮助你实现国内直连，即客户端�
 
 这个配置文件激活了router模块，使用的是白名单的模式，当匹配到中国大陆或者局域网的IP/域名时，直接连接。如果是广告运营商的域名，则直接断开连接。
 
-所需要的数据库geoip.dat和geosite.dat已经包含在release的压缩包中，直接使用即可。它们来自v2ray的[domain-list-community](https://github.com/v2ray/domain-list-community)和[geoip](https://github.com/v2ray/geoip)。你可以使用如```geosite:cn```，```geosite:bilibili```的形式来指定某一类域名，使用如```geoip:cn```，```geoip:private```的形式来指定某一类IP。所有可用的tag可以在[domain-list-community](https://github.com/v2ray/domain-list-community)仓库中找到。
+所需要的数据库```geoip.dat```和```geosite.dat```已经包含在release的压缩包中，直接使用即可。它们来自V2Ray的[domain-list-community](https://github.com/v2fly/domain-list-community)和[geoip](https://github.com/v2fly/geoip)。
+
+你可以使用如```geosite:cn```、```geosite:geolocation-!cn```、```geosite:category-ads-all```、```geosite:bilibili```的形式来指定某一类域名，所有可用的tag可以在[domain-list-community](https://github.com/v2fly/domain-list-community)仓库的[```data```](https://github.com/v2fly/domain-list-community/tree/master/data)目录中找到。```geosite.dat``` 更详细使用说明，参考[V2Ray/Routing路由#预定义域名列表](https://www.v2fly.org/config/routing.html#预定义域名列表)。
+
+你可以使用如```geoip:cn```、```geoip:hk```、```geoip:us```、```geoip:private```的形式来指定某一类IP。`geoip:private`为特殊项，囊括了内网IP和保留IP，其余类别囊括了各个国家/地区的IP地址段。各国家/地区的代号参考[维基百科](https://zh.wikipedia.org/wiki/%E5%9C%8B%E5%AE%B6%E5%9C%B0%E5%8D%80%E4%BB%A3%E7%A2%BC)。
 
 你也可以配置自己的路由规则。例如，想要屏蔽所有example.com域名以及其子域名，以及192.168.1.0/24，添加下面的规则。
 
