@@ -8,8 +8,12 @@ import (
 
 	"github.com/p4gefau1t/trojan-go/log"
 
+	"github.com/p4gefau1t/trojan-go/config"
+
 	"github.com/p4gefau1t/trojan-go/common"
 )
+
+const Name = "STATISTICS"
 
 type TrafficMeter interface {
 	io.Closer
@@ -72,4 +76,9 @@ func NewAuthenticator(ctx context.Context, name string) (Authenticator, error) {
 	}
 	createdAuth[ctx] = auth
 	return auth, err
+}
+
+func ShouldTrackUserIp(ctx context.Context) bool {
+	cfg := config.FromContext(ctx, Name).(*Config)
+	return cfg.Statistics.TrackUserIp
 }

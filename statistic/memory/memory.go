@@ -42,24 +42,33 @@ func (u *User) Close() error {
 }
 
 func (u *User) AddIP(ip string) bool {
-	if u.maxIPNum <= 0 {
+	trackIp := statistic.ShouldTrackUserIp(u.ctx)
+	ipLimit := u.maxIPNum > 0
+	if !trackIp && !ipLimit {
 		return true
 	}
 	u.ipTableLock.Lock()
 	defer u.ipTableLock.Unlock()
 	_, found := u.ipTable[ip]
-	if found {
+	if ipLimit {
+		if found {
+			return true
+		}
+		if len(u.ipTable)+1 > u.maxIPNum {
+			return false
+		}
+		u.ipTable[ip] = struct{}{}
+		return true
+	} else {
+		if trackIp && !found {
+			u.ipTable[ip] = struct{}{}
+		}
 		return true
 	}
-	if len(u.ipTable)+1 > u.maxIPNum {
-		return false
-	}
-	u.ipTable[ip] = struct{}{}
-	return true
 }
 
 func (u *User) DelIP(ip string) bool {
-	if u.maxIPNum <= 0 {
+	if !statistic.ShouldTrackUserIp(u.ctx) && u.maxIPNum <= 0 {
 		return true
 	}
 	u.ipTableLock.Lock()
