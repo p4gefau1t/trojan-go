@@ -17,10 +17,10 @@ clean:
 	rm -f *.dat
 
 geoip.dat:
-	wget https://github.com/v2ray/geoip/raw/release/geoip.dat
+	wget https://github.com/v2fly/geoip/raw/release/geoip.dat
 
 geosite.dat:
-	wget https://github.com/v2ray/domain-list-community/raw/release/dlc.dat -O geosite.dat
+	wget https://github.com/v2fly/domain-list-community/raw/release/dlc.dat -O geosite.dat
 
 test:
 	@$(GO_DIR)go test ./...
