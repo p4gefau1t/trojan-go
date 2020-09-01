@@ -132,7 +132,7 @@ type Client struct {
 func (c *Client) Route(address *tunnel.Address) int {
 	policy := -1
 	var err error
-	if c.defaultPolicy == IPOnDemand {
+	if c.domainStrategy == IPOnDemand {
 		address, err = newIPAddress(address)
 		if err != nil {
 			return c.defaultPolicy
