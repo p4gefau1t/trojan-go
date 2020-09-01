@@ -16,23 +16,23 @@ import (
 const Name = "URL"
 
 type Websocket struct {
-	Enabled bool
-	Host    string
-	Path    string
+	Enabled bool   `json:"enabled"`
+	Host    string `json:"host"`
+	Path    string `json:"path"`
 }
 
 type TLS struct {
-	SNI string
+	SNI string `json:"sni"`
 }
 
 type Shadowsocks struct {
-	Enabled  bool
-	Method   string
-	Password string
+	Enabled  bool   `json:"enabled"`
+	Method   string `json:"method"`
+	Password string `json:"password"`
 }
 
 type Mux struct {
-	Enabled bool
+	Enabled bool `json:"enabled"`
 }
 
 type API struct {
