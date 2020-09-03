@@ -147,6 +147,8 @@ inbound:
     - protocol: tls
       tag: tls
       config:
+        remote-addr: 127.0.0.1
+        remote-port: 80
         ssl:
           sni: localhost
           key: server.key
@@ -155,12 +157,16 @@ inbound:
     - protocol: trojan
       tag: trojan1
       config:
+        remote-addr: 127.0.0.1
+        remote-port: 80
         password:
           - 12345678
 
     - protocol: trojan
       tag: trojan2
       config:
+        remote-addr: 127.0.0.1
+        remote-port: 80
         password:
           - 87654321
 
