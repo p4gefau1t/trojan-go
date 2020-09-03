@@ -42,7 +42,7 @@ func (o *apiController) listUsers(apiClient service.TrojanServerServiceClient) e
 		return err
 	}
 	defer stream.CloseSend()
-	result := []service.ListUsersResponse{}
+	result := []*service.ListUsersResponse{}
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
@@ -51,7 +51,7 @@ func (o *apiController) listUsers(apiClient service.TrojanServerServiceClient) e
 			}
 			return err
 		}
-		result = append(result, *resp)
+		result = append(result, resp)
 	}
 	data, err := json.Marshal(result)
 	common.Must(err)
