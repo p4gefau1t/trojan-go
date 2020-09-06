@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/p4gefau1t/trojan-go/config"
+	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/test/util"
@@ -25,8 +26,10 @@ func TestTransport(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: serverCfg.LocalPort,
 	}
+	freedomCfg := &freedom.Config{}
 	sctx := config.WithConfig(context.Background(), Name, serverCfg)
 	cctx := config.WithConfig(context.Background(), Name, clientCfg)
+	cctx = config.WithConfig(cctx, freedom.Name, freedomCfg)
 
 	s, err := NewServer(sctx, nil)
 	common.Must(err)
@@ -71,6 +74,8 @@ func TestClientPlugin(t *testing.T) {
 		},
 	}
 	ctx := config.WithConfig(context.Background(), Name, clientCfg)
+	freedomCfg := &freedom.Config{}
+	ctx = config.WithConfig(ctx, freedom.Name, freedomCfg)
 	c, err := NewClient(ctx, nil)
 	common.Must(err)
 	c.Close()
@@ -92,6 +97,8 @@ func TestServerPlugin(t *testing.T) {
 		},
 	}
 	ctx := config.WithConfig(context.Background(), Name, cfg)
+	freedomCfg := &freedom.Config{}
+	ctx = config.WithConfig(ctx, freedom.Name, freedomCfg)
 	s, err := NewServer(ctx, nil)
 	common.Must(err)
 	s.Close()

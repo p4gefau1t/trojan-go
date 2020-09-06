@@ -14,6 +14,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 )
 
@@ -27,6 +28,7 @@ func TestTrojan(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = config.WithConfig(ctx, transport.Name, transportConfig)
+	ctx = config.WithConfig(ctx, freedom.Name, &freedom.Config{})
 	tcpClient, err := transport.NewClient(ctx, nil)
 	common.Must(err)
 	tcpServer, err := transport.NewServer(ctx, nil)

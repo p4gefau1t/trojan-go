@@ -13,6 +13,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"golang.org/x/net/websocket"
 )
@@ -35,7 +36,9 @@ func TestWebsocket(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: port,
 	}
+	freedomCfg := &freedom.Config{}
 	ctx = config.WithConfig(ctx, transport.Name, transportConfig)
+	ctx = config.WithConfig(ctx, freedom.Name, freedomCfg)
 	tcpClient, err := transport.NewClient(ctx, nil)
 	common.Must(err)
 	tcpServer, err := transport.NewServer(ctx, nil)

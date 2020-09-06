@@ -8,8 +8,7 @@ import (
 
 const Name = "WEBSOCKET"
 
-type Tunnel struct {
-}
+type Tunnel struct{}
 
 func (*Tunnel) Name() string {
 	return Name

@@ -257,7 +257,8 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 
 	direct, err := freedom.NewClient(ctx, nil)
 	if err != nil {
-		return nil, common.NewError("failed to initialize raw client").Base(err)
+		cancel()
+		return nil, common.NewError("router failed to initialize raw client").Base(err)
 	}
 	client := &Client{
 		domains:  [3][]*v2router.Domain{},

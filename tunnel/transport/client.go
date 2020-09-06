@@ -2,7 +2,6 @@ package transport
 
 import (
 	"context"
-	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 )
 
 // Client implements tunnel.Client
@@ -19,6 +19,7 @@ type Client struct {
 	cmd           *exec.Cmd
 	ctx           context.Context
 	cancel        context.CancelFunc
+	direct        *freedom.Client
 }
 
 func (c *Client) Close() error {
@@ -35,8 +36,7 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 // DialConn implements tunnel.Client. It will ignore the params and directly dial to the remote server
 func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
-	dialer := new(net.Dialer)
-	conn, err := dialer.DialContext(c.ctx, "tcp", c.serverAddress.String())
+	conn, err := c.direct.DialConn(c.serverAddress, nil)
 	if err != nil {
 		return nil, common.NewError("transport failed to connect to remote server").Base(err)
 	}
@@ -90,12 +90,15 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 		}
 	}
 
+	direct, err := freedom.NewClient(ctx, nil)
+	common.Must(err)
 	ctx, cancel := context.WithCancel(ctx)
 	client := &Client{
 		serverAddress: serverAddress,
 		cmd:           cmd,
 		ctx:           ctx,
 		cancel:        cancel,
+		direct:        direct,
 	}
 	return client, nil
 }
