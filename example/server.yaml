@@ -1,0 +1,17 @@
+run-type: server
+local-addr: 0.0.0.0
+local-port: 443
+remote-addr: 127.0.0.1
+remote-port: 80
+password:
+  - your_password
+ssl:
+  cert: your_cert.crt
+  key: your_key.key
+  sni: your-domain-name.com
+router:
+  enabled: true
+  block:
+    - 'geoip:private'
+  geoip: /usr/share/trojan-go/geoip.dat
+  geosite: /usr/share/trojan-go/geosite.dat
