@@ -253,13 +253,15 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
-	ctx, cancel := context.WithCancel(ctx)
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
 
 	direct, err := freedom.NewClient(ctx, nil)
 	if err != nil {
 		cancel()
 		return nil, common.NewError("router failed to initialize raw client").Base(err)
 	}
+
 	client := &Client{
 		domains:  [3][]*v2router.Domain{},
 		cidrs:    [3][]*v2router.CIDR{},

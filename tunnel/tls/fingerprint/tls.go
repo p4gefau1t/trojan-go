@@ -40,7 +40,7 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 				&SNIExtension{},
 				&UtlsExtendedMasterSecretExtension{},
 				&RenegotiationInfoExtension{Renegotiation: RenegotiateOnceAsClient},
-				&SupportedCurvesExtension{[]CurveID{
+				&SupportedCurvesExtension{Curves: []CurveID{
 					CurveID(GREASE_PLACEHOLDER),
 					X25519,
 					CurveP256,
@@ -63,21 +63,21 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 					PKCS1WithSHA512,
 				}},
 				&SCTExtension{},
-				&KeyShareExtension{[]KeyShare{
+				&KeyShareExtension{KeyShares: []KeyShare{
 					{Group: CurveID(GREASE_PLACEHOLDER), Data: []byte{0}},
 					{Group: X25519},
 				}},
-				&PSKKeyExchangeModesExtension{[]uint8{
+				&PSKKeyExchangeModesExtension{Modes: []uint8{
 					PskModeDHE,
 				}},
-				&SupportedVersionsExtension{[]uint16{
+				&SupportedVersionsExtension{Versions: []uint16{
 					GREASE_PLACEHOLDER,
 					VersionTLS13,
 					VersionTLS12,
 					VersionTLS11,
 					VersionTLS10,
 				}},
-				&FakeCertCompressionAlgsExtension{[]CertCompressionAlgo{
+				&FakeCertCompressionAlgsExtension{Methods: []CertCompressionAlgo{
 					CertCompressionBrotli,
 				}},
 				&UtlsGREASEExtension{},
@@ -115,7 +115,7 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 				&SNIExtension{},
 				&UtlsExtendedMasterSecretExtension{},
 				&RenegotiationInfoExtension{Renegotiation: RenegotiateOnceAsClient},
-				&SupportedCurvesExtension{[]CurveID{
+				&SupportedCurvesExtension{Curves: []CurveID{
 					X25519,
 					CurveP256,
 					CurveP384,
@@ -129,11 +129,11 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 				&SessionTicketExtension{},
 				&ALPNExtension{AlpnProtocols: []string{"h2", "http/1.1"}},
 				&StatusRequestExtension{},
-				&KeyShareExtension{[]KeyShare{
+				&KeyShareExtension{KeyShares: []KeyShare{
 					{Group: X25519},
 					{Group: CurveP256},
 				}},
-				&SupportedVersionsExtension{[]uint16{
+				&SupportedVersionsExtension{Versions: []uint16{
 					VersionTLS13,
 					VersionTLS12,
 					VersionTLS11,
@@ -151,8 +151,8 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 					ECDSAWithSHA1,
 					PKCS1WithSHA1,
 				}},
-				&PSKKeyExchangeModesExtension{[]uint8{1 /*pskModeDHE*/}},
-				&FakeRecordSizeLimitExtension{0x4001},
+				&PSKKeyExchangeModesExtension{Modes: []uint8{1 /*pskModeDHE*/}},
+				&FakeRecordSizeLimitExtension{Limit: 0x4001},
 				&UtlsPaddingExtension{GetPaddingLen: BoringPaddingStyle},
 			}}
 	case "ios":
@@ -209,7 +209,7 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 				&SupportedPointsExtension{SupportedPoints: []byte{
 					0, //pointFormatUncompressed,
 				}},
-				&SupportedCurvesExtension{[]CurveID{
+				&SupportedCurvesExtension{Curves: []CurveID{
 					X25519,
 					CurveP256,
 					CurveP384,
