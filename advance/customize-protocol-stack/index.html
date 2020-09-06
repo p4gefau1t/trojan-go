@@ -30,7 +30,7 @@
 <meta itemprop="name" content="自定义协议栈">
 <meta itemprop="description" content="注意，Trojan不支持这个特性 Trojan-Go允许高级用户自定义协议栈。在自定义模式下，Trojan-Go将放弃对协议栈的控制，允许用户">
 
-<meta itemprop="wordCount" content="1279">
+<meta itemprop="wordCount" content="1291">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -314,6 +314,8 @@
     - <span style="color:#66d9ef">protocol</span>: tls
       <span style="color:#66d9ef">tag</span>: tls
       <span style="color:#66d9ef">config</span>:
+        <span style="color:#66d9ef">remote-addr</span>: <span style="color:#ae81ff">127.0.0.1</span>
+        <span style="color:#66d9ef">remote-port</span>: <span style="color:#ae81ff">80</span>
         <span style="color:#66d9ef">ssl</span>:
           <span style="color:#66d9ef">sni</span>: localhost
           <span style="color:#66d9ef">key</span>: server.key
@@ -322,12 +324,16 @@
     - <span style="color:#66d9ef">protocol</span>: trojan
       <span style="color:#66d9ef">tag</span>: trojan1
       <span style="color:#66d9ef">config</span>:
+        <span style="color:#66d9ef">remote-addr</span>: <span style="color:#ae81ff">127.0.0.1</span>
+        <span style="color:#66d9ef">remote-port</span>: <span style="color:#ae81ff">80</span>
         <span style="color:#66d9ef">password</span>:
           - <span style="color:#ae81ff">12345678</span>
 
     - <span style="color:#66d9ef">protocol</span>: trojan
       <span style="color:#66d9ef">tag</span>: trojan2
       <span style="color:#66d9ef">config</span>:
+        <span style="color:#66d9ef">remote-addr</span>: <span style="color:#ae81ff">127.0.0.1</span>
+        <span style="color:#66d9ef">remote-port</span>: <span style="color:#ae81ff">80</span>
         <span style="color:#66d9ef">password</span>:
           - <span style="color:#ae81ff">87654321</span>
 

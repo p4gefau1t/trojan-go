@@ -30,7 +30,7 @@
 <meta itemprop="name" content="国内直连和广告屏蔽">
 <meta itemprop="description" content="注意，Trojan不支持这个特性 Trojan-Go内建的路由模块可以帮助你实现国内直连，即客户端对于国内网站不经过代理，直接连接。 路由模块在">
 
-<meta itemprop="wordCount" content="663">
+<meta itemprop="wordCount" content="853">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -87,7 +87,9 @@
     }
 }
 </code></pre></div><p>这个配置文件激活了router模块，使用的是白名单的模式，当匹配到中国大陆或者局域网的IP/域名时，直接连接。如果是广告运营商的域名，则直接断开连接。</p>
-<p>所需要的数据库geoip.dat和geosite.dat已经包含在release的压缩包中，直接使用即可。它们来自v2ray的<a href="https://github.com/v2ray/domain-list-community">domain-list-community</a>和<a href="https://github.com/v2ray/geoip">geoip</a>。你可以使用如<code>geosite:cn</code>，<code>geosite:bilibili</code>的形式来指定某一类域名，使用如<code>geoip:cn</code>，<code>geoip:private</code>的形式来指定某一类IP。所有可用的tag可以在<a href="https://github.com/v2ray/domain-list-community">domain-list-community</a>仓库中找到。</p>
+<p>所需要的数据库<code>geoip.dat</code>和<code>geosite.dat</code>已经包含在release的压缩包中，直接使用即可。它们来自V2Ray的<a href="https://github.com/v2fly/domain-list-community">domain-list-community</a>和<a href="https://github.com/v2fly/geoip">geoip</a>。</p>
+<p>你可以使用如<code>geosite:cn</code>、<code>geosite:geolocation-!cn</code>、<code>geosite:category-ads-all</code>、<code>geosite:bilibili</code>的形式来指定某一类域名，所有可用的tag可以在<a href="https://github.com/v2fly/domain-list-community">domain-list-community</a>仓库的<a href="https://github.com/v2fly/domain-list-community/tree/master/data"><code>data</code></a>目录中找到。<code>geosite.dat</code> 更详细使用说明，参考<a href="https://www.v2fly.org/config/routing.html#%E9%A2%84%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D%E5%88%97%E8%A1%A8">V2Ray/Routing路由#预定义域名列表</a>。</p>
+<p>你可以使用如<code>geoip:cn</code>、<code>geoip:hk</code>、<code>geoip:us</code>、<code>geoip:private</code>的形式来指定某一类IP。<code>geoip:private</code>为特殊项，囊括了内网IP和保留IP，其余类别囊括了各个国家/地区的IP地址段。各国家/地区的代号参考<a href="https://zh.wikipedia.org/wiki/%E5%9C%8B%E5%AE%B6%E5%9C%B0%E5%8D%80%E4%BB%A3%E7%A2%BC">维基百科</a>。</p>
 <p>你也可以配置自己的路由规则。例如，想要屏蔽所有example.com域名以及其子域名，以及192.168.1.0/24，添加下面的规则。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#e6db74">&#34;block&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> [
     <span style="color:#e6db74">&#34;domain:example.com&#34;</span>,
