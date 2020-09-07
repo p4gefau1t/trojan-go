@@ -226,26 +226,38 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 	codes := []codeInfo{}
 	for _, s := range cfg.Router.Proxy {
 		if strings.HasPrefix(s, prefix) {
-			codes = append(codes, codeInfo{
-				code:     s[len(prefix):],
-				strategy: Proxy,
-			})
+			if left := s[len(prefix):]; len(left) > 0 {
+				codes = append(codes, codeInfo{
+					code:     left,
+					strategy: Proxy,
+				})
+			} else {
+				log.Warn("invalid empty rule: ", s)
+			}
 		}
 	}
 	for _, s := range cfg.Router.Bypass {
 		if strings.HasPrefix(s, prefix) {
-			codes = append(codes, codeInfo{
-				code:     s[len(prefix):],
-				strategy: Bypass,
-			})
+			if left := s[len(prefix):]; len(left) > 0 {
+				codes = append(codes, codeInfo{
+					code:     left,
+					strategy: Bypass,
+				})
+			} else {
+				log.Warn("invalid empty rule: ", s)
+			}
 		}
 	}
 	for _, s := range cfg.Router.Block {
 		if strings.HasPrefix(s, prefix) {
-			codes = append(codes, codeInfo{
-				code:     s[len(prefix):],
-				strategy: Block,
-			})
+			if left := s[len(prefix):]; len(left) > 0 {
+				codes = append(codes, codeInfo{
+					code:     left,
+					strategy: Block,
+				})
+			} else {
+				log.Warn("invalid empty rule: ", s)
+			}
 		}
 	}
 	return codes
@@ -270,30 +282,31 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		ctx:      ctx,
 		cancel:   cancel,
 	}
-	switch cfg.Router.DomainStrategy {
-	case "as_is", "as-is":
+	switch strings.ToLower(cfg.Router.DomainStrategy) {
+	case "as_is", "as-is", "asis":
 		client.domainStrategy = AsIs
-	case "ip_if_non_match", "ip-if-non-match":
+	case "ip_if_non_match", "ip-if-non-match", "ipifnonmatch":
 		client.domainStrategy = IPIfNonMatch
-	case "ip_on_demand", "ip-on-demand":
+	case "ip_on_demand", "ip-on-demand", "ipondemand":
 		client.domainStrategy = IPOnDemand
 	default:
 		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)
 	}
 
-	switch cfg.Router.DefaultPolicy {
+	switch strings.ToLower(cfg.Router.DefaultPolicy) {
 	case "proxy":
 		client.defaultPolicy = Proxy
 	case "bypass":
 		client.defaultPolicy = Bypass
 	case "block":
 		client.defaultPolicy = Block
+	default:
 		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)
 	}
 
 	geoipData, err := ioutil.ReadFile(cfg.Router.GeoIPFilename)
 	if err != nil {
-		log.Warn(err)
+		log.Fatal("failed to read geoip.dat file: ", err)
 	} else {
 		geoip := new(v2router.GeoIPList)
 		if err := proto.Unmarshal(geoipData, geoip); err != nil {
@@ -305,7 +318,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			found := false
 			for _, e := range geoip.GetEntry() {
 				code := e.GetCountryCode()
-				if c.code == code {
+				if strings.EqualFold(c.code, code) {
 					client.cidrs[c.strategy] = append(client.cidrs[c.strategy], e.GetCidr()...)
 					found = true
 					break
@@ -321,7 +334,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 
 	geositeData, err := ioutil.ReadFile(cfg.Router.GeoSiteFilename)
 	if err != nil {
-		log.Warn(err)
+		log.Fatal("failed to read geosite.dat file: ", err)
 	} else {
 		geosite := new(v2router.GeoSiteList)
 		if err := proto.Unmarshal(geositeData, geosite); err != nil {
@@ -329,14 +342,42 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		}
 		siteCode := loadCode(cfg, "geosite:")
 		for _, c := range siteCode {
-			c.code = strings.ToUpper(c.code)
+			attrWanted := ""
+			// Test if user wants domains that have an attribute
+			if attrIdx := strings.Index(c.code, "@"); attrIdx > 0 {
+				if attrIdx+1 < len(c.code) {
+					c.code = strings.ToUpper(c.code[:attrIdx])
+					attrWanted = c.code[attrIdx+1:]
+				} else {
+					log.Fatal("geosite info", c.code, "invalid")
+					continue
+				}
+			} else if attrIdx == 0 { // "geosite:@cn" is invalid
+				log.Fatal("geosite info", c.code, "invalid")
+				continue
+			} else {
+				c.code = strings.ToUpper(c.code)
+			}
 			found := false
 			for _, e := range geosite.GetEntry() {
 				code := e.GetCountryCode()
-				if c.code == code {
-					client.domains[c.strategy] = append(client.domains[c.strategy], e.GetDomain()...)
-					found = true
-					break
+				if strings.EqualFold(c.code, code) {
+					domainList := e.GetDomain()
+					if attrWanted != "" {
+						for _, domain := range domainList {
+							for _, attr := range domain.GetAttribute() {
+								if strings.EqualFold(attrWanted, attr.GetKey()) {
+									client.domains[c.strategy] = append(client.domains[c.strategy], domain)
+									found = true
+								}
+							}
+						}
+						break
+					} else {
+						client.domains[c.strategy] = append(client.domains[c.strategy], domainList...)
+						found = true
+						break
+					}
 				}
 			}
 			if found {
@@ -351,13 +392,25 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	for _, info := range domainInfo {
 		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
 			Type:      v2router.Domain_Domain,
-			Value:     info.code,
+			Value:     strings.ToLower(info.code),
+			Attribute: nil,
+		})
+	}
+
+	keywordInfo := loadCode(cfg, "keyword:")
+	for _, info := range keywordInfo {
+		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
+			Type:      v2router.Domain_Plain,
+			Value:     strings.ToLower(info.code),
 			Attribute: nil,
 		})
 	}
 
 	regexInfo := loadCode(cfg, "regex:")
 	for _, info := range regexInfo {
+		if _, err := regexp.Compile(info.code); err != nil {
+			return nil, common.NewError("invalid regular expression: " + info.code).Base(err)
+		}
 		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
 			Type:      v2router.Domain_Regex,
 			Value:     info.code,
@@ -368,8 +421,8 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	fullInfo := loadCode(cfg, "full:")
 	for _, info := range fullInfo {
 		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
-			Type:      v2router.Domain_Regex,
-			Value:     info.code,
+			Type:      v2router.Domain_Full,
+			Value:     strings.ToLower(info.code),
 			Attribute: nil,
 		})
 	}
@@ -378,11 +431,11 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	for _, info := range cidrInfo {
 		tmp := strings.Split(info.code, "/")
 		if len(tmp) != 2 {
-			return nil, common.NewError("invalid cidr:" + info.code)
+			return nil, common.NewError("invalid cidr: " + info.code)
 		}
 		ip := net.ParseIP(tmp[0])
 		if ip == nil {
-			return nil, common.NewError("invalid cidr ip:" + info.code)
+			return nil, common.NewError("invalid cidr ip: " + info.code)
 		}
 		prefix, err := strconv.ParseInt(tmp[1], 10, 32)
 		if err != nil {
