@@ -32,7 +32,7 @@ Trojan-Go的大多数模块是可插拔的。在build文件夹下可以找到各
 
 ```shell
 go build -tags "full" #编译所有模块
-go build -tags "client" -ldflags="-s -w" #只有客户端功能，且去除符号表缩小体积
+go build -tags "client" -trimpath -ldflags="-s -w -buildid=" #只有客户端功能，且去除符号表缩小体积
 go build -tags "server mysql" #只有服务端和mysql支持
 ```
 
