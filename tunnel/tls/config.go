@@ -33,6 +33,11 @@ type TLSConfig struct {
 	Fingerprint          string   `json:"fingerprint" yaml:"fingerprint"`
 	KeyLogPath           string   `json:"key_log" yaml:"key-log"`
 	CertCheckRate        int      `json:"cert_check_rate" yaml:"cert-check-rate"`
+	CertmagicDomains     []string `json:"certmagic_domains" yaml:"certmagic-domains"`
+	CertmagicStoragePath string   `json:"certmagic_storage_path" yaml:"certmagic-storage-path"`
+	CertmagicDefaultSNI  string   `json:"certmagic_default_sni" yaml:"certmagic-default-sni"`
+	MatchSNI             []string `json:"match_sni" yaml:"match-sni"`
+	AutoRedirect         bool     `json:"auto_redirect" yaml:"auto-redirect"`
 }
 
 func init() {

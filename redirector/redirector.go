@@ -13,7 +13,7 @@ import (
 type Dial func(net.Addr) (net.Conn, error)
 
 func defaultDial(addr net.Addr) (net.Conn, error) {
-	return net.Dial("tcp", addr.String())
+	return net.Dial(addr.Network(), addr.String())
 }
 
 type Redirection struct {

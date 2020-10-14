@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caddyserver/certmagic"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -27,7 +28,7 @@ import (
 
 // Server is a tls server
 type Server struct {
-	fallbackAddress    *tunnel.Address
+	fallbackAddress    net.Addr
 	verifySNI          bool
 	sni                string
 	alpn               []string
@@ -46,6 +47,8 @@ type Server struct {
 	underlay           tunnel.Server
 	nextHTTP           bool
 	portOverrider      map[string]int
+	tlsConfig          *tls.Config
+	matchSNI           func(string) bool
 }
 
 func (s *Server) Close() error {
@@ -78,30 +81,35 @@ func (s *Server) acceptLoop() {
 		}
 		go func(conn net.Conn) {
 
-			tlsConfig := &tls.Config{
-				CipherSuites:             s.cipherSuite,
-				PreferServerCipherSuites: s.PreferServerCipher,
-				SessionTicketsDisabled:   !s.sessionTicket,
-				NextProtos:               s.alpn,
-				KeyLogWriter:             s.keyLogger,
-				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-					sni := s.keyPair[0].Leaf.Subject.CommonName
-					dnsNames := s.keyPair[0].Leaf.DNSNames
-					if s.sni != "" {
-						sni = s.sni
-					}
-					matched := isDomainNameMatched(sni, hello.ServerName)
-					for _, name := range dnsNames {
-						if isDomainNameMatched(name, hello.ServerName) {
-							matched = true
-							break
+			var tlsConfig *tls.Config
+			if s.tlsConfig != nil {
+				tlsConfig = s.tlsConfig
+			} else {
+				tlsConfig = &tls.Config{
+					CipherSuites:             s.cipherSuite,
+					PreferServerCipherSuites: s.PreferServerCipher,
+					SessionTicketsDisabled:   !s.sessionTicket,
+					NextProtos:               s.alpn,
+					KeyLogWriter:             s.keyLogger,
+					GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+						sni := s.keyPair[0].Leaf.Subject.CommonName
+						dnsNames := s.keyPair[0].Leaf.DNSNames
+						if s.sni != "" {
+							sni = s.sni
 						}
-					}
-					if s.verifySNI && !matched {
-						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
-					}
-					return &s.keyPair[0], nil
-				},
+						matched := isDomainNameMatched(sni, hello.ServerName)
+						for _, name := range dnsNames {
+							if isDomainNameMatched(name, hello.ServerName) {
+								matched = true
+								break
+							}
+						}
+						if s.verifySNI && !matched {
+							return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
+						}
+						return &s.keyPair[0], nil
+					},
+				}
 			}
 
 			// ------------------------ WAR ZONE ----------------------------
@@ -148,7 +156,7 @@ func (s *Server) acceptLoop() {
 			httpReq, err := http.ReadRequest(r)
 			rewindConn.Rewind()
 			rewindConn.StopBuffering()
-			if err != nil {
+			if err != nil && s.matchSNI(state.ServerName) {
 				// this is not a http request. pass it to trojan protocol layer for further inspection
 				s.connChan <- &transport.Conn{
 					Conn: rewindConn,
@@ -281,24 +289,95 @@ func loadKeyPair(keyPath string, certPath string, password string) (*tls.Certifi
 func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
-	var fallbackAddress *tunnel.Address
-	if cfg.TLS.FallbackPort != 0 {
+	var tlsConfig *tls.Config
+	var fallbackAddress net.Addr
+	if len(cfg.TLS.CertmagicDomains) > 0 {
+		var storage = &certmagic.FileStorage{cfg.TLS.CertmagicStoragePath}
+		certmagic.Default.Storage = storage
+		certmagic.DefaultACME.Agreed = true
+
+		if cfg.TLS.CertmagicDefaultSNI != "" {
+			certmagic.Default.DefaultServerName = cfg.TLS.CertmagicDefaultSNI
+		}
+
+		cmCfg := certmagic.NewDefault()
+		err := cmCfg.ManageSync(cfg.TLS.CertmagicDomains)
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig = cmCfg.TLSConfig()
+		tlsConfig.NextProtos = append(cfg.TLS.ALPN, tlsConfig.NextProtos...)
+
+		httpsLn, _ := tls.Listen("unix", "/tmp/trojan_tls.socket", tlsConfig)
+		httpsServer := &http.Server{
+			ReadHeaderTimeout: 10 * time.Second,
+			ReadTimeout:       30 * time.Second,
+			WriteTimeout:      2 * time.Minute,
+			IdleTimeout:       5 * time.Minute,
+			Handler:           http.DefaultServeMux,
+		}
+		go httpsServer.Serve(httpsLn)
+		fallbackAddress = &net.UnixAddr{
+			Name: "/tmp/trojan_tls.socket",
+			Net:  "unix",
+		}
+
+		if cfg.TLS.AutoRedirect {
+			hostOnly := func(hostport string) string {
+				host, _, err := net.SplitHostPort(hostport)
+				if err != nil {
+					return hostport // OK; probably had no port to begin with
+				}
+				return host
+			}
+			httpRedirectHandler := func(w http.ResponseWriter, r *http.Request) {
+				toURL := "https://"
+
+				// since we redirect to the standard HTTPS port, we
+				// do not need to include it in the redirect URL
+				requestHost := hostOnly(r.Host)
+
+				toURL += requestHost
+				toURL += r.URL.RequestURI()
+
+				// get rid of this disgusting unencrypted HTTP connection 🤢
+				w.Header().Set("Connection", "close")
+
+				http.Redirect(w, r, toURL, http.StatusMovedPermanently)
+			}
+
+			httpLn, _ := net.Listen("tcp", ":80")
+			httpServer := &http.Server{
+				ReadHeaderTimeout: 5 * time.Second,
+				ReadTimeout:       5 * time.Second,
+				WriteTimeout:      5 * time.Second,
+				IdleTimeout:       5 * time.Second,
+			}
+
+			httpServer.Handler = cmCfg.Issuer.(*certmagic.ACMEManager).HTTPChallengeHandler(http.HandlerFunc(httpRedirectHandler))
+			go httpServer.Serve(httpLn)
+		}
+	}
+	if cfg.TLS.FallbackPort != 0 && len(cfg.TLS.CertmagicDomains) == 0 {
 		if cfg.TLS.FallbackHost == "" {
 			cfg.TLS.FallbackHost = cfg.RemoteHost
 			log.Warn("empty tls fallback address")
 		}
 		fallbackAddress = tunnel.NewAddressFromHostPort("tcp", cfg.TLS.FallbackHost, cfg.TLS.FallbackPort)
-		fallbackConn, err := net.Dial("tcp", fallbackAddress.String())
+	} else {
+		log.Warn("empty tls fallback port")
+	}
+	if fallbackAddress != nil {
+		fallbackConn, err := net.Dial(fallbackAddress.Network(), fallbackAddress.String())
 		if err != nil {
 			return nil, common.NewError("invalid fallback address").Base(err)
 		}
 		fallbackConn.Close()
-	} else {
-		log.Warn("empty tls fallback port")
 	}
 
 	keyPair, err := loadKeyPair(cfg.TLS.KeyPath, cfg.TLS.CertPath, cfg.TLS.KeyPassword)
-	if err != nil {
+	if err != nil && len(cfg.TLS.CertmagicDomains) == 0 {
 		return nil, common.NewError("tls failed to load key pair")
 	}
 
@@ -315,6 +394,9 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	var cipherSuite []uint16
 	if len(cfg.TLS.Cipher) != 0 {
 		cipherSuite = fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":"))
+		if tlsConfig != nil {
+			tlsConfig.CipherSuites = cipherSuite
+		}
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -334,10 +416,22 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		cipherSuite:        cipherSuite,
 		ctx:                ctx,
 		cancel:             cancel,
+		tlsConfig:          tlsConfig,
+		matchSNI: func(s string) bool {
+			if len(cfg.TLS.MatchSNI) == 0 {
+				return true
+			}
+			for _, v := range cfg.TLS.MatchSNI {
+				if s == v {
+					return true
+				}
+			}
+			return false
+		},
 	}
 
 	go server.acceptLoop()
-	if cfg.TLS.CertCheckRate > 0 {
+	if cfg.TLS.CertCheckRate > 0 && len(cfg.TLS.CertmagicDomains) == 0 {
 		go server.checkKeyPairLoop(
 			time.Second*time.Duration(cfg.TLS.CertCheckRate),
 			cfg.TLS.KeyPath,
