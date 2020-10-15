@@ -11,6 +11,7 @@ type WebsocketConfig struct {
 type Config struct {
 	RemoteHost string          `json:"remote_addr" yaml:"remote-addr"`
 	RemotePort int             `json:"remote_port" yaml:"remote-port"`
+	RemoteUnix string          `json:"remote_unix" yaml:"remote-unix"`
 	Websocket  WebsocketConfig `json:"websocket" yaml:"websocket"`
 }
 

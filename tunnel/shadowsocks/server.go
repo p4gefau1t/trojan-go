@@ -72,10 +72,19 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		return nil, common.NewError("invalid shadowsocks redirection port")
 	}
 	log.Debug("shadowsocks client created")
+	var redirAddr net.Addr
+	if cfg.RemoteUnix != "" {
+		redirAddr = &net.UnixAddr{
+			Name: cfg.RemoteUnix,
+			Net:  "unix",
+		}
+	} else {
+		redirAddr = tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	}
 	return &Server{
 		underlay:   underlay,
 		Cipher:     cipher,
 		Redirector: redirector.NewRedirector(ctx),
-		redirAddr:  tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort),
+		redirAddr:  redirAddr,
 	}, nil
 }

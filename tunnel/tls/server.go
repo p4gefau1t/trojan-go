@@ -309,6 +309,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		tlsConfig = cmCfg.TLSConfig()
 		tlsConfig.NextProtos = append(cfg.TLS.ALPN, tlsConfig.NextProtos...)
 
+		os.Remove("/tmp/trojan_tls.socket")
 		httpsLn, _ := tls.Listen("unix", "/tmp/trojan_tls.socket", tlsConfig)
 		httpsServer := &http.Server{
 			ReadHeaderTimeout: 10 * time.Second,
@@ -411,7 +412,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		connChan:           make(chan tunnel.Conn, 32),
 		wsChan:             make(chan tunnel.Conn, 32),
 		redir:              redirector.NewRedirector(ctx),
-		keyPair:            []tls.Certificate{*keyPair},
 		keyLogger:          keyLogger,
 		cipherSuite:        cipherSuite,
 		ctx:                ctx,
@@ -428,6 +428,10 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 			}
 			return false
 		},
+	}
+
+	if keyPair != nil {
+		server.keyPair = []tls.Certificate{*keyPair}
 	}
 
 	go server.acceptLoop()

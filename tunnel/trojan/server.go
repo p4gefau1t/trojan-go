@@ -102,7 +102,7 @@ func (c *InboundConn) Auth() error {
 type Server struct {
 	auth       statistic.Authenticator
 	redir      *redirector.Redirector
-	redirAddr  *tunnel.Address
+	redirAddr  net.Addr
 	underlay   tunnel.Server
 	connChan   chan tunnel.Conn
 	muxChan    chan tunnel.Conn
@@ -220,7 +220,15 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		go api.RunService(ctx, Name+"_SERVER", auth)
 	}
 
-	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	var redirAddr net.Addr
+	if cfg.RemoteUnix != "" {
+		redirAddr = &net.UnixAddr{
+			Name: cfg.RemoteUnix,
+			Net:  "unix",
+		}
+	} else {
+		redirAddr = tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	}
 	s := &Server{
 		underlay:   underlay,
 		auth:       auth,
@@ -234,7 +242,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	}
 
 	if !cfg.DisableHTTPCheck {
-		redirConn, err := net.Dial("tcp", redirAddr.String())
+		redirConn, err := net.Dial(redirAddr.Network(), redirAddr.String())
 		if err != nil {
 			cancel()
 			return nil, common.NewError("invalid redirect address. check your http server: " + redirAddr.String()).Base(err)

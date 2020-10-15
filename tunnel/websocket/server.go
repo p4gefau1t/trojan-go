@@ -159,6 +159,15 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	log.Debug("websocket server created")
+	var redirAddr net.Addr
+	if cfg.RemoteUnix != "" {
+		redirAddr = &net.UnixAddr{
+			Name: cfg.RemoteUnix,
+			Net:  "unix",
+		}
+	} else {
+		redirAddr = tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	}
 	return &Server{
 		enabled:   cfg.Websocket.Enabled,
 		hostname:  cfg.Websocket.Host,
@@ -168,6 +177,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		underlay:  underlay,
 		timeout:   time.Second * time.Duration(rand.Intn(10)+5),
 		redir:     redirector.NewRedirector(ctx),
-		redirAddr: tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort),
+		redirAddr: redirAddr,
 	}, nil
 }

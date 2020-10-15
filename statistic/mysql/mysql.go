@@ -78,8 +78,13 @@ func (a *Authenticator) updater() {
 	}
 }
 
-func connectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {
-	path := strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
+func connectDatabase(driverName, username, password, ip string, port int, unix string, dbName string) (*sql.DB, error) {
+	var path string
+	if unix != "" {
+		path = strings.Join([]string{username, ":", password, "@unix(", unix, ")/", dbName, "?charset=utf8"}, "")
+	} else {
+		path = strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
+	}
 	return sql.Open(driverName, path)
 }
 
@@ -91,6 +96,7 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 		cfg.MySQL.Password,
 		cfg.MySQL.ServerHost,
 		cfg.MySQL.ServerPort,
+		cfg.MySQL.ServerUnix,
 		cfg.MySQL.Database,
 	)
 	if err != nil {

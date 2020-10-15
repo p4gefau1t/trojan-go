@@ -7,6 +7,7 @@ type Config struct {
 	LocalPort        int         `json:"local_port" yaml:"local-port"`
 	RemoteHost       string      `json:"remote_addr" yaml:"remote-addr"`
 	RemotePort       int         `json:"remote_port" yaml:"remote-port"`
+	RemoteUnix       string      `json:"remote_unix" yaml:"remote-unix"`
 	DisableHTTPCheck bool        `json:"disable_http_check" yaml:"disable-http-check"`
 	MySQL            MySQLConfig `json:"mysql" yaml:"mysql"`
 	API              APIConfig   `json:"api" yaml:"api"`

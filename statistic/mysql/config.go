@@ -8,6 +8,7 @@ type MySQLConfig struct {
 	Enabled    bool   `json:"enabled" yaml:"enabled"`
 	ServerHost string `json:"server_addr" yaml:"server-addr"`
 	ServerPort int    `json:"server_port" yaml:"server-port"`
+	ServerUnix string `json:"server_unix" yaml:"server-unix"`
 	Database   string `json:"database" yaml:"database"`
 	Username   string `json:"username" yaml:"username"`
 	Password   string `json:"password" yaml:"password"`
