@@ -295,9 +295,10 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		var storage = &certmagic.FileStorage{cfg.TLS.CertmagicStoragePath}
 		certmagic.Default.Storage = storage
 		certmagic.DefaultACME.Agreed = true
+		certmagic.Default.DefaultServerName = cfg.TLS.CertmagicDefaultSNI
 
-		if cfg.TLS.CertmagicDefaultSNI != "" {
-			certmagic.Default.DefaultServerName = cfg.TLS.CertmagicDefaultSNI
+		if !cfg.TLS.AutoRedirect {
+			certmagic.DefaultACME.DisableHTTPChallenge = true
 		}
 
 		cmCfg := certmagic.NewDefault()
