@@ -148,7 +148,7 @@ Trojan-Go服务端可以兼容所有原Trojan客户端，如Igniter，ShadowRock
 例如，交叉编译一个在mips处理器，linux操作系统上运行的，只有客户端功能的Trojan-Go，只需执行下面的命令即可
 
 ```shell
-CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client" -ldflags "-s -w"
+CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client" -trimpath -ldflags "-s -w -buildid="
 ```
 
 得到的可执行文件可以直接在目标平台运行。
