@@ -1,34 +1,29 @@
+name: build
+
 on: 
-  push:
-    tags:
-      - 'v*'
-name: release-build
+  watch:
+    types: [started]
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.15.x]
+        platform: [ubuntu-20.04, windows-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
-    - name: Install Go
+    - name: setup Go
       uses: actions/setup-go@v1
       with:
-        go-version: 1.15.x
-    - name: Checkout code
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout
       uses: actions/checkout@v2
-    - name: Checkout tag
-      run: |
-        git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-        tag_name="${GITHUB_REF##*/}"
-        echo Tag $tag_name
-        git checkout $tag_name
+    - name: Test
+      run: go test ./...
     - name: Build
-      run: |
-        make geosite.dat geoip.dat
-        make release -j$(nproc)
-        set -x
-        assets=()
-        for asset in ./*.zip; do
-          assets+=("-a" "$asset")
-        done
-        tag_name="${GITHUB_REF##*/}"
-        hub release create -p -d "${assets[@]}" -m "$tag_name" "$tag_name"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: make
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-${{ matrix.platform }}
+        path: build/*
