@@ -82,6 +82,8 @@ github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0 h1:beJRvss6cKPj/Q
 github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0/go.mod h1:6qvbJidjCnQWxyTc9SBD/cLCtN4qLs2neS/VzwSTnTY=
 github.com/xtaci/smux v1.5.14 h1:1j+zJYDZRv9FHaWqCJfH5RPizIm0fSzJIFbfVn8zsfg=
 github.com/xtaci/smux v1.5.14/go.mod h1:OMlQbT5vcgl2gb49mFkYo6SMf+zP3rcjcwQz7ZU7IGY=
+github.com/xtls/go v0.0.0-20201101145325-207fdcada8d0 h1:Q0OSaIJ+wOy38+g5KYVP9slhbznXwsYGkzscpUrVsak=
+github.com/xtls/go v0.0.0-20201101145325-207fdcada8d0/go.mod h1:5TB2+k58gx4A4g2Nf5miSHNDF6CuAzHKpWBooLAshTs=
 go.starlark.net v0.0.0-20190919145610-979af19b165c h1:WR7X1xgXJlXhQBdorVc9Db3RhwG+J/kp6bLuMyJjfVw=
 go.starlark.net v0.0.0-20190919145610-979af19b165c/go.mod h1:c1/X6cHgvdXj6pUlmWKMkuqRnW4K8x2vwt6JAaaircg=
 go.starlark.net v0.0.0-20200619143648-50ca820fafb9 h1:GXxsgecRXvpdwo8UtXZyEzJww54A+54NaO+86/pBr+c=

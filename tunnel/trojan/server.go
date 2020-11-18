@@ -17,6 +17,10 @@ import (
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
+
+	"github.com/p4gefau1t/trojan-go/tunnel/tls"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
+	xtls "github.com/xtls/go"
 )
 
 // InboundConn is a trojan inbound connection
@@ -159,6 +163,17 @@ func (s *Server) acceptLoop() {
 					Conn: inboundConn,
 				}
 				log.Debug("trojan udp connection")
+			case XDirect, XOrigin:
+				if _, ok := s.underlay.(*tls.Server); ok {
+					xtlsConn := conn.(*transport.Conn).Conn.(*common.RewindConn).Conn.(*xtls.Conn)
+					xtlsConn.RPRX = true
+					if inboundConn.metadata.Command == XDirect {
+						xtlsConn.DirectMode = true
+					}
+					s.connChan <- inboundConn
+				} else {
+					log.Error(common.NewError("failed to use xtls command, maybe \"security\" is not \"xtls\""))
+				}
 			case Mux:
 				s.muxChan <- inboundConn
 				log.Debug("mux connection")
