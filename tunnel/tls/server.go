@@ -282,6 +282,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
 	var fallbackAddress *tunnel.Address
+	var httpResp []byte
 	if cfg.TLS.FallbackPort != 0 {
 		if cfg.TLS.FallbackHost == "" {
 			cfg.TLS.FallbackHost = cfg.RemoteHost
@@ -295,6 +296,15 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		fallbackConn.Close()
 	} else {
 		log.Warn("empty tls fallback port")
+		if cfg.TLS.HTTPResponseFileName != "" {
+			httpRespBody, err := ioutil.ReadFile(cfg.TLS.HTTPResponseFileName)
+			if err != nil {
+				return nil, common.NewError("invalid response file").Base(err)
+			}
+			httpResp = httpRespBody
+		} else {
+			log.Warn("empty tls http response")
+		}
 	}
 
 	keyPair, err := loadKeyPair(cfg.TLS.KeyPath, cfg.TLS.CertPath, cfg.TLS.KeyPassword)
@@ -321,6 +331,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	server := &Server{
 		underlay:           underlay,
 		fallbackAddress:    fallbackAddress,
+		httpResp:           httpResp,
 		verifySNI:          cfg.TLS.VerifyHostName,
 		sni:                cfg.TLS.SNI,
 		alpn:               cfg.TLS.ALPN,
