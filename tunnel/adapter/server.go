@@ -100,10 +100,12 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	addr := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
 	tcpListener, err := net.Listen("tcp", addr.String())
 	if err != nil {
+		cancel()
 		return nil, common.NewError("adapter failed to create tcp listener").Base(err)
 	}
 	udpListener, err := net.ListenPacket("udp", addr.String())
 	if err != nil {
+		cancel()
 		return nil, common.NewError("adapter failed to create tcp listener").Base(err)
 	}
 	server := &Server{

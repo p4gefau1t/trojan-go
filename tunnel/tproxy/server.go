@@ -197,6 +197,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 	listenAddr := tunnel.NewAddressFromHostPort("tcp", cfg.LocalHost, cfg.LocalPort)
 	ip, err := listenAddr.ResolveIP()
 	if err != nil {
+		cancel()
 		return nil, common.NewError("invalid tproxy local address").Base(err)
 	}
 	tcpListener, err := ListenTCP("tcp", &net.TCPAddr{
@@ -204,6 +205,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		Port: cfg.LocalPort,
 	})
 	if err != nil {
+		cancel()
 		return nil, common.NewError("tproxy failed to listen tcp").Base(err)
 	}
 
@@ -212,6 +214,7 @@ func NewServer(ctx context.Context, _ tunnel.Server) (*Server, error) {
 		Port: cfg.LocalPort,
 	})
 	if err != nil {
+		cancel()
 		return nil, common.NewError("tproxy failed to listen udp").Base(err)
 	}
 
