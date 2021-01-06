@@ -136,6 +136,14 @@ windows-amd64:
 	mkdir -p $(BUILD_DIR)/$@
 	GOARCH=amd64 GOOS=windows $(GOBUILD)/$@
 
-windows-arm:
+windows-armv5:
 	mkdir -p $(BUILD_DIR)/$@
 	GOARCH=arm GOOS=windows $(GOBUILD)/$@
+
+windows-armv6:
+	mkdir -p $(BUILD_DIR)/$@
+	GOARCH=arm GOOS=windows GOARM=6 $(GOBUILD)/$@
+
+windows-armv7:
+	mkdir -p $(BUILD_DIR)/$@
+	GOARCH=arm GOOS=windows GOARM=7 $(GOBUILD)/$@
