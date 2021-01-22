@@ -418,6 +418,19 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		})
 	}
 
+	// Just for compatibility with V2Ray rule type `regexp`
+	regexpInfo := loadCode(cfg, "regexp:")
+	for _, info := range regexpInfo {
+		if _, err := regexp.Compile(info.code); err != nil {
+			return nil, common.NewError("invalid regular expression: " + info.code).Base(err)
+		}
+		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
+			Type:      v2router.Domain_Regex,
+			Value:     info.code,
+			Attribute: nil,
+		})
+	}
+
 	fullInfo := loadCode(cfg, "full:")
 	for _, info := range fullInfo {
 		client.domains[info.strategy] = append(client.domains[info.strategy], &v2router.Domain{
