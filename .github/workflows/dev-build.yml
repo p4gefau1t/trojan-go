@@ -21,7 +21,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Test
-      run: go test ./...
+      run: make test
     - name: Build
       run: make
     - name: Upload Binary

@@ -60,8 +60,6 @@ Trojan-Go支持并且兼容原版Trojan的绝大多数功能，包括但不限�
 
 - Websocket传输支持，用于实现CDN流量中转(基于WebSocket over TLS/SSL)和对抗GFW中间人攻击
 
-- 自动化HTTPS证书申请，从Let's Encrypt自动申请和更新HTTPS证书
-
 - TLS指纹伪造，绕过GFW针对TLS Client Hello的特征识别
 
 - 基于gRPC的API支持，支持动态用户管理和流量速度限制等

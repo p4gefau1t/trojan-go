@@ -8,7 +8,7 @@ BUILD_DIR := build
 VAR_SETTING := -X $(PACKAGE_NAME)/constant.Version=$(VERSION) -X $(PACKAGE_NAME)/constant.Commit=$(COMMIT)
 GOBUILD = env CGO_ENABLED=0 $(GO_DIR)go build -tags "full" -trimpath -ldflags="-s -w -buildid= $(VAR_SETTING)" -o $(BUILD_DIR)
 
-.PHONY: trojan-go release
+.PHONY: trojan-go release test
 normal: clean trojan-go
 
 clean:
@@ -23,6 +23,8 @@ geosite.dat:
 	wget https://github.com/v2fly/domain-list-community/raw/release/dlc.dat -O geosite.dat
 
 test:
+	# Disable Bloomfilter when testing
+	export SHADOWSOCKS_SF_CAPACITY="-1"
 	@$(GO_DIR)go test ./...
 
 trojan-go:

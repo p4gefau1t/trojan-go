@@ -80,6 +80,7 @@ func TestShadowsocks(t *testing.T) {
 			t.Fail()
 		}
 	}()
+
 	// test redirection
 	conn3, err := tcpClient.DialConn(nil, nil)
 	common.Must(err)

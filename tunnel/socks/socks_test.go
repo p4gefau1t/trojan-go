@@ -121,7 +121,7 @@ func TestSocks(t *testing.T) {
 	packet.Close()
 	udpConn.Close()
 
-	c, _ := socks5.NewClient(fmt.Sprintf("127.0.0.1:%d", port), "", "", 0, 0, 0)
+	c, _ := socks5.NewClient(fmt.Sprintf("127.0.0.1:%d", port), "", "", 0, 0)
 
 	conn, err := c.Dial("udp", util.EchoAddr)
 	common.Must(err)
