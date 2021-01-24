@@ -19,7 +19,7 @@
             "geoip:cn",
             "geoip:private",
             "geosite:cn",
-            "geosite:geolocation-cn"
+            "geosite:private"
         ],
         "block": [
             "geosite:category-ads"
