@@ -11,7 +11,7 @@ mux:
     enabled: true
 router:
     enabled: true
-    bypass: ['geoip:cn', 'geoip:private', 'geosite:cn', 'geosite:geolocation-cn']
+    bypass: ['geoip:cn', 'geoip:private', 'geosite:cn', 'geosite:private']
     block: ['geosite:category-ads']
     proxy: ['geosite:geolocation-!cn']
     default_policy: proxy
