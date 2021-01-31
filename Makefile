@@ -24,8 +24,7 @@ geosite.dat:
 
 test:
 	# Disable Bloomfilter when testing
-	export SHADOWSOCKS_SF_CAPACITY="-1"
-	@$(GO_DIR)go test ./...
+	SHADOWSOCKS_SF_CAPACITY="-1" $(GO_DIR)go test ./...
 
 trojan-go:
 	mkdir -p $(BUILD_DIR)
