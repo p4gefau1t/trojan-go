@@ -1,8 +1,8 @@
 on:
   push:
     branches:
-      - 'dev'
-name: docker-dev-build
+      - 'master'
+name: docker-nightly-build
 jobs:
   build:
     runs-on: ubuntu-latest

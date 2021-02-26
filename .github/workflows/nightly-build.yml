@@ -1,11 +1,11 @@
 on: 
   push:
     branches:
-      - dev
+      - master
   pull_request:
     branches:
-      - dev
-name: dev-build
+      - master
+name: nightly-build
 jobs:
   build:
     strategy:
