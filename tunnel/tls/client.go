@@ -15,7 +15,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 	utls "github.com/refraction-networking/utls"
 )
 
@@ -28,6 +27,7 @@ type Client struct {
 	sessionTicket bool
 	reuseSession  bool
 	fingerprint   string
+	helloID       utls.ClientHelloID
 	keyLogger     io.WriteCloser
 	underlay      tunnel.Client
 }
@@ -56,16 +56,7 @@ func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn
 			ServerName:         c.sni,
 			InsecureSkipVerify: !c.verify,
 			KeyLogWriter:       c.keyLogger,
-		}, utls.HelloCustom)
-		_, isWebsocket := overlay.(*websocket.Tunnel)
-		// TODO fix websocket ALPN problem
-		spec, err := fingerprint.GetClientHelloSpec(c.fingerprint, isWebsocket)
-		if err != nil {
-			return nil, common.NewError("invalid hello spec").Base(err)
-		}
-		if err := tlsConn.ApplyPreset(spec); err != nil {
-			return nil, common.NewError("tls failed to apply preset fingerprint").Base(err)
-		}
+		}, c.helloID)
 		if err := tlsConn.Handshake(); err != nil {
 			return nil, common.NewError("tls failed to handshake with remote server").Base(err)
 		}
@@ -95,10 +86,17 @@ func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
+	helloID := utls.ClientHelloID{}
 	if cfg.TLS.Fingerprint != "" {
-		_, err := fingerprint.GetClientHelloSpec(cfg.TLS.Fingerprint, cfg.Websocket.Enabled)
-		if err != nil {
-			return nil, err
+		switch cfg.TLS.Fingerprint {
+		case "firefox":
+			helloID = utls.HelloFirefox_Auto
+		case "chrome":
+			helloID = utls.HelloChrome_Auto
+		case "ios":
+			helloID = utls.HelloIOS_Auto
+		default:
+			return nil, common.NewError("invalid fingerprint " + cfg.TLS.Fingerprint)
 		}
 		log.Info("tls fingerprint", cfg.TLS.Fingerprint, "applied")
 	}
@@ -115,6 +113,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		cipher:        fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":")),
 		sessionTicket: cfg.TLS.ReuseSession,
 		fingerprint:   cfg.TLS.Fingerprint,
+		helloID:       helloID,
 	}
 
 	if cfg.TLS.CertPath != "" {

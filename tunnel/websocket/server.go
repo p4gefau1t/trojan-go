@@ -98,7 +98,9 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	wsServer := websocket.Server{
 		Config: *wsConfig,
 		Handler: func(conn *websocket.Conn) {
-			wsConn = conn //store the websocket after handshaking
+			wsConn = conn                              // store the websocket after handshaking
+			wsConn.PayloadType = websocket.BinaryFrame // treat it as a binary websocket
+
 			log.Debug("websocket obtained")
 			handshake <- struct{}{}
 			// this function SHOULD NOT return unless the connection is ended
