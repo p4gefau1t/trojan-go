@@ -8,7 +8,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/tunnel"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func convert(i interface{}) interface{} {
