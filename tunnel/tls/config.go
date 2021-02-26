@@ -41,7 +41,7 @@ func init() {
 			TLS: TLSConfig{
 				Verify:         true,
 				VerifyHostName: true,
-				Fingerprint:    "firefox",
+				Fingerprint:    "",
 				ALPN:           []string{"http/1.1"},
 			},
 		}

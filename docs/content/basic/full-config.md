@@ -54,7 +54,7 @@ weight: 30
     "plain_http_response": "",
     "fallback_addr": "",
     "fallback_port": 0,
-    "fingerprint": "firefox"
+    "fingerprint": ""
   },
   "tcp": {
     "no_delay": true,
@@ -167,9 +167,9 @@ weight: 30
 
 ```fingerprint```用于指定客户端TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
 
-- ""，不使用指纹伪造
+- ""，不使用指纹伪造（默认）
 
-- "firefox"，伪造Firefox指纹（默认）
+- "firefox"，伪造Firefox指纹
 
 - "chrome"，伪造Chrome指纹
 
