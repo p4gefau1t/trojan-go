@@ -102,7 +102,7 @@
     <span style="color:#f92672">&#34;plain_http_response&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;fallback_addr&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
     <span style="color:#f92672">&#34;fallback_port&#34;</span>: <span style="color:#ae81ff">0</span>,
-    <span style="color:#f92672">&#34;fingerprint&#34;</span>: <span style="color:#e6db74">&#34;firefox&#34;</span>
+    <span style="color:#f92672">&#34;fingerprint&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
   },
   <span style="color:#f92672">&#34;tcp&#34;</span>: {
     <span style="color:#f92672">&#34;no_delay&#34;</span>: <span style="color:#66d9ef">true</span>,
@@ -208,10 +208,10 @@
 <p><code>fingerprint</code>用于指定客户端TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用<a href="https://github.com/refraction-networking/utls">utls</a>进行指纹伪造，默认伪造Firefox的指纹。合法的值有</p>
 <ul>
 <li>
-<p>&ldquo;&quot;，不使用指纹伪造</p>
+<p>&ldquo;&quot;，不使用指纹伪造（默认）</p>
 </li>
 <li>
-<p>&ldquo;firefox&rdquo;，伪造Firefox指纹（默认）</p>
+<p>&ldquo;firefox&rdquo;，伪造Firefox指纹</p>
 </li>
 <li>
 <p>&ldquo;chrome&rdquo;，伪造Chrome指纹</p>

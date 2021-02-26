@@ -30,7 +30,7 @@
 <meta itemprop="name" content="Trojan基本原理">
 <meta itemprop="description" content="这个页面将会简单讲述Trojan协议的基本工作原理。如果你对于GFW和Trojan的工作方式不感兴趣，可以跳过这一小节。但为了更好地保护你的">
 
-<meta itemprop="wordCount" content="1234">
+<meta itemprop="wordCount" content="1242">
 <meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
 
@@ -52,7 +52,7 @@
 <div class="content-container">
 <main><h1>Trojan基本原理</h1>
 <p>这个页面将会简单讲述Trojan协议的基本工作原理。如果你对于GFW和Trojan的工作方式不感兴趣，可以跳过这一小节。但为了更好地保护你的通讯安全性和节点的隐蔽性，我还是建议你阅读。</p>
-<h2 id="为什么shadowsocks容易遭到封锁">为什么Shadowsocks容易遭到封锁</h2>
+<h2 id="为什么使用流密码的shadowsocks容易遭到封锁">为什么（使用流密码的）Shadowsocks容易遭到封锁</h2>
 <p>防火墙在早期仅仅只是对出境流量进行截获和审查，也即<strong>被动检测</strong>。Shadowsocks的加密协议设计使得传输的数据包本身几乎没有任何特征，看起来类似于完全随机的比特流，这在早期的确能有效绕过GFW。</p>
 <p>目前的GFW已经开始采用<strong>主动探测</strong>的方式。具体来说，当GFW发现一个可疑的无法识别的连接时（大流量，随机字节流，高位端口等特征），将会<strong>主动连接</strong>这个服务器端口，重放之前捕获到的流量（或者经过一些精心修改后重放）。Shadowsocks服务器检测到不正常的连接，将连接断开。这种不正常的流量和断开连接的行为被视作可疑的Shadowsocks服务器的特征，于是该服务器被加入GFW的可疑名单中。这个名单不一定立即生效，而是在某些特殊的敏感时期，可疑名单中的服务器会遭到暂时或者永久的封锁。该可疑名单是否封锁，可能由人为因素决定。</p>
 <p>如果你想了解更多，可以参考<a href="https://gfw.report/blog/gfw_shadowsocks/">这篇文章</a>。</p>
