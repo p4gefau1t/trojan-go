@@ -59,7 +59,7 @@ uninstall:
 	@-zip -du $(NAME)-$@ *.dat
 	@echo "<<< ---- $(NAME)-$@"
 
-release: geosite.dat geoip.dat darwin-amd64.zip linux-386.zip linux-amd64.zip \
+release: geosite.dat geoip.dat darwin-amd64.zip darwin-arm64.zip linux-386.zip linux-amd64.zip \
 	linux-arm.zip linux-armv5.zip linux-armv6.zip linux-armv7.zip linux-armv8.zip \
 	linux-mips-softfloat.zip linux-mips-hardfloat.zip linux-mipsle-softfloat.zip linux-mipsle-hardfloat.zip \
 	linux-mips64.zip linux-mips64le.zip freebsd-386.zip freebsd-amd64.zip \
@@ -68,6 +68,10 @@ release: geosite.dat geoip.dat darwin-amd64.zip linux-386.zip linux-amd64.zip \
 darwin-amd64:
 	mkdir -p $(BUILD_DIR)/$@
 	GOARCH=amd64 GOOS=darwin $(GOBUILD)/$@
+
+darwin-arm64:
+	mkdir -p $(BUILD_DIR)/$@
+	GOARCH=arm64 GOOS=darwin $(GOBUILD)/$@
 
 linux-386:
 	mkdir -p $(BUILD_DIR)/$@
