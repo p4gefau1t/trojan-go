@@ -15,7 +15,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/freedom"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-	v2router "v2ray.com/core/app/router"
+	v2router "github.com/v2fly/v2ray-core/v4/app/router"
 )
 
 const (
