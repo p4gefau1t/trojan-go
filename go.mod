@@ -13,7 +13,7 @@ require (
 	github.com/txthinking/runnergroup v0.0.0-20200327135940-540a793bb997 // indirect
 	github.com/txthinking/socks5 v0.0.0-20210106113028-328af325654e
 	github.com/txthinking/x v0.0.0-20201210150116-a8015a742c8c // indirect
-	github.com/v2fly/v2ray-core/v4 v4.34.1-0.20210224091244-9d13f99633c8
+	github.com/v2fly/v2ray-core/v4 v4.36.2
 	github.com/xtaci/smux v1.5.15
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
