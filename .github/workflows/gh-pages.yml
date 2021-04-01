@@ -2,6 +2,15 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "docs"
+      - ".github/workflows/gh-pages.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "docs"
+      - ".github/workflows/gh-pages.yml"
 name: github-pages
 jobs:
   deploy:
@@ -11,17 +20,21 @@ jobs:
         with:
           submodules: true  # Fetch Hugo themes
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.69.2'
+          hugo-version: "0.82.0"
           # extended: true
+
       - name: Build
         run: |
           cd docs
           make hugo-themes
           hugo
+
       - name: Deploy
+        if: ${{ github.event_name == 'push' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
