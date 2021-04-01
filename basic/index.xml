@@ -5,11 +5,7 @@
     <link>https://p4gefau1t.github.io/trojan-go/basic/</link>
     <description>Recent content in 基本配置 on Trojan-Go Docs</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-CN</language>
-    
-	<atom:link href="https://p4gefau1t.github.io/trojan-go/basic/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>zh-CN</language><atom:link href="https://p4gefau1t.github.io/trojan-go/basic/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Trojan基本原理</title>
       <link>https://p4gefau1t.github.io/trojan-go/basic/trojan/</link>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>正确配置Trojan-Go - Trojan-Go Docs</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW.">
-<meta name="generator" content="Hugo 0.69.2" />
+<meta name="generator" content="Hugo 0.82.0" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
 <link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/config/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
@@ -19,9 +19,10 @@
 <meta property="og:title" content="正确配置Trojan-Go" />
 <meta property="og:description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/basic/config/" />
-<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/basic/config/" /><meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/><meta property="article:section" content="basic" />
+
 <meta property="og:site_name" content="Trojan-Go Docs" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
@@ -30,11 +31,7 @@
 <meta itemprop="name" content="正确配置Trojan-Go">
 <meta itemprop="description" content="下面将介绍如何正确配置Trojan-Go以完全隐藏你的代理节点特征。 在开始之前，你需要 一个服务器，且未被GFW封锁 一个域名，可以使用免费的域">
 
-<meta itemprop="wordCount" content="2029">
-<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
-
-
-
+<meta itemprop="wordCount" content="2028"><meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 <meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
@@ -71,7 +68,7 @@
 <p>我们的目标是，使得你的服务器和正常的HTTPS网站表现相同。</p>
 <p>首先你需要一个HTTP服务器，可以使用nginx，apache，caddy等配置一个本地HTTP服务器，也可以使用别人的HTTP服务器。HTTP服务器的作用是，当GFW主动探测时，向它展示一个完全正常的Web页面。</p>
 <p><strong>你需要在<code>remote_addr</code>和<code>remote_port</code>指定这个HTTP服务器的地址。<code>remote_addr</code>可以是IP或者域名。Trojan-Go将会测试这个HTTP服务器是否工作正常，如果不正常，Trojan-Go会拒绝启动。</strong></p>
-<p>下面是一份比较安全的服务器配置server.json，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如&quot;remote_addr&rdquo;: &ldquo;example.com&rdquo;），在1234端口配置一个HTTPS服务，或是一个展示&quot;400 Bad Request&quot;的静态HTTP网页服务。（可选，可以删除<code>fallback_port</code>字段，跳过这个步骤）</p>
+<p>下面是一份比较安全的服务器配置server.json，需要你在本地80端口配置一个HTTP服务（必要，你也可以使用其他的网站HTTP服务器，如&quot;remote_addr&quot;: &ldquo;example.com&rdquo;），在1234端口配置一个HTTPS服务，或是一个展示&quot;400 Bad Request&quot;的静态HTTP网页服务。（可选，可以删除<code>fallback_port</code>字段，跳过这个步骤）</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
     <span style="color:#f92672">&#34;run_type&#34;</span>: <span style="color:#e6db74">&#34;server&#34;</span>,
     <span style="color:#f92672">&#34;local_addr&#34;</span>: <span style="color:#e6db74">&#34;0.0.0.0&#34;</span>,

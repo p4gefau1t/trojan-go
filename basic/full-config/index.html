@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>完整的配置文件 - Trojan-Go Docs</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW.">
-<meta name="generator" content="Hugo 0.69.2" />
+<meta name="generator" content="Hugo 0.82.0" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
 <link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/full-config/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
@@ -19,9 +19,10 @@
 <meta property="og:title" content="完整的配置文件" />
 <meta property="og:description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/basic/full-config/" />
-<meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta property="og:url" content="https://p4gefau1t.github.io/trojan-go/basic/full-config/" /><meta property="og:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/><meta property="article:section" content="basic" />
+
 <meta property="og:site_name" content="Trojan-Go Docs" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 
@@ -30,11 +31,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6658">
-<meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
-
-
-
+<meta itemprop="wordCount" content="6655"><meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 <meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
@@ -262,7 +259,7 @@
 </li>
 </ul>
 <p>含义同上。</p>
-<p><code>domain_strategy</code>域名解析策略，默认&quot;as_is&rdquo;。合法的值有：</p>
+<p><code>domain_strategy</code>域名解析策略，默认&quot;as_is&quot;。合法的值有：</p>
 <ul>
 <li>
 <p>&ldquo;as_is&rdquo;，只在域名列表中进行匹配。</p>
@@ -278,7 +275,7 @@
 <h3 id="websocket选项"><code>websocket</code>选项</h3>
 <p>Websocket传输是trojan-go的特性。在<strong>正常的直接连接代理节点</strong>的情况下，开启这个选项不会改善你的链路速度（甚至有可能下降），也不会提升你的连接安全性。你只应该在需要利用CDN进行中转，或利用nginx等服务器根据路径分发的情况下，使用websocket。</p>
 <p><code>enabled</code>表示是否启用Websocket承载流量，服务端开启后同时支持一般Trojan协议和基于websocket的Trojan协议，客户端开启后将只使用websocket承载所有Trojan协议流量。</p>
-<p><code>path</code>指的是Websocket使用的URL路径，必须以斜杠(&quot;/&quot;)开头，如&rdquo;/longlongwebsocketpath&rdquo;，并且服务器和客户端必须一致。</p>
+<p><code>path</code>指的是Websocket使用的URL路径，必须以斜杠(&quot;/&quot;)开头，如&quot;/longlongwebsocketpath&quot;，并且服务器和客户端必须一致。</p>
 <p><code>host</code>Websocket握手时，HTTP请求中使用的主机名。客户端如果留空则使用<code>remote_addr</code>填充。如果使用了CDN，这个选项一般填入域名。不正确的<code>host</code>可能导致CDN无法转发请求。</p>
 <h3 id="shadowsocks-aead加密选项"><code>shadowsocks</code> AEAD加密选项</h3>
 <p>此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD方法进行加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。</p>

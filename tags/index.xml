@@ -5,10 +5,6 @@
     <link>https://p4gefau1t.github.io/trojan-go/tags/</link>
     <description>Recent content in Tags on Trojan-Go Docs</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-CN</language>
-    
-	<atom:link href="https://p4gefau1t.github.io/trojan-go/tags/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>zh-CN</language><atom:link href="https://p4gefau1t.github.io/trojan-go/tags/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

@@ -1,117 +1,61 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
   <url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/mux/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/overview/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/websocket/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/router/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/forward/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/nginx-relay/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/plugin/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/aead/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/customize-protocol-stack/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/api/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/build/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/nat/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/trojan/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/basic/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/basic/trojan/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/basic/config/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/mux/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/basic/full-config/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/advance/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/websocket/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/simplesocks/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/api/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/plugin/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/developer/url/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/categories/</loc>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://p4gefau1t.github.io/trojan-go/tags/</loc>
   </url>
-  
 </urlset>
