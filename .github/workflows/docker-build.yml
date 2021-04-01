@@ -1,12 +1,12 @@
 on:
   push:
     branches:
-      - 'master'
+      - "master"
     paths-ignore:
-      - '**.md'
-      - 'docs'
+      - "**.md"
+      - "docs"
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 name: docker-build
 jobs:
   build:
@@ -15,12 +15,17 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
 
-      - name: Dockerhub login
-        env:
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: |
-          echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Prepare
         id: prepare
@@ -30,15 +35,8 @@ jobs:
           else
             echo ::set-output name=version::snapshot
           fi
-          echo ::set-output name=docker_platforms::linux/arm/v7,linux/amd64
+          echo ::set-output name=docker_platforms::linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
           echo ::set-output name=docker_image::${{ secrets.DOCKER_USERNAME }}/trojan-go
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          buildx-version: latest
-          qemu-version: latest
 
       - name: Build and push docker image
         run: |

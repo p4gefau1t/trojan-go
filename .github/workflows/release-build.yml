@@ -1,34 +1,37 @@
-on: 
+on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 name: release-build
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.16'
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Checkout tag
-      run: |
-        git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-        tag_name="${GITHUB_REF##*/}"
-        echo Tag $tag_name
-        git checkout $tag_name
-    - name: Build
-      run: |
-        make geosite.dat geoip.dat
-        make release -j$(nproc)
-        set -x
-        assets=()
-        for asset in ./*.zip; do
-          assets+=("-a" "$asset")
-        done
-        tag_name="${GITHUB_REF##*/}"
-        hub release create -p -d "${assets[@]}" -m "$tag_name" "$tag_name"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16"
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Checkout tag
+        run: |
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          tag_name="${GITHUB_REF##*/}"
+          echo Tag $tag_name
+          git checkout $tag_name
+
+      - name: Build
+        run: |
+          make geosite.dat geoip.dat
+          make release -j$(nproc)
+          set -x
+          assets=()
+          for asset in ./*.zip; do
+            assets+=("-a" "$asset")
+          done
+          tag_name="${GITHUB_REF##*/}"
+          hub release create -p -d "${assets[@]}" -m "$tag_name" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
