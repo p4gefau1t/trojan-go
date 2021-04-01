@@ -152,8 +152,14 @@ func (s *Server) acceptLoop() {
 			rewindConn.StopBuffering()
 			switch inboundConn.metadata.Command {
 			case Connect:
-				s.connChan <- inboundConn
-				log.Debug("normal trojan connection")
+				if inboundConn.metadata.DomainName == "MUX_CONN" {
+					s.muxChan <- inboundConn
+					log.Debug("mux(r) connection")
+				} else {
+					s.connChan <- inboundConn
+					log.Debug("normal trojan connection")
+				}
+
 			case Associate:
 				s.packetChan <- &PacketConn{
 					Conn: inboundConn,
