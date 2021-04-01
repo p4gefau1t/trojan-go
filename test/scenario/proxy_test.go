@@ -6,13 +6,12 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/p4gefau1t/trojan-go/test/util"
-
-	_ "net/http/pprof"
+	netproxy "golang.org/x/net/proxy"
 
 	_ "github.com/p4gefau1t/trojan-go/api"
 	_ "github.com/p4gefau1t/trojan-go/api/service"
@@ -24,7 +23,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/nat"
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
-	netproxy "golang.org/x/net/proxy"
+	"github.com/p4gefau1t/trojan-go/test/util"
 )
 
 // test key and cert

@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/websocket"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
-	"golang.org/x/net/websocket"
 )
 
 var HTTPAddr string

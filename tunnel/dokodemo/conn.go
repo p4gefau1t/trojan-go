@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/p4gefau1t/trojan-go/common"
-
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
