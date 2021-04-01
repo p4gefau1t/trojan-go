@@ -1,31 +1,39 @@
-on: 
+on:
   push:
     branches:
       - master
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - "**.md"
+      - "docs"
 name: nightly-build
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        go-version: ['1.16']
+        go-version: ["1.16"]
         platform: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Test
-      run: make test
-    - name: Build
-      run: make
-    - name: Upload Binary
-      uses: actions/upload-artifact@v2
-      with:
-        name: build-${{ matrix.platform }}
-        path: ./build/
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-${{ matrix.platform }}
+          path: ./build/
