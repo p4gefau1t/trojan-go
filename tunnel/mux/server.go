@@ -3,10 +3,11 @@ package mux
 import (
 	"context"
 
+	"github.com/xtaci/smux"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
-	"github.com/xtaci/smux"
 )
 
 // Server is a smux server

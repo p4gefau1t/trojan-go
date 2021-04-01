@@ -12,9 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/crypto/ssh/terminal"
+
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/log/golog/colorful"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 func init() {

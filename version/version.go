@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/constant"
 	"github.com/p4gefau1t/trojan-go/option"
-
-	"github.com/p4gefau1t/trojan-go/common"
 )
 
 type versionOption struct {

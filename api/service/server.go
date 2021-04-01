@@ -8,14 +8,15 @@ import (
 	"io/ioutil"
 	"net"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type ServerAPI struct {
