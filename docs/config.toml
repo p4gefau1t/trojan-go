@@ -7,7 +7,7 @@ theme = "hugo-theme-techdoc"
 hasCJKLanguage = true
 metaDataFormat = "yaml"
 
-defaultContentLanguage = "zh-CN"
+defaultContentLanguage = "zh"
 defaultContentLanguageInSubdir= true
 enableMissingTranslationPlaceholders = false
 
