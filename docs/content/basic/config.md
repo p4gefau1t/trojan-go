@@ -14,7 +14,7 @@ weight: 22
 
 - Trojan-Go，可以从release页面下载
 
-- 证书和密钥，可以从letsencrpyt等机构免费申请签发
+- 证书和密钥，可以从letsencrypt等机构免费申请签发
 
 ### 服务端配置
 
