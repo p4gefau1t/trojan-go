@@ -106,7 +106,7 @@ Trojan-Go 服务端兼容所有原 Trojan 客户端，如 Igniter、ShadowRocket
 例如，交叉编译一个可在 mips 处理器、Linux 操作系统上运行的、只有客户端功能的 Trojan-Go，只需执行下面的命令，得到的可执行文件可以直接在目标平台运行：
 
 ```shell
-CGO_ENABLE=0 GOOS=linux GOARCH=mips go build -tags "client" -trimpath -ldflags "-s -w -buildid="
+CGO_ENABLED=0 GOOS=linux GOARCH=mips go build -tags "client" -trimpath -ldflags "-s -w -buildid="
 ```
 
 完整的 tag 说明参见 [Trojan-Go 文档](https://p4gefau1t.github.io/trojan-go)。
@@ -295,19 +295,19 @@ Go 支持通过设置环境变量进行交叉编译，例如：
 编译适用于 64 位 Windows 操作系统的可执行文件：
 
 ```shell
-CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build -tags "full"
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags "full"
 ```
 
 编译适用于 Apple Silicon 的可执行文件：
 
 ```shell
-CGO_ENABLE=0 GOOS=macos GOARCH=arm64 go build -tags "full"
+CGO_ENABLED=0 GOOS=macos GOARCH=arm64 go build -tags "full"
 ```
 
 编译适用于 64 位 Linux 操作系统的可执行文件：
 
 ```shell
-CGO_ENABLE=0 GOOS=linux GOARCH=amd64 go build -tags "full"
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags "full"
 ```
 
 ## 致谢
