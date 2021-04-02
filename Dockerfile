@@ -9,6 +9,7 @@ RUN apk add git make &&\
 
 FROM alpine
 WORKDIR /
+RUN apk add --no-cache tzdata ca-certificates
 COPY --from=builder /trojan-go/build /usr/local/bin/
 COPY --from=builder /trojan-go/example/server.json /etc/trojan-go/config.json
 
