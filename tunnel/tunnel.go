@@ -37,7 +37,7 @@ type ConnListener interface {
 }
 
 // PacketListener accept UDP packet stream
-// We don't have any tunnel based on packet streams, so AcceptPacket will always recieve a real PacketConn
+// We don't have any tunnel based on packet streams, so AcceptPacket will always receive a real PacketConn
 type PacketListener interface {
 	AcceptPacket(Tunnel) (PacketConn, error)
 }
