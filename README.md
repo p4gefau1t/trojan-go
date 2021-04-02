@@ -40,7 +40,6 @@ Trojan-Go 兼容原版 Trojan 的绝大多数功能，包括但不限于：
 
 Trojan-Go 服务端兼容所有原 Trojan 客户端，如 Igniter、ShadowRocket 等。以下是支持 Trojan-Go 扩展特性（Websocket / Mux 等）的客户端：
 
-- [Trojan-Qt5](https://github.com/Trojan-Qt5/Trojan-Qt5/)：跨平台客户端，支持 Windows / macOS / Linux，使用 Trojan-Go 核心，支持所有 Trojan-Go 扩展特性。
 - [Qv2ray](https://github.com/Qv2ray/Qv2ray)：跨平台客户端，支持 Windows / macOS / Linux，使用 Trojan-Go 核心，支持所有 Trojan-Go 扩展特性。
 - [Igniter-Go](https://github.com/p4gefau1t/trojan-go-android)：Android 客户端，Fork 自 Igniter，将 Igniter 核心替换为 Trojan-Go 并做了一定修改，支持所有 Trojan-Go 扩展特性。
 
