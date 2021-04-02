@@ -12,9 +12,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the code
-        uses: actions/checkout@v2
-
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -32,8 +29,10 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             echo ::set-output name=version::${GITHUB_REF#refs/tags/}
+            echo ::set-output name=ref::${GITHUB_REF#refs/tags/}
           else
             echo ::set-output name=version::snapshot
+            echo ::set-output name=ref::${{ github.sha }}
           fi
           echo ::set-output name=docker_platforms::linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
           echo ::set-output name=docker_image::${{ secrets.DOCKER_USERNAME }}/trojan-go
@@ -44,6 +43,7 @@ jobs:
           --output "type=image,push=true" \
           --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
           --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
+          --build-arg REF=${ref} \
           --file Dockerfile .
 
   test:
