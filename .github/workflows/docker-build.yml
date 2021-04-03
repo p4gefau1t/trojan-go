@@ -46,7 +46,7 @@ jobs:
           --output "type=image,push=true" \
           --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
           --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
-          --build-arg REF=${ref} \
+          --build-arg REF=${{ steps.prepare.outputs.ref }} \
           --file Dockerfile .
 
   test:
