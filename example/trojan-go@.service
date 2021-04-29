@@ -11,6 +11,7 @@ NoNewPrivileges=true
 ExecStart=/usr/bin/trojan-go -config /etc/trojan-go/%i.json
 Restart=on-failure
 RestartSec=10s
+LimitNOFILE=infinity
 
 [Install]
 WantedBy=multi-user.target
