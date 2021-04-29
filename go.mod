@@ -12,12 +12,12 @@ require (
 	github.com/txthinking/runnergroup v0.0.0-20210326110939-37fc67d0da7c // indirect
 	github.com/txthinking/socks5 v0.0.0-20210326104807-61b5745ff346
 	github.com/txthinking/x v0.0.0-20210326105829-476fab902fbe // indirect
-	github.com/v2fly/v2ray-core/v4 v4.37.1
+	github.com/v2fly/v2ray-core/v4 v4.38.1
 	github.com/xtaci/smux v1.5.15
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	google.golang.org/grpc v1.36.1
+	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
