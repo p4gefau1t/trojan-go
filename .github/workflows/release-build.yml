@@ -26,12 +26,12 @@ jobs:
         run: |
           make geosite.dat geoip.dat
           make release -j$(nproc)
-          set -x
-          assets=()
-          for asset in ./*.zip; do
-            assets+=("-a" "$asset")
-          done
-          tag_name="${GITHUB_REF##*/}"
-          hub release create -p -d "${assets[@]}" -m "$tag_name" "$tag_name"
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          fail_on_unmatched_files: true
+          files: ./trojan-go-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
