@@ -3,11 +3,13 @@ package common
 import (
 	"io"
 	"net"
+	"sync"
 
 	"github.com/p4gefau1t/trojan-go/log"
 )
 
 type RewindReader struct {
+	mu         sync.Mutex
 	rawReader  io.Reader
 	buf        []byte
 	bufReadIdx int
@@ -17,13 +19,16 @@ type RewindReader struct {
 }
 
 func (r *RewindReader) Read(p []byte) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if r.rewound {
 		if len(r.buf) > r.bufReadIdx {
 			n := copy(p, r.buf[r.bufReadIdx:])
 			r.bufReadIdx += n
 			return n, nil
 		}
-		r.rewound = false //all buffering content has been read
+		r.rewound = false // all buffering content has been read
 	}
 	n, err := r.rawReader.Read(p)
 	if r.buffering {
@@ -59,19 +64,24 @@ func (r *RewindReader) Discard(n int) (int, error) {
 }
 
 func (r *RewindReader) Rewind() {
+	r.mu.Lock()
 	if r.bufferSize == 0 {
 		panic("no buffer")
 	}
 	r.rewound = true
 	r.bufReadIdx = 0
+	r.mu.Unlock()
 }
 
 func (r *RewindReader) StopBuffering() {
+	r.mu.Lock()
 	r.buffering = false
+	r.mu.Unlock()
 }
 
 func (r *RewindReader) SetBufferSize(size int) {
-	if size == 0 { //disable buffering
+	r.mu.Lock()
+	if size == 0 { // disable buffering
 		if !r.buffering {
 			panic("reader is disabled")
 		}
@@ -88,6 +98,7 @@ func (r *RewindReader) SetBufferSize(size int) {
 		r.bufferSize = size
 		r.buf = make([]byte, 0, size)
 	}
+	r.mu.Unlock()
 }
 
 type RewindConn struct {
