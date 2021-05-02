@@ -21,6 +21,7 @@ jobs:
           tag_name="${GITHUB_REF##*/}"
           echo Tag $tag_name
           git checkout $tag_name
+          echo "TAG_NAME=${tag_name}" >> $GITHUB_ENV
 
       - name: Build
         run: |
@@ -31,7 +32,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          fail_on_unmatched_files: true
+          name: ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
           files: ./trojan-go-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
