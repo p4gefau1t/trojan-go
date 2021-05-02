@@ -76,10 +76,8 @@ func TestMemoryAuth(t *testing.T) {
 	go func() {
 		for {
 			k := 100
-			select {
-			case <-time.After(time.Second / time.Duration(k)):
-				user.AddTraffic(200/k, 100/k)
-			}
+			time.Sleep(time.Second / time.Duration(k))
+			user.AddTraffic(200/k, 100/k)
 		}
 	}()
 	time.Sleep(time.Second * 4)
