@@ -88,7 +88,7 @@ func Info(v ...interface{}) {
 }
 
 func Infof(format string, v ...interface{}) {
-	logger.Warnf(format, v...)
+	logger.Infof(format, v...)
 }
 
 func Debug(v ...interface{}) {
@@ -96,7 +96,7 @@ func Debug(v ...interface{}) {
 }
 
 func Debugf(format string, v ...interface{}) {
-	logger.Warnf(format, v...)
+	logger.Debugf(format, v...)
 }
 
 func Trace(v ...interface{}) {
