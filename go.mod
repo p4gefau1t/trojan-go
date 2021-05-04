@@ -14,8 +14,8 @@ require (
 	github.com/txthinking/x v0.0.0-20210326105829-476fab902fbe // indirect
 	github.com/v2fly/v2ray-core/v4 v4.38.3
 	github.com/xtaci/smux v1.5.15
-	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
-	golang.org/x/net v0.0.0-20210502030024-e5908800b52b
+	golang.org/x/crypto v0.0.0-20210503195802-e9a32991a82e
+	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0

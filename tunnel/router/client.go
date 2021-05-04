@@ -2,16 +2,15 @@ package router
 
 import (
 	"context"
-	"io/ioutil"
 	"net"
 	"regexp"
 	"strconv"
 	"strings"
 
 	v2router "github.com/v2fly/v2ray-core/v4/app/router"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/common/geodata"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
@@ -39,7 +38,7 @@ func matchDomain(list []*v2router.Domain, target string) bool {
 		case v2router.Domain_Full:
 			domain := d.GetValue()
 			if domain == target {
-				log.Trace("domain:", target, "hit domain(full) rule:", domain)
+				log.Tracef("domain %s hit domain(full) rule: %s", target, domain)
 				return true
 			}
 		case v2router.Domain_Domain:
@@ -47,14 +46,14 @@ func matchDomain(list []*v2router.Domain, target string) bool {
 			if strings.HasSuffix(target, domain) {
 				idx := strings.Index(target, domain)
 				if idx == 0 || target[idx-1] == '.' {
-					log.Trace("domain:", target, "hit domain rule:", domain)
+					log.Tracef("domain %s hit domain rule: %s", target, domain)
 					return true
 				}
 			}
 		case v2router.Domain_Plain:
 			//keyword
 			if strings.Contains(target, d.GetValue()) {
-				log.Trace("domain:", target, "hit keyword rule:", d.GetValue())
+				log.Tracef("domain %s hit keyword rule: %s", target, d.GetValue())
 				return true
 			}
 		case v2router.Domain_Regex:
@@ -64,11 +63,11 @@ func matchDomain(list []*v2router.Domain, target string) bool {
 				return false
 			}
 			if matched {
-				log.Trace("domain:", target, "hit regex rule:", d.GetValue())
+				log.Tracef("domain %s hit regex rule: %s", target, d.GetValue())
 				return true
 			}
 		default:
-			log.Debug("unknown rule type:" + d.GetType().String())
+			log.Debug("unknown rule type:", d.GetType().String())
 		}
 	}
 	return false
@@ -233,7 +232,7 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 					strategy: Proxy,
 				})
 			} else {
-				log.Warn("invalid empty rule: ", s)
+				log.Warn("invalid empty rule:", s)
 			}
 		}
 	}
@@ -245,7 +244,7 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 					strategy: Bypass,
 				})
 			} else {
-				log.Warn("invalid empty rule: ", s)
+				log.Warn("invalid empty rule:", s)
 			}
 		}
 	}
@@ -257,7 +256,7 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 					strategy: Block,
 				})
 			} else {
-				log.Warn("invalid empty rule: ", s)
+				log.Warn("invalid empty rule:", s)
 			}
 		}
 	}
@@ -305,86 +304,58 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)
 	}
 
-	geoipData, err := ioutil.ReadFile(cfg.Router.GeoIPFilename)
-	if err != nil {
-		log.Warn("failed to read geoip.dat file: ", err)
-	} else {
-		geoip := new(v2router.GeoIPList)
-		if err := proto.Unmarshal(geoipData, geoip); err != nil {
-			return nil, err
-		}
-		ipCode := loadCode(cfg, "geoip:")
-		for _, c := range ipCode {
-			c.code = strings.ToUpper(c.code)
-			found := false
-			for _, e := range geoip.GetEntry() {
-				code := e.GetCountryCode()
-				if strings.EqualFold(c.code, code) {
-					client.cidrs[c.strategy] = append(client.cidrs[c.strategy], e.GetCidr()...)
-					found = true
-					break
-				}
-			}
-			if found {
-				log.Info("geoip info", c, "loaded")
-			} else {
-				log.Warn("geoip info", c, "not found")
-			}
+	ipCode := loadCode(cfg, "geoip:")
+	for _, c := range ipCode {
+		code := c.code
+		cidrs, err := geodata.LoadGeoIP(code)
+		if err != nil {
+			log.Error(err)
+		} else {
+			log.Infof("geoip:%s loaded", code)
+			client.cidrs[c.strategy] = append(client.cidrs[c.strategy], cidrs...)
 		}
 	}
 
-	geositeData, err := ioutil.ReadFile(cfg.Router.GeoSiteFilename)
-	if err != nil {
-		log.Warn("failed to read geosite.dat file: ", err)
-	} else {
-		geosite := new(v2router.GeoSiteList)
-		if err := proto.Unmarshal(geositeData, geosite); err != nil {
-			return nil, err
-		}
-		siteCode := loadCode(cfg, "geosite:")
-		for _, c := range siteCode {
-			attrWanted := ""
-			// Test if user wants domains that have an attribute
-			if attrIdx := strings.Index(c.code, "@"); attrIdx > 0 {
-				if attrIdx+1 < len(c.code) {
-					c.code = strings.ToUpper(c.code[:attrIdx])
-					attrWanted = c.code[attrIdx+1:]
-				} else { // "geosite:google@" is invalid
-					log.Warn("geosite info", c.code, "invalid")
-					continue
-				}
-			} else if attrIdx == 0 { // "geosite:@cn" is invalid
-				log.Warn("geosite info", c.code, "invalid")
+	siteCode := loadCode(cfg, "geosite:")
+	for _, c := range siteCode {
+		code := c.code
+		attrWanted := ""
+		// Test if user wants domains that have an attribute
+		if attrIdx := strings.Index(code, "@"); attrIdx > 0 {
+			if !strings.HasSuffix(code, "@") {
+				code = c.code[:attrIdx]
+				attrWanted = c.code[attrIdx+1:]
+			} else { // "geosite:google@" is invalid
+				log.Warnf("geosite:%s invalid", code)
 				continue
-			} else {
-				c.code = strings.ToUpper(c.code)
 			}
+		} else if attrIdx == 0 { // "geosite:@cn" is invalid
+			log.Warnf("geosite:%s invalid", code)
+			continue
+		}
+
+		domainList, err := geodata.LoadGeoSite(code)
+		if err != nil {
+			log.Error(err)
+		} else {
 			found := false
-			for _, e := range geosite.GetEntry() {
-				code := e.GetCountryCode()
-				if strings.EqualFold(c.code, code) {
-					domainList := e.GetDomain()
-					if attrWanted != "" {
-						for _, domain := range domainList {
-							for _, attr := range domain.GetAttribute() {
-								if strings.EqualFold(attrWanted, attr.GetKey()) {
-									client.domains[c.strategy] = append(client.domains[c.strategy], domain)
-									found = true
-								}
-							}
+			if attrWanted != "" {
+				for _, domain := range domainList {
+					for _, attr := range domain.GetAttribute() {
+						if strings.EqualFold(attrWanted, attr.GetKey()) {
+							client.domains[c.strategy] = append(client.domains[c.strategy], domain)
+							found = true
 						}
-						break
-					} else {
-						client.domains[c.strategy] = append(client.domains[c.strategy], domainList...)
-						found = true
-						break
 					}
 				}
+			} else {
+				client.domains[c.strategy] = append(client.domains[c.strategy], domainList...)
+				found = true
 			}
 			if found {
-				log.Info("geosite info", c, "loaded")
+				log.Infof("geosite:%s loaded", c.code)
 			} else {
-				log.Warn("geosite info", c, "not found")
+				log.Errorf("geosite:%s not found", c.code)
 			}
 		}
 	}
