@@ -19,3 +19,5 @@
 *.tar.gz
 *.crt
 *.key
+*.dat
+trojan-go
