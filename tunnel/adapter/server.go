@@ -55,6 +55,7 @@ func (s *Server) acceptConnLoop() {
 				Conn: rewindConn,
 			}
 		} else {
+			s.socksLock.RUnlock()
 			log.Debug("http connection")
 			s.httpConn <- &freedom.Conn{
 				Conn: rewindConn,
