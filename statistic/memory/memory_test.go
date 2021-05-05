@@ -2,7 +2,6 @@ package memory
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"strconv"
 	"testing"
@@ -77,24 +76,30 @@ func TestMemoryAuth(t *testing.T) {
 		for {
 			k := 100
 			time.Sleep(time.Second / time.Duration(k))
-			user.AddTraffic(200/k, 100/k)
+			user.AddTraffic(2000/k, 1000/k)
 		}
 	}()
 	time.Sleep(time.Second * 4)
-	if sent, recv := user.GetSpeed(); sent > 300 || sent < 100 || recv > 150 || recv < 50 {
-		t.Fatal("GetSpeed", sent, recv)
+	if sent, recv := user.GetSpeed(); sent > 3000 || sent < 1000 || recv > 1500 || recv < 500 {
+		t.Error("GetSpeed", sent, recv)
+	} else {
+		t.Log("GetSpeed", sent, recv)
 	}
 
 	user.SetSpeedLimit(30, 20)
 	time.Sleep(time.Second * 4)
-	if sent, recv := user.GetSpeed(); sent > 45 || recv > 30 {
-		t.Fatal("SetSpeedLimit", sent, recv)
+	if sent, recv := user.GetSpeed(); sent > 60 || recv > 40 {
+		t.Error("SetSpeedLimit", sent, recv)
+	} else {
+		t.Log("SetSpeedLimit", sent, recv)
 	}
 
 	user.SetSpeedLimit(0, 0)
 	time.Sleep(time.Second * 4)
 	if sent, recv := user.GetSpeed(); sent < 30 || recv < 20 {
-		t.Fatal("SetSpeedLimit", sent, recv)
+		t.Error("SetSpeedLimit", sent, recv)
+	} else {
+		t.Log("SetSpeedLimit", sent, recv)
 	}
 
 	auth.AddUser("user2")
@@ -123,13 +128,15 @@ func BenchmarkMemoryUsage(b *testing.B) {
 	ctx := config.WithConfig(context.Background(), Name, cfg)
 	auth, err := NewAuthenticator(ctx)
 	common.Must(err)
+
 	m1 := runtime.MemStats{}
 	m2 := runtime.MemStats{}
 	runtime.ReadMemStats(&m1)
-	for i := 0; i < 100000; i++ {
-		err := auth.AddUser(common.SHA224String("hash" + strconv.FormatInt(int64(i), 10)))
-		common.Must(err)
+	for i := 0; i < b.N; i++ {
+		common.Must(auth.AddUser(common.SHA224String("hash" + strconv.Itoa(i))))
 	}
 	runtime.ReadMemStats(&m2)
-	fmt.Println(float64(m2.Alloc-m1.Alloc)/1024/1024, "MiB")
+
+	b.ReportMetric(float64(m2.Alloc-m1.Alloc)/1024/1024, "MiB(Alloc)")
+	b.ReportMetric(float64(m2.TotalAlloc-m1.TotalAlloc)/1024/1024, "MiB(TotalAlloc)")
 }
