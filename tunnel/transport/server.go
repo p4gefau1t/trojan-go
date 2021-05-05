@@ -77,6 +77,7 @@ func (s *Server) acceptLoop() {
 					}
 				}
 			} else {
+				s.httpLock.RUnlock()
 				s.connChan <- &Conn{
 					Conn: tcpConn,
 				}
