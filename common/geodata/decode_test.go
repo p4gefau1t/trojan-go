@@ -6,18 +6,19 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/common/geodata"
 )
 
-const (
-	geoipURL   = "https://raw.githubusercontent.com/v2fly/geoip/release/geoip.dat"
-	geositeURL = "https://raw.githubusercontent.com/v2fly/domain-list-community/release/dlc.dat"
-)
-
 func init() {
+	const (
+		geoipURL   = "https://raw.githubusercontent.com/v2fly/geoip/release/geoip.dat"
+		geositeURL = "https://raw.githubusercontent.com/v2fly/domain-list-community/release/dlc.dat"
+	)
+
 	wd, err := os.Getwd()
 	common.Must(err)
 
@@ -65,4 +66,40 @@ func TestDecodeGeoSite(t *testing.T) {
 	if !bytes.Equal(result, expected) {
 		t.Errorf("failed to load geosite:test, expected: %v, got: %v", expected, result)
 	}
+}
+
+func BenchmarkLoadGeoIP(b *testing.B) {
+	m1 := runtime.MemStats{}
+	m2 := runtime.MemStats{}
+
+	loader := geodata.GetGeodataLoader()
+
+	runtime.ReadMemStats(&m1)
+	cn, _ := loader.LoadGeoIP("cn")
+	private, _ := loader.LoadGeoIP("private")
+	runtime.KeepAlive(cn)
+	runtime.KeepAlive(private)
+	runtime.ReadMemStats(&m2)
+
+	b.ReportMetric(float64(m2.Alloc-m1.Alloc)/1024, "KiB(GeoIP-Alloc)")
+	b.ReportMetric(float64(m2.TotalAlloc-m1.TotalAlloc)/1024/1024, "MiB(GeoIP-TotalAlloc)")
+}
+
+func BenchmarkLoadGeoSite(b *testing.B) {
+	m3 := runtime.MemStats{}
+	m4 := runtime.MemStats{}
+
+	loader := geodata.GetGeodataLoader()
+
+	runtime.ReadMemStats(&m3)
+	cn, _ := loader.LoadGeoSite("cn")
+	notcn, _ := loader.LoadGeoSite("geolocation-!cn")
+	private, _ := loader.LoadGeoSite("private")
+	runtime.KeepAlive(cn)
+	runtime.KeepAlive(notcn)
+	runtime.KeepAlive(private)
+	runtime.ReadMemStats(&m4)
+
+	b.ReportMetric(float64(m4.Alloc-m3.Alloc)/1024/1024, "MiB(GeoSite-Alloc)")
+	b.ReportMetric(float64(m4.TotalAlloc-m3.TotalAlloc)/1024/1024, "MiB(GeoSite-TotalAlloc)")
 }
