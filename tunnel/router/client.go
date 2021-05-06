@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -264,6 +265,11 @@ func loadCode(cfg *Config, prefix string) []codeInfo {
 }
 
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
+	m1 := runtime.MemStats{}
+	m2 := runtime.MemStats{}
+	m3 := runtime.MemStats{}
+	m4 := runtime.MemStats{}
+
 	cfg := config.FromContext(ctx, Name).(*Config)
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithCancel(ctx)
@@ -304,10 +310,14 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		return nil, common.NewError("unknown strategy: " + cfg.Router.DomainStrategy)
 	}
 
+	runtime.ReadMemStats(&m1)
+
+	geodataLoader := geodata.GetGeodataLoader()
+
 	ipCode := loadCode(cfg, "geoip:")
 	for _, c := range ipCode {
 		code := c.code
-		cidrs, err := geodata.LoadGeoIP(code)
+		cidrs, err := geodataLoader.LoadGeoIP(code)
 		if err != nil {
 			log.Error(err)
 		} else {
@@ -315,6 +325,8 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			client.cidrs[c.strategy] = append(client.cidrs[c.strategy], cidrs...)
 		}
 	}
+
+	runtime.ReadMemStats(&m2)
 
 	siteCode := loadCode(cfg, "geosite:")
 	for _, c := range siteCode {
@@ -334,7 +346,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			continue
 		}
 
-		domainList, err := geodata.LoadGeoSite(code)
+		domainList, err := geodataLoader.LoadGeoSite(code)
 		if err != nil {
 			log.Error(err)
 		} else {
@@ -359,6 +371,8 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			}
 		}
 	}
+
+	runtime.ReadMemStats(&m3)
 
 	domainInfo := loadCode(cfg, "domain:")
 	for _, info := range domainInfo {
@@ -433,5 +447,13 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	}
 
 	log.Info("router client created")
+
+	runtime.ReadMemStats(&m4)
+
+	log.Debugf("GeoIP rules -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m2.Alloc-m1.Alloc), common.HumanFriendlyTraffic(m2.TotalAlloc-m1.TotalAlloc))
+	log.Debugf("GeoSite rules -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m3.Alloc-m2.Alloc), common.HumanFriendlyTraffic(m3.TotalAlloc-m2.TotalAlloc))
+	log.Debugf("Plaintext rules -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m4.Alloc-m3.Alloc), common.HumanFriendlyTraffic(m4.TotalAlloc-m3.TotalAlloc))
+	log.Debugf("Total(router) -> Alloc: %s; TotalAlloc: %s", common.HumanFriendlyTraffic(m4.Alloc-m1.Alloc), common.HumanFriendlyTraffic(m4.TotalAlloc-m1.TotalAlloc))
+
 	return client, nil
 }
