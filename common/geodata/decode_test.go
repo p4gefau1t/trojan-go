@@ -72,7 +72,7 @@ func BenchmarkLoadGeoIP(b *testing.B) {
 	m1 := runtime.MemStats{}
 	m2 := runtime.MemStats{}
 
-	loader := geodata.GetGeodataLoader()
+	loader := geodata.NewGeodataLoader()
 
 	runtime.ReadMemStats(&m1)
 	cn, _ := loader.LoadGeoIP("cn")
@@ -89,7 +89,7 @@ func BenchmarkLoadGeoSite(b *testing.B) {
 	m3 := runtime.MemStats{}
 	m4 := runtime.MemStats{}
 
-	loader := geodata.GetGeodataLoader()
+	loader := geodata.NewGeodataLoader()
 
 	runtime.ReadMemStats(&m3)
 	cn, _ := loader.LoadGeoSite("cn")
