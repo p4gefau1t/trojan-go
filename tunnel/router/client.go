@@ -312,7 +312,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 
 	runtime.ReadMemStats(&m1)
 
-	geodataLoader := geodata.GetGeodataLoader()
+	geodataLoader := geodata.NewGeodataLoader()
 
 	ipCode := loadCode(cfg, "geoip:")
 	for _, c := range ipCode {

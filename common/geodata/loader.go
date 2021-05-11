@@ -6,27 +6,20 @@ import (
 	v2router "github.com/v2fly/v2ray-core/v4/app/router"
 )
 
-type geodataLoader interface {
-	LoadIP(filename, country string) ([]*v2router.CIDR, error)
-	LoadSite(filename, list string) ([]*v2router.Domain, error)
-	LoadGeoIP(country string) ([]*v2router.CIDR, error)
-	LoadGeoSite(list string) ([]*v2router.Domain, error)
+type geodataCache struct {
+	geoipCache
+	geositeCache
 }
 
-func GetGeodataLoader() geodataLoader {
+func NewGeodataLoader() GeodataLoader {
 	return &geodataCache{
 		make(map[string]*v2router.GeoIP),
 		make(map[string]*v2router.GeoSite),
 	}
 }
 
-type geodataCache struct {
-	GeoIPCache
-	GeoSiteCache
-}
-
 func (g *geodataCache) LoadIP(filename, country string) ([]*v2router.CIDR, error) {
-	geoip, err := g.GeoIPCache.Unmarshal(filename, country)
+	geoip, err := g.geoipCache.Unmarshal(filename, country)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +28,7 @@ func (g *geodataCache) LoadIP(filename, country string) ([]*v2router.CIDR, error
 }
 
 func (g *geodataCache) LoadSite(filename, list string) ([]*v2router.Domain, error) {
-	geosite, err := g.GeoSiteCache.Unmarshal(filename, list)
+	geosite, err := g.geositeCache.Unmarshal(filename, list)
 	if err != nil {
 		return nil, err
 	}

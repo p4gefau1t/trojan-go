@@ -11,27 +11,27 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 )
 
-type GeoIPCache map[string]*v2router.GeoIP
+type geoipCache map[string]*v2router.GeoIP
 
-func (g GeoIPCache) Has(key string) bool {
+func (g geoipCache) Has(key string) bool {
 	return !(g.Get(key) == nil)
 }
 
-func (g GeoIPCache) Get(key string) *v2router.GeoIP {
+func (g geoipCache) Get(key string) *v2router.GeoIP {
 	if g == nil {
 		return nil
 	}
 	return g[key]
 }
 
-func (g GeoIPCache) Set(key string, value *v2router.GeoIP) {
+func (g geoipCache) Set(key string, value *v2router.GeoIP) {
 	if g == nil {
 		g = make(map[string]*v2router.GeoIP)
 	}
 	g[key] = value
 }
 
-func (g GeoIPCache) Unmarshal(filename, code string) (*v2router.GeoIP, error) {
+func (g geoipCache) Unmarshal(filename, code string) (*v2router.GeoIP, error) {
 	asset := common.GetAssetLocation(filename)
 	idx := strings.ToLower(asset + ":" + code)
 	if g.Has(idx) {
@@ -77,27 +77,27 @@ func (g GeoIPCache) Unmarshal(filename, code string) (*v2router.GeoIP, error) {
 	return nil, common.NewError("country code " + code + " not found in " + filename)
 }
 
-type GeoSiteCache map[string]*v2router.GeoSite
+type geositeCache map[string]*v2router.GeoSite
 
-func (g GeoSiteCache) Has(key string) bool {
+func (g geositeCache) Has(key string) bool {
 	return !(g.Get(key) == nil)
 }
 
-func (g GeoSiteCache) Get(key string) *v2router.GeoSite {
+func (g geositeCache) Get(key string) *v2router.GeoSite {
 	if g == nil {
 		return nil
 	}
 	return g[key]
 }
 
-func (g GeoSiteCache) Set(key string, value *v2router.GeoSite) {
+func (g geositeCache) Set(key string, value *v2router.GeoSite) {
 	if g == nil {
 		g = make(map[string]*v2router.GeoSite)
 	}
 	g[key] = value
 }
 
-func (g GeoSiteCache) Unmarshal(filename, code string) (*v2router.GeoSite, error) {
+func (g geositeCache) Unmarshal(filename, code string) (*v2router.GeoSite, error) {
 	asset := common.GetAssetLocation(filename)
 	idx := strings.ToLower(asset + ":" + code)
 	if g.Has(idx) {
