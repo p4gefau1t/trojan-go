@@ -145,7 +145,7 @@ func (s *Server) packetDispatchLoop() {
 					select {
 					case info := <-conn.output:
 						buf := bytes.NewBuffer(make([]byte, 0, MaxPacketSize))
-						buf.Write([]byte{0, 0, 0}) //RSV, FRAG
+						buf.Write([]byte{0, 0, 0}) // RSV, FRAG
 						common.Must(info.metadata.Address.WriteTo(buf))
 						buf.Write(info.payload)
 						_, err := s.listenPacketConn.WriteTo(buf.Bytes(), conn.src)

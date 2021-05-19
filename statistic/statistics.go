@@ -15,11 +15,11 @@ type TrafficMeter interface {
 	Hash() string
 	AddTraffic(sent, recv int)
 	GetTraffic() (sent, recv uint64)
+	SetTraffic(sent, recv uint64)
 	ResetTraffic() (sent, recv uint64)
 	GetSpeed() (sent, recv uint64)
-	SetSpeedLimit(sent, recv int)
 	GetSpeedLimit() (sent, recv int)
-	SetTraffic(sent, recv uint64)
+	SetSpeedLimit(sent, recv int)
 }
 
 type IPRecorder interface {
@@ -45,9 +45,11 @@ type Authenticator interface {
 
 type Creator func(ctx context.Context) (Authenticator, error)
 
-var authCreators = map[string]Creator{}
-var createdAuth = map[context.Context]Authenticator{}
-var createdAuthLock = sync.Mutex{}
+var (
+	createdAuthLock sync.Mutex
+	authCreators    = make(map[string]Creator)
+	createdAuth     = make(map[context.Context]Authenticator)
+)
 
 func RegisterAuthenticatorCreator(name string, creator Creator) {
 	authCreators[name] = creator

@@ -95,5 +95,5 @@ func (l *SimpleLogger) Tracef(format string, v ...interface{}) {
 }
 
 func (l *SimpleLogger) SetOutput(io.Writer) {
-	//do nothing
+	// do nothing
 }

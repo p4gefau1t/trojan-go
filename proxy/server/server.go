@@ -67,5 +67,4 @@ func init() {
 		}
 		return proxy.NewProxy(ctx, cancel, serverList, clientList), nil
 	})
-
 }

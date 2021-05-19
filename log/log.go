@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-//LogLevel how much log to dump
-//0: ALL; 1: INFO; 2: WARN; 3: ERROR; 4: FATAL; 5: OFF
+// LogLevel how much log to dump
+// 0: ALL; 1: INFO; 2: WARN; 3: ERROR; 4: FATAL; 5: OFF
 type LogLevel int
 
 const (

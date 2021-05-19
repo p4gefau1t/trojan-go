@@ -86,7 +86,7 @@ func TestTrojan(t *testing.T) {
 		t.Fail()
 	}
 
-	//redirecting
+	// redirecting
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	common.Must(err)
 	sendBuf := util.GeneratePayload(1024)

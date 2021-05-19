@@ -73,7 +73,7 @@ func TestSocks(t *testing.T) {
 
 	payload := util.GeneratePayload(1024)
 	buf := bytes.NewBuffer(make([]byte, 0, 4096))
-	buf.Write([]byte{0, 0, 0}) //RSV, FRAG
+	buf.Write([]byte{0, 0, 0}) // RSV, FRAG
 	common.Must(addr.WriteTo(buf))
 	buf.Write(payload)
 

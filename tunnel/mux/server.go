@@ -32,7 +32,7 @@ func (s *Server) acceptConnWorker() {
 		}
 		go func(conn tunnel.Conn) {
 			smuxConfig := smux.DefaultConfig()
-			//smuxConfig.KeepAliveDisabled = true
+			// smuxConfig.KeepAliveDisabled = true
 			smuxSession, err := smux.Server(conn, smuxConfig)
 			if err != nil {
 				log.Error(err)

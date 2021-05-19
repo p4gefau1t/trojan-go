@@ -26,7 +26,7 @@ func (c *ConnectConn) Metadata() *tunnel.Metadata {
 
 type OtherConn struct {
 	net.Conn
-	metadata   *tunnel.Metadata //fixed
+	metadata   *tunnel.Metadata // fixed
 	reqReader  *io.PipeReader
 	respWriter *io.PipeWriter
 	ctx        context.Context
@@ -156,7 +156,7 @@ func (s *Server) acceptLoop() {
 					req.Body.Close()
 					resp.Body.Close()
 
-					req, err = http.ReadRequest(reqBufReader) //read the next http request from local
+					req, err = http.ReadRequest(reqBufReader) // read the next http request from local
 					if err != nil {
 						log.Error(common.NewError("http failed to the read request from local").Base(err))
 						return

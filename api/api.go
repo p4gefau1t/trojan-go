@@ -9,7 +9,7 @@ import (
 
 type Handler func(ctx context.Context, auth statistic.Authenticator) error
 
-var handlers = map[string]Handler{}
+var handlers = make(map[string]Handler)
 
 func RegisterHandler(name string, handler Handler) {
 	handlers[name] = handler
