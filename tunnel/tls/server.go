@@ -77,7 +77,6 @@ func (s *Server) acceptLoop() {
 			return
 		}
 		go func(conn net.Conn) {
-
 			tlsConfig := &tls.Config{
 				CipherSuites:             s.cipherSuite,
 				PreferServerCipherSuites: s.PreferServerCipher,
@@ -315,7 +314,7 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	var keyLogger io.WriteCloser
 	if cfg.TLS.KeyLogPath != "" {
 		log.Warn("tls key logging activated. USE OF KEY LOGGING COMPROMISES SECURITY. IT SHOULD ONLY BE USED FOR DEBUGGING.")
-		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
 			return nil, common.NewError("failed to open key log file").Base(err)
 		}

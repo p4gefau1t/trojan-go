@@ -52,7 +52,7 @@ func matchDomain(list []*v2router.Domain, target string) bool {
 				}
 			}
 		case v2router.Domain_Plain:
-			//keyword
+			// keyword
 			if strings.Contains(target, d.GetValue()) {
 				log.Tracef("domain %s hit keyword rule: %s", target, d.GetValue())
 				return true
@@ -85,11 +85,11 @@ func matchIP(list []*v2router.CIDR, target net.IP) bool {
 		n := int(c.GetPrefix())
 		mask := net.CIDRMask(n, 8*len)
 		cidrIP := net.IP(c.GetIp())
-		if cidrIP.To4() != nil { //IPv4 CIDR
+		if cidrIP.To4() != nil { // IPv4 CIDR
 			if isIPv6 {
 				continue
 			}
-		} else { //IPv6 CIDR
+		} else { // IPv6 CIDR
 			if !isIPv6 {
 				continue
 			}

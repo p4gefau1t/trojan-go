@@ -39,7 +39,7 @@ func (r *Metadata) WriteTo(w io.Writer) error {
 	if err := r.Address.WriteTo(buf); err != nil {
 		return err
 	}
-	//use tcp by default
+	// use tcp by default
 	r.Address.NetworkType = "tcp"
 	_, err := w.Write(buf.Bytes())
 	return err
@@ -171,7 +171,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		if err != nil {
 			return common.NewError("failed to read domain name")
 		}
-		//the fucking browser uses IP as a domain name sometimes
+		// the fucking browser uses IP as a domain name sometimes
 		host := buf[0:length]
 		if ip := net.ParseIP(string(host)); ip != nil {
 			a.IP = ip

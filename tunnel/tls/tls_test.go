@@ -69,8 +69,8 @@ WS94/5WE/lwHJi8ZPSjH1AURCzXhUi4fGvBrNBtry95e+jcEvP5c0g==
 `
 
 func TestDefaultTLS(t *testing.T) {
-	ioutil.WriteFile("server.crt", []byte(cert), 0777)
-	ioutil.WriteFile("server.key", []byte(key), 0777)
+	ioutil.WriteFile("server.crt", []byte(cert), 0o777)
+	ioutil.WriteFile("server.key", []byte(key), 0o777)
 	serverCfg := &Config{
 		TLS: TLSConfig{
 			VerifyHostName: true,
@@ -131,8 +131,8 @@ func TestDefaultTLS(t *testing.T) {
 }
 
 func TestUTLS(t *testing.T) {
-	ioutil.WriteFile("server.crt", []byte(cert), 0777)
-	ioutil.WriteFile("server.key", []byte(key), 0777)
+	ioutil.WriteFile("server.crt", []byte(cert), 0o777)
+	ioutil.WriteFile("server.key", []byte(key), 0o777)
 	fingerprints := []string{
 		"chrome",
 		"firefox",

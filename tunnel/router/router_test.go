@@ -28,8 +28,7 @@ func (m MockClient) Close() error {
 	return nil
 }
 
-type MockPacketConn struct {
-}
+type MockPacketConn struct{}
 
 func (m MockPacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
 	panic("implement me")

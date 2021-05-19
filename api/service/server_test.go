@@ -310,8 +310,8 @@ qbPPrmQPgv5prRHCObn0+j6SwV9vV7Q9BI41CloKUDXZmPFTVipP6z5tV2YTOg==
 `
 
 func init() {
-	ioutil.WriteFile("server.crt", []byte(serverCert), 0777)
-	ioutil.WriteFile("server.key", []byte(serverKey), 0777)
-	ioutil.WriteFile("client.crt", []byte(clientCert), 0777)
-	ioutil.WriteFile("client.key", []byte(clientKey), 0777)
+	ioutil.WriteFile("server.crt", []byte(serverCert), 0o777)
+	ioutil.WriteFile("server.key", []byte(serverKey), 0o777)
+	ioutil.WriteFile("client.crt", []byte(clientCert), 0o777)
+	ioutil.WriteFile("client.key", []byte(clientKey), 0o777)
 }

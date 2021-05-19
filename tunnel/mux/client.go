@@ -28,7 +28,7 @@ type smuxClientInfo struct {
 	underlayConn   tunnel.Conn
 }
 
-//Client is a smux client
+// Client is a smux client
 type Client struct {
 	clientPoolLock sync.Mutex
 	clientPool     map[muxID]*smuxClientInfo
@@ -114,7 +114,7 @@ func (c *Client) newMuxClient() (*smuxClientInfo, error) {
 	conn = newStickyConn(conn)
 
 	smuxConfig := smux.DefaultConfig()
-	//smuxConfig.KeepAliveDisabled = true
+	// smuxConfig.KeepAliveDisabled = true
 	client, err := smux.Client(conn, smuxConfig)
 	info := &smuxClientInfo{
 		client:         client,

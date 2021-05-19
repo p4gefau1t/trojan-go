@@ -29,13 +29,13 @@ func init() {
 	geositePath := common.GetAssetLocation("geosite.dat")
 
 	if _, err := os.Stat(geoipPath); err != nil && errors.Is(err, fs.ErrNotExist) {
-		common.Must(os.MkdirAll(tempPath, 0755))
+		common.Must(os.MkdirAll(tempPath, 0o755))
 		geoipBytes, err := common.FetchHTTPContent(geoipURL)
 		common.Must(err)
 		common.Must(common.WriteFile(geoipPath, geoipBytes))
 	}
 	if _, err := os.Stat(geositePath); err != nil && errors.Is(err, fs.ErrNotExist) {
-		common.Must(os.MkdirAll(tempPath, 0755))
+		common.Must(os.MkdirAll(tempPath, 0o755))
 		geositeBytes, err := common.FetchHTTPContent(geositeURL)
 		common.Must(err)
 		common.Must(common.WriteFile(geositePath, geositeBytes))

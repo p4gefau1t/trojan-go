@@ -81,8 +81,8 @@ NYpAJoagHIeNLGo4aJFwiVsZ
 `
 
 func init() {
-	ioutil.WriteFile("server.crt", []byte(cert), 0777)
-	ioutil.WriteFile("server.key", []byte(key), 0777)
+	ioutil.WriteFile("server.crt", []byte(cert), 0o777)
+	ioutil.WriteFile("server.key", []byte(key), 0o777)
 }
 
 func CheckClientServer(clientData, serverData string, socksPort int) (ok bool) {
@@ -457,7 +457,7 @@ api:
 	time.Sleep(time.Second * 3)
 	client.Close()
 	time.Sleep(time.Second * 3)
-	//http.ListenAndServe("localhost:6060", nil)
+	// http.ListenAndServe("localhost:6060", nil)
 }
 
 func SingleThreadBenchmark(clientData, serverData string, socksPort int) {
