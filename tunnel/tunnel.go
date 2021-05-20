@@ -85,5 +85,5 @@ func GetTunnel(name string) (Tunnel, error) {
 	if t, ok := tunnels[name]; ok {
 		return t, nil
 	}
-	return nil, common.NewError("unknown tunnel name " + string(name))
+	return nil, common.NewError("unknown tunnel name " + name)
 }

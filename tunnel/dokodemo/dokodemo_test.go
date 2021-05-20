@@ -43,8 +43,10 @@ func TestDokodemo(t *testing.T) {
 		Port: cfg.LocalPort,
 	}))
 	packet2, err := s.AcceptPacket(nil)
+	common.Must(err)
 	buf := [100]byte{}
 	n, m, err := packet2.ReadWithMetadata(buf[:])
+	common.Must(err)
 	if m.Address.Port != cfg.TargetPort {
 		t.Fail()
 	}
@@ -64,7 +66,9 @@ func TestDokodemo(t *testing.T) {
 		Port: cfg.LocalPort,
 	}))
 	packet4, err := s.AcceptPacket(nil)
+	common.Must(err)
 	n, m, err = packet4.ReadWithMetadata(buf[:])
+	common.Must(err)
 	if m.Address.Port != cfg.TargetPort {
 		t.Fail()
 	}

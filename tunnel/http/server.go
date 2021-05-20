@@ -43,8 +43,7 @@ func (c *OtherConn) Read(p []byte) (int, error) {
 		if n != 0 {
 			panic("non zero")
 		}
-		select {
-		case <-c.ctx.Done():
+		for range c.ctx.Done() {
 			return 0, common.NewError("http conn closed")
 		}
 	}

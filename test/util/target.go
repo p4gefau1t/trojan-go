@@ -96,7 +96,7 @@ func runUDPEchoServer() {
 	go func() {
 		for {
 			buf := make([]byte, 1024*8)
-			n, addr, err := conn.ReadFrom(buf[:])
+			n, addr, err := conn.ReadFrom(buf)
 			if err != nil {
 				return
 			}
@@ -144,7 +144,7 @@ func runUDPBlackHoleServer() {
 		defer conn.Close()
 		buf := make([]byte, 1024*8)
 		for {
-			_, _, err := conn.ReadFrom(buf[:])
+			_, _, err := conn.ReadFrom(buf)
 			if err != nil {
 				return
 			}

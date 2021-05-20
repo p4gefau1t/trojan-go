@@ -181,7 +181,7 @@ func (s *Server) packetDispatchLoop() {
 			continue
 		}
 		payload := make([]byte, MaxPacketSize)
-		length, err := r.Read(payload)
+		length, _ := r.Read(payload)
 		select {
 		case conn.input <- &packetInfo{
 			metadata: &tunnel.Metadata{

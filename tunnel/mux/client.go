@@ -69,7 +69,7 @@ func (c *Client) cleanLoop() {
 					info.underlayConn.Close()
 					delete(c.clientPool, id)
 					log.Info("mux client", id, "is dead")
-				} else if info.client.NumStreams() == 0 && time.Now().Sub(info.lastActiveTime) > c.timeout {
+				} else if info.client.NumStreams() == 0 && time.Since(info.lastActiveTime) > c.timeout {
 					info.client.Close()
 					info.underlayConn.Close()
 					delete(c.clientPool, id)
@@ -115,7 +115,7 @@ func (c *Client) newMuxClient() (*smuxClientInfo, error) {
 
 	smuxConfig := smux.DefaultConfig()
 	// smuxConfig.KeepAliveDisabled = true
-	client, err := smux.Client(conn, smuxConfig)
+	client, _ := smux.Client(conn, smuxConfig)
 	info := &smuxClientInfo{
 		client:         client,
 		underlayConn:   conn,

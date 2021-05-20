@@ -49,7 +49,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 	// share link must be valid url
 	parse, e := neturl.Parse(shareLink)
 	if e != nil {
-		e = errors.New(fmt.Sprintf("invalid url: %s", e.Error()))
+		e = fmt.Errorf("invalid url: %s", e.Error())
 		return
 	}
 
@@ -106,7 +106,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 		e = errors.New("empty transport type")
 		return
 	} else if _, ok := validTypes[info.Type]; !ok {
-		e = errors.New(fmt.Sprintf("unknown transport type: %s", info.Type))
+		e = fmt.Errorf("unknown transport type: %s", info.Type)
 		return
 	}
 
@@ -154,7 +154,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 		encryptionProviderName := encryptionParts[0]
 
 		if _, ok := validEncryptionProviders[encryptionProviderName]; !ok {
-			e = errors.New(fmt.Sprintf("unsupported encryption provider name: %s", encryptionProviderName))
+			e = fmt.Errorf("unsupported encryption provider name: %s", encryptionProviderName)
 			return
 		}
 
@@ -172,7 +172,7 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 
 			ssMethod, ssPassword := ssParams[0], ssParams[1]
 			if _, ok := validSSEncryptionMap[ssMethod]; !ok {
-				e = errors.New(fmt.Sprintf("unsupported ss method: %s", ssMethod))
+				e = fmt.Errorf("unsupported ss method: %s", ssMethod)
 				return
 			}
 
@@ -180,8 +180,6 @@ func NewShareInfoFromURL(shareLink string) (info ShareInfo, e error) {
 				e = errors.New("ss password cannot be empty")
 				return
 			}
-		} else if encryptionProviderName == "none" {
-			// no encryption. do nothing.
 		}
 	}
 
@@ -213,7 +211,7 @@ func handleTrojanPort(p string) (port uint16, e error) {
 	}
 
 	if portParsed < 1 || portParsed > 65535 {
-		e = errors.New(fmt.Sprintf("invalid port %d", portParsed))
+		e = fmt.Errorf("invalid port %d", portParsed)
 		return
 	}
 
