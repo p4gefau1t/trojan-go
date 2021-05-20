@@ -5,7 +5,6 @@ default: hugo
 clean:
 	rm -rf public/
 
-
 hugo-build: clean hugo-themes
 	hugo --enableGitInfo --source .
 
