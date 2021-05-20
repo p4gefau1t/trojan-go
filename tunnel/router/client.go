@@ -148,7 +148,7 @@ func (c *Client) Route(address *tunnel.Address) int {
 			}
 		}
 		if c.domainStrategy == IPIfNonMatch {
-			resolved_ip, err := newIPAddress(address)
+			resolvedIP, err := newIPAddress(address)
 			if err == nil {
 				for i := Block; i <= Proxy; i++ {
 					if matchIP(c.cidrs[i], resolved_ip.IP) {
