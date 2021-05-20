@@ -16,7 +16,6 @@ linters:
     - gofmt
     - gofumpt
     - goimports
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -27,6 +26,7 @@ linters:
     - deadcode
     - errcheck
     - goprintffuncname
+    - gosimple
     - nilerr
     - rowserrcheck
     - staticcheck
