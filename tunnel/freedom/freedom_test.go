@@ -72,7 +72,7 @@ func TestSocks(t *testing.T) {
 		noDelay:      true,
 	}
 	target, err := tunnel.NewAddressFromAddr("tcp", util.EchoAddr)
-
+	common.Must(err)
 	s, _ := socks5.NewClassicServer(socksAddr.String(), "127.0.0.1", "", "", 0, 0)
 	s.Handle = &socks5.DefaultHandle{}
 	go s.RunTCPServer()
