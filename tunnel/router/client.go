@@ -133,7 +133,7 @@ type Client struct {
 func (c *Client) Route(address *tunnel.Address) int {
 	if address.AddressType == tunnel.DomainName {
 		if c.domainStrategy == IPOnDemand {
-			resolved_ip, err := newIPAddress(address)
+			resolvedIP, err := newIPAddress(address)
 			if err == nil {
 				for i := Block; i <= Proxy; i++ {
 					if matchIP(c.cidrs[i], resolved_ip.IP) {
