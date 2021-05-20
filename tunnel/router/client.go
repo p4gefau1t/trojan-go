@@ -131,45 +131,40 @@ type Client struct {
 }
 
 func (c *Client) Route(address *tunnel.Address) int {
-	policy := -1
-	var err error
-	if c.domainStrategy == IPOnDemand {
-		address, err = newIPAddress(address)
-		if err != nil {
-			return c.defaultPolicy
-		}
-	}
 	if address.AddressType == tunnel.DomainName {
-		for i := 0; i < 3; i++ {
+		if c.domainStrategy == IPOnDemand {
+			resolved_ip, err := newIPAddress(address)
+			if err == nil {
+				for i := Block; i <= Proxy; i++ {
+					if matchIP(c.cidrs[i], resolved_ip.IP) {
+						return i
+					}
+				}
+			}
+		}
+		for i := Block; i <= Proxy; i++ {
 			if matchDomain(c.domains[i], address.DomainName) {
-				policy = i
-				break
+				return i
+			}
+		}
+		if c.domainStrategy == IPIfNonMatch {
+			resolved_ip, err := newIPAddress(address)
+			if err == nil {
+				for i := Block; i <= Proxy; i++ {
+					if matchIP(c.cidrs[i], resolved_ip.IP) {
+						return i
+					}
+				}
 			}
 		}
 	} else {
-		for i := 0; i < 3; i++ {
+		for i := Block; i <= Proxy; i++ {
 			if matchIP(c.cidrs[i], address.IP) {
-				policy = i
-				break
+				return i
 			}
 		}
 	}
-	if policy == -1 && c.domainStrategy == IPIfNonMatch {
-		address, err = newIPAddress(address)
-		if err != nil {
-			return c.defaultPolicy
-		}
-		for i := 0; i < 3; i++ {
-			if matchIP(c.cidrs[i], address.IP) {
-				policy = i
-				break
-			}
-		}
-	}
-	if policy == -1 {
-		policy = c.defaultPolicy
-	}
-	return policy
+	return c.defaultPolicy
 }
 
 func (c *Client) DialConn(address *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn, error) {
