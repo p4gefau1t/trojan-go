@@ -71,7 +71,6 @@ func (p *Proxy) relayConnLoop() {
 					copyConn := func(a, b net.Conn) {
 						_, err := io.Copy(a, b)
 						errChan <- err
-						return
 					}
 					go copyConn(inbound, outbound)
 					go copyConn(outbound, inbound)
@@ -127,7 +126,7 @@ func (p *Proxy) relayPacketLoop() {
 								errChan <- nil
 								return
 							}
-							n, err = b.WriteWithMetadata(buf[:n], metadata)
+							_, err = b.WriteWithMetadata(buf[:n], metadata)
 							if err != nil {
 								errChan <- err
 								return

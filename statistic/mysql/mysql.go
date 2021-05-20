@@ -48,7 +48,7 @@ func (a *Authenticator) updater() {
 
 		// update memory
 		rows, err := a.db.Query("SELECT password,quota,download,upload FROM users")
-		if err != nil {
+		if err != nil || rows.Err() != nil {
 			log.Error(common.NewError("failed to pull data from the database").Base(err))
 			time.Sleep(a.updateDuration)
 			continue

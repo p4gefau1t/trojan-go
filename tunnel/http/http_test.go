@@ -30,18 +30,22 @@ func TestHTTP(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		go func() {
-			http.Get(fmt.Sprintf("http://127.0.0.1:%d", port))
+			resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d", port))
+			common.Must(err)
+			defer resp.Body.Close()
 		}()
 		time.Sleep(time.Microsecond * 10)
 		conn, err := s.AcceptConn(nil)
 		common.Must(err)
 		bufReader := bufio.NewReader(bufio.NewReader(conn))
 		req, err := http.ReadRequest(bufReader)
+		common.Must(err)
 		fmt.Println(req)
 		ioutil.ReadAll(req.Body)
 		req.Body.Close()
 		resp, err := http.Get("http://127.0.0.1:" + util.HTTPPort)
 		common.Must(err)
+		defer resp.Body.Close()
 		err = resp.Write(conn)
 		common.Must(err)
 		buf := [100]byte{}

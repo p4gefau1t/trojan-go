@@ -71,6 +71,7 @@ func TestServerAPI(t *testing.T) {
 	}
 
 	stream3, err := server.SetUsers(ctx)
+	common.Must(err)
 	stream3.Send(&SetUsersRequest{
 		Status: &UserStatus{
 			User: &User{
@@ -147,6 +148,7 @@ func TestServerAPI(t *testing.T) {
 			},
 		})
 		resp2, err = stream2.Recv()
+		common.Must(err)
 		fmt.Println(resp2.Status.SpeedCurrent)
 		fmt.Println(resp2.Status.SpeedLimit)
 		time.Sleep(time.Second)
@@ -186,6 +188,7 @@ func TestTLS(t *testing.T) {
 	time.Sleep(time.Second)
 	pool := x509.NewCertPool()
 	certBytes, err := ioutil.ReadFile("server.crt")
+	common.Must(err)
 	pool.AppendCertsFromPEM(certBytes)
 
 	certificate, err := tls.LoadX509KeyPair("client.crt", "client.key")

@@ -56,7 +56,7 @@ func (c *PacketConn) packetLoop() {
 				continue
 			}
 		}
-		address, err := tunnel.NewAddressFromAddr("udp", addr.String())
+		address, _ := tunnel.NewAddressFromAddr("udp", addr.String())
 		c.packetChan <- &packetInfo{
 			src: &tunnel.Metadata{
 				Address: address,

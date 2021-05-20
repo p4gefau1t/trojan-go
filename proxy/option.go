@@ -28,14 +28,17 @@ func (o *Option) Handle() error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	isJSON := false
-	if strings.HasSuffix(*o.path, ".json") {
+	switch {
+	case strings.HasSuffix(*o.path, ".json"):
 		isJSON = true
-	} else if strings.HasSuffix(*o.path, ".yaml") || strings.HasSuffix(*o.path, ".yml") {
+	case strings.HasSuffix(*o.path, ".yaml"), strings.HasSuffix(*o.path, ".yml"):
 		isJSON = false
-	} else {
+	default:
 		log.Fatal("unsupported filename suffix", *o.path, ". use .yaml or .json instead.")
 	}
+
 	log.Info("trojan-go", constant.Version, "initializing")
 	proxy, err := NewProxyFromConfigData(data, isJSON)
 	if err != nil {

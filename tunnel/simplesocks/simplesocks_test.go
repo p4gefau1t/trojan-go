@@ -51,6 +51,7 @@ func TestSimpleSocks(t *testing.T) {
 	}
 
 	packet1, err := c.DialPacket(nil)
+	common.Must(err)
 	packet1.WriteWithMetadata([]byte("12345678"), &tunnel.Metadata{
 		Address: &tunnel.Address{
 			DomainName:  "test.com",
@@ -60,6 +61,7 @@ func TestSimpleSocks(t *testing.T) {
 	})
 	defer packet1.Close()
 	packet2, err := s.AcceptPacket(nil)
+	common.Must(err)
 	defer packet2.Close()
 	_, m, err := packet2.ReadWithMetadata(buf[:])
 	common.Must(err)

@@ -49,7 +49,7 @@ func TestClientAPI(t *testing.T) {
 	if resp.TrafficTotal.DownloadTraffic != 5678 || resp.TrafficTotal.UploadTraffic != 1234 {
 		t.Fail()
 	}
-	resp, err = client.GetTraffic(ctx, &GetTrafficRequest{})
+	_, err = client.GetTraffic(ctx, &GetTrafficRequest{})
 	if err == nil {
 		t.Fail()
 	}

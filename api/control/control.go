@@ -105,13 +105,15 @@ func (o *apiController) setUsers(apiClient service.TrojanServerServiceClient) er
 			},
 		},
 	}
-	if *o.add {
+
+	switch {
+	case *o.add:
 		req.Operation = service.SetUsersRequest_Add
-	} else if *o.modify {
+	case *o.modify:
 		req.Operation = service.SetUsersRequest_Modify
-	} else if *o.delete {
+	case *o.delete:
 		req.Operation = service.SetUsersRequest_Delete
-	} else {
+	default:
 		return common.NewError("Invalid operation")
 	}
 

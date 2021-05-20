@@ -122,7 +122,7 @@ func (u *url) Handle() error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			listenPort = int(lp)
+			listenPort = lp
 		case "api":
 			apiEnabled = true
 			h, p, err := net.SplitHostPort(val)
@@ -134,7 +134,7 @@ func (u *url) Handle() error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			apiPort = int(lp)
+			apiPort = lp
 		default:
 			log.Fatal("invalid option", o)
 		}
@@ -173,7 +173,7 @@ func (u *url) Handle() error {
 		log.Fatal(err)
 	}
 	log.Debug(string(data))
-	client, err := proxy.NewProxyFromConfigData([]byte(data), true)
+	client, err := proxy.NewProxyFromConfigData(data, true)
 	if err != nil {
 		log.Fatal(err)
 	}

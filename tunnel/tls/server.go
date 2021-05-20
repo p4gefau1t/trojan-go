@@ -117,15 +117,16 @@ func (s *Server) acceptLoop() {
 					// not a valid tls client hello
 					handshakeRewindConn.Rewind()
 					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
-					if s.fallbackAddress != nil {
+					switch {
+					case s.fallbackAddress != nil:
 						s.redir.Redirect(&redirector.Redirection{
 							InboundConn: handshakeRewindConn,
 							RedirectTo:  s.fallbackAddress,
 						})
-					} else if s.httpResp != nil {
+					case s.httpResp != nil:
 						handshakeRewindConn.Write(s.httpResp)
 						handshakeRewindConn.Close()
-					} else {
+					default:
 						handshakeRewindConn.Close()
 					}
 				} else {
