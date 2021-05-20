@@ -3,13 +3,13 @@ on:
     branches:
       - master
     paths:
-      - "docs"
+      - "docs/**"
       - ".github/workflows/gh-pages.yml"
   pull_request:
     branches:
       - master
     paths:
-      - "docs"
+      - "docs/**"
       - ".github/workflows/gh-pages.yml"
 name: github-pages
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: "0.83.0"
+          hugo-version: "0.83.1"
           # extended: true
 
       - name: Build
