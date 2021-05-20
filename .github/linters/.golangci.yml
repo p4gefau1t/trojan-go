@@ -3,6 +3,9 @@ run:
   skip-files:
     - \.pb\.go$
 
+issues:
+  new: true
+
 linters:
   enable:
     - asciicheck
