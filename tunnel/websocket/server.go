@@ -92,6 +92,9 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 	url := "wss://" + s.hostname + s.path
 	origin := "https://" + s.hostname
 	wsConfig, err := websocket.NewConfig(url, origin)
+	if err != nil {
+		return nil, common.NewError("failed to create websocket config").Base(err)
+	}
 	var wsConn *websocket.Conn
 	ctx, cancel := context.WithCancel(s.ctx)
 
