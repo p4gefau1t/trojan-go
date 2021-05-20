@@ -172,12 +172,12 @@ func NewProxyFromConfigData(data []byte, isJSON bool) (*Proxy, error) {
 	ctx := context.WithValue(context.Background(), Name+"_ID", rand.Int())
 	var err error
 	if isJSON {
-		ctx, err = config.WithJSONConfig(context.Background(), data)
+		ctx, err = config.WithJSONConfig(ctx, data)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		ctx, err = config.WithYAMLConfig(context.Background(), data)
+		ctx, err = config.WithYAMLConfig(ctx, data)
 		if err != nil {
 			return nil, err
 		}
