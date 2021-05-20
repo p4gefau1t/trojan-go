@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>完整的配置文件 - Trojan-Go Docs</title>
 <meta name="description" content="An unidentifiable mechanism that helps you bypass GFW.">
-<meta name="generator" content="Hugo 0.83.0" />
+<meta name="generator" content="Hugo 0.83.1" />
 <link href="https://p4gefau1t.github.io/trojan-goindex.xml" rel="alternate" type="application/rss+xml">
 <link rel="canonical" href="https://p4gefau1t.github.io/trojan-go/basic/full-config/">
 <link rel="stylesheet" href="https://p4gefau1t.github.io/trojan-go/css/theme.min.css">
@@ -31,7 +31,7 @@
 <meta itemprop="name" content="完整的配置文件">
 <meta itemprop="description" content="下面是一个完整的配置文件，其中的必填选项有 run_type local_addr local_port remote_addr remote_port 对于服务器server，key和cert为必填。 对于客户端client，反向代理隧道fo">
 
-<meta itemprop="wordCount" content="6655"><meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
+<meta itemprop="wordCount" content="6707"><meta itemprop="image" content="https://p4gefau1t.github.io/trojan-go/images/og-image.png"/>
 <meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Trojan-Go Docs</h1>
@@ -262,13 +262,13 @@
 <p><code>domain_strategy</code>域名解析策略，默认&quot;as_is&quot;。合法的值有：</p>
 <ul>
 <li>
-<p>&ldquo;as_is&rdquo;，只在域名列表中进行匹配。</p>
+<p>&ldquo;as_is&rdquo;，只在各列表中的域名规则内进行匹配。</p>
 </li>
 <li>
-<p>&ldquo;ip_if_non_match&rdquo;，在域名列表中进行匹配，如果不匹配，解析为IP后在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。</p>
+<p>&ldquo;ip_if_non_match&rdquo;，先在各列表中的域名规则内进行匹配；如果不匹配，则解析为IP后，在各列表中的IP地址规则内进行匹配。该策略可能导致DNS泄漏或遭到污染。</p>
 </li>
 <li>
-<p>&ldquo;ip_on_demand&rdquo;，域名均解析为IP，在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。</p>
+<p>&ldquo;ip_on_demand&rdquo;，先解析为IP，在各列表中的IP地址规则内进行匹配；如果不匹配，则在各列表中的域名规则内进行匹配。该策略可能导致DNS泄漏或遭到污染。</p>
 </li>
 </ul>
 <p><code>geoip</code>和<code>geosite</code>字段指geoip和geosite数据库文件路径，默认使用程序所在目录的geoip.dat和geosite.dat。也可以通过指定环境变量TROJAN_GO_LOCATION_ASSET指定工作目录。</p>
