@@ -136,7 +136,7 @@ func (c *Client) Route(address *tunnel.Address) int {
 			resolvedIP, err := newIPAddress(address)
 			if err == nil {
 				for i := Block; i <= Proxy; i++ {
-					if matchIP(c.cidrs[i], resolved_ip.IP) {
+					if matchIP(c.cidrs[i], resolvedIP.IP) {
 						return i
 					}
 				}
