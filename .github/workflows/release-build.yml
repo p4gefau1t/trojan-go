@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*.*"
 name: release-build
 jobs:
   build:

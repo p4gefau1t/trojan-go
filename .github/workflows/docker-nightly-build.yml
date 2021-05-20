@@ -1,10 +1,10 @@
 on:
   push:
     branches:
-      - "master"
+      - master
     paths-ignore:
       - '**.md'
-      - 'docs'
+      - 'docs/**'
 name: docker-nightly-build
 jobs:
   build:

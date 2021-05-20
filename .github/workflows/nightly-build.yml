@@ -2,12 +2,16 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - master
     paths-ignore:
       - "**.md"
-      - "docs"
+      - "docs/**"
 name: nightly-build
 jobs:
   build:

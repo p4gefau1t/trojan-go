@@ -10,6 +10,8 @@ on:
       - ".github/linters/.golangci.yml"
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - master
     paths:
       - "**/*.go"
       - ".github/workflows/linter.yml"

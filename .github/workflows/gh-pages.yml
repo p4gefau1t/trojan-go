@@ -6,6 +6,7 @@ on:
       - "docs/**"
       - ".github/workflows/gh-pages.yml"
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - master
     paths:
