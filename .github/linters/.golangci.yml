@@ -1,0 +1,40 @@
+run:
+  timeout: 5m
+  skip-files:
+    - \.pb\.go$
+
+linters:
+  enable:
+    - asciicheck
+    - bodyclose
+    - depguard
+    - gci
+    - gocritic
+    - gofmt
+    - gofumpt
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - typecheck
+    - unconvert
+    - whitespace
+  disable:
+    - deadcode
+    - errcheck
+    - goprintffuncname
+    - nilerr
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - unparam
+    - unused
+    - varcheck
+
+linters-settings:
+  gci:
+    local-prefixes: github.com/p4gefau1t/trojan-go
+  goimports:
+    local-prefixes: github.com/p4gefau1t/trojan-go
