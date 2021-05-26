@@ -23,20 +23,26 @@ func (o *Option) Name() string {
 	return Name
 }
 
-func (o *Option) Handle() error {
-	data, err := ioutil.ReadFile(*o.path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func HandleHelper(file_path string) error {
 	isJSON := false
 	switch {
-	case strings.HasSuffix(*o.path, ".json"):
+	case strings.HasSuffix(file_path, ".json"):
 		isJSON = true
-	case strings.HasSuffix(*o.path, ".yaml"), strings.HasSuffix(*o.path, ".yml"):
+	case strings.HasSuffix(file_path, ".yaml"), strings.HasSuffix(file_path, ".yml"):
 		isJSON = false
 	default:
-		log.Fatal("unsupported filename suffix", *o.path, ". use .yaml or .json instead.")
+		log.Fatalf("unsupported filename suffix %s. use .yaml or .json instead.", file_path)
+	}
+
+	data, err := ioutil.ReadFile(file_path)
+	if err != nil {
+		switch {
+		case strings.HasSuffix(err.Error(), "The system cannot find the file specified."),
+			strings.HasSuffix(err.Error(), "no such file or directory"):
+			return err
+		default:
+			log.Fatal(err)
+		}
 	}
 
 	log.Info("trojan-go", constant.Version, "initializing")
@@ -51,13 +57,39 @@ func (o *Option) Handle() error {
 	return nil
 }
 
+func (o *Option) Handle() error {
+	if *o.path != "Not_Specified" {
+		err := HandleHelper(*o.path)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			return nil
+		}
+	}
+
+	file_paths := [3]string{"config.json", "config.yml", "config.yaml"}
+
+	for i := 0; i < 3; i++ {
+		log.Infof("loading config from default path %s", file_paths[i])
+		err := HandleHelper(file_paths[i])
+		if err == nil {
+			return nil
+		} else {
+			log.Warn(err)
+		}
+	}
+
+	log.Fatal("no config provided: put a config.json/yml/yaml in the directory or specify path with -config")
+	return nil
+}
+
 func (o *Option) Priority() int {
 	return 1
 }
 
 func init() {
 	option.RegisterHandler(&Option{
-		path: flag.String("config", "config.json", "Trojan-Go config filename (.yaml/.yml/.json)"),
+		path: flag.String("config", "Not_Specified", "Trojan-Go config filename (.yaml/.yml/.json)"),
 	})
 	option.RegisterHandler(&StdinOption{
 		format:       flag.String("stdin-format", "disabled", "Read from standard input (yaml/json)"),
