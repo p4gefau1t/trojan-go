@@ -1,3 +1,4 @@
+name: Test
 on:
   push:
     branches:
@@ -6,8 +7,7 @@ on:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
-      - "Makefile"
-      - ".github/workflows/nightly-build.yml"
+      - ".github/workflows/test.yml"
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -16,16 +16,15 @@ on:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
-      - "Makefile"
-      - ".github/workflows/nightly-build.yml"
-name: nightly-build
+      - ".github/workflows/test.yml"
 jobs:
-  build:
+  test:
     strategy:
       fail-fast: false
       matrix:
         go-version: ["1.16"]
-    runs-on: ubuntu-latest
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
@@ -35,7 +34,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build
-        run: |
-          make geosite.dat geoip.dat
-          make release -j$(nproc)
+      - name: Test
+        run: make test
