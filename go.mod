@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/huandu/go-clone v1.2.1
+	github.com/mitchellh/copystructure v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/refraction-networking/utls v0.0.0-20201210053706-2179f286686b
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5

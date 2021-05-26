@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/huandu/go-clone"
+	clone "github.com/mitchellh/copystructure"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -105,7 +105,11 @@ func (s *Server) acceptLoop() {
 					if s.verifySNI && !matched {
 						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
 					}
-					keyPairCopied := clone.Clone(&s.keyPair[0]).(*tls.Certificate)
+					keyPairCopiedInterface, err := clone.Copy(&s.keyPair[0])
+					if err != nil {
+						return nil, common.NewError("failed to deep copy certificate").Base(err)
+					}
+					keyPairCopied := keyPairCopiedInterface.(*tls.Certificate)
 					return keyPairCopied, nil
 				},
 			}
