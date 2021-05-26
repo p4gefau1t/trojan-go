@@ -18,6 +18,8 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 )
 
+var auth statistic.Authenticator
+
 // InboundConn is a trojan inbound connection
 type InboundConn struct {
 	net.Conn
@@ -206,19 +208,19 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 
-	// TODO replace this dirty code
-	var auth statistic.Authenticator
-	var err error
-	if cfg.MySQL.Enabled {
-		log.Debug("mysql enabled")
-		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
-	} else {
-		log.Debug("auth by config file")
-		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
-	}
-	if err != nil {
-		cancel()
-		return nil, common.NewError("trojan failed to create authenticator")
+	if auth == nil {
+		var err error
+		if cfg.MySQL.Enabled {
+			log.Debug("mysql enabled")
+			auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+		} else {
+			log.Debug("auth by config file")
+			auth, err = statistic.NewAuthenticator(ctx, memory.Name)
+		}
+		if err != nil {
+			cancel()
+			return nil, common.NewError("trojan failed to create authenticator")
+		}
 	}
 
 	if cfg.API.Enabled {
