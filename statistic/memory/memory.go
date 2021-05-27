@@ -21,12 +21,11 @@ type User struct {
 	recv        uint64
 	lastSent    uint64
 	lastRecv    uint64
-	speedLock   sync.RWMutex
 	sendSpeed   uint64
 	recvSpeed   uint64
 	hash        string
-	ipTableLock sync.RWMutex
-	ipTable     map[string]struct{}
+	ipTable     sync.Map
+	ipNum       int32
 	maxIPNum    int
 	limiterLock sync.RWMutex
 	sendLimiter *rate.Limiter
@@ -45,16 +44,15 @@ func (u *User) AddIP(ip string) bool {
 	if u.maxIPNum <= 0 {
 		return true
 	}
-	u.ipTableLock.Lock()
-	defer u.ipTableLock.Unlock()
-	_, found := u.ipTable[ip]
+	_, found := u.ipTable.Load(ip)
 	if found {
 		return true
 	}
-	if len(u.ipTable)+1 > u.maxIPNum {
+	if int(u.ipNum)+1 > u.maxIPNum {
 		return false
 	}
-	u.ipTable[ip] = struct{}{}
+	u.ipTable.Store(ip, true)
+	atomic.AddInt32(&u.ipNum, 1)
 	return true
 }
 
@@ -62,20 +60,17 @@ func (u *User) DelIP(ip string) bool {
 	if u.maxIPNum <= 0 {
 		return true
 	}
-	u.ipTableLock.Lock()
-	defer u.ipTableLock.Unlock()
-	_, found := u.ipTable[ip]
+	_, found := u.ipTable.Load(ip)
 	if !found {
 		return false
 	}
-	delete(u.ipTable, ip)
+	u.ipTable.Delete(ip)
+	atomic.AddInt32(&u.ipNum, -1)
 	return true
 }
 
 func (u *User) GetIP() int {
-	u.ipTableLock.RLock()
-	defer u.ipTableLock.RUnlock()
-	return len(u.ipTable)
+	return int(u.ipNum)
 }
 
 func (u *User) SetIPLimit(n int) {
@@ -87,8 +82,8 @@ func (u *User) GetIPLimit() int {
 }
 
 func (u *User) AddTraffic(sent, recv int) {
-	u.limiterLock.Lock()
-	defer u.limiterLock.Unlock()
+	u.limiterLock.RLock()
+	defer u.limiterLock.RUnlock()
 
 	if u.sendLimiter != nil && sent >= 0 {
 		u.sendLimiter.WaitN(u.ctx, sent)
@@ -152,83 +147,68 @@ func (u *User) ResetTraffic() (uint64, uint64) {
 }
 
 func (u *User) speedUpdater() {
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-u.ctx.Done():
 			return
-		case <-time.After(time.Second):
-			u.speedLock.Lock()
+		case <-ticker.C:
 			sent, recv := u.GetTraffic()
-			u.sendSpeed = sent - u.lastSent
-			u.recvSpeed = recv - u.lastRecv
-			u.lastSent = sent
-			u.lastRecv = recv
-			u.speedLock.Unlock()
+			atomic.StoreUint64(&u.sendSpeed, sent-u.lastSent)
+			atomic.StoreUint64(&u.recvSpeed, recv-u.lastRecv)
+			atomic.StoreUint64(&u.lastSent, sent)
+			atomic.StoreUint64(&u.lastRecv, recv)
 		}
 	}
 }
 
 func (u *User) GetSpeed() (uint64, uint64) {
-	u.speedLock.RLock()
-	defer u.speedLock.RUnlock()
-	return u.sendSpeed, u.recvSpeed
+	return atomic.LoadUint64(&u.sendSpeed), atomic.LoadUint64(&u.recvSpeed)
 }
 
 type Authenticator struct {
-	sync.RWMutex
-
-	users map[string]*User
+	users sync.Map
 	ctx   context.Context
 }
 
 func (a *Authenticator) AuthUser(hash string) (bool, statistic.User) {
-	a.RLock()
-	defer a.RUnlock()
-	if user, found := a.users[hash]; found {
-		return true, user
+	if user, found := a.users.Load(hash); found {
+		return true, user.(*User)
 	}
 	return false, nil
 }
 
 func (a *Authenticator) AddUser(hash string) error {
-	a.Lock()
-	defer a.Unlock()
-	if _, found := a.users[hash]; found {
+	if _, found := a.users.Load(hash); found {
 		return common.NewError("hash " + hash + " is already exist")
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
-		hash:    hash,
-		ctx:     ctx,
-		cancel:  cancel,
-		ipTable: make(map[string]struct{}),
+		hash:   hash,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 	go meter.speedUpdater()
-	a.users[hash] = meter
+	a.users.Store(hash, meter)
 	return nil
 }
 
 func (a *Authenticator) DelUser(hash string) error {
-	a.Lock()
-	defer a.Unlock()
-	meter, found := a.users[hash]
+	meter, found := a.users.Load(hash)
 	if !found {
 		return common.NewError("hash " + hash + " not found")
 	}
-	meter.Close()
-	delete(a.users, hash)
+	meter.(*User).Close()
+	a.users.Delete(hash)
 	return nil
 }
 
 func (a *Authenticator) ListUsers() []statistic.User {
-	a.RLock()
-	defer a.RUnlock()
-	result := make([]statistic.User, len(a.users))
-	i := 0
-	for _, u := range a.users {
-		result[i] = u
-		i++
-	}
+	result := make([]statistic.User, 0)
+	a.users.Range(func(k, v interface{}) bool {
+		result = append(result, v.(*User))
+		return true
+	})
 	return result
 }
 
@@ -239,8 +219,7 @@ func (a *Authenticator) Close() error {
 func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	u := &Authenticator{
-		ctx:   ctx,
-		users: make(map[string]*User),
+		ctx: ctx,
 	}
 	for _, password := range cfg.Passwords {
 		hash := common.SHA224String(password)
