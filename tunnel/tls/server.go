@@ -17,8 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/huandu/go-clone"
-
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -107,8 +105,7 @@ func (s *Server) acceptLoop() {
 					if s.verifySNI && !matched {
 						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
 					}
-					keyPairCopied := clone.Clone(&s.keyPair[0]).(*tls.Certificate)
-					return keyPairCopied, nil
+					return &s.keyPair[0], nil
 				},
 			}
 
