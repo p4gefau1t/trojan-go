@@ -17,8 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/huandu/go-clone"
-
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -50,7 +48,6 @@ type Server struct {
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
 	nextHTTP           int32
-	setNextHTTPOnce    sync.Once
 	portOverrider      map[string]int
 }
 
@@ -107,8 +104,7 @@ func (s *Server) acceptLoop() {
 					if s.verifySNI && !matched {
 						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
 					}
-					keyPairCopied := clone.Clone(&s.keyPair[0]).(*tls.Certificate)
-					return keyPairCopied, nil
+					return &s.keyPair[0], nil
 				},
 			}
 
@@ -209,6 +205,8 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certPath string, password string) {
 	var lastKeyBytes, lastCertBytes []byte
+	ticker := time.NewTicker(checkRate)
+
 	for {
 		log.Debug("checking cert...")
 		keyBytes, err := ioutil.ReadFile(keyPath)
@@ -234,11 +232,13 @@ func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certP
 			lastKeyBytes = keyBytes
 			lastCertBytes = certBytes
 		}
+
 		select {
-		case <-time.After(checkRate):
+		case <-ticker.C:
 			continue
 		case <-s.ctx.Done():
 			log.Debug("exiting")
+			ticker.Stop()
 			return
 		}
 	}
