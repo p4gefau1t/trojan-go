@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/huandu/go-clone"
@@ -48,7 +49,8 @@ type Server struct {
 	ctx                context.Context
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
-	nextHTTP           bool
+	nextHTTP           int32
+	setNextHTTPOnce    sync.Once
 	portOverrider      map[string]int
 }
 
@@ -76,7 +78,7 @@ func (s *Server) acceptLoop() {
 			select {
 			case <-s.ctx.Done():
 			default:
-				log.Fatal(common.NewError("transport accept error"))
+				log.Fatal(common.NewError("transport accept error" + err.Error()))
 			}
 			return
 		}
@@ -161,7 +163,7 @@ func (s *Server) acceptLoop() {
 					Conn: rewindConn,
 				}
 			} else {
-				if !s.nextHTTP {
+				if atomic.LoadInt32(&s.nextHTTP) != 1 {
 					// there is no websocket layer waiting for connections, redirect it
 					log.Error("incoming http request, but no websocket server is listening")
 					s.redir.Redirect(&redirector.Redirection{
@@ -182,7 +184,7 @@ func (s *Server) acceptLoop() {
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	if _, ok := overlay.(*websocket.Tunnel); ok {
-		s.nextHTTP = true
+		atomic.StoreInt32(&s.nextHTTP, 1)
 		log.Debug("next proto http")
 		// websocket overlay
 		select {
