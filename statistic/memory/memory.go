@@ -114,15 +114,13 @@ func (u *User) GetSpeedLimit() (send, recv int) {
 	u.limiterLock.RLock()
 	defer u.limiterLock.RUnlock()
 
-	sendLimit := 0
-	recvLimit := 0
 	if u.sendLimiter != nil {
-		sendLimit = int(u.sendLimiter.Limit())
+		send = int(u.sendLimiter.Limit())
 	}
 	if u.recvLimiter != nil {
-		recvLimit = int(u.recvLimiter.Limit())
+		recv = int(u.recvLimiter.Limit())
 	}
-	return sendLimit, recvLimit
+	return
 }
 
 func (u *User) Hash() string {
