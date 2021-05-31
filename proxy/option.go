@@ -23,63 +23,67 @@ func (o *Option) Name() string {
 	return Name
 }
 
-func HandleHelper(file_path string) error {
+func detectAndReadConfig(file string) ([]byte, bool, error) {
 	isJSON := false
 	switch {
-	case strings.HasSuffix(file_path, ".json"):
+	case strings.HasSuffix(file, ".json"):
 		isJSON = true
-	case strings.HasSuffix(file_path, ".yaml"), strings.HasSuffix(file_path, ".yml"):
+	case strings.HasSuffix(file, ".yaml"), strings.HasSuffix(file, ".yml"):
 		isJSON = false
 	default:
-		log.Fatalf("unsupported filename suffix %s. use .yaml or .json instead.", file_path)
+		log.Fatalf("unsupported config format: %s. use .yaml or .json instead.", file)
 	}
 
-	data, err := ioutil.ReadFile(file_path)
+	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		switch {
-		case strings.HasSuffix(err.Error(), "The system cannot find the file specified."),
-			strings.HasSuffix(err.Error(), "no such file or directory"):
-			return err
-		default:
-			log.Fatal(err)
-		}
+		return nil, false, err
 	}
-
-	log.Info("trojan-go", constant.Version, "initializing")
-	proxy, err := NewProxyFromConfigData(data, isJSON)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = proxy.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return nil
+	return data, isJSON, nil
 }
 
 func (o *Option) Handle() error {
-	if *o.path != "Not_Specified" {
-		err := HandleHelper(*o.path)
+	defaultConfigPath := []string{
+		"config.json",
+		"config.yml",
+		"config.yaml",
+	}
+
+	isJSON := false
+	var data []byte
+	var err error
+
+	switch *o.path {
+	case "":
+		log.Warn("no specified config file, use default path to detect config file")
+		for _, file := range defaultConfigPath {
+			log.Warn("try to load config from default path:", file)
+			data, isJSON, err = detectAndReadConfig(file)
+			if err != nil {
+				log.Warn(err)
+				continue
+			}
+			break
+		}
+	default:
+		data, isJSON, err = detectAndReadConfig(*o.path)
 		if err != nil {
 			log.Fatal(err)
-		} else {
-			return nil
 		}
 	}
 
-	file_paths := [3]string{"config.json", "config.yml", "config.yaml"}
-
-	for i := 0; i < 3; i++ {
-		log.Infof("loading config from default path %s", file_paths[i])
-		err := HandleHelper(file_paths[i])
-		if err == nil {
-			return nil
-		} else {
-			log.Warn(err)
+	if data != nil {
+		log.Info("trojan-go", constant.Version, "initializing")
+		proxy, err := NewProxyFromConfigData(data, isJSON)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = proxy.Run()
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 
-	log.Fatal("no config provided: put a config.json/yml/yaml in the directory or specify path with -config")
+	log.Fatal("no valid config")
 	return nil
 }
 
@@ -89,7 +93,7 @@ func (o *Option) Priority() int {
 
 func init() {
 	option.RegisterHandler(&Option{
-		path: flag.String("config", "Not_Specified", "Trojan-Go config filename (.yaml/.yml/.json)"),
+		path: flag.String("config", "", "Trojan-Go config filename (.yaml/.yml/.json)"),
 	})
 	option.RegisterHandler(&StdinOption{
 		format:       flag.String("stdin-format", "disabled", "Read from standard input (yaml/json)"),
