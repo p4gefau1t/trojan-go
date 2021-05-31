@@ -48,7 +48,6 @@ type Server struct {
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
 	nextHTTP           int32
-	setNextHTTPOnce    sync.Once
 	portOverrider      map[string]int
 }
 
@@ -206,6 +205,8 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certPath string, password string) {
 	var lastKeyBytes, lastCertBytes []byte
+	ticker := time.NewTicker(checkRate)
+
 	for {
 		log.Debug("checking cert...")
 		keyBytes, err := ioutil.ReadFile(keyPath)
@@ -231,11 +232,13 @@ func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certP
 			lastKeyBytes = keyBytes
 			lastCertBytes = certBytes
 		}
+
 		select {
-		case <-time.After(checkRate):
+		case <-ticker.C:
 			continue
 		case <-s.ctx.Done():
 			log.Debug("exiting")
+			ticker.Stop()
 			return
 		}
 	}
