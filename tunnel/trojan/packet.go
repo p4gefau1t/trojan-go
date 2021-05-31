@@ -66,7 +66,7 @@ func (c *PacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, er
 	length := int(binary.BigEndian.Uint16(lengthBuf[:]))
 
 	crlf := [2]byte{}
-	io.ReadFull(c.Conn, crlf[:])
+	_, err = io.ReadFull(c.Conn, crlf[:])
 	if err != nil {
 		return 0, nil, common.NewError("failed to read crlf")
 	}
