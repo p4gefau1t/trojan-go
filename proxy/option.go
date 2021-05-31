@@ -88,7 +88,7 @@ func (o *Option) Handle() error {
 }
 
 func (o *Option) Priority() int {
-	return 1
+	return -1
 }
 
 func init() {
@@ -119,9 +119,9 @@ func (o *StdinOption) Handle() error {
 	if o.suppressHint == nil || !*o.suppressHint {
 		fmt.Printf("Trojan-Go %s (%s/%s)\n", constant.Version, runtime.GOOS, runtime.GOARCH)
 		if isJSON {
-			fmt.Println("Reading in JSON configuration from STDIN.")
+			fmt.Println("Reading JSON configuration from stdin.")
 		} else {
-			fmt.Println("Reading in YAML configuration from STDIN.")
+			fmt.Println("Reading YAML configuration from stdin.")
 		}
 	}
 
