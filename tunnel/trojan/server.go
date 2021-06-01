@@ -15,6 +15,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/statistic/mysql"
+	"github.com/p4gefau1t/trojan-go/statistic/sqlite"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 )
@@ -214,6 +215,9 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	if cfg.MySQL.Enabled {
 		log.Debug("mysql enabled")
 		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+	} else if cfg.SQLite.Enabled {
+		log.Debug("sqlite enabled")
+		auth, err = statistic.NewAuthenticator(ctx, sqlite.Name)
 	} else {
 		log.Debug("auth by config file")
 		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
