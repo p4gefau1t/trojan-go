@@ -59,15 +59,13 @@ func (c *PacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, er
 		return 0, nil, common.NewError("failed to parse udp packet addr").Base(err)
 	}
 	lengthBuf := [2]byte{}
-	_, err := io.ReadFull(c.Conn, lengthBuf[:])
-	if err != nil {
+	if _, err := io.ReadFull(c.Conn, lengthBuf[:]); err != nil {
 		return 0, nil, common.NewError("failed to read length")
 	}
 	length := int(binary.BigEndian.Uint16(lengthBuf[:]))
 
 	crlf := [2]byte{}
-	io.ReadFull(c.Conn, crlf[:])
-	if err != nil {
+	if _, err := io.ReadFull(c.Conn, crlf[:]); err != nil {
 		return 0, nil, common.NewError("failed to read crlf")
 	}
 
@@ -75,13 +73,13 @@ func (c *PacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, er
 		io.CopyN(ioutil.Discard, c.Conn, int64(length)) // drain the rest of the packet
 		return 0, nil, common.NewError("incoming packet size is too large")
 	}
-	_, err = io.ReadFull(c.Conn, payload[:length])
-	if err != nil {
+
+	if _, err := io.ReadFull(c.Conn, payload[:length]); err != nil {
 		return 0, nil, common.NewError("failed to read payload")
 	}
 
 	log.Debug("udp packet from", c.RemoteAddr(), "metadata", addr.String(), "size", length)
 	return length, &tunnel.Metadata{
 		Address: addr,
-	}, err
+	}, nil
 }
