@@ -34,6 +34,9 @@ func GetProgramDir() string {
 }
 
 func GetAssetLocation(file string) string {
+	if filepath.IsAbs(file) {
+		return file
+	}
 	if loc := os.Getenv("TROJAN_GO_LOCATION_ASSET"); loc != "" {
 		log.Debugf("env set: TROJAN_GO_LOCATION_ASSET=%s", loc)
 		return filepath.Join(loc, file)
