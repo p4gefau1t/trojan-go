@@ -17,12 +17,18 @@ import (
 const Name = "MEMORY"
 
 type User struct {
-	sent        uint64
-	recv        uint64
-	lastSent    uint64
-	lastRecv    uint64
-	sendSpeed   uint64
-	recvSpeed   uint64
+	// WARNING: do not change the order of these fields.
+	// 64-bit fields that use `sync/atomic` package functions
+	// must be 64-bit aligned on 32-bit systems.
+	// Reference: https://github.com/golang/go/issues/599
+	// Solution: https://github.com/golang/go/issues/11891#issuecomment-433623786
+	sent      uint64
+	recv      uint64
+	lastSent  uint64
+	lastRecv  uint64
+	sendSpeed uint64
+	recvSpeed uint64
+
 	hash        string
 	ipTable     sync.Map
 	ipNum       int32

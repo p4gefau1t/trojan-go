@@ -29,9 +29,15 @@ const (
 )
 
 type OutboundConn struct {
+	// WARNING: do not change the order of these fields.
+	// 64-bit fields that use `sync/atomic` package functions
+	// must be 64-bit aligned on 32-bit systems.
+	// Reference: https://github.com/golang/go/issues/599
+	// Solution: https://github.com/golang/go/issues/11891#issuecomment-433623786
+	sent uint64
+	recv uint64
+
 	metadata          *tunnel.Metadata
-	sent              uint64
-	recv              uint64
 	user              statistic.User
 	headerWrittenOnce sync.Once
 	net.Conn

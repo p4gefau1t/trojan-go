@@ -21,9 +21,15 @@ import (
 
 // InboundConn is a trojan inbound connection
 type InboundConn struct {
+	// WARNING: do not change the order of these fields.
+	// 64-bit fields that use `sync/atomic` package functions
+	// must be 64-bit aligned on 32-bit systems.
+	// Reference: https://github.com/golang/go/issues/599
+	// Solution: https://github.com/golang/go/issues/11891#issuecomment-433623786
+	sent uint64
+	recv uint64
+
 	net.Conn
-	sent     uint64
-	recv     uint64
 	auth     statistic.Authenticator
 	user     statistic.User
 	hash     string
