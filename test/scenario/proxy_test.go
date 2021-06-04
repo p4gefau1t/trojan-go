@@ -24,6 +24,7 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
 	"github.com/p4gefau1t/trojan-go/test/util"
+	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
 )
 
 // test key and cert
@@ -86,6 +87,7 @@ func init() {
 }
 
 func CheckClientServer(clientData, serverData string, socksPort int) (ok bool) {
+	trojan.Auth = nil
 	server, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
 	common.Must(err)
 	go server.Run()
