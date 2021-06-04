@@ -110,6 +110,11 @@ weight: 30
     "password": "",
     "check_rate": 60
   },
+  "sqlite": {
+    "enabled": false,
+    "path": "",
+    "check_rate": 60
+  },
   "api": {
     "enabled": false,
     "api_addr": "",
@@ -326,6 +331,37 @@ CREATE TABLE users (
     upload BIGINT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     INDEX (password)
+);
+```
+
+### ```sqlite```数据库选项
+
+trojan-go另设有使用sqlite的方式，但更推荐的方式是使用API。
+
+```enabled```表示是否启用sqlite数据库进行用户验证。
+
+```path```表示数据库文件的路径（相对当前工作目录）。
+
+```check_rate```是trojan-go从MySQL获取用户数据并更新缓存的间隔时间，单位为秒。
+
+其他选项可以顾名思义，不再赘述。
+
+users表结构和trojan版本定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
+
+```mysql
+CREATE TABLE users (
+    id       [INT UNSIGNED]    NOT NULL,
+    username VARCHAR (64)      NOT NULL,
+    password CHAR (56)         NOT NULL,
+    quota    BIGINT            NOT NULL
+                               DEFAULT 0,
+    download [BIGINT UNSIGNED] NOT NULL
+                               DEFAULT 0,
+    upload   [BIGINT UNSIGNED] NOT NULL
+                               DEFAULT 0,
+    PRIMARY KEY (
+        id
+    )
 );
 ```
 

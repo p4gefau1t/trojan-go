@@ -3,6 +3,7 @@ module github.com/p4gefau1t/trojan-go
 go 1.16
 
 require (
+	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/refraction-networking/utls v0.0.0-20201210053706-2179f286686b
