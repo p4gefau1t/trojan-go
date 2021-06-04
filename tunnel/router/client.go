@@ -312,7 +312,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	ipCode := loadCode(cfg, "geoip:")
 	for _, c := range ipCode {
 		code := c.code
-		cidrs, err := geodataLoader.LoadGeoIP(code)
+		cidrs, err := geodataLoader.LoadIP(cfg.Router.GeoIPFilename, code)
 		if err != nil {
 			log.Error(err)
 		} else {
@@ -341,7 +341,7 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			continue
 		}
 
-		domainList, err := geodataLoader.LoadGeoSite(code)
+		domainList, err := geodataLoader.LoadSite(cfg.Router.GeoSiteFilename, code)
 		if err != nil {
 			log.Error(err)
 		} else {
