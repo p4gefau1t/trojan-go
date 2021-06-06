@@ -22,7 +22,6 @@ type TLSConfig struct {
 	KeyPath              string   `json:"key" yaml:"key"`
 	KeyPassword          string   `json:"key_password" yaml:"key-password"`
 	Cipher               string   `json:"cipher" yaml:"cipher"`
-	Ciphers              []string `json:"ciphers" yaml:"ciphers"`
 	PreferServerCipher   bool     `json:"prefer_server_cipher" yaml:"prefer-server-cipher"`
 	SNI                  string   `json:"sni" yaml:"sni"`
 	HTTPResponseFileName string   `json:"plain_http_response" yaml:"plain-http-response"`
