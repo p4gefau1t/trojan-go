@@ -13,17 +13,17 @@ type User struct {
 }
 
 func (u *User) setSent(sent uint64) {
-	binary.BigEndian.PutUint64(u.Sent[:], sent)
+	binary.BigEndian.PutUint64(u.Sent, sent)
 }
 func (u *User) getSent() uint64 {
-	return binary.BigEndian.Uint64(u.Sent[:])
+	return binary.BigEndian.Uint64(u.Sent)
 }
 
 func (u *User) setRecv(recv uint64) {
-	binary.BigEndian.PutUint64(u.Recv[:], recv)
+	binary.BigEndian.PutUint64(u.Recv, recv)
 }
 func (u *User) getRecv() uint64 {
-	return binary.BigEndian.Uint64(u.Recv[:])
+	return binary.BigEndian.Uint64(u.Recv)
 }
 
 func (u *User) GetHash() string {
