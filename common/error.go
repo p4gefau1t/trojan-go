@@ -25,6 +25,10 @@ func NewError(info string) *Error {
 	}
 }
 
+func NewErrorf(format string, a ...interface{}) *Error {
+	return NewError(fmt.Sprintf(format, a...))
+}
+
 func Must(err error) {
 	if err != nil {
 		fmt.Println(err)

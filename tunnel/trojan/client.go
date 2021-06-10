@@ -51,7 +51,7 @@ func (c *OutboundConn) WriteHeader(payload []byte) (bool, error) {
 	var err error
 	written := false
 	c.headerWrittenOnce.Do(func() {
-		hash := c.user.Hash()
+		hash := c.user.GetHash()
 		buf := bytes.NewBuffer(make([]byte, 0, MaxPacketSize))
 		crlf := []byte{0x0d, 0x0a}
 		buf.Write([]byte(hash))

@@ -12,6 +12,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/statistic"
+	"github.com/p4gefau1t/trojan-go/statistic/sqlite"
 )
 
 const Name = "MEMORY"
@@ -22,20 +23,19 @@ type User struct {
 	// must be 64-bit aligned on 32-bit systems.
 	// Reference: https://github.com/golang/go/issues/599
 	// Solution: https://github.com/golang/go/issues/11891#issuecomment-433623786
-	sent      uint64
-	recv      uint64
-	lastSent  uint64
-	lastRecv  uint64
-	sendSpeed uint64
-	recvSpeed uint64
-
-	hash        string
+	Sent        uint64
+	Recv        uint64
+	lastSent    uint64
+	lastRecv    uint64
+	sendSpeed   uint64
+	recvSpeed   uint64
+	Hash        string
 	ipTable     sync.Map
 	ipNum       int32
-	maxIPNum    int
+	MaxIPNum    int
 	limiterLock sync.RWMutex
-	sendLimiter *rate.Limiter
-	recvLimiter *rate.Limiter
+	SendLimiter *rate.Limiter
+	RecvLimiter *rate.Limiter
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
@@ -47,14 +47,14 @@ func (u *User) Close() error {
 }
 
 func (u *User) AddIP(ip string) bool {
-	if u.maxIPNum <= 0 {
+	if u.MaxIPNum <= 0 {
 		return true
 	}
 	_, found := u.ipTable.Load(ip)
 	if found {
 		return true
 	}
-	if int(u.ipNum)+1 > u.maxIPNum {
+	if int(u.ipNum)+1 > u.MaxIPNum {
 		return false
 	}
 	u.ipTable.Store(ip, true)
@@ -63,7 +63,7 @@ func (u *User) AddIP(ip string) bool {
 }
 
 func (u *User) DelIP(ip string) bool {
-	if u.maxIPNum <= 0 {
+	if u.MaxIPNum <= 0 {
 		return true
 	}
 	_, found := u.ipTable.Load(ip)
@@ -79,25 +79,25 @@ func (u *User) GetIP() int {
 	return int(u.ipNum)
 }
 
-func (u *User) SetIPLimit(n int) {
-	u.maxIPNum = n
+func (u *User) setIPLimit(n int) {
+	u.MaxIPNum = n
 }
 
 func (u *User) GetIPLimit() int {
-	return u.maxIPNum
+	return u.MaxIPNum
 }
 
 func (u *User) AddTraffic(sent, recv int) {
 	u.limiterLock.RLock()
 	defer u.limiterLock.RUnlock()
 
-	if u.sendLimiter != nil && sent >= 0 {
-		u.sendLimiter.WaitN(u.ctx, sent)
-	} else if u.recvLimiter != nil && recv >= 0 {
-		u.recvLimiter.WaitN(u.ctx, recv)
+	if u.SendLimiter != nil && sent >= 0 {
+		u.SendLimiter.WaitN(u.ctx, sent)
+	} else if u.RecvLimiter != nil && recv >= 0 {
+		u.RecvLimiter.WaitN(u.ctx, recv)
 	}
-	atomic.AddUint64(&u.sent, uint64(sent))
-	atomic.AddUint64(&u.recv, uint64(recv))
+	atomic.AddUint64(&u.Sent, uint64(sent))
+	atomic.AddUint64(&u.Recv, uint64(recv))
 }
 
 func (u *User) SetSpeedLimit(send, recv int) {
@@ -105,14 +105,14 @@ func (u *User) SetSpeedLimit(send, recv int) {
 	defer u.limiterLock.Unlock()
 
 	if send <= 0 {
-		u.sendLimiter = nil
+		u.SendLimiter = nil
 	} else {
-		u.sendLimiter = rate.NewLimiter(rate.Limit(send), send*2)
+		u.SendLimiter = rate.NewLimiter(rate.Limit(send), send*2)
 	}
 	if recv <= 0 {
-		u.recvLimiter = nil
+		u.RecvLimiter = nil
 	} else {
-		u.recvLimiter = rate.NewLimiter(rate.Limit(recv), recv*2)
+		u.RecvLimiter = rate.NewLimiter(rate.Limit(recv), recv*2)
 	}
 }
 
@@ -120,31 +120,31 @@ func (u *User) GetSpeedLimit() (send, recv int) {
 	u.limiterLock.RLock()
 	defer u.limiterLock.RUnlock()
 
-	if u.sendLimiter != nil {
-		send = int(u.sendLimiter.Limit())
+	if u.SendLimiter != nil {
+		send = int(u.SendLimiter.Limit())
 	}
-	if u.recvLimiter != nil {
-		recv = int(u.recvLimiter.Limit())
+	if u.RecvLimiter != nil {
+		recv = int(u.RecvLimiter.Limit())
 	}
 	return
 }
 
-func (u *User) Hash() string {
-	return u.hash
+func (u *User) GetHash() string {
+	return u.Hash
 }
 
-func (u *User) SetTraffic(send, recv uint64) {
-	atomic.StoreUint64(&u.sent, send)
-	atomic.StoreUint64(&u.recv, recv)
+func (u *User) setTraffic(send, recv uint64) {
+	atomic.StoreUint64(&u.Sent, send)
+	atomic.StoreUint64(&u.Recv, recv)
 }
 
 func (u *User) GetTraffic() (uint64, uint64) {
-	return atomic.LoadUint64(&u.sent), atomic.LoadUint64(&u.recv)
+	return atomic.LoadUint64(&u.Sent), atomic.LoadUint64(&u.Recv)
 }
 
 func (u *User) ResetTraffic() (uint64, uint64) {
-	sent := atomic.SwapUint64(&u.sent, 0)
-	recv := atomic.SwapUint64(&u.recv, 0)
+	sent := atomic.SwapUint64(&u.Sent, 0)
+	recv := atomic.SwapUint64(&u.Recv, 0)
 	atomic.StoreUint64(&u.lastSent, 0)
 	atomic.StoreUint64(&u.lastRecv, 0)
 	return sent, recv
@@ -166,12 +166,32 @@ func (u *User) speedUpdater() {
 	}
 }
 
+func (u *User) trafficUpdater(pst statistic.Persistencer) {
+	ticker := time.NewTicker(10 * time.Second)
+	for {
+		select {
+		case <-u.ctx.Done():
+			return
+		case <-ticker.C:
+			if pst != nil {
+				sent, recv := u.GetTraffic()
+				log.Debugf("Update %s traffic", u.Hash)
+				err := pst.UpdateUserTraffic(u.Hash, sent, recv)
+				if err != nil {
+					log.Debugf("Update user %s traffic failed: %s", u.Hash, err)
+				}
+			}
+		}
+	}
+}
+
 func (u *User) GetSpeed() (uint64, uint64) {
 	return atomic.LoadUint64(&u.sendSpeed), atomic.LoadUint64(&u.recvSpeed)
 }
 
 type Authenticator struct {
 	users sync.Map
+	pst   statistic.Persistencer
 	ctx   context.Context
 }
 
@@ -188,12 +208,19 @@ func (a *Authenticator) AddUser(hash string) error {
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
-		hash:   hash,
+		Hash:   hash,
 		ctx:    ctx,
 		cancel: cancel,
 	}
 	go meter.speedUpdater()
 	a.users.Store(hash, meter)
+	if a.pst != nil {
+		go meter.trafficUpdater(a.pst)
+		err := a.pst.SaveUser(meter)
+		if err != nil {
+			log.Errorf("Save user %s failed: %s", hash, err)
+		}
+	}
 	return nil
 }
 
@@ -204,6 +231,9 @@ func (a *Authenticator) DelUser(hash string) error {
 	}
 	meter.(*User).Close()
 	a.users.Delete(hash)
+	if a.pst != nil {
+		a.pst.DeleteUser(hash)
+	}
 	return nil
 }
 
@@ -220,17 +250,96 @@ func (a *Authenticator) Close() error {
 	return nil
 }
 
+func (a *Authenticator) SetUserTraffic(hash string, sent, recv uint64) error {
+	u, exist := a.users.Load(hash)
+	if !exist {
+		return common.NewErrorf("user %v not found", hash)
+	}
+	user := u.(*User)
+	user.setTraffic(sent, recv)
+	if a.pst != nil {
+		err := a.pst.SaveUser(user)
+		if err != nil {
+			log.Errorf("Save user %s failed: %s", hash, err)
+		}
+	}
+	return nil
+}
+
+func (a *Authenticator) SetUserSpeedLimit(hash string, send, recv int) error {
+	u, exist := a.users.Load(hash)
+	if !exist {
+		return common.NewErrorf("user %v not found", hash)
+	}
+	user := u.(*User)
+	user.SetSpeedLimit(send, recv)
+	if a.pst != nil {
+		err := a.pst.SaveUser(user)
+		if err != nil {
+			log.Errorf("Save user %s failed: %s", hash, err)
+		}
+	}
+	return nil
+}
+
+func (a *Authenticator) SetUserIPLimit(hash string, limit int) error {
+	u, exist := a.users.Load(hash)
+	if !exist {
+		return common.NewErrorf("user %v not found", hash)
+	}
+	user := u.(*User)
+	user.setIPLimit(limit)
+	if a.pst != nil {
+		err := a.pst.SaveUser(user)
+		if err != nil {
+			log.Errorf("Save user %s failed: %s", hash, err)
+		}
+	}
+	return nil
+}
+
 func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
-	u := &Authenticator{
+	a := &Authenticator{
 		ctx: ctx,
+	}
+	var err error
+	if cfg.Sqlite != "" {
+		a.pst, err = sqlite.NewSqlitePersistencer(cfg.Sqlite)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if a.pst != nil {
+		err := a.pst.ListUser(func(hash string, u statistic.Metadata) bool {
+			if _, found := a.users.Load(hash); found {
+				log.Error("hash " + hash + " is already exist")
+				return true
+			}
+			ctx, cancel := context.WithCancel(a.ctx)
+			user := &User{
+				Hash:   hash,
+				ctx:    ctx,
+				cancel: cancel,
+			}
+			user.setIPLimit(u.GetIPLimit())
+			user.SetSpeedLimit(u.GetSpeedLimit())
+			user.setTraffic(u.GetTraffic())
+			go user.speedUpdater()
+			go user.trafficUpdater(a.pst)
+			a.users.Store(hash, user)
+			return true
+		})
+		if err != nil {
+			log.Errorf("List user from persistencer: %s", err)
+		}
 	}
 	for _, password := range cfg.Passwords {
 		hash := common.SHA224String(password)
-		u.AddUser(hash)
+		a.AddUser(hash)
 	}
 	log.Debug("memory authenticator created")
-	return u, nil
+	return a, nil
 }
 
 func init() {

@@ -102,34 +102,34 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 				break
 			}
 			if req.Status.SpeedLimit != nil {
-				valid, user := s.auth.AuthUser(req.Status.User.Hash)
-				if !valid {
-					err = common.NewError("failed to auth new user").Base(err)
-					continue
+				err = s.auth.SetUserSpeedLimit(req.Status.User.Hash, int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
+				if err != nil {
+					break
 				}
-				if req.Status.SpeedLimit != nil {
-					user.SetSpeedLimit(int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
-				}
-				if req.Status.TrafficTotal != nil {
-					user.SetTraffic(req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
-				}
-				user.SetIPLimit(int(req.Status.IpLimit))
 			}
+			if req.Status.TrafficTotal != nil {
+				err = s.auth.SetUserTraffic(req.Status.User.Hash, req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
+				if err != nil {
+					break
+				}
+			}
+			err = s.auth.SetUserIPLimit(req.Status.User.Hash, int(req.Status.IpLimit))
 		case SetUsersRequest_Delete:
 			err = s.auth.DelUser(req.Status.User.Hash)
 		case SetUsersRequest_Modify:
-			valid, user := s.auth.AuthUser(req.Status.User.Hash)
-			if !valid {
-				err = common.NewError("invalid user " + req.Status.User.Hash)
-			} else {
-				if req.Status.SpeedLimit != nil {
-					user.SetSpeedLimit(int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
+			if req.Status.SpeedLimit != nil {
+				err = s.auth.SetUserSpeedLimit(req.Status.User.Hash, int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
+				if err != nil {
+					break
 				}
-				if req.Status.TrafficTotal != nil {
-					user.SetTraffic(req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
-				}
-				user.SetIPLimit(int(req.Status.IpLimit))
 			}
+			if req.Status.TrafficTotal != nil {
+				err = s.auth.SetUserTraffic(req.Status.User.Hash, req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
+				if err != nil {
+					break
+				}
+			}
+			err = s.auth.SetUserIPLimit(req.Status.User.Hash, int(req.Status.IpLimit))
 		}
 		if err != nil {
 			stream.Send(&SetUsersResponse{
@@ -156,7 +156,7 @@ func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_
 		err := stream.Send(&ListUsersResponse{
 			Status: &UserStatus{
 				User: &User{
-					Hash: user.Hash(),
+					Hash: user.GetHash(),
 				},
 				TrafficTotal: &Traffic{
 					DownloadTraffic: downloadTraffic,

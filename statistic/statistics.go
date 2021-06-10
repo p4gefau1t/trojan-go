@@ -10,29 +10,40 @@ import (
 	"github.com/p4gefau1t/trojan-go/log"
 )
 
+const Name = "STATISTICS"
+
+type Metadata interface {
+	GetHash() string
+	GetTraffic() (sent, recv uint64)
+	GetSpeedLimit() (sent, recv int)
+	GetIPLimit() int
+}
+
 type TrafficMeter interface {
 	io.Closer
-	Hash() string
 	AddTraffic(sent, recv int)
-	GetTraffic() (sent, recv uint64)
-	SetTraffic(sent, recv uint64)
 	ResetTraffic() (sent, recv uint64)
 	GetSpeed() (sent, recv uint64)
-	GetSpeedLimit() (sent, recv int)
-	SetSpeedLimit(sent, recv int)
 }
 
 type IPRecorder interface {
 	AddIP(string) bool
 	DelIP(string) bool
 	GetIP() int
-	SetIPLimit(int)
-	GetIPLimit() int
 }
 
 type User interface {
+	Metadata
 	TrafficMeter
 	IPRecorder
+}
+
+type Persistencer interface {
+	SaveUser(Metadata) error
+	LoadUser(hash string) (Metadata, error)
+	DeleteUser(hash string) error
+	ListUser(func(hash string, u Metadata) bool) error
+	UpdateUserTraffic(hash string, sent, recv uint64) error
 }
 
 type Authenticator interface {
@@ -40,6 +51,9 @@ type Authenticator interface {
 	AuthUser(hash string) (valid bool, user User)
 	AddUser(hash string) error
 	DelUser(hash string) error
+	SetUserTraffic(hash string, sent, recv uint64) error
+	SetUserSpeedLimit(hash string, send, recv int) error
+	SetUserIPLimit(hash string, limit int) error
 	ListUsers() []User
 }
 

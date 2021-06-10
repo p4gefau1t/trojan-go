@@ -6,6 +6,7 @@ import (
 
 type Config struct {
 	Passwords []string `json:"password" yaml:"password"`
+	Sqlite    string   `json:"sqlite" yaml:"sqlite"`
 }
 
 func init() {
