@@ -1,12 +1,14 @@
 package sqlite
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 type User struct {
 	Hash string `gorm:"primary_key"`
 	// uint64 = 8 byte binary
-	Sent      []byte
-	Recv      []byte
+	Sent      []byte `gorm:"type:TEXT"`
+	Recv      []byte `gorm:"type:TEXT"`
 	MaxIPNum  int
 	SendLimit int
 	RecvLimit int

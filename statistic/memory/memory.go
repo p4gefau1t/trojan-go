@@ -166,6 +166,25 @@ func (u *User) speedUpdater() {
 	}
 }
 
+func (u *User) trafficUpdater(pst statistic.Persistencer) {
+	ticker := time.NewTicker(10 * time.Second)
+	for {
+		select {
+		case <-u.ctx.Done():
+			return
+		case <-ticker.C:
+			if pst != nil {
+				sent, recv := u.GetTraffic()
+				log.Debugf("Update %s traffic", u.Hash)
+				err := pst.UpdateUserTraffic(u.Hash, sent, recv)
+				if err != nil {
+					log.Debugf("Update user %s traffic failed: %s", u.Hash, err)
+				}
+			}
+		}
+	}
+}
+
 func (u *User) GetSpeed() (uint64, uint64) {
 	return atomic.LoadUint64(&u.sendSpeed), atomic.LoadUint64(&u.recvSpeed)
 }
@@ -196,6 +215,7 @@ func (a *Authenticator) AddUser(hash string) error {
 	go meter.speedUpdater()
 	a.users.Store(hash, meter)
 	if a.pst != nil {
+		go meter.trafficUpdater(a.pst)
 		err := a.pst.SaveUser(meter)
 		if err != nil {
 			log.Errorf("Save user %s failed: %s", hash, err)
@@ -302,7 +322,11 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 				ctx:    ctx,
 				cancel: cancel,
 			}
+			user.setIPLimit(u.GetIPLimit())
+			user.SetSpeedLimit(u.GetSpeedLimit())
+			user.setTraffic(u.GetTraffic())
 			go user.speedUpdater()
+			go user.trafficUpdater(a.pst)
 			a.users.Store(hash, user)
 			return true
 		})
