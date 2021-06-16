@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"math/rand"
-	"net"
 	"os"
 	"strings"
 
@@ -16,16 +15,13 @@ import (
 
 const Name = "PROXY"
 
-const (
-	MaxPacketSize = 1024 * 8
-)
-
 // Proxy relay connections and packets
 type Proxy struct {
-	sources []tunnel.Server
-	sink    tunnel.Client
-	ctx     context.Context
-	cancel  context.CancelFunc
+	sources         []tunnel.Server
+	sink            tunnel.Client
+	ctx             context.Context
+	cancel          context.CancelFunc
+	relayBufferSize int
 }
 
 func (p *Proxy) Run() error {
@@ -68,8 +64,9 @@ func (p *Proxy) relayConnLoop() {
 					}
 					defer outbound.Close()
 					errChan := make(chan error, 2)
-					copyConn := func(a, b net.Conn) {
-						_, err := io.Copy(a, b)
+					copyConn := func(dst io.Writer, src io.Reader) {
+						buffer := make([]byte, p.relayBufferSize)
+						_, err := io.CopyBuffer(dst, src, buffer)
 						errChan <- err
 					}
 					go copyConn(inbound, outbound)
@@ -116,7 +113,7 @@ func (p *Proxy) relayPacketLoop() {
 					errChan := make(chan error, 2)
 					copyPacket := func(a, b tunnel.PacketConn) {
 						for {
-							buf := make([]byte, MaxPacketSize)
+							buf := make([]byte, p.relayBufferSize)
 							n, metadata, err := a.ReadWithMetadata(buf)
 							if err != nil {
 								errChan <- err
@@ -151,11 +148,13 @@ func (p *Proxy) relayPacketLoop() {
 }
 
 func NewProxy(ctx context.Context, cancel context.CancelFunc, sources []tunnel.Server, sink tunnel.Client) *Proxy {
+	cfg := config.FromContext(ctx, Name).(*Config)
 	return &Proxy{
-		sources: sources,
-		sink:    sink,
-		ctx:     ctx,
-		cancel:  cancel,
+		sources:         sources,
+		sink:            sink,
+		ctx:             ctx,
+		cancel:          cancel,
+		relayBufferSize: cfg.RelayBufferSize,
 	}
 }
 
