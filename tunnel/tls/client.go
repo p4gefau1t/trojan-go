@@ -107,11 +107,18 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 		log.Warn("tls sni is unspecified")
 	}
 
+	var cipherSuite []uint16
+	if len(cfg.TLS.Cipher) != 0 {
+		cipherSuite = fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":"))
+	} else if len(cfg.TLS.Ciphers) != 0 {
+		cipherSuite = fingerprint.ParseCipher(cfg.TLS.Ciphers)
+	}
+
 	client := &Client{
 		underlay:      underlay,
 		verify:        cfg.TLS.Verify,
 		sni:           cfg.TLS.SNI,
-		cipher:        fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":")),
+		cipher:        cipherSuite,
 		sessionTicket: cfg.TLS.ReuseSession,
 		fingerprint:   cfg.TLS.Fingerprint,
 		helloID:       helloID,
