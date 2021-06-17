@@ -137,6 +137,7 @@ func (c *Client) Route(address *tunnel.Address) int {
 			if err == nil {
 				for i := Block; i <= Proxy; i++ {
 					if matchIP(c.cidrs[i], resolvedIP.IP) {
+						log.Warnf("%s (%s) hit %s", address.DomainName, resolvedIP.IP, i)
 						return i
 					}
 				}
@@ -144,6 +145,7 @@ func (c *Client) Route(address *tunnel.Address) int {
 		}
 		for i := Block; i <= Proxy; i++ {
 			if matchDomain(c.domains[i], address.DomainName) {
+				log.Warnf("%s hit %s", address.DomainName, i)
 				return i
 			}
 		}
@@ -152,6 +154,7 @@ func (c *Client) Route(address *tunnel.Address) int {
 			if err == nil {
 				for i := Block; i <= Proxy; i++ {
 					if matchIP(c.cidrs[i], resolvedIP.IP) {
+						log.Warnf("%s (%s) hit %s", address.DomainName, resolvedIP.IP, i)
 						return i
 					}
 				}
