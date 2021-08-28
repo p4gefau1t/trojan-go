@@ -14,6 +14,7 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+build/
 *.DS_Store
 *.zip
 *.tar.gz
