@@ -2,8 +2,8 @@ package tls
 
 import (
 	"context"
-	"io/ioutil"
 	"net"
+	"os"
 	"sync"
 	"testing"
 
@@ -14,69 +14,93 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 )
 
-var cert string = `
+var rsa2048Cert = `
 -----BEGIN CERTIFICATE-----
-MIIDZTCCAk0CFFphZh018B5iAD9F5fV4y0AlD0LxMA0GCSqGSIb3DQEBCwUAMG8x
-CzAJBgNVBAYTAlVTMQ0wCwYDVQQIDARNYXJzMRMwEQYDVQQHDAppVHJhbnN3YXJw
-MRMwEQYDVQQKDAppVHJhbnN3YXJwMRMwEQYDVQQLDAppVHJhbnN3YXJwMRIwEAYD
-VQQDDAlsb2NhbGhvc3QwHhcNMjAwMzMxMTAwMDUxWhcNMzAwMzI5MTAwMDUxWjBv
-MQswCQYDVQQGEwJVUzENMAsGA1UECAwETWFyczETMBEGA1UEBwwKaVRyYW5zd2Fy
-cDETMBEGA1UECgwKaVRyYW5zd2FycDETMBEGA1UECwwKaVRyYW5zd2FycDESMBAG
-A1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
-ml44fThYMkCcT627o7ibEs7mq2WOhImjDwYijYJ1684BatrCsHJNcw8PJGTuP+tg
-GdngmALjA3l+RipjaE/UK4FJrAjruphA/hOCjZfWqk8KBR4qk0OltxCMWJlp/XCM
-9ny1ogFdWUlBbqThs4NWSOUESgxf/Be2njeiOrngGR31qxSiLCLBvafIhKqq/4av
-Rlx0Ht770uvF97MlAj1ASAvzTZICHAfUZxEdWl0J4MBbG7SNcnMBbyAF+s60eFTa
-4RGMfRGnUa2Fzz/gfjhvfSIGeLQ3JRG6sl6jkc5xe0PZzhq3UNpK0gtQ48yy9CSP
-neZnrynoKks7XC2bizsr3QIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAHS/xuG5+F
-yGU3N6V4kv+HbKqHaXNOq4zKVsCc1k7vg4MFFpKUJKxtJYooCI8n2ypp5XRUTIGQ
-bmEbVcIPqm9Rf/4vHtF0falNCwieAbXDkiEHoykRmmU1UE/ccPA7X8NO9aVLJAJO
-N2Li8MH0Ixgs02pQH56eyGKoRBWPR5C3ETQ9Leqvazg6Dn1iJWvmfF0mOte5228s
-mZJOntF9t8MZOJdIWGdrUHn6euRfhd0btkmL/NUDzeCTwJcuPORLxkBbCP5mTC6G
-GnLS5Z4oRYgCgvT2pLtcM0r48hYjwgjXFQ4zalkW6YI9LPpqwwMhhOzINlXjBaDi
-Haz8uKI4EciU
+MIIC5TCCAc2gAwIBAgIJAJqNVe6g/10vMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNV
+BAMMCWxvY2FsaG9zdDAeFw0yMTA5MTQwNjE1MTFaFw0yNjA5MTMwNjE1MTFaMBQx
+EjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBAK7bupJ8tmHM3shQ/7N730jzpRsXdNiBxq/Jxx8j+vB3AcxuP5bjXQZqS6YR
+5W5vrfLlegtq1E/mmaI3Ht0RfIlzev04Dua9PWmIQJD801nEPknbfgCLXDh+pYr2
+sfg8mUh3LjGtrxyH+nmbTjWg7iWSKohmZ8nUDcX94Llo5FxibMAz8OsAwOmUueCH
+jP3XswZYHEy+OOP3K0ZEiJy0f5T6ZXk9OWYuPN4VQKJx1qrc9KzZtSPHwqVdkGUi
+ase9tOPA4aMutzt0btgW7h7UrvG6C1c/Rr1BxdiYq1EQ+yypnAlyToVQSNbo67zz
+wGQk4GeruIkOgJOLdooN/HjhbHMCAwEAAaM6MDgwFAYDVR0RBA0wC4IJbG9jYWxo
+b3N0MAsGA1UdDwQEAwIHgDATBgNVHSUEDDAKBggrBgEFBQcDATANBgkqhkiG9w0B
+AQsFAAOCAQEASsBzHHYiWDDiBVWUEwVZAduTrslTLNOxG0QHBKsHWIlz/3QlhQil
+ywb3OhfMTUR1dMGY5Iq5432QiCHO4IMCOv7tDIkgb4Bc3v/3CRlBlnurtAmUfNJ6
+pTRSlK4AjWpGHAEEd/8aCaOE86hMP8WDht8MkJTRrQqpJ1HeDISoKt9nepHOIsj+
+I2zLZZtw0pg7FuR4MzWuqOt071iRS46Pupryb3ZEGIWNz5iLrDQod5Iz2ZGSRGqE
+rB8idX0mlj5AHRRanVR3PAes+eApsW9JvYG/ImuCOs+ZsukY614zQZdR+SyFm85G
+4NICyeQsmiypNHHgw+xZmGqZg65bXNGoyg==
 -----END CERTIFICATE-----
 `
 
-var key string = `
------BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAml44fThYMkCcT627o7ibEs7mq2WOhImjDwYijYJ1684BatrC
-sHJNcw8PJGTuP+tgGdngmALjA3l+RipjaE/UK4FJrAjruphA/hOCjZfWqk8KBR4q
-k0OltxCMWJlp/XCM9ny1ogFdWUlBbqThs4NWSOUESgxf/Be2njeiOrngGR31qxSi
-LCLBvafIhKqq/4avRlx0Ht770uvF97MlAj1ASAvzTZICHAfUZxEdWl0J4MBbG7SN
-cnMBbyAF+s60eFTa4RGMfRGnUa2Fzz/gfjhvfSIGeLQ3JRG6sl6jkc5xe0PZzhq3
-UNpK0gtQ48yy9CSPneZnrynoKks7XC2bizsr3QIDAQABAoIBAFpYUo9W7qdakSFA
-+NS1Mm0rkm01nteLBlfAq3BOrl030DSNm+xQuWthoOcX+yiFxVTb40qURfC+plzC
-ajOepPphTJDXF7+5ZDBPktTzzLsYTzD3mstdiBtAICOqhhHCUX3hNxx91/htm1H6
-Re4eK921y3DbFUIhTswCm3vrVXDc4yTXtURGllVzo40K/1Of39CpufKFdpJ81HV+
-h/VW++h3o+sFV4KqcqIjClxBfDxoJpBaRlOCunTiHqZNvqO+EPqPR5zdn34werjU
-xQEvPzmz+ClwnaEXQxYWgIcYQii9VNsHogDxEw4R31S7lVrUt0f0atDmGJip1lPb
-E7IomAECgYEAzKQ3PzBV46nUNfVO9SODpf14Z+xYfLKouPC+Qnepwp0V0JS6zY1+
-Wzskyb80drjnoQraWSEvGsX+tEWeLcnjN7JuMu/U8DPKRcQ+Q2dsVo/q4sfBOgvl
-VhPNMZLfa7NIkRUx2KXku++Ep0Xtak0dskrfQrZnvhymRPyWuIMM6IECgYEAwRwL
-Gt/ZZdUueE/hwT3c1hNn6igeDLOwK2t6frib+Ofw5oCAQxtTROvP1ljlnWUPkeIS
-uzTusmqucalcK3lCHIsyHLwApOI/B31M971pxMVBRZ0wIbBaoarCGND7gi8JUPFR
-VErGcAB5YnpRlmfLPEgw2o7DpjsDc2KmdE9oNV0CgYEAmfNEWLYtNztxGTK1treD
-96ELLutf2lexlIgQKgLJ5E22tpbdPXwfvdRtpZTBjDsojj+S6hCL1lFzfv0MtZe2
-5xTF0G4avKXJmti6moy4tRpJ81ehZuDCJBJ7gLrkd6qFghf2yuxqenQDUK/Lnvfq
-ylGHSjHdM+lrsGRxotd8I4ECgYBoo4GA9nseqv2bQ+3YgGUBu1I7l7FwwI1decfO
-ksoxfb0Tqd3WfyAH4J+mTlVdjD17lzz/JBeTpisQe+ztwa8JOIPW/ih7L/1nWYYz
-V/fQH/LWfe5u0tjJcXXrbJJcYJBzw8+GFV6hoiAkNJOxJF0ENToDtAhgMuoTxAje
-TYjyIQKBgQCmHkLLq0Bj3FpIOVrwo2gNvQteNPa7jkkGp4lljO8JQUHhCHDGWKEH
-MUJ0EFsxS/EaQa+rW6jHhs3GyBA2TxmC783stAOOEX+hO/zpcbzdCWgp6eZ0aGMW
-WS94/5WE/lwHJi8ZPSjH1AURCzXhUi4fGvBrNBtry95e+jcEvP5c0g==
------END RSA PRIVATE KEY-----
+var rsa2048Key = `
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCu27qSfLZhzN7I
+UP+ze99I86UbF3TYgcavyccfI/rwdwHMbj+W410GakumEeVub63y5XoLatRP5pmi
+Nx7dEXyJc3r9OA7mvT1piECQ/NNZxD5J234Ai1w4fqWK9rH4PJlIdy4xra8ch/p5
+m041oO4lkiqIZmfJ1A3F/eC5aORcYmzAM/DrAMDplLngh4z917MGWBxMvjjj9ytG
+RIictH+U+mV5PTlmLjzeFUCicdaq3PSs2bUjx8KlXZBlImrHvbTjwOGjLrc7dG7Y
+Fu4e1K7xugtXP0a9QcXYmKtREPssqZwJck6FUEjW6Ou888BkJOBnq7iJDoCTi3aK
+Dfx44WxzAgMBAAECggEBAKYhib/H0ZhWB4yWuHqUxG4RXtrAjHlvw5Acy5zgmHiC
++Sh7ztrTJf0EXN9pvWwRm1ldgXj7hMBtPaaLbD1pccM9/qo66p17Sq/LjlyyeTOe
+affOHIbz4Sij2zCOdkR9fr0EztTQScF3yBhl4Aa/4cO8fcCeWxm86WEldq9x4xWJ
+s5WMR4CnrOJhDINLNPQPKX92KyxEQ/RfuBWovx3M0nl3fcUWfESY134t5g/UBFId
+In19tZ+pGIpCkxP0U1AZWrlZRA8Q/3sO2orUpoAOdCrGk/DcCTMh0c1pMzbYZ1/i
+cYXn38MpUo8QeG4FElUhAv6kzeBIl2tRBMVzIigo+AECgYEA3No1rHdFu6Ox9vC8
+E93PTZevYVcL5J5yx6x7khCaOLKKuRXpjOX/h3Ll+hlN2DVAg5Jli/JVGCco4GeK
+kbFLSyxG1+E63JbgsVpaEOgvFT3bHHSPSRJDnIU+WkcNQ2u4Ky5ahZzbNdV+4fj2
+NO2iMgkm7hoJANrm3IqqW8epenMCgYEAyq+qdNj5DiDzBcDvLwY+4/QmMOOgDqeh
+/TzhbDRyr+m4xNT7LLS4s/3wcbkQC33zhMUI3YvOHnYq5Ze/iL/TSloj0QCp1I7L
+J7sZeM1XimMBQIpCfOC7lf4tU76Fz0DTHAL+CmX1DgmRJdYO09843VsKkscC968R
+4cwL5oGxxgECgYAM4TTsH/CTJtLEIfn19qOWVNhHhvoMlSkAeBCkzg8Qa2knrh12
+uBsU3SCIW11s1H40rh758GICDJaXr7InGP3ZHnXrNRlnr+zeqvRBtCi6xma23B1X
+F5eV0zd1sFsXqXqOGh/xVtp54z+JEinZoForLNl2XVJVGG8KQZP50kUR/QKBgH4O
+8zzpFT0sUPlrHVdp0wODfZ06dPmoWJ9flfPuSsYN3tTMgcs0Owv3C+wu5UPAegxB
+X1oq8W8Qn21cC8vJQmgj19LNTtLcXI3BV/5B+Aghu02gr+lq/EA1bYuAG0jjUGlD
+kyx0bQzl9lhJ4b70PjGtxc2z6KyTPdPpTB143FABAoGAQDoIUdc77/IWcjzcaXeJ
+8abak5rAZA7cu2g2NVfs+Km+njsB0pbTwMnV1zGoFABdaHLdqbthLWtX7WOb1PDD
+MQ+kbiLw5uj8IY2HEqJhDGGEdXBqxbW7kyuIAN9Mw+mwKzkikNcFQdxgchWH1d1o
+lVkr92iEX+IhIeYb4DN1vQw=
+-----END PRIVATE KEY-----
 `
 
-func TestDefaultTLS(t *testing.T) {
-	ioutil.WriteFile("server.crt", []byte(cert), 0o777)
-	ioutil.WriteFile("server.key", []byte(key), 0o777)
+var eccCert = `
+-----BEGIN CERTIFICATE-----
+MIICTDCCAfKgAwIBAgIQDtCrO8cNST2eY2tA/AGrsDAKBggqhkjOPQQDAjBeMQsw
+CQYDVQQGEwJDTjEOMAwGA1UEChMFTXlTU0wxKzApBgNVBAsTIk15U1NMIFRlc3Qg
+RUNDIC0gRm9yIHRlc3QgdXNlIG9ubHkxEjAQBgNVBAMTCU15U1NMLmNvbTAeFw0y
+MTA5MTQwNjQ1MzNaFw0yNjA5MTMwNjQ1MzNaMCExCzAJBgNVBAYTAkNOMRIwEAYD
+VQQDEwlsb2NhbGhvc3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASvYy/r7XR1
+Y39lC2JpRJh582zR2CTNynbuolK9a1jsbXaZv+hpBlHkgzMHsWu7LY9Pnb/Dbp4i
+1lRASOddD/rLo4HOMIHLMA4GA1UdDwEB/wQEAwIFoDAdBgNVHSUEFjAUBggrBgEF
+BQcDAQYIKwYBBQUHAwIwHwYDVR0jBBgwFoAUWxGyVxD0fBhTy3tH4eKznRFXFCYw
+YwYIKwYBBQUHAQEEVzBVMCEGCCsGAQUFBzABhhVodHRwOi8vb2NzcC5teXNzbC5j
+b20wMAYIKwYBBQUHMAKGJGh0dHA6Ly9jYS5teXNzbC5jb20vbXlzc2x0ZXN0ZWNj
+LmNydDAUBgNVHREEDTALgglsb2NhbGhvc3QwCgYIKoZIzj0EAwIDSAAwRQIgDQUa
+GEdmKstLMHUmmPMGm/P9S4vvSZV2VHsb3+AEyIUCIQCdJpbyTCz+mEyskhwrGOw/
+blh3WBONv6MBtqPpmgE1AQ==
+-----END CERTIFICATE-----
+`
+
+var eccKey = `
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIB8G2suYKuBLoodNIwRMp3JPN1fcZxCt3kcOYIx4nbcPoAoGCCqGSM49
+AwEHoUQDQgAEr2Mv6+10dWN/ZQtiaUSYefNs0dgkzcp27qJSvWtY7G12mb/oaQZR
+5IMzB7Fruy2PT52/w26eItZUQEjnXQ/6yw==
+-----END EC PRIVATE KEY-----
+`
+
+func TestDefaultTLSRSA2048(t *testing.T) {
+	os.WriteFile("server-rsa2048.crt", []byte(rsa2048Cert), 0o777)
+	os.WriteFile("server-rsa2048.key", []byte(rsa2048Key), 0o777)
 	serverCfg := &Config{
 		TLS: TLSConfig{
 			VerifyHostName: true,
 			CertCheckRate:  1,
-			KeyPath:        "server.key",
-			CertPath:       "server.crt",
+			KeyPath:        "server-rsa2048.key",
+			CertPath:       "server-rsa2048.crt",
 		},
 	}
 	clientCfg := &Config{
@@ -130,9 +154,71 @@ func TestDefaultTLS(t *testing.T) {
 	conn2.Close()
 }
 
-func TestUTLS(t *testing.T) {
-	ioutil.WriteFile("server.crt", []byte(cert), 0o777)
-	ioutil.WriteFile("server.key", []byte(key), 0o777)
+func TestDefaultTLSECC(t *testing.T) {
+	os.WriteFile("server-ecc.crt", []byte(eccCert), 0o777)
+	os.WriteFile("server-ecc.key", []byte(eccKey), 0o777)
+	serverCfg := &Config{
+		TLS: TLSConfig{
+			VerifyHostName: true,
+			CertCheckRate:  1,
+			KeyPath:        "server-ecc.key",
+			CertPath:       "server-ecc.crt",
+		},
+	}
+	clientCfg := &Config{
+		TLS: TLSConfig{
+			Verify:      false,
+			SNI:         "localhost",
+			Fingerprint: "",
+		},
+	}
+	sctx := config.WithConfig(context.Background(), Name, serverCfg)
+	cctx := config.WithConfig(context.Background(), Name, clientCfg)
+
+	port := common.PickPort("tcp", "127.0.0.1")
+	transportConfig := &transport.Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  port,
+		RemoteHost: "127.0.0.1",
+		RemotePort: port,
+	}
+	ctx := config.WithConfig(context.Background(), transport.Name, transportConfig)
+	ctx = config.WithConfig(ctx, freedom.Name, &freedom.Config{})
+	tcpClient, err := transport.NewClient(ctx, nil)
+	common.Must(err)
+	tcpServer, err := transport.NewServer(ctx, nil)
+	common.Must(err)
+	common.Must(err)
+	s, err := NewServer(sctx, tcpServer)
+	common.Must(err)
+	c, err := NewClient(cctx, tcpClient)
+	common.Must(err)
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	var conn1, conn2 net.Conn
+	go func() {
+		conn2, err = s.AcceptConn(nil)
+		common.Must(err)
+		wg.Done()
+	}()
+	conn1, err = c.DialConn(nil, nil)
+	common.Must(err)
+
+	common.Must2(conn1.Write([]byte("12345678\r\n")))
+	wg.Wait()
+	buf := [10]byte{}
+	conn2.Read(buf[:])
+	if !util.CheckConn(conn1, conn2) {
+		t.Fail()
+	}
+	conn1.Close()
+	conn2.Close()
+}
+
+func TestUTLSRSA2048(t *testing.T) {
+	os.WriteFile("server-rsa2048.crt", []byte(rsa2048Cert), 0o777)
+	os.WriteFile("server-rsa2048.key", []byte(rsa2048Key), 0o777)
 	fingerprints := []string{
 		"chrome",
 		"firefox",
@@ -142,8 +228,78 @@ func TestUTLS(t *testing.T) {
 		serverCfg := &Config{
 			TLS: TLSConfig{
 				CertCheckRate: 1,
-				KeyPath:       "server.key",
-				CertPath:      "server.crt",
+				KeyPath:       "server-rsa2048.key",
+				CertPath:      "server-rsa2048.crt",
+			},
+		}
+		clientCfg := &Config{
+			TLS: TLSConfig{
+				Verify:      false,
+				SNI:         "localhost",
+				Fingerprint: s,
+			},
+		}
+		sctx := config.WithConfig(context.Background(), Name, serverCfg)
+		cctx := config.WithConfig(context.Background(), Name, clientCfg)
+
+		port := common.PickPort("tcp", "127.0.0.1")
+		transportConfig := &transport.Config{
+			LocalHost:  "127.0.0.1",
+			LocalPort:  port,
+			RemoteHost: "127.0.0.1",
+			RemotePort: port,
+		}
+		ctx := config.WithConfig(context.Background(), transport.Name, transportConfig)
+		ctx = config.WithConfig(ctx, freedom.Name, &freedom.Config{})
+		tcpClient, err := transport.NewClient(ctx, nil)
+		common.Must(err)
+		tcpServer, err := transport.NewServer(ctx, nil)
+		common.Must(err)
+
+		s, err := NewServer(sctx, tcpServer)
+		common.Must(err)
+		c, err := NewClient(cctx, tcpClient)
+		common.Must(err)
+
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		var conn1, conn2 net.Conn
+		go func() {
+			conn2, err = s.AcceptConn(nil)
+			common.Must(err)
+			wg.Done()
+		}()
+		conn1, err = c.DialConn(nil, nil)
+		common.Must(err)
+
+		common.Must2(conn1.Write([]byte("12345678\r\n")))
+		wg.Wait()
+		buf := [10]byte{}
+		conn2.Read(buf[:])
+		if !util.CheckConn(conn1, conn2) {
+			t.Fail()
+		}
+		conn1.Close()
+		conn2.Close()
+		s.Close()
+		c.Close()
+	}
+}
+
+func TestUTLSECC(t *testing.T) {
+	os.WriteFile("server-ecc.crt", []byte(eccCert), 0o777)
+	os.WriteFile("server-ecc.key", []byte(eccKey), 0o777)
+	fingerprints := []string{
+		"chrome",
+		"firefox",
+		"ios",
+	}
+	for _, s := range fingerprints {
+		serverCfg := &Config{
+			TLS: TLSConfig{
+				CertCheckRate: 1,
+				KeyPath:       "server-ecc.key",
+				CertPath:      "server-ecc.crt",
 			},
 		}
 		clientCfg := &Config{
