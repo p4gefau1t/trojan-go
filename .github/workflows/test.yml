@@ -22,14 +22,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.17"]
         platform: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: ^1.17.1
 
       - name: Checkout code
         uses: actions/checkout@v2
