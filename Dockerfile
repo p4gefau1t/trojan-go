@@ -13,7 +13,8 @@ RUN if [[ -z "${REF}" ]]; then \
 RUN cd trojan-go &&\
     make &&\
     wget https://github.com/v2fly/domain-list-community/raw/release/dlc.dat -O build/geosite.dat &&\
-    wget https://github.com/v2fly/geoip/raw/release/geoip.dat -O build/geoip.dat
+    wget https://github.com/v2fly/geoip/raw/release/geoip.dat -O build/geoip.dat &&\
+    wget https://github.com/v2fly/geoip/raw/release/geoip-only-cn-private.dat -O build/geoip-only-cn-private.dat
 
 FROM alpine
 WORKDIR /
