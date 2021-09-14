@@ -33,5 +33,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Check Go modules
+        run: |
+          go mod tidy -compat=1.17
+          git diff --exit-code go.mod go.sum
+          go mod verify
+
       - name: Test
         run: make test

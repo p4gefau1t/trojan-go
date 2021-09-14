@@ -1,3 +1,4 @@
+//go:build custom || full
 // +build custom full
 
 package build
