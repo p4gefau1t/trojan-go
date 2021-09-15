@@ -335,6 +335,8 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	var cipherSuite []uint16
 	if len(cfg.TLS.Cipher) != 0 {
 		cipherSuite = fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":"))
+	} else if len(cfg.TLS.Ciphers) != 0 {
+		cipherSuite = fingerprint.ParseCipher(cfg.TLS.Ciphers)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
