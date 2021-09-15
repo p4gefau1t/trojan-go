@@ -19,6 +19,8 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/mux"
 )
 
+var Auth statistic.Authenticator
+
 // InboundConn is a trojan inbound connection
 type InboundConn struct {
 	// WARNING: do not change the order of these fields.
@@ -214,29 +216,29 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 
-	// TODO replace this dirty code
-	var auth statistic.Authenticator
-	var err error
-	if cfg.MySQL.Enabled {
-		log.Debug("mysql enabled")
-		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
-	} else {
-		log.Debug("auth by config file")
-		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
-	}
-	if err != nil {
-		cancel()
-		return nil, common.NewError("trojan failed to create authenticator")
+	if Auth == nil {
+		var err error
+		if cfg.MySQL.Enabled {
+			log.Debug("mysql enabled")
+			Auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+		} else {
+			log.Debug("auth by config file")
+			Auth, err = statistic.NewAuthenticator(ctx, memory.Name)
+		}
+		if err != nil {
+			cancel()
+			return nil, common.NewError("trojan failed to create authenticator")
+		}
 	}
 
 	if cfg.API.Enabled {
-		go api.RunService(ctx, Name+"_SERVER", auth)
+		go api.RunService(ctx, Name+"_SERVER", Auth)
 	}
 
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
 	s := &Server{
 		underlay:   underlay,
-		auth:       auth,
+		auth:       Auth,
 		redirAddr:  redirAddr,
 		connChan:   make(chan tunnel.Conn, 32),
 		muxChan:    make(chan tunnel.Conn, 32),
