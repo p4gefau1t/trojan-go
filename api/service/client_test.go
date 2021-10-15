@@ -37,7 +37,8 @@ func TestClientAPI(t *testing.T) {
 	if !valid {
 		t.Fail()
 	}
-	user.AddTraffic(1234, 5678)
+	user.AddSentTraffic(1234)
+	user.AddRecvTraffic(5678)
 	time.Sleep(time.Second)
 	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", port), grpc.WithInsecure())
 	common.Must(err)

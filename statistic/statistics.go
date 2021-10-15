@@ -21,7 +21,8 @@ type Metadata interface {
 
 type TrafficMeter interface {
 	io.Closer
-	AddTraffic(sent, recv int)
+	AddSentTraffic(sent int)
+	AddRecvTraffic(recv int)
 	ResetTraffic() (sent, recv uint64)
 	GetSpeed() (sent, recv uint64)
 }

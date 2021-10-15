@@ -55,7 +55,8 @@ func TestServerAPI(t *testing.T) {
 		fmt.Println(resp.Status.SpeedLimit)
 	}
 	stream1.CloseSend()
-	user.AddTraffic(1234, 5678)
+	user.AddSentTraffic(1234)
+	user.AddRecvTraffic(5678)
 	time.Sleep(time.Second * 1)
 	stream2, err := server.GetUsers(ctx)
 	common.Must(err)
@@ -127,7 +128,7 @@ func TestServerAPI(t *testing.T) {
 				return
 			default:
 			}
-			user.AddTraffic(200, 0)
+			user.AddSentTraffic(200)
 		}
 	}()
 	go func() {
@@ -137,7 +138,7 @@ func TestServerAPI(t *testing.T) {
 				return
 			default:
 			}
-			user.AddTraffic(0, 300)
+			user.AddRecvTraffic(300)
 		}
 	}()
 	time.Sleep(time.Second * 3)

@@ -87,16 +87,21 @@ func (u *User) GetIPLimit() int {
 	return u.MaxIPNum
 }
 
-func (u *User) AddTraffic(sent, recv int) {
+func (u *User) AddSentTraffic(sent int) {
 	u.limiterLock.RLock()
-	defer u.limiterLock.RUnlock()
-
 	if u.SendLimiter != nil && sent >= 0 {
 		u.SendLimiter.WaitN(u.ctx, sent)
-	} else if u.RecvLimiter != nil && recv >= 0 {
+	}
+	u.limiterLock.RUnlock()
+	atomic.AddUint64(&u.Sent, uint64(sent))
+}
+
+func (u *User) AddRecvTraffic(recv int) {
+	u.limiterLock.RLock()
+	if u.RecvLimiter != nil && recv >= 0 {
 		u.RecvLimiter.WaitN(u.ctx, recv)
 	}
-	atomic.AddUint64(&u.Sent, uint64(sent))
+	u.limiterLock.RUnlock()
 	atomic.AddUint64(&u.Recv, uint64(recv))
 }
 

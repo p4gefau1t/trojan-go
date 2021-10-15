@@ -26,7 +26,8 @@ func TestMemoryAuth(t *testing.T) {
 	if user.GetHash() != "user1" {
 		t.Fatal("Hash")
 	}
-	user.AddTraffic(100, 200)
+	user.AddSentTraffic(100)
+	user.AddRecvTraffic(200)
 	sent, recv := user.GetTraffic()
 	if sent != 100 || recv != 200 {
 		t.Fatal("traffic")
@@ -76,7 +77,8 @@ func TestMemoryAuth(t *testing.T) {
 		for {
 			k := 100
 			time.Sleep(time.Second / time.Duration(k))
-			user.AddTraffic(2000/k, 1000/k)
+			user.AddSentTraffic(2000 / k)
+			user.AddRecvTraffic(1000 / k)
 		}
 	}()
 	time.Sleep(time.Second * 4)

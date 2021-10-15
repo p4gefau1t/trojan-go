@@ -46,14 +46,14 @@ func (c *InboundConn) Metadata() *tunnel.Metadata {
 func (c *InboundConn) Write(p []byte) (int, error) {
 	n, err := c.Conn.Write(p)
 	atomic.AddUint64(&c.sent, uint64(n))
-	c.user.AddTraffic(n, 0)
+	c.user.AddSentTraffic(n)
 	return n, err
 }
 
 func (c *InboundConn) Read(p []byte) (int, error) {
 	n, err := c.Conn.Read(p)
 	atomic.AddUint64(&c.recv, uint64(n))
-	c.user.AddTraffic(0, n)
+	c.user.AddRecvTraffic(n)
 	return n, err
 }
 
