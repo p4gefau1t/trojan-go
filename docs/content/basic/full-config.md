@@ -108,6 +108,9 @@ weight: 30
     "database": "",
     "username": "",
     "password": "",
+    "key": "/etc/trojan-go/key",
+    "cert": "/etc/trojan-go/cert",
+    "ca": "/etc/trojan-go/ca",
     "check_rate": 60
   },
   "api": {
