@@ -2,12 +2,17 @@ package mysql
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
 	// MySQL Driver
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/p4gefau1t/trojan-go/common"
@@ -77,8 +82,49 @@ func (a *Authenticator) updater() {
 	}
 }
 
-func connectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {
+func connectDatabase(driverName, username, password, ip string, port int, dbName, keyPath, certPath, caPath string) (*sql.DB, error) {
 	path := strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
+
+	// Adding support for TLS certs
+	if caPath != "" {
+		path += "&tls=custom"
+		rootCertPool := x509.NewCertPool()
+		pem, err := ioutil.ReadFile(caPath)
+		if err != nil {
+			return nil, err
+		}
+		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
+			return nil, errors.New("AppendCertsFromPEM() failed")
+		}
+		if keyPath != "" && certPath != "" {
+			// Both Key and Cert are set. Go with customer cert.
+			clientCert := make([]tls.Certificate, 0, 1)
+			certs, err := tls.LoadX509KeyPair(certPath, keyPath)
+			if err != nil {
+				return nil, err
+			}
+			clientCert = append(clientCert, certs)
+			mysql.RegisterTLSConfig("custom", &tls.Config{
+				// ServerName: "example.com",
+				RootCAs:      rootCertPool,
+				Certificates: clientCert,
+				MinVersion:   tls.VersionTLS12,
+				MaxVersion:   0,
+			})
+		} else if keyPath == "" && certPath == "" {
+			// Neither Key or Cert is set. Proceed without customer cert.
+			mysql.RegisterTLSConfig("custom", &tls.Config{
+				// ServerName: "example.com",
+				RootCAs:    rootCertPool,
+				MinVersion: tls.VersionTLS12,
+				MaxVersion: 0,
+			})
+		} else {
+			// one of Key or Cert is set but not both, which is ILLEGAL.
+			return nil, errors.New("Set both key and cert, or set neither.")
+		}
+	}
+
 	return sql.Open(driverName, path)
 }
 
@@ -91,6 +137,9 @@ func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 		cfg.MySQL.ServerHost,
 		cfg.MySQL.ServerPort,
 		cfg.MySQL.Database,
+		cfg.MySQL.Key,
+		cfg.MySQL.Cert,
+		cfg.MySQL.CA,
 	)
 	if err != nil {
 		return nil, common.NewError("Failed to connect to database server").Base(err)

@@ -11,6 +11,9 @@ type MySQLConfig struct {
 	Database   string `json:"database" yaml:"database"`
 	Username   string `json:"username" yaml:"username"`
 	Password   string `json:"password" yaml:"password"`
+	Key        string `json:"key" yaml:"key"`
+	Cert       string `json:"cert" yaml:"cert"`
+	CA         string `json:"ca" yaml:"ca"`
 	CheckRate  int    `json:"check_rate" yaml:"check-rate"`
 }
 
