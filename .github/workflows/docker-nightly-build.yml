@@ -26,25 +26,36 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Prepare
-        id: prepare
-        run: |
-          echo ::set-output name=docker_platforms::linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
-          echo ::set-output name=docker_image::${{ secrets.DOCKER_USERNAME }}/trojan-go
-          echo ::set-output name=ref::${{ github.sha }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push docker image
-        run: |
-          docker buildx build --platform ${{ steps.prepare.outputs.docker_platforms }} \
-          --output "type=image,push=true" \
-          --tag "${{ steps.prepare.outputs.docker_image }}:nightly" \
-          --build-arg REF=${{ steps.prepare.outputs.ref }} \
-          --file Dockerfile .
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}, ${{ secrets.DOCKER_USERNAME }}/trojan-go
 
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Test docker image
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Test
         run: |
-          docker run --rm --entrypoint /usr/local/bin/trojan-go ${{ secrets.DOCKER_USERNAME }}/trojan-go -version
+          docker run --rm --entrypoint /usr/local/bin/trojan-go ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} -version
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+          push: true
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
