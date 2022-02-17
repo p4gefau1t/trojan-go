@@ -23,14 +23,21 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 	if err != nil {
 		return nil, common.NewError("simplesocks failed to dial using underlying tunnel").Base(err)
 	}
-	return &Conn{
+	simplesocks := &Conn{
 		Conn:       conn,
 		isOutbound: true,
 		metadata: &tunnel.Metadata{
 			Command: Connect,
 			Address: addr,
 		},
-	}, nil
+	}
+	_, err = simplesocks.Write(make([]byte, 0)) // send simplesocks header, let the server connect to the destination
+	if err != nil {
+		conn.Close()
+		return nil, common.NewError("simplesocks failed to send header").Base(err)
+	}
+
+	return simplesocks, nil
 }
 
 func (c *Client) DialPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
