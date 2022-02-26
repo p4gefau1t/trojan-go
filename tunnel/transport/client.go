@@ -16,6 +16,7 @@ import (
 // Client implements tunnel.Client
 type Client struct {
 	serverAddress *tunnel.Address
+	rewriteConnAddr *tunnel.Address
 	cmd           *exec.Cmd
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -36,7 +37,11 @@ func (c *Client) DialPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 
 // DialConn implements tunnel.Client. It will ignore the params and directly dial to the remote server
 func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
-	conn, err := c.direct.DialConn(c.serverAddress, nil)
+	var addr *tunnel.Address = c.serverAddress
+	if c.rewriteConnAddr != nil {
+		addr = c.rewriteConnAddr
+	}
+	conn, err := c.direct.DialConn(addr, nil)
 	if err != nil {
 		return nil, common.NewError("transport failed to connect to remote server").Base(err)
 	}
@@ -51,6 +56,11 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 
 	var cmd *exec.Cmd
 	serverAddress := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	var rewriteConnAddr *tunnel.Address
+	if cfg.RewriteConnAddr != "" {
+		log.Info("Rewrite Addr configured : " + cfg.RewriteConnAddr)
+		rewriteConnAddr = tunnel.NewAddressFromHostPort("tcp", cfg.RewriteConnAddr, cfg.RemotePort)
+	}
 
 	if cfg.TransportPlugin.Enabled {
 		log.Warn("trojan-go will use transport plugin and work in plain text mode")
@@ -95,6 +105,7 @@ func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	client := &Client{
 		serverAddress: serverAddress,
+		rewriteConnAddr: rewriteConnAddr,
 		cmd:           cmd,
 		ctx:           ctx,
 		cancel:        cancel,

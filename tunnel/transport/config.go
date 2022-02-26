@@ -10,6 +10,7 @@ type Config struct {
 	RemoteHost      string                `json:"remote_addr" yaml:"remote-addr"`
 	RemotePort      int                   `json:"remote_port" yaml:"remote-port"`
 	TransportPlugin TransportPluginConfig `json:"transport_plugin" yaml:"transport-plugin"`
+	RewriteConnAddr string                `json:"rewrite_conn_addr" yaml:"rewrite-conn-addr"`
 }
 
 type TransportPluginConfig struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/p4gefau1t/trojan-go/log"
 )
 
 type Client struct {
@@ -51,6 +52,7 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 		network = "tcp4"
 	}
 	dialer := new(net.Dialer)
+	log.Debug("Freedom Dial addr" + addr.String())
 	tcpConn, err := dialer.DialContext(c.ctx, network, addr.String())
 	if err != nil {
 		return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
