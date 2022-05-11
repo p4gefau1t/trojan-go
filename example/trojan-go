@@ -1,0 +1,38 @@
+
+#!/bin/sh
+
+# PROVIDE: trojan_go
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+. /etc/rc.subr
+
+name="trojan_go"
+rcvar="${name}_enable"
+
+: ${trojan_go_enable="NO"}
+: ${trojan_go_config="/usr/local/etc/trojan-go/config.json"}
+: ${trojan_go_logfile="/var/log/trojan-go.log"}
+: ${trojan_go_env=""}
+: ${trojan_go_user="trojan"}
+: ${trojan_go_group="trojan"}
+
+#asset_env="TROJAN_GO_LOCATION_ASSET=/usr/local/share/$name"
+pidfile="/var/run/$name.pid"
+procname="/usr/local/bin/trojan-go"
+command="/usr/sbin/daemon"
+command_args="-c -p ${pidfile} /usr/bin/env ${trojan_go_env} ${procname} -config ${trojan_go_config}"
+#command_args="-c -p ${pidfile} /usr/bin/env ${asset_env} ${trojan_go_env} ${procname} -config ${trojan_go_config}"
+required_files="${trojan_go_config}"
+
+start_precmd="trojan_go_startprecmd"
+
+trojan_go_startprecmd() {
+         touch "${pidfile}"
+         touch ${trojan_go_logfile}
+         mkdir -p /usr/local/etc/trojan-go
+         chown ${trojan_go_user}:${trojan_go_group} "${pidfile}"
+         chown ${trojan_go_user}:${trojan_go_group} "${trojan_go_logfile}"
+}
+
+load_rc_config "$name"
+run_rc_command "$1" 
