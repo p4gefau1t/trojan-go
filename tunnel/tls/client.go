@@ -2,14 +2,13 @@ package tls
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"io"
 	"io/ioutil"
 	"strings"
 
-	utls "github.com/refraction-networking/utls"
+	tls "github.com/refraction-networking/utls"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -28,7 +27,7 @@ type Client struct {
 	sessionTicket bool
 	reuseSession  bool
 	fingerprint   string
-	helloID       utls.ClientHelloID
+	helloID       tls.ClientHelloID
 	keyLogger     io.WriteCloser
 	underlay      tunnel.Client
 }
@@ -50,32 +49,14 @@ func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn
 		return nil, common.NewError("tls failed to dial conn").Base(err)
 	}
 
-	if c.fingerprint != "" {
-		// utls fingerprint
-		tlsConn := utls.UClient(conn, &utls.Config{
-			RootCAs:            c.ca,
-			ServerName:         c.sni,
-			InsecureSkipVerify: !c.verify,
-			KeyLogWriter:       c.keyLogger,
-		}, c.helloID)
-		if err := tlsConn.Handshake(); err != nil {
-			return nil, common.NewError("tls failed to handshake with remote server").Base(err)
-		}
-		return &transport.Conn{
-			Conn: tlsConn,
-		}, nil
-	}
-	// golang default tls library
-	tlsConn := tls.Client(conn, &tls.Config{
-		InsecureSkipVerify:     !c.verify,
-		ServerName:             c.sni,
-		RootCAs:                c.ca,
-		KeyLogWriter:           c.keyLogger,
-		CipherSuites:           c.cipher,
-		SessionTicketsDisabled: !c.sessionTicket,
-	})
-	err = tlsConn.Handshake()
-	if err != nil {
+	// utls fingerprint
+	tlsConn := tls.UClient(conn, &tls.Config{
+		RootCAs:            c.ca,
+		ServerName:         c.sni,
+		InsecureSkipVerify: !c.verify,
+		KeyLogWriter:       c.keyLogger,
+	}, c.helloID)
+	if err := tlsConn.Handshake(); err != nil {
 		return nil, common.NewError("tls failed to handshake with remote server").Base(err)
 	}
 	return &transport.Conn{
@@ -87,19 +68,22 @@ func (c *Client) DialConn(_ *tunnel.Address, overlay tunnel.Tunnel) (tunnel.Conn
 func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 
-	helloID := utls.ClientHelloID{}
+	helloID := tls.ClientHelloID{}
 	if cfg.TLS.Fingerprint != "" {
-		switch cfg.TLS.Fingerprint {
+		switch strings.ToLower(cfg.TLS.Fingerprint) {
 		case "firefox":
-			helloID = utls.HelloFirefox_Auto
+			helloID = tls.HelloFirefox_Auto
 		case "chrome":
-			helloID = utls.HelloChrome_Auto
+			helloID = tls.HelloChrome_Auto
 		case "ios":
-			helloID = utls.HelloIOS_Auto
+			helloID = tls.HelloIOS_Auto
 		default:
-			return nil, common.NewError("invalid fingerprint " + cfg.TLS.Fingerprint)
+			return nil, common.NewError("Invalid 'fingerprint' value in configuration: '" + cfg.TLS.Fingerprint + "'. Possible values are 'firefox', 'ios', or 'chrome' (default).")
 		}
-		log.Info("tls fingerprint", cfg.TLS.Fingerprint, "applied")
+		log.Info("Your trojan's TLS fingerprint will look like", cfg.TLS.Fingerprint)
+	} else {
+		helloID = tls.HelloChrome_Auto
+		log.Info("No 'fingerprint' value specified in your configuration. Your trojan's TLS fingerprint will look like Chrome by default.")
 	}
 
 	if cfg.TLS.SNI == "" {
