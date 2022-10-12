@@ -38,10 +38,8 @@ func (a *Authenticator) updater() {
 				log.Error(common.NewError("failed to update data to user table").Base(err))
 				continue
 			}
-			if r, err := s.RowsAffected(); err != nil {
-				if r == 0 {
-					a.DelUser(hash)
-				}
+			if r, err := s.RowsAffected(); err == nil && r == 0 {
+				a.DelUser(hash)
 			}
 		}
 		log.Info("buffered data has been written into the database")
