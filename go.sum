@@ -83,6 +83,8 @@ github.com/refraction-networking/utls v0.0.0-20210713165636-0b2885c8c0d4 h1:n9NM
 github.com/refraction-networking/utls v0.0.0-20210713165636-0b2885c8c0d4/go.mod h1:tz9gX959MEFfFN5whTIocCLUG57WiILqtdVxI8c6Wj0=
 github.com/refraction-networking/utls v1.1.2 h1:a7GQauRt72VG+wtNm0lnrAaCGlyX47gEi1++dSsDBpw=
 github.com/refraction-networking/utls v1.1.2/go.mod h1:+D89TUtA8+NKVFj1IXWr0p3tSdX1+SqUB7rL0QnGqyg=
+github.com/refraction-networking/utls v1.1.3 h1:K9opY+iKxcGvHOBG2019wFEVtsNFh0f5WqHyc2i3iU0=
+github.com/refraction-networking/utls v1.1.3/go.mod h1:+D89TUtA8+NKVFj1IXWr0p3tSdX1+SqUB7rL0QnGqyg=
 github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 h1:f/FNXud6gA3MNr8meMVVGxhp+QBTqY91tM8HjEuMjGg=
 github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3/go.mod h1:HgjTstvQsPGkxUsCd2KWxErBblirPizecHcpD3ffK+s=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
