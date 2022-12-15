@@ -4,7 +4,9 @@ draft: false
 weight: 1
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
 
 Trojan-Go supports the use of multiplexing to improve network concurrency performance.
 

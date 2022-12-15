@@ -4,7 +4,9 @@ draft: false
 weight: 8
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
 
 Trojan-Go allows advanced users to customize the protocol stack. In custom mode, Trojan-Go will relinquish control of the protocol stack and allow users to manipulate the underlying protocol stack combinations. For example:
 
@@ -18,11 +20,17 @@ Trojan-Go allows advanced users to customize the protocol stack. In custom mode,
 
 And so on.
 
-**Do not try to use this feature if you don't know anything about networking. Incorrect configuration may cause Trojan-Go to not work properly, or cause performance and security issues. **
+
+{{% panel status="warning" title="Caution" %}}
+Do not try to use this feature if you don't know anything about networking. Incorrect configuration may cause Trojan-Go to not work properly, or cause performance and security issues.
+{{% /panel %}}
 
 Trojan-Go abstracts all protocols into tunnels, each of which may provide a client, which is responsible for sending, a server, which is responsible for receiving, or both. The custom protocol stack is how the custom tunnels are stacked.
 
-**Before proceeding with the configuration, please read the "Basic Introduction" section of the Developer's Guide to ensure that you understand how Trojan-Go works**
+{{% panel status="notice" title="Prerequisite" %}}
+Before proceeding with the configuration, please read the "Basic Introduction" section of the Developer's Guide to ensure that you understand how Trojan-Go works.
+{{% /panel %}}
+
 
 Here are the tunnels supported by Trojan-Go and their properties:
 

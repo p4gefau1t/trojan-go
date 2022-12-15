@@ -4,7 +4,9 @@ draft: false
 weight: 8
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
 
 The Trojan protocol itself is not encrypted and its security relies on the underlying TLS. in general, TLS security is good and there is no need to encrypt Trojan traffic again. However, there are some scenarios where you may not be able to guarantee the security of a TLS tunnel.
 

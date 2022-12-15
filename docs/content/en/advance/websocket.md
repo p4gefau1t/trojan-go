@@ -4,7 +4,9 @@ draft: false
 weight: 2
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
 
 Trojan-Go supports using TLS+Websocket to host the Trojan protocol, making it possible to relay traffic using CDNs.
 

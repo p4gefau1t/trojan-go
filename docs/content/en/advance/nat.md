@@ -4,7 +4,9 @@ draft: false
 weight: 11
 ---
 
-### Note that Trojan does not fully support this feature (UDP)
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not fully support this feature (UDP)
+{{% /panel %}}
 
 Trojan-Go supports transparent TCP/UDP proxies based on tproxy.
 

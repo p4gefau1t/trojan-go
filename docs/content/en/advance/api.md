@@ -4,7 +4,9 @@ draft: false
 weight: 10
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
 
 Trojan-Go provides a set of APIs using gRPC, which supports the following features.
 

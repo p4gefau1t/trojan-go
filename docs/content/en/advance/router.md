@@ -4,7 +4,9 @@ draft: false
 weight: 3
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
 
 Trojan-Go's built-in routing module can help you implement domestic direct connections, i.e., the client can connect directly to domestic websites without going through a proxy.
 

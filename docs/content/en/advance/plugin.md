@@ -4,7 +4,10 @@ draft: false
 weight: 7
 ---
 
-### Note that Trojan does not support this feature
+{{% panel status="caution" title="Compatibility" %}}
+Note that Trojan does not support this feature
+{{% /panel %}}
+
 
 Trojan-Go supports a pluggable transport layer. In principle, Trojan-Go can use any software that has TCP tunneling capabilities as a transport layer, such as v2ray, shadowsocks, kcp, etc. Also, Trojan-Go is compatible with Shadowsocks' SIP003 plugin standard, such as GoQuiet, v2ray-plugin, etc. You can also use Tor's transport layer plugins, such as obfs4, meek, etc.
 
@@ -18,9 +21,14 @@ We recommend that you design your own protocols and develop your own plugins**. 
 
 For example, you can use the SIP003-compliant v2ray-plugin, an example of which is shown below:
 
-**This configuration uses websocket to transmit unencrypted trojan protocol in clear text, which is a security risk. This configuration is for demonstration purposes only. **
+{{% panel status="warning" title="Caution" %}}
+This configuration uses websocket to transmit unencrypted trojan protocol in clear text, which is a security risk. This configuration is for demonstration purposes only.
+{{% /panel %}}
 
-**Do not use this configuration to penetrate GFW under any circumstances.**
+{{% panel status="danger" title="Warning" %}}
+Do not use this configuration to penetrate GFW under any circumstances.
+{{% /panel %}}
+
 
 Server-side configuration.
 

@@ -361,4 +361,7 @@ trojan-go provides an API based on gRPC to support server-side and client-side m
 
 - ```client_cert``` If client authentication is enabled, fill in the list of certified client certificates here.
 
-Warning:**Do not expose API services without TLS bi-directional authentication directly to the Internet, otherwise it may lead to various security problems.**
+
+{{% panel status="warning" title="Warning" %}}
+Do not expose API services without TLS bi-directional authentication directly to the Internet, otherwise it may lead to various security problems.
+{{% /panel %}}
