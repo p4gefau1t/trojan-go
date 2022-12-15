@@ -11,6 +11,17 @@ defaultContentLanguage = "zh"
 defaultContentLanguageInSubdir= true
 enableMissingTranslationPlaceholders = false
 
+
+[languages]
+    [languages.zh]
+        languageName = '中文'
+        contentDir = 'content/zh'
+        weight = 1
+    [languages.en]
+        languageName = 'English'
+        contentDir = 'content/en'
+        weight = 2
+
 [params]
 
     # Source Code repository section
