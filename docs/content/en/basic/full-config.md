@@ -1,5 +1,5 @@
 ---
-title: "Full profile"
+title: "Full configuration file"
 draft: false
 weight: 30
 ---
@@ -278,7 +278,7 @@ Thanks to the use of AEAD, trojan-go can correctly determine if the request is v
 
 ### ```transport_plugin``` Transport layer plugin options
 
-```Enabled`` Whether to enable transport layer plug-in instead of TLS transport. Once transport layer plugin support is enabled, trojan-go will transmit **unencrypted TLS-encrypted trojan protocol traffic in plaintext to the plugin** to allow user-defined obfuscation and encryption of the traffic.
+```Enabled``` Whether to enable transport layer plug-in instead of TLS transport. Once transport layer plugin support is enabled, trojan-go will transmit **unencrypted TLS-encrypted trojan protocol traffic in plaintext to the plugin** to allow user-defined obfuscation and encryption of the traffic.
 
 ```type``` plug-in types. The currently supported types are
 

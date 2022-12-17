@@ -4,7 +4,7 @@ draft: false
 weight: 100
 ---
 
-Trojan-Go implements an API based on gRPC, using protobuf to exchange data. The client can get the traffic and speed information; the server can get the traffic, speed, online situation of each user, and dynamically add and delete users and limit the speed. The API module can be activated by adding the ```api`` option to the configuration file. Here is an example, the meaning of each field can be found in the section "Complete configuration file".
+Trojan-Go implements an API based on gRPC, using protobuf to exchange data. The client can get the traffic and speed information; the server can get the traffic, speed, online situation of each user, and dynamically add and delete users and limit the speed. The API module can be activated by adding the ```api``` option to the configuration file. Here is an example, the meaning of each field can be found in the section [Full configuration file]({{< ref "full-config.md" >}} "Full configuration file").
 
 ```json
 ...

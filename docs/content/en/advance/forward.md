@@ -23,7 +23,7 @@ You can use Trojan-Go to set up tunnels. A typical application is to use Trojan-
 
 forward is essentially a client, but you need to fill in the ```target_addr``` and ```target_port``` fields to indicate the target of the reverse proxy.
 
-After using this configuration file, the local 53 TCP and UDP ports will be listened to, and all TCP or UDP data sent to the local 53 port will be forwarded to the remote server your_awesome_server via TLS tunnel, and after the remote server gets a response, the data will be returned to the local 53 port via the tunnel. In other words, you can treat 127.0.0.1 as a DNS server, and the results of the local query and the remote server query are the same. You can use this configuration to bypass DNS pollution.
+After using this configuration file, the local 53 TCP and UDP ports will be listened to, and all TCP or UDP data sent to the local 53 port will be forwarded to the remote server ```your_awesome_server``` via TLS tunnel, and after the remote server gets a response, the data will be returned to the local 53 port via the tunnel. In other words, you can treat 127.0.0.1 as a DNS server, and the results of the local query and the remote server query are the same. You can use this configuration to bypass DNS pollution.
 
 On the same principle, you can build a Google mirror locally
 
