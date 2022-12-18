@@ -1,15 +1,26 @@
 baseURL = "https://p4gefau1t.github.io/trojan-go"
 
-languageCode = "zh-CN"
+languageCode = "en-US"
 title = "Trojan-Go Docs"
 theme = "hugo-theme-techdoc"
 
 hasCJKLanguage = true
 metaDataFormat = "yaml"
 
-defaultContentLanguage = "zh"
+defaultContentLanguage = "en"
 defaultContentLanguageInSubdir= true
 enableMissingTranslationPlaceholders = false
+
+
+[languages]
+    [languages.zh]
+        languageName = '中文'
+        contentDir = 'content/zh'
+        weight = 1
+    [languages.en]
+        languageName = 'English'
+        contentDir = 'content/en'
+        weight = 2
 
 [params]
 
@@ -68,14 +79,19 @@ enableMissingTranslationPlaceholders = false
 # See https://gohugo.io/content-management/menus/
 [menu]
     [[menu.main]]
-        name = "Home"
-        url = "/"
+        name = "English (DeepL)"
+        url = "/en/"
         weight = 1
+
+    [[menu.main]]
+        name = "Chinese (original)"
+        url = "/zh/"
+        weight = 2
 
     [[menu.main]]
         name = "GitHub"
         url = "https://github.com/p4gefau1t"
-        weight = 2
+        weight = 3
 
 # Markup configure section
 # See https://gohugo.io/getting-started/configuration-markup/

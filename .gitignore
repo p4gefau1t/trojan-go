@@ -22,3 +22,5 @@ build/
 *.key
 *.dat
 trojan-go
+
+docs/.hugo_build.lock
