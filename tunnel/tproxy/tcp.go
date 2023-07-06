@@ -105,9 +105,7 @@ func getOriginalTCPDest(conn *net.TCPConn) (*net.TCPAddr, error) {
 			return nil, os.NewSyscallError("getsockopt", err)
 		}
 		ip := make([]byte, 16)
-		for i, b := range addr.Addr {
-			ip[i] = b
-		}
+		copy(ip, addr.Addr[:])
 		pb := *(*[2]byte)(unsafe.Pointer(&addr.Port))
 		return &net.TCPAddr{
 			IP:   ip,
@@ -125,9 +123,7 @@ func getOriginalTCPDest(conn *net.TCPConn) (*net.TCPAddr, error) {
 		return nil, os.NewSyscallError("getsockopt", err)
 	}
 	ip := make([]byte, 4)
-	for i, b := range addr.Addr {
-		ip[i] = b
-	}
+	copy(ip, addr.Addr[:])
 	pb := *(*[2]byte)(unsafe.Pointer(&addr.Port))
 	return &net.TCPAddr{
 		IP:   ip,
