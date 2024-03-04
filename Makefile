@@ -117,7 +117,7 @@ linux-mips-hardfloat:
 	GOARCH=mips GOMIPS=hardfloat GOOS=linux $(GOBUILD)/$@
 
 linux-mipsle-softfloat: TAGS = client
-	mkdir -p $(BUILD_DIR)/$@	
+	mkdir -p $(BUILD_DIR)/$@
 	GOARCH=mipsle GOMIPS=softfloat GOOS=linux $(GOBUILD)/$@
 
 linux-mipsle-hardfloat:
