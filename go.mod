@@ -1,8 +1,11 @@
 module github.com/p4gefau1t/trojan-go
 
-go 1.17
+go 1.21.8
+
+toolchain go1.22.0
 
 require (
+	github.com/database64128/tfo-go/v2 v2.2.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/refraction-networking/utls v0.0.0-20210713165636-0b2885c8c0d4
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
@@ -33,7 +36,7 @@ require (
 	github.com/txthinking/x v0.0.0-20210326105829-476fab902fbe // indirect
 	go.starlark.net v0.0.0-20210602144842-1cdb82c9e17a // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/sys v0.0.0-20210820121016-41cdb8703e55 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 )
