@@ -4,12 +4,12 @@ import (
 	"context"
 	"net"
 
-	"github.com/txthinking/socks5"
-	"golang.org/x/net/proxy"
-
+	"github.com/database64128/tfo-go/v2"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	"github.com/txthinking/socks5"
+	"golang.org/x/net/proxy"
 )
 
 type Client struct {
@@ -22,6 +22,25 @@ type Client struct {
 	proxyAddr    *tunnel.Address
 	username     string
 	password     string
+}
+
+func (c *Client) DialTFOConn(addr *tunnel.Address, _ tunnel.Tunnel, b []byte) (tunnel.Conn, error) {
+	//TFO Only for tcp
+	network := "tcp"
+	if c.preferIPv4 {
+		network = "tcp4"
+	}
+	dialer := new(tfo.Dialer)
+	tcpConn, err := dialer.DialContext(c.ctx, network, addr.String(), b)
+	if err != nil {
+		return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
+	}
+
+	tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
+	tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
+	return &Conn{
+		Conn: tcpConn,
+	}, nil
 }
 
 func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, error) {
