@@ -72,8 +72,8 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 		return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
 	}
 
-	tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
-	tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
+	// tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
+	// tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
 	return &Conn{
 		Conn: tcpConn,
 	}, nil
