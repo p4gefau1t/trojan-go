@@ -10,6 +10,9 @@ import (
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/tunnel"
+	dialer_sing_box "github.com/sagernet/sing-box/common/dialer"
+	"github.com/sagernet/sing/common/metadata"
+	"github.com/sagernet/tfo-go"
 )
 
 type Client struct {
@@ -26,6 +29,7 @@ type Client struct {
 
 func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, error) {
 	// forward proxy
+
 	if c.forwardProxy {
 		var auth *proxy.Auth
 		if c.username != "" {
@@ -42,6 +46,12 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 		if err != nil {
 			return nil, common.NewError("freedom failed to dial target address via socks proxy " + addr.String()).Base(err)
 		}
+		// conn, err := dialer_sing_box.DialSlowContext(&tfo.Dialer{
+		// 	Dialer: net.Dialer{},
+		// }, context.Background(), "tcp", metadata.ParseSocksaddr(addr.String()))
+		// if err != nil {
+		// 	return nil, common.NewError("freedom failed to dial target address via socks proxy " + addr.String()).Base(err)
+		// }
 		return &Conn{
 			Conn: conn,
 		}, nil
@@ -50,14 +60,24 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 	if c.preferIPv4 {
 		network = "tcp4"
 	}
-	dialer := new(net.Dialer)
-	tcpConn, err := dialer.DialContext(c.ctx, network, addr.String())
+	// dialer := new(net.Dialer)
+	// tcpConn, err := dialer.DialContext(c.ctx, network, addr.String())
+	// if err != nil {
+	// 	return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
+	// }
+	tcpConn, err := dialer_sing_box.DialSlowContext(&tfo.Dialer{
+		Dialer: net.Dialer{
+			DualStack: true,
+		},
+		DisableTFO: false,
+	}, context.Background(), network, metadata.ParseSocksaddr(addr.String()))
 	if err != nil {
 		return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
 	}
 
-	tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
-	tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
+	// tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
+	// tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
+	// todo session ticket
 	return &Conn{
 		Conn: tcpConn,
 	}, nil
