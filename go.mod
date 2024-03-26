@@ -8,6 +8,9 @@ require (
 	github.com/database64128/tfo-go/v2 v2.2.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/refraction-networking/utls v0.0.0-20210713165636-0b2885c8c0d4
+	github.com/sagernet/sing v0.3.6
+	github.com/sagernet/sing-box v1.8.10
+	github.com/sagernet/tfo-go v0.0.0-20231209031829-7b5343ac1dc6
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.9.0
@@ -30,6 +33,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/miekg/dns v1.1.58 // indirect
 	github.com/oschwald/maxminddb-golang v1.12.0 // indirect
@@ -39,11 +43,8 @@ require (
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/sagernet/gvisor v0.0.0-20231209105102-8d27a30e436e // indirect
 	github.com/sagernet/netlink v0.0.0-20220905062125-8043b4a9aa97 // indirect
-	github.com/sagernet/sing v0.3.6 // indirect
-	github.com/sagernet/sing-box v1.8.10 // indirect
 	github.com/sagernet/sing-dns v0.1.14 // indirect
 	github.com/sagernet/sing-tun v0.2.5 // indirect
-	github.com/sagernet/tfo-go v0.0.0-20231209031829-7b5343ac1dc6 // indirect
 	github.com/sagernet/wireguard-go v0.0.0-20231215174105-89dec3b2f3e8 // indirect
 	github.com/scjalliance/comshim v0.0.0-20230315213746-5e51f40bd3b9 // indirect
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
@@ -57,5 +58,5 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
-	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 )

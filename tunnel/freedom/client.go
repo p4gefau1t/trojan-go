@@ -29,7 +29,7 @@ type Client struct {
 
 func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, error) {
 	// forward proxy
-	
+
 	if c.forwardProxy {
 		var auth *proxy.Auth
 		if c.username != "" {
@@ -66,7 +66,10 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 	// 	return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
 	// }
 	tcpConn, err := dialer_sing_box.DialSlowContext(&tfo.Dialer{
-		Dialer: net.Dialer{},
+		Dialer: net.Dialer{
+			DualStack: true,
+		},
+		DisableTFO: false,
 	}, context.Background(), network, metadata.ParseSocksaddr(addr.String()))
 	if err != nil {
 		return nil, common.NewError("freedom failed to dial " + addr.String()).Base(err)
