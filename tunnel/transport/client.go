@@ -45,15 +45,7 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 	}, nil
 }
 
-func (c *Client) DialTFOConn(ta *tunnel.Address, tt tunnel.Tunnel, b []byte) (tunnel.Conn, error) {
-	conn, err := c.direct.DialTFOConn(c.serverAddress, nil, b)
-	if err != nil {
-		return nil, common.NewError("transport failed to connect to remote server").Base(err)
-	}
-	return &Conn{
-		Conn: conn,
-	}, nil
-}
+
 
 // NewClient creates a transport layer client
 func NewClient(ctx context.Context, _ tunnel.Client) (*Client, error) {
