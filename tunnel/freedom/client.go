@@ -77,6 +77,7 @@ func (c *Client) DialConn(addr *tunnel.Address, _ tunnel.Tunnel) (tunnel.Conn, e
 
 	// tcpConn.(*net.TCPConn).SetKeepAlive(c.keepAlive)
 	// tcpConn.(*net.TCPConn).SetNoDelay(c.noDelay)
+	// todo session ticket
 	return &Conn{
 		Conn: tcpConn,
 	}, nil
