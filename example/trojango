@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# PROVIDE: trojango
+# REQUIRE: LOGIN cleanvar
+# KEYWORD: shutdown
+
+# This is a FreeBSD rc.d script file for managing the trojan-go service
+#
+# The trojan-go is located at /usr/local/tjgo/trojan-go
+# Log file and err file is under /var/log/
+
+. /etc/rc.subr
+
+name=trojango
+rcvar=trojango_enable 
+
+command="/usr/local/tjgo/trojan-go"
+trojango_flags="-config /usr/local/tjgo/server.yaml"
+
+command_args="> /var/log/trojango.log 2> /var/log/trojango.err &"
+
+load_rc_config $name 
+run_rc_command "$1"
