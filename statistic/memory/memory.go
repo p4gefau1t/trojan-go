@@ -171,45 +171,54 @@ func (u *User) GetSpeed() (uint64, uint64) {
 }
 
 type Authenticator struct {
-	users sync.Map
-	ctx   context.Context
+	Users sync.Map
+	Ctx   context.Context
 }
 
+var ErrorHashExist = common.NewError("hash is already exist")
+
 func (a *Authenticator) AuthUser(hash string) (bool, statistic.User) {
-	if user, found := a.users.Load(hash); found {
+	if user, found := a.Users.Load(hash); found {
 		return true, user.(*User)
 	}
 	return false, nil
 }
 
-func (a *Authenticator) AddUser(hash string) error {
-	if _, found := a.users.Load(hash); found {
-		return common.NewError("hash " + hash + " is already exist")
+func (a *Authenticator) GetUser(hash string) (statistic.User, error) {
+	if user, found := a.Users.Load(hash); found {
+		return user.(*User), nil
 	}
-	ctx, cancel := context.WithCancel(a.ctx)
+	return nil, common.NewError("hash " + hash + " not found")
+}
+
+func (a *Authenticator) AddUser(hash string) error {
+	if _, found := a.Users.Load(hash); found {
+		return ErrorHashExist
+	}
+	ctx, cancel := context.WithCancel(a.Ctx)
 	meter := &User{
 		hash:   hash,
 		ctx:    ctx,
 		cancel: cancel,
 	}
 	go meter.speedUpdater()
-	a.users.Store(hash, meter)
+	a.Users.Store(hash, meter)
 	return nil
 }
 
 func (a *Authenticator) DelUser(hash string) error {
-	meter, found := a.users.Load(hash)
+	meter, found := a.Users.Load(hash)
 	if !found {
 		return common.NewError("hash " + hash + " not found")
 	}
 	meter.(*User).Close()
-	a.users.Delete(hash)
+	a.Users.Delete(hash)
 	return nil
 }
 
 func (a *Authenticator) ListUsers() []statistic.User {
 	result := make([]statistic.User, 0)
-	a.users.Range(func(k, v interface{}) bool {
+	a.Users.Range(func(k, v interface{}) bool {
 		result = append(result, v.(*User))
 		return true
 	})
@@ -223,7 +232,7 @@ func (a *Authenticator) Close() error {
 func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	u := &Authenticator{
-		ctx: ctx,
+		Ctx: ctx,
 	}
 	for _, password := range cfg.Passwords {
 		hash := common.SHA224String(password)

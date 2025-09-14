@@ -298,3 +298,113 @@ outbound:
 		t.Fail()
 	}
 }
+
+func TestHTTPAuth(t *testing.T) {
+	serverPort := common.PickPort("tcp", "127.0.0.1")
+	socksPort := common.PickPort("tcp", "127.0.0.1")
+
+	// 客户端配置 - 使用HTTP认证
+	clientData := fmt.Sprintf(`
+run-type: custom
+log-level: 1
+
+inbound:
+  node:
+    - protocol: adapter
+      tag: adapter
+      config:
+        local-addr: 127.0.0.1
+        local-port: %d
+    - protocol: socks
+      tag: socks
+      config:
+        local-addr: 127.0.0.1
+        local-port: %d
+  path:
+    -
+      - adapter
+      - socks
+
+outbound:
+  node:
+    - protocol: transport
+      tag: transport
+      config:
+        remote-addr: 127.0.0.1
+        remote-port: %d
+
+    - protocol: tls
+      tag: tls
+      config:
+        ssl:
+          sni: localhost
+          key: server.key
+          cert: server.crt
+
+    - protocol: trojan
+      tag: trojan
+      config:
+        password:
+          - ce37e9cf-ff1a-44cd-9905-5cb0daa70c46
+
+  path:
+    -
+      - transport
+      - tls
+      - trojan
+
+`, serverPort, socksPort, serverPort)
+
+	// 服务器配置 - 使用HTTP认证器
+	serverData := fmt.Sprintf(`
+run-type: custom
+log-level: 1
+
+inbound:
+  node:
+    - protocol: adapter
+      tag: adapter
+      config:
+        local-addr: 127.0.0.1
+        local-port: %d
+
+    - protocol: tls
+      tag: tls
+      config:
+        ssl:
+          sni: localhost
+          key: server.key
+          cert: server.crt
+
+    - protocol: trojan
+      tag: trojan
+      config:
+        password:
+          - testpassword123
+
+  path:
+    -
+      - adapter
+      - tls
+      - trojan
+
+outbound:
+  node:
+    - protocol: freedom
+      tag: freedom
+
+  path:
+    - 
+      - freedom
+
+http:
+  enabled: true
+  api_url: "http://127.0.0.1:8080/api/auth"
+  timeout: 10
+
+`, serverPort)
+
+	if !CheckClientServer(clientData, serverData, socksPort) {
+		t.Fail()
+	}
+}

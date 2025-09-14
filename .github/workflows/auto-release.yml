@@ -1,0 +1,36 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.17.1
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set tag name
+        run: |
+          tag_name="v$(date +%Y%m%d%H%M%S)"
+          echo "TAG_NAME=${tag_name}" >> $GITHUB_ENV
+          echo "Tag: $tag_name"
+
+      - name: Build
+        run: |
+          make release -j$(nproc)
+
+      - name: Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.TAG_NAME }}
+          file: ./trojan-go-*.zip
+          file_glob: true
+          prerelease: true
