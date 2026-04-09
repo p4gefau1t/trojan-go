@@ -124,9 +124,11 @@ func (s *Server) acceptLoop() {
 					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
 					switch {
 					case s.fallbackAddress != nil:
+						ip, _, _ := net.SplitHostPort(handshakeRewindConn.RemoteAddr().String())
 						s.redir.Redirect(&redirector.Redirection{
 							InboundConn: handshakeRewindConn,
 							RedirectTo:  s.fallbackAddress,
+							ClientIP:    ip,
 						})
 					case s.httpResp != nil:
 						handshakeRewindConn.Write(s.httpResp)
@@ -162,9 +164,11 @@ func (s *Server) acceptLoop() {
 				if atomic.LoadInt32(&s.nextHTTP) != 1 {
 					// there is no websocket layer waiting for connections, redirect it
 					log.Error("incoming http request, but no websocket server is listening")
+					ip, _, _ := net.SplitHostPort(rewindConn.RemoteAddr().String())
 					s.redir.Redirect(&redirector.Redirection{
 						InboundConn: rewindConn,
 						RedirectTo:  s.fallbackAddress,
+						ClientIP:    ip,
 					})
 					return
 				}

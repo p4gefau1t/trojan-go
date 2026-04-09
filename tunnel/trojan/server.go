@@ -149,9 +149,11 @@ func (s *Server) acceptLoop() {
 				rewindConn.Rewind()
 				rewindConn.StopBuffering()
 				log.Warn(common.NewError("connection with invalid trojan header from " + rewindConn.RemoteAddr().String()).Base(err))
+				ip, _, _ := net.SplitHostPort(rewindConn.RemoteAddr().String())
 				s.redir.Redirect(&redirector.Redirection{
 					RedirectTo:  s.redirAddr,
 					InboundConn: rewindConn,
+					ClientIP:    ip,
 				})
 				return
 			}

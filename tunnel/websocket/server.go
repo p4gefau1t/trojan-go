@@ -55,9 +55,11 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		return nil, common.NewError("websocket failed to accept connection from underlying server")
 	}
 	if !s.enabled {
+		ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 		s.redir.Redirect(&redirector.Redirection{
 			InboundConn: conn,
 			RedirectTo:  s.redirAddr,
+			ClientIP:    ip,
 		})
 		return nil, common.NewError("websocket is disabled. redirecting http request from " + conn.RemoteAddr().String())
 	}
@@ -70,9 +72,11 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		log.Debug("invalid http request")
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
+		ip, _, _ := net.SplitHostPort(rewindConn.RemoteAddr().String())
 		s.redir.Redirect(&redirector.Redirection{
 			InboundConn: rewindConn,
 			RedirectTo:  s.redirAddr,
+			ClientIP:    ip,
 		})
 		return nil, common.NewError("not a valid http request: " + conn.RemoteAddr().String()).Base(err)
 	}
@@ -80,9 +84,11 @@ func (s *Server) AcceptConn(tunnel.Tunnel) (tunnel.Conn, error) {
 		log.Debug("invalid http websocket handshake request")
 		rewindConn.Rewind()
 		rewindConn.StopBuffering()
+		ip, _, _ := net.SplitHostPort(rewindConn.RemoteAddr().String())
 		s.redir.Redirect(&redirector.Redirection{
 			InboundConn: rewindConn,
 			RedirectTo:  s.redirAddr,
+			ClientIP:    ip,
 		})
 		return nil, common.NewError("not a valid websocket handshake request: " + conn.RemoteAddr().String()).Base(err)
 	}
