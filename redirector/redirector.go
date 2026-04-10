@@ -1,10 +1,13 @@
 package redirector
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"reflect"
+	"strings"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -20,6 +23,7 @@ type Redirection struct {
 	Dial
 	RedirectTo  net.Addr
 	InboundConn net.Conn
+	ClientIP    string
 }
 
 type Redirector struct {
@@ -34,6 +38,61 @@ func (r *Redirector) Redirect(redirection *Redirection) {
 	case <-r.ctx.Done():
 		log.Debug("exiting")
 	}
+}
+
+func injectForwardedHeader(inbound net.Conn, outbound net.Conn, clientIP string) error {
+	var headerBuf bytes.Buffer
+	buf := make([]byte, 4096)
+
+	for {
+		n, err := inbound.Read(buf)
+		if err != nil {
+			return err
+		}
+		headerBuf.Write(buf[:n])
+
+		if bytes.Contains(headerBuf.Bytes(), []byte("\r\n\r\n")) {
+			break
+		}
+
+		if headerBuf.Len() > 65536 {
+			return fmt.Errorf("headers too large")
+		}
+	}
+
+	headerBytes := headerBuf.Bytes()
+	idx := bytes.Index(headerBytes, []byte("\r\n\r\n"))
+
+	headers := headerBytes[:idx]
+	remaining := headerBytes[idx+4:]
+
+	headerStr := string(headers)
+	lines := strings.Split(headerStr, "\r\n")
+
+	xffFound := false
+	for i, line := range lines {
+		if strings.HasPrefix(strings.ToLower(line), "x-forwarded-for:") {
+			lines[i] = line + ", " + clientIP
+			xffFound = true
+			break
+		}
+	}
+	if !xffFound {
+		lines = append(lines, "X-Forwarded-For: "+clientIP)
+	}
+
+	lines = append(lines, "X-Real-IP: "+clientIP)
+
+	var out bytes.Buffer
+	for _, line := range lines {
+		out.WriteString(line)
+		out.WriteString("\r\n")
+	}
+	out.WriteString("\r\n")
+	out.Write(remaining)
+
+	_, err := outbound.Write(out.Bytes())
+	return err
 }
 
 func (r *Redirector) worker() {
@@ -60,6 +119,11 @@ func (r *Redirector) worker() {
 					return
 				}
 				defer outboundConn.Close()
+				if redirection.ClientIP != "" {
+					if err := injectForwardedHeader(redirection.InboundConn, outboundConn, redirection.ClientIP); err != nil {
+						log.Debug("failed to inject X-Forwarded-For header, using plain TCP forwarding:", err)
+					}
+				}
 				errChan := make(chan error, 2)
 				copyConn := func(a, b net.Conn) {
 					_, err := io.Copy(a, b)
